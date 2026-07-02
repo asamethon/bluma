@@ -19,7 +19,8 @@ import {
   HankenGrotesk_700Bold,
   HankenGrotesk_800ExtraBold,
 } from '@expo-google-fonts/hanken-grotesk';
-import { Stack } from 'expo-router';
+import analytics from '@react-native-firebase/analytics';
+import { Stack, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -48,6 +49,16 @@ export default observer(function RootLayout() {
   const { isLoading } = authState$.get();
   const storiesLoaded = storyState$.storiesLoaded.get();
   const [splashTimedOut, setSplashTimedOut] = useState(false);
+  const pathname = usePathname();
+
+  // Ekran görüntüleme takibi — DAU/retention oturumlardan otomatik gelir,
+  // bu event hangi ekranların kullanıldığını gösterir.
+  useEffect(() => {
+    if (!pathname) return;
+    analytics()
+      .logScreenView({ screen_name: pathname, screen_class: pathname })
+      .catch(() => {});
+  }, [pathname]);
 
   useEffect(() => {
     authActions.initializeAuth();

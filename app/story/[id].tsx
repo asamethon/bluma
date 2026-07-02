@@ -11,6 +11,7 @@ import { moderationActions } from '@/store/moderationStore';
 import { storyActions, storyState$ } from '@/store/storyStore';
 import { Ionicons } from '@expo/vector-icons';
 import { observer } from '@legendapp/state/react';
+import analytics from '@react-native-firebase/analytics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
@@ -102,6 +103,7 @@ export default observer(function ReaderScreen() {
       // Asıl okuma görüntülenmeyi saymalı (bilgi ekranı tek kaynak olmamalı).
       // Store, kullanıcı başına 3 görüntülenme ile sınırlar; misafirleri saymaz.
       storyActions.incrementStoryViews(id);
+      analytics().logEvent('story_read', { story_id: String(id) }).catch(() => {});
     }
   }, [id]);
 

@@ -1,5 +1,6 @@
 import { offlineStorageService } from '@/services/offlineStorageService';
 import { pushNotificationService } from '@/services/pushNotificationService';
+import analytics from '@react-native-firebase/analytics';
 import { Book, Chapter, Comment, Story, User } from '@/types';
 import NetInfo from '@react-native-community/netinfo';
 
@@ -506,6 +507,8 @@ export const storyActions = {
           storyData.title,
           'new_story'
         ).catch(() => {});
+
+        analytics().logEvent('story_publish', { story_id: docRef.id }).catch(() => {});
       }
 
       storyState$.isLoading.set(false);
@@ -557,6 +560,7 @@ export const storyActions = {
           notificationActions.announceStoryToFollowers(
             user.id, authorName, storyId, title, 'new_story'
           ).catch(() => {});
+          analytics().logEvent('story_publish', { story_id: storyId }).catch(() => {});
         } else if (staysPublished && chapterAdded) {
           notificationActions.announceStoryToFollowers(
             user.id, authorName, storyId, title, 'new_chapter', updates.chaptersCount
