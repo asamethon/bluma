@@ -20,8 +20,8 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  FlatList,
   Pressable,
-  ScrollView,
   StyleSheet,
   TextInput,
   View,
@@ -188,177 +188,184 @@ export default observer(function SearchScreen() {
   const showIdle = !searchQuery.trim() && !selectedGenre;
   const busy = isLoading || isSearchingUsers;
 
+  const listHeader = (
+    <>
+      {/* Header */}
+      <View style={styles.headerRow}>
+        <Text variant="title" style={{ fontSize: 26, fontWeight: '700' }}>Keşfet</Text>
+      </View>
+
+      {/* Search input */}
+      <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <Ionicons name="search-outline" size={18} color={colors.textSecondary} />
+        <TextInput
+          style={[styles.searchInput, { color: colors.text }]}
+          placeholder="Hikâye, yazar ya da etiket ara"
+          placeholderTextColor={colors.textSecondary}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          returnKeyType="search"
+          onSubmitEditing={() => saveSearchToHistory(searchQuery)}
+        />
+        {searchQuery.length > 0 && (
+          <Pressable onPress={() => setSearchQuery('')}>
+            <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
+          </Pressable>
+        )}
+      </View>
+
+      {/* Trend Aramalar — gerçek kataloğdan, sadece idle modda göster */}
+      {showIdle && trendingSearches.length > 0 && (
+        <View style={styles.section}>
+          <Text variant="overline" tone="textLight" style={styles.overlineLabel}>
+            TREND ARAMALAR
+          </Text>
+          <View style={styles.trendingRow}>
+            {trendingSearches.map(title => (
+              <Pressable
+                key={title}
+                onPress={() => { setSearchQuery(title); saveSearchToHistory(title); }}
+                style={[styles.trendPill, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}
+              >
+                <Ionicons name="trending-up" size={13} color={colors.bloom} />
+                <Text variant="label" style={{ color: colors.text }}>{title}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* Genre chips */}
+      <View style={styles.sectionSpacing}>
+        <SectionHeader title="Türler" accent={colors.primary} />
+        <View style={styles.genreGrid}>
+          {GENRE_KEYS.map(g => (
+            <CategoryChip
+              key={g}
+              category={g}
+              active={selectedGenre === g}
+              onPress={() => setSelectedGenre(selectedGenre === g ? null : g)}
+            />
+          ))}
+        </View>
+      </View>
+
+      {/* Recent searches */}
+      {showIdle && recentSearches.length > 0 && (
+        <View style={styles.section}>
+          <View style={styles.rowBetween}>
+            <Text variant="subheading" style={{ fontWeight: '700' }}>Son Aramalar</Text>
+            <Pressable onPress={clearSearchHistory}>
+              <Text variant="caption" tone="primary">Temizle</Text>
+            </Pressable>
+          </View>
+          {recentSearches.map((item, idx) => (
+            <View key={idx}>
+              <Pressable
+                style={styles.recentRow}
+                onPress={() => {
+                  if (item.type === 'query') setSearchQuery(item.query || '');
+                  else if (item.type === 'story' && item.id) router.push(`/story/${item.id}/preview`);
+                  else if (item.type === 'user' && item.id) router.push(`/user/${item.id}` as any);
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+                  {item.type === 'query' && <Ionicons name="time-outline" size={18} color={colors.textSecondary} />}
+                  {item.type === 'story' && <View style={[styles.recentThumb, { backgroundColor: colors.surfaceVariant }]} />}
+                  {item.type === 'user' && <Avatar size={36} name={item.name} />}
+                  <View>
+                    <Text variant="body">{item.type === 'query' ? item.query : (item.title || item.name)}</Text>
+                    {item.type !== 'query' && (
+                      <Text variant="caption" tone="textSecondary">{item.type === 'story' ? 'Hikaye' : `@${item.username}`}</Text>
+                    )}
+                  </View>
+                </View>
+                <Pressable onPress={() => removeSearchItem(idx)} hitSlop={8}>
+                  <Ionicons name="close" size={16} color={colors.textLight} />
+                </Pressable>
+              </Pressable>
+              {idx < recentSearches.length - 1 && (
+                <View style={[styles.divider, { backgroundColor: colors.border, marginLeft: 46 }]} />
+              )}
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* Results section */}
+      {(!showIdle || selectedGenre !== null) && (
+        <View style={styles.sectionSpacing}>
+          <View style={styles.rowBetween}>
+            <Text variant="heading" style={{ fontSize: 18, fontWeight: '700' }}>
+              {selectedGenre ? (CategoryMeta[selectedGenre]?.label ?? selectedGenre) : searchQuery ? `"${searchQuery}"` : 'Tüm Sonuçlar'}
+            </Text>
+            <Badge
+              label={`${filteredStories.length} hikâye`}
+              tone="neutral"
+            />
+          </View>
+        </View>
+      )}
+
+      {/* Users — searchUsers zaten authStore.searchUsers içinde .slice(0, 20) ile sınırlı */}
+      {searchUsers.length > 0 && (
+        <View style={[styles.section, { gap: 0 }]}>
+          {searchUsers.map((user, idx) => (
+            <View key={user.id}>
+              <Pressable
+                style={styles.userRow}
+                onPress={() => router.push(`/user/${user.id}` as any)}
+              >
+                <Avatar uri={user.profileImage} name={user.displayName} size={50} />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text variant="subheading" numberOfLines={1}>{user.displayName}</Text>
+                  <Text variant="caption" tone="primary">@{user.username || 'user'}</Text>
+                </View>
+                <FollowButton userId={user.id} />
+              </Pressable>
+              {idx < searchUsers.length - 1 && (
+                <View style={[styles.divider, { backgroundColor: colors.border, marginLeft: 62 }]} />
+              )}
+            </View>
+          ))}
+        </View>
+      )}
+
+      {busy && (
+        <ActivityIndicator color={colors.primary} style={{ marginVertical: 32 }} />
+      )}
+    </>
+  );
+
   return (
     <Screen style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView
+      <FlatList
+        data={busy ? [] : filteredStories}
+        keyExtractor={(story) => story.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 }}
         keyboardShouldPersistTaps="handled"
-      >
-        {/* Header */}
-        <View style={styles.headerRow}>
-          <Text variant="title" style={{ fontSize: 26, fontWeight: '700' }}>Keşfet</Text>
-        </View>
-
-        {/* Search input */}
-        <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Ionicons name="search-outline" size={18} color={colors.textSecondary} />
-          <TextInput
-            style={[styles.searchInput, { color: colors.text }]}
-            placeholder="Hikâye, yazar ya da etiket ara"
-            placeholderTextColor={colors.textSecondary}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            returnKeyType="search"
-            onSubmitEditing={() => saveSearchToHistory(searchQuery)}
-          />
-          {searchQuery.length > 0 && (
-            <Pressable onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
-            </Pressable>
-          )}
-        </View>
-
-        {/* Trend Aramalar — gerçek kataloğdan, sadece idle modda göster */}
-        {showIdle && trendingSearches.length > 0 && (
-          <View style={styles.section}>
-            <Text variant="overline" tone="textLight" style={styles.overlineLabel}>
-              TREND ARAMALAR
-            </Text>
-            <View style={styles.trendingRow}>
-              {trendingSearches.map(title => (
-                <Pressable
-                  key={title}
-                  onPress={() => { setSearchQuery(title); saveSearchToHistory(title); }}
-                  style={[styles.trendPill, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}
-                >
-                  <Ionicons name="trending-up" size={13} color={colors.bloom} />
-                  <Text variant="label" style={{ color: colors.text }}>{title}</Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Genre chips */}
-        <View style={styles.sectionSpacing}>
-          <SectionHeader title="Türler" accent={colors.primary} />
-          <View style={styles.genreGrid}>
-            {GENRE_KEYS.map(g => (
-              <CategoryChip
-                key={g}
-                category={g}
-                active={selectedGenre === g}
-                onPress={() => setSelectedGenre(selectedGenre === g ? null : g)}
-              />
-            ))}
-          </View>
-        </View>
-
-        {/* Recent searches */}
-        {showIdle && recentSearches.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.rowBetween}>
-              <Text variant="subheading" style={{ fontWeight: '700' }}>Son Aramalar</Text>
-              <Pressable onPress={clearSearchHistory}>
-                <Text variant="caption" tone="primary">Temizle</Text>
-              </Pressable>
-            </View>
-            {recentSearches.map((item, idx) => (
-              <View key={idx}>
-                <Pressable
-                  style={styles.recentRow}
-                  onPress={() => {
-                    if (item.type === 'query') setSearchQuery(item.query || '');
-                    else if (item.type === 'story' && item.id) router.push(`/story/${item.id}/preview`);
-                    else if (item.type === 'user' && item.id) router.push(`/user/${item.id}` as any);
-                  }}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
-                    {item.type === 'query' && <Ionicons name="time-outline" size={18} color={colors.textSecondary} />}
-                    {item.type === 'story' && <View style={[styles.recentThumb, { backgroundColor: colors.surfaceVariant }]} />}
-                    {item.type === 'user' && <Avatar size={36} name={item.name} />}
-                    <View>
-                      <Text variant="body">{item.type === 'query' ? item.query : (item.title || item.name)}</Text>
-                      {item.type !== 'query' && (
-                        <Text variant="caption" tone="textSecondary">{item.type === 'story' ? 'Hikaye' : `@${item.username}`}</Text>
-                      )}
-                    </View>
-                  </View>
-                  <Pressable onPress={() => removeSearchItem(idx)} hitSlop={8}>
-                    <Ionicons name="close" size={16} color={colors.textLight} />
-                  </Pressable>
-                </Pressable>
-                {idx < recentSearches.length - 1 && (
-                  <View style={[styles.divider, { backgroundColor: colors.border, marginLeft: 46 }]} />
-                )}
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* Results section */}
-        {(!showIdle || selectedGenre !== null) && (
-          <View style={styles.sectionSpacing}>
-            <View style={styles.rowBetween}>
-              <Text variant="heading" style={{ fontSize: 18, fontWeight: '700' }}>
-                {selectedGenre ? (CategoryMeta[selectedGenre]?.label ?? selectedGenre) : searchQuery ? `"${searchQuery}"` : 'Tüm Sonuçlar'}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={
+          !busy && isEmpty && (searchQuery.trim() || selectedGenre) ? (
+            <View style={styles.empty}>
+              <Ionicons name="leaf-outline" size={38} color={colors.primaryLight} />
+              <Text variant="body" tone="textSecondary" style={{ marginTop: 12, fontStyle: 'italic', textAlign: 'center' }}>
+                Bu bahçede henüz hiçbir şey filizlenmedi.
               </Text>
-              <Badge
-                label={`${filteredStories.length} hikâye`}
-                tone="neutral"
-              />
             </View>
+          ) : null
+        }
+        renderItem={({ item: story }) => (
+          <View style={{ paddingHorizontal: Spacing.screenX, marginBottom: Spacing.md }}>
+            <StoryRow
+              story={story}
+              status={story.isCompleted ? 'Tamamlandı' : null}
+              onPress={() => handleStoryPress(story)}
+            />
           </View>
         )}
-
-        {/* Users */}
-        {searchUsers.length > 0 && (
-          <View style={[styles.section, { gap: 0 }]}>
-            {searchUsers.map((user, idx) => (
-              <View key={user.id}>
-                <Pressable
-                  style={styles.userRow}
-                  onPress={() => router.push(`/user/${user.id}` as any)}
-                >
-                  <Avatar uri={user.profileImage} name={user.displayName} size={50} />
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text variant="subheading" numberOfLines={1}>{user.displayName}</Text>
-                    <Text variant="caption" tone="primary">@{user.username || 'user'}</Text>
-                  </View>
-                  <FollowButton userId={user.id} />
-                </Pressable>
-                {idx < searchUsers.length - 1 && (
-                  <View style={[styles.divider, { backgroundColor: colors.border, marginLeft: 62 }]} />
-                )}
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* Story results */}
-        {busy ? (
-          <ActivityIndicator color={colors.primary} style={{ marginVertical: 32 }} />
-        ) : filteredStories.length > 0 ? (
-          <View style={{ paddingHorizontal: Spacing.screenX, gap: Spacing.md }}>
-            {filteredStories.map(story => (
-              <StoryRow
-                key={story.id}
-                story={story}
-                status={story.isCompleted ? 'Tamamlandı' : null}
-                onPress={() => handleStoryPress(story)}
-              />
-            ))}
-          </View>
-        ) : isEmpty && (searchQuery.trim() || selectedGenre) ? (
-          <View style={styles.empty}>
-            <Ionicons name="leaf-outline" size={38} color={colors.primaryLight} />
-            <Text variant="body" tone="textSecondary" style={{ marginTop: 12, fontStyle: 'italic', textAlign: 'center' }}>
-              Bu bahçede henüz hiçbir şey filizlenmedi.
-            </Text>
-          </View>
-        ) : null}
-      </ScrollView>
+      />
     </Screen>
   );
 });

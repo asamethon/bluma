@@ -25,6 +25,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  FlatList,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -287,176 +288,192 @@ export default observer(function HomeScreen() {
     hour >= 18 && hour < 22 ? "İyi akşamlar," :
     "İyi geceler,";
 
+  // Ortak header: BloomMark + greeting + notification + kategori rayı + offline not
+  const commonHeader = (
+    <>
+      {/* Header — BloomMark + greeting + notification */}
+      <View style={styles.header}>
+        <BloomMark size={30} />
+        <View style={{ flex: 1, marginLeft: 10 }}>
+          <Text variant="caption" tone="textLight">{greeting}</Text>
+          <Text variant="heading" style={{ marginTop: 1 }}>{firstName}</Text>
+        </View>
+        <View style={styles.headerActions}>
+          {isGuest ? (
+            <TouchableOpacity
+              style={[styles.guestLoginPill, { backgroundColor: colors.primary }]}
+              onPress={() => startAuth('signup')}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Giriş Yap</Text>
+            </TouchableOpacity>
+          ) : (
+            <>
+              {networkStatus.isOffline && (
+                <IconButton
+                  icon="cloud-offline"
+                  onPress={() => router.push("/profile/offline")}
+                  color={colors.primary}
+                />
+              )}
+              <View style={{ position: 'relative' }}>
+                <IconButton
+                  icon="notifications-outline"
+                  onPress={() => router.push("/(tabs)/notifications" as any)}
+                  variant="sunk"
+                  size={42}
+                />
+                {unreadCount > 0 && (
+                  <View style={[styles.notifBadge, { backgroundColor: colors.bloom, borderColor: colors.background }]}>
+                    <Text style={styles.notifBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                  </View>
+                )}
+              </View>
+            </>
+          )}
+        </View>
+      </View>
+
+      {/* Category rail */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.rail}
+      >
+        <Chip
+          label="Hepsi"
+          icon="apps"
+          active={selectedCategory === null}
+          onPress={() => setSelectedCategory(null)}
+        />
+        {CATEGORY_RAIL.map((cat) => (
+          <CategoryChip
+            key={cat}
+            category={cat}
+            active={selectedCategory === cat}
+            onPress={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
+          />
+        ))}
+      </ScrollView>
+
+      {/* Offline note */}
+      {networkStatus.isOffline && (
+        <Pressable style={styles.offlineNote} onPress={() => router.push("/profile/offline")}>
+          <View style={styles.offlineIcon}>
+            <IconButton icon="cloud-offline" color={colors.primary} size={36} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text variant="bodyStrong" color={colors.primary}>Çevrimdışı Mod</Text>
+            <Text variant="caption" tone="textSecondary">
+              {offlineModeInfo.offlineStoriesCount} hikaye çevrimdışı okunabilir
+            </Text>
+          </View>
+          <IconButton icon="chevron-forward" size={18} color={colors.textLight} />
+        </Pressable>
+      )}
+    </>
+  );
+
+  // Kategori seçiliyken: büyüyebilen tek liste (categoryStories) FlatList'in
+  // `data`'sı olur; her şey diğeri ListHeaderComponent içinde kalır.
+  const idleModeContent = !categoryStories ? (
+    <>
+      {/* Okumaya devam et — en son okunanlar, kaldığı bölümden açılır */}
+      {!isGuest && continueReading.length > 0 && (
+        <View style={styles.section}>
+          <SectionHeader title="Okumaya Devam Et" accent={colors.primary} />
+          <View style={{ paddingHorizontal: Spacing.screenX, gap: Spacing.md }}>
+            {continueReading.map(({ story, chapterIndex }) => (
+              <StoryRow
+                key={story.id}
+                story={story}
+                status={`Bölüm ${chapterIndex + 1}'de kaldın`}
+                onPress={() =>
+                  router.push(`/story/${story.id}?chapter=${chapterIndex}` as any)
+                }
+              />
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* Featured editor's pick */}
+      {featured && (
+        <View style={styles.section}>
+          <SectionHeader title="Editörün Seçimi" accent={colors.secondary} />
+          <StoryCardFeature story={featured} onPress={() => handleStoryPress(featured.id)} />
+        </View>
+      )}
+
+      {renderShelf("Bu Hafta Öne Çıkanlar", editorsRest, colors.secondary)}
+      {renderShelf("En Çok Okunanlar", mostRead, colors.primary)}
+      {renderList("Yeni Geldi", newest, colors.bloom)}
+      {CATEGORY_RAIL.map((cat) =>
+        renderShelf(CategoryMeta[cat]?.label ?? cat, byCategory(cat), categoryColor(cat))
+      )}
+
+      {/* empty state */}
+      {allStories.length === 0 && (
+        <View style={styles.empty}>
+          <BloomMark size={64} color={colors.primaryLight} coreColor={colors.bloomLight} />
+          <Text variant="heading" center style={{ marginTop: Spacing.xl }}>
+            Bahçe henüz boş
+          </Text>
+          <Text variant="body" tone="textSecondary" center style={{ marginTop: Spacing.sm }}>
+            İlk hikayeni yaz ve Bluma&apos;da filizlenmesini izle.
+          </Text>
+        </View>
+      )}
+    </>
+  ) : null;
+
+  const listHeader = (
+    <>
+      {commonHeader}
+      {categoryStories && (
+        <View style={styles.section}>
+          <SectionHeader
+            title={CategoryMeta[selectedCategory!]?.label ?? selectedCategory!}
+            accent={categoryColor(selectedCategory!)}
+          />
+        </View>
+      )}
+      {idleModeContent}
+    </>
+  );
+
   return (
     <Screen style={styles.container}>
       <OfflineIndicator showWhenOnline={true} />
 
-      <ScrollView
+      <FlatList
+        data={categoryStories ?? []}
+        keyExtractor={(story) => story.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 140 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.bloom} />
         }
-      >
-        {/* Header — BloomMark + greeting + notification */}
-        <View style={styles.header}>
-          <BloomMark size={30} />
-          <View style={{ flex: 1, marginLeft: 10 }}>
-            <Text variant="caption" tone="textLight">{greeting}</Text>
-            <Text variant="heading" style={{ marginTop: 1 }}>{firstName}</Text>
-          </View>
-          <View style={styles.headerActions}>
-            {isGuest ? (
-              <TouchableOpacity
-                style={[styles.guestLoginPill, { backgroundColor: colors.primary }]}
-                onPress={() => startAuth('signup')}
-              >
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Giriş Yap</Text>
-              </TouchableOpacity>
-            ) : (
-              <>
-                {networkStatus.isOffline && (
-                  <IconButton
-                    icon="cloud-offline"
-                    onPress={() => router.push("/profile/offline")}
-                    color={colors.primary}
-                  />
-                )}
-                <View style={{ position: 'relative' }}>
-                  <IconButton
-                    icon="notifications-outline"
-                    onPress={() => router.push("/(tabs)/notifications" as any)}
-                    variant="sunk"
-                    size={42}
-                  />
-                  {unreadCount > 0 && (
-                    <View style={[styles.notifBadge, { backgroundColor: colors.bloom, borderColor: colors.background }]}>
-                      <Text style={styles.notifBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
-                    </View>
-                  )}
-                </View>
-              </>
-            )}
-          </View>
-        </View>
-
-        {/* Category rail */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.rail}
-        >
-          <Chip
-            label="Hepsi"
-            icon="apps"
-            active={selectedCategory === null}
-            onPress={() => setSelectedCategory(null)}
-          />
-          {CATEGORY_RAIL.map((cat) => (
-            <CategoryChip
-              key={cat}
-              category={cat}
-              active={selectedCategory === cat}
-              onPress={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
-            />
-          ))}
-        </ScrollView>
-
-        {/* Offline note */}
-        {networkStatus.isOffline && (
-          <Pressable style={styles.offlineNote} onPress={() => router.push("/profile/offline")}>
-            <View style={styles.offlineIcon}>
-              <IconButton icon="cloud-offline" color={colors.primary} size={36} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text variant="bodyStrong" color={colors.primary}>Çevrimdışı Mod</Text>
-              <Text variant="caption" tone="textSecondary">
-                {offlineModeInfo.offlineStoriesCount} hikaye çevrimdışı okunabilir
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={
+          categoryStories ? (
+            <View style={styles.empty}>
+              <BloomMark size={64} color={colors.primaryLight} coreColor={colors.bloomLight} />
+              <Text variant="body" tone="textSecondary" center style={{ marginTop: Spacing.sm }}>
+                Bu türde henüz hikâye yok.
               </Text>
             </View>
-            <IconButton icon="chevron-forward" size={18} color={colors.textLight} />
-          </Pressable>
-        )}
-
-        {categoryStories ? (
-          /* Kategori seçiliyken: yalnızca o kategorinin hikâyeleri */
-          <>
-            <View style={styles.section}>
-              <SectionHeader
-                title={CategoryMeta[selectedCategory!]?.label ?? selectedCategory!}
-                accent={categoryColor(selectedCategory!)}
-              />
-              <View style={{ paddingHorizontal: Spacing.screenX, gap: Spacing.md }}>
-                {categoryStories.map((story) => (
-                  <StoryRow
-                    key={story.id}
-                    story={story}
-                    status={story.isCompleted ? "Tamamlandı" : "Devam ediyor"}
-                    onPress={() => handleStoryPress(story.id)}
-                  />
-                ))}
-              </View>
-            </View>
-            {categoryStories.length === 0 && (
-              <View style={styles.empty}>
-                <BloomMark size={64} color={colors.primaryLight} coreColor={colors.bloomLight} />
-                <Text variant="body" tone="textSecondary" center style={{ marginTop: Spacing.sm }}>
-                  Bu türde henüz hikâye yok.
-                </Text>
-              </View>
-            )}
-          </>
-        ) : (
-          <>
-            {/* Okumaya devam et — en son okunanlar, kaldığı bölümden açılır */}
-            {!isGuest && continueReading.length > 0 && (
-              <View style={styles.section}>
-                <SectionHeader title="Okumaya Devam Et" accent={colors.primary} />
-                <View style={{ paddingHorizontal: Spacing.screenX, gap: Spacing.md }}>
-                  {continueReading.map(({ story, chapterIndex }) => (
-                    <StoryRow
-                      key={story.id}
-                      story={story}
-                      status={`Bölüm ${chapterIndex + 1}'de kaldın`}
-                      onPress={() =>
-                        router.push(`/story/${story.id}?chapter=${chapterIndex}` as any)
-                      }
-                    />
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {/* Featured editor's pick */}
-            {featured && (
-              <View style={styles.section}>
-                <SectionHeader title="Editörün Seçimi" accent={colors.secondary} />
-                <StoryCardFeature story={featured} onPress={() => handleStoryPress(featured.id)} />
-              </View>
-            )}
-
-            {renderShelf("Bu Hafta Öne Çıkanlar", editorsRest, colors.secondary)}
-            {renderShelf("En Çok Okunanlar", mostRead, colors.primary)}
-            {renderList("Yeni Geldi", newest, colors.bloom)}
-            {CATEGORY_RAIL.map((cat) =>
-              renderShelf(CategoryMeta[cat]?.label ?? cat, byCategory(cat), categoryColor(cat))
-            )}
-          </>
-        )}
-
-        {/* empty state */}
-        {allStories.length === 0 && (
-          <View style={styles.empty}>
-            <BloomMark size={64} color={colors.primaryLight} coreColor={colors.bloomLight} />
-            <Text variant="heading" center style={{ marginTop: Spacing.xl }}>
-              Bahçe henüz boş
-            </Text>
-            <Text variant="body" tone="textSecondary" center style={{ marginTop: Spacing.sm }}>
-              İlk hikayeni yaz ve Bluma&apos;da filizlenmesini izle.
-            </Text>
+          ) : null
+        }
+        renderItem={({ item: story }) => (
+          <View style={{ paddingHorizontal: Spacing.screenX, marginBottom: Spacing.md }}>
+            <StoryRow
+              story={story}
+              status={story.isCompleted ? "Tamamlandı" : "Devam ediyor"}
+              onPress={() => handleStoryPress(story.id)}
+            />
           </View>
         )}
-      </ScrollView>
+      />
     </Screen>
   );
 });

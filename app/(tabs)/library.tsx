@@ -11,14 +11,20 @@ import { storyActions, storyState$ } from '@/store/storyStore';
 import { Story } from '@/types';
 import { observer } from '@legendapp/state/react';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   RefreshControl,
-  ScrollView,
+  SectionList,
   StyleSheet,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+interface LibrarySection {
+  title: string;
+  accent: string;
+  data: Story[];
+}
 
 export default observer(function LibraryScreen() {
   const { colors } = useTheme();
@@ -62,11 +68,27 @@ export default observer(function LibraryScreen() {
 
   const isEmpty = (!savedStories || savedStories.length === 0) && (!likedStories || likedStories.length === 0);
 
+  // savedStories büyüyebilir (kayıt sınırı yok) — ScrollView+.map() yerine
+  // SectionList kullanılır (bkz. docs/ARCHITECTURE.md performans ilkeleri).
+  const sections: LibrarySection[] = useMemo(() => {
+    const list: LibrarySection[] = [];
+    if (savedStories && savedStories.length > 0) {
+      list.push({ title: 'Kaydedilenler', accent: colors.secondary, data: savedStories });
+    }
+    if (likedStories && likedStories.length > 0) {
+      list.push({ title: 'Beğendiklerim', accent: colors.bloom, data: likedStories.slice(0, 10) });
+    }
+    return list;
+  }, [savedStories, likedStories, colors.secondary, colors.bloom]);
+
   return (
     <View style={[styles.root, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-      <ScrollView
+      <SectionList
+        sections={sections}
+        keyExtractor={(story) => story.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 140 }}
+        stickySectionHeadersEnabled={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -74,57 +96,39 @@ export default observer(function LibraryScreen() {
             tintColor={colors.bloom}
           />
         }
-      >
-        <View style={styles.header}>
-          <Text variant="title">Kütüphanem</Text>
-        </View>
-
-        {isEmpty ? (
-          <View style={styles.empty}>
-            <BloomMark size={64} color={colors.primaryLight} coreColor={colors.bloomLight} />
-            <Text variant="heading" center style={{ marginTop: Spacing.xl }}>
-              Kütüphanen henüz boş
-            </Text>
-            <Text variant="body" tone="textSecondary" center style={{ marginTop: Spacing.sm, maxWidth: 280 }}>
-              Beğendiğin hikâyeleri kaydet; hepsi burada seni bekler.
-            </Text>
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Text variant="title">Kütüphanem</Text>
           </View>
-        ) : (
-          <>
-            {savedStories && savedStories.length > 0 && (
-              <View style={styles.section}>
-                <SectionHeader title="Kaydedilenler" accent={colors.secondary} />
-                <View style={{ paddingHorizontal: Spacing.screenX, gap: Spacing.md }}>
-                  {savedStories.map((story: Story) => (
-                    <StoryRow
-                      key={story.id}
-                      story={story}
-                      status={story.isCompleted ? 'Tamamlandı' : 'Devam ediyor'}
-                      onPress={() => router.push(`/story/${story.id}/preview` as any)}
-                    />
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {likedStories && likedStories.length > 0 && (
-              <View style={styles.section}>
-                <SectionHeader title="Beğendiklerim" accent={colors.bloom} />
-                <View style={{ paddingHorizontal: Spacing.screenX, gap: Spacing.md }}>
-                  {likedStories.slice(0, 10).map((story: Story) => (
-                    <StoryRow
-                      key={story.id}
-                      story={story}
-                      status={story.isCompleted ? 'Tamamlandı' : 'Devam ediyor'}
-                      onPress={() => router.push(`/story/${story.id}/preview` as any)}
-                    />
-                  ))}
-                </View>
-              </View>
-            )}
-          </>
+        }
+        ListEmptyComponent={
+          isEmpty ? (
+            <View style={styles.empty}>
+              <BloomMark size={64} color={colors.primaryLight} coreColor={colors.bloomLight} />
+              <Text variant="heading" center style={{ marginTop: Spacing.xl }}>
+                Kütüphanen henüz boş
+              </Text>
+              <Text variant="body" tone="textSecondary" center style={{ marginTop: Spacing.sm, maxWidth: 280 }}>
+                Beğendiğin hikâyeleri kaydet; hepsi burada seni bekler.
+              </Text>
+            </View>
+          ) : null
+        }
+        renderSectionHeader={({ section }) => (
+          <View style={styles.section}>
+            <SectionHeader title={section.title} accent={section.accent} />
+          </View>
         )}
-      </ScrollView>
+        renderItem={({ item: story }) => (
+          <View style={styles.rowWrap}>
+            <StoryRow
+              story={story}
+              status={story.isCompleted ? 'Tamamlandı' : 'Devam ediyor'}
+              onPress={() => router.push(`/story/${story.id}/preview` as any)}
+            />
+          </View>
+        )}
+      />
     </View>
   );
 });
@@ -137,6 +141,7 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.md,
   },
   section: { marginTop: Spacing.xl },
+  rowWrap: { paddingHorizontal: Spacing.screenX, marginBottom: Spacing.md },
   empty: {
     alignItems: 'center',
     paddingVertical: 80,
