@@ -100,20 +100,23 @@ Sıra: bir feature'ı taşı → `npx tsc --noEmit` 0 hata → commit → sırad
 Büyük dosyalar big-bang bölünmez; önce hook/servis çıkarılır, ekran en son inceltilir.
 
 - [x] Pilot: `features/social/hooks/useFollow` (reader + kullanıcı profili bağlandı)
-- [ ] `features/social`: FollowButton bileşeni; search.tsx kullanıcı satırlarını bağla
-- [ ] `store/storyStore.ts` (2000+ satır) → `features/story/services/` modüllerine böl
+- [x] `features/social`: FollowButton bileşeni; search.tsx kullanıcı satırlarını bağla
+- [x] `store/storyStore.ts` (2000+ satır) → `features/story/services/` modüllerine böl
   (storyApi, likes, saves, views, comments, offline ayrı dosyalar)
-- [ ] `app/(tabs)/write.tsx` (1250) → form hook'u + bölüm editörü bileşenleri
-- [ ] `app/story/edit/[id].tsx` (2050) → write ile ortak feature bileşenlerini paylaş
-- [ ] `store/authStore.ts` (1250) → auth servisleri (signIn/signUp/social ayrı)
-- [ ] `app/user/[id].tsx` + `app/(tabs)/profile.tsx` → profile feature'ı
-- [ ] RNFirebase namespaced → modular API migrasyonu (deprecation uyarıları)
-- [ ] Ekranlardaki `Colors[colorScheme]` kalıntılarını `useTheme()`'e taşı
-- [ ] Hook disiplini ihlalleri (bilinen): ana sayfada `editorsPicks`
-  useEffect'i her render'da çalışıyor (`allStories` yeni referans — useMemo'ya
-  taşınmalı); arama ekranında filtre sonucu `useState`+`useEffect`+`setTimeout`
-  ile tutuluyor (türetilmiş değer — render'da hesaplanmalı)
-- [ ] Liste performansı: ana sayfa / arama / kütüphane `ScrollView`+`.map()`
-  → `FlatList`; satırlar `React.memo`
+- [x] `app/(tabs)/write.tsx` (1250) → form hook'u + bölüm editörü bileşenleri
+- [x] `app/story/edit/[id].tsx` (2050) → kendi hook'u + bileşenlerine bölündü
+  (write.tsx henüz farklı tasarımda olduğu için bileşen paylaşımı yapılmadı)
+- [x] `store/authStore.ts` (1250) → auth servisleri (signIn/signUp/social ayrı)
+- [x] `app/user/[id].tsx` + `app/(tabs)/profile.tsx` → profile feature'ı
+  (paylaşılan bileşenler: ProfileStatCell, ProfileGradientHero, ProfileStoryShelf,
+  ProfileConversationCard)
+- [ ] RNFirebase namespaced → modular API migrasyonu (deprecation uyarıları) —
+  ERTELENDİ, ayrı bir oturumda ele alınacak (15-20+ dosyayı etkiler, riskli)
+- [x] Ekranlardaki `Colors[colorScheme]` kalıntılarını `useTheme()`'e taşı
+- [x] Hook disiplini ihlalleri (bilinen): ana sayfada `editorsPicks`
+  useEffect'i her render'da çalışıyordu (`allStories` artık `useMemo`'da);
+  arama ekranında filtre sonucu artık `useMemo` ile render'da hesaplanıyor
+- [x] Liste performansı: ana sayfa / arama `FlatList`, kütüphane `SectionList`'e
+  taşındı; sabit sayıda öğe gösteren yatay raflar (`.slice`) olduğu gibi kaldı
 
 Bir maddeyi bitirince işaretle ve commit mesajında belirt.
