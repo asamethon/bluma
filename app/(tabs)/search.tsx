@@ -8,7 +8,7 @@ import {
   Text,
 } from '@/components/ui';
 import { CategoryMeta, Radius, Spacing, categoryColor, useTheme } from '@/constants/theme';
-import { useGuestGate } from '@/contexts/GuestContext';
+import { FollowButton } from '@/features/social/components/FollowButton';
 import { authActions, authState$, User } from '@/store/authStore';
 import { moderationActions, moderationState$ } from '@/store/moderationStore';
 import { preferencesActions, preferencesState$ } from '@/store/preferencesStore';
@@ -24,7 +24,6 @@ import {
   ScrollView,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 
@@ -47,11 +46,8 @@ interface SearchHistoryItem {
 export default observer(function SearchScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-  const { requireAuth } = useGuestGate();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [followingMap, setFollowingMap] = useState<Record<string, boolean>>({});
-  const [followBusy, setFollowBusy] = useState<Record<string, boolean>>({});
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [allStories, setAllStories] = useState<Story[]>([]);
   const [filteredStories, setFilteredStories] = useState<Story[]>([]);
@@ -149,36 +145,8 @@ export default observer(function SearchScreen() {
       setIsSearchingUsers(true);
       const users = await authActions.searchUsers(query);
       setSearchUsers(users);
-
-      // Takip durumlarını yükle (giriş yapmış kullanıcı için)
-      const me = authState$.get().user;
-      if (me?.id) {
-        const map: Record<string, boolean> = {};
-        await Promise.all(
-          users.map(async u => {
-            if (u.id === me.id) return;
-            try { map[u.id] = await authActions.isFollowingUser(u.id); } catch {}
-          })
-        );
-        setFollowingMap(prev => ({ ...prev, ...map }));
-      }
     } catch { setSearchUsers([]); }
     finally { setIsSearchingUsers(false); }
-  };
-
-  const handleToggleFollow = (userId: string) => {
-    if (!requireAuth('follow')) return;
-    if (followBusy[userId]) return;
-    const currently = !!followingMap[userId];
-    // Optimistic
-    setFollowingMap(m => ({ ...m, [userId]: !currently }));
-    setFollowBusy(m => ({ ...m, [userId]: true }));
-    (currently ? authActions.unfollowUser(userId) : authActions.followUser(userId))
-      .then((r: any) => {
-        if (!r?.success) setFollowingMap(m => ({ ...m, [userId]: currently }));
-      })
-      .catch(() => setFollowingMap(m => ({ ...m, [userId]: currently })))
-      .finally(() => setFollowBusy(m => ({ ...m, [userId]: false })));
   };
 
   const loadAllStories = async () => {
@@ -364,27 +332,7 @@ export default observer(function SearchScreen() {
                     <Text variant="subheading" numberOfLines={1}>{user.displayName}</Text>
                     <Text variant="caption" tone="primary">@{user.username || 'user'}</Text>
                   </View>
-                  {authState$.get().user?.id !== user.id && (
-                    <TouchableOpacity
-                      style={[
-                        styles.followPill,
-                        followingMap[user.id]
-                          ? { backgroundColor: colors.surfaceVariant, borderWidth: 1, borderColor: colors.border }
-                          : { backgroundColor: colors.primary },
-                      ]}
-                      onPress={() => handleToggleFollow(user.id)}
-                      disabled={followBusy[user.id]}
-                      hitSlop={6}
-                    >
-                      {followBusy[user.id] ? (
-                        <ActivityIndicator size="small" color={followingMap[user.id] ? colors.text : '#fff'} />
-                      ) : (
-                        <Text variant="label" color={followingMap[user.id] ? colors.text : '#fff'}>
-                          {followingMap[user.id] ? 'Takip Ediliyor' : 'Takip Et'}
-                        </Text>
-                      )}
-                    </TouchableOpacity>
-                  )}
+                  <FollowButton userId={user.id} />
                 </Pressable>
                 {idx < searchUsers.length - 1 && (
                   <View style={[styles.divider, { backgroundColor: colors.border, marginLeft: 62 }]} />
