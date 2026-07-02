@@ -2,18 +2,18 @@ import ImageModal from '@/components/ImageModal';
 import { GuestState } from '@/components/GuestState';
 import {
   Screen,
-  Avatar,
   Badge,
-  BloomMark,
   Button,
   IconButton,
   SegmentedControl,
-  StoryCardSpine,
   StoryRow,
   Text,
 } from '@/components/ui';
-import { Colors } from '@/constants/Colors';
 import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
+import { ProfileConversationCard } from '@/features/profile/components/ProfileConversationCard';
+import { ProfileGradientHero } from '@/features/profile/components/ProfileGradientHero';
+import { ProfileStatCell } from '@/features/profile/components/ProfileStatCell';
+import { ProfileStoryShelf } from '@/features/profile/components/ProfileStoryShelf';
 import { CHALLENGE_DEFS, RANKS, challengeActions, challengeState$, getRankIndex } from '@/store/challengeStore';
 import { imageUploadService } from '@/services/imageUploadService';
 import { authActions, authState$ } from '@/store/authStore';
@@ -35,14 +35,11 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  useColorScheme,
 } from 'react-native';
 import { buildProfileShareUrl } from '@/utils/deepLinks';
 
 export default observer(function ProfileScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
-  const { colors: themeColors } = useTheme();
+  const { colors } = useTheme();
   const router = useRouter();
   const { user: currentUser, isGuest } = authState$.get();
   const { isLoading, publishedUserStories } = storyState$.get();
@@ -291,41 +288,11 @@ export default observer(function ProfileScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
 
         {/* ── Gradient hero ─────────────────────────────────────── */}
-        <View>
-          <View style={styles.hero}>
-            {/* diagonal darker base */}
-            <View
-              pointerEvents="none"
-              style={{
-                position: 'absolute',
-                left: -60,
-                bottom: -60,
-                width: 220,
-                height: 220,
-                borderRadius: 110,
-                backgroundColor: '#4B2DA8',
-                opacity: 0.55,
-              }}
-            />
-            {/* petal-rose blush — upper-right */}
-            <View
-              pointerEvents="none"
-              style={{
-                position: 'absolute',
-                right: -30,
-                top: -30,
-                width: 160,
-                height: 160,
-                borderRadius: 80,
-                backgroundColor: '#FF85A8',
-                opacity: 0.38,
-              }}
-            />
-            {/* BloomMark watermark */}
-            <View style={styles.heroWatermark} pointerEvents="none">
-              <BloomMark size={132} color="#fff" coreColor="#fff" />
-            </View>
-            <View style={styles.heroActions}>
+        <ProfileGradientHero
+          avatarUri={currentUser.profileImage}
+          avatarName={currentUser.displayName}
+          actions={
+            <View style={{ flexDirection: 'row', gap: 4, justifyContent: 'flex-end', flex: 1 }}>
               <IconButton
                 icon="settings-outline"
                 onPress={() => router.push('/profile/settings' as any)}
@@ -339,17 +306,8 @@ export default observer(function ProfileScreen() {
                 size={40}
               />
             </View>
-          </View>
-          {/* Avatar dışarıda — hero overflow'dan etkilenmiyor */}
-          <View style={styles.heroAvatarWrap}>
-            <Avatar
-              uri={currentUser.profileImage}
-              name={currentUser.displayName}
-              size={88}
-              ring
-            />
-          </View>
-        </View>
+          }
+        />
 
         {/* ── Identity ──────────────────────────────────────────── */}
         <View style={styles.identity}>
@@ -402,9 +360,9 @@ export default observer(function ProfileScreen() {
 
           {/* Stats bar */}
           <View style={styles.statsBar}>
-            <StatCell icon="book" value={userStats.stories} label="Hikâye" color={themeColors.primary} />
+            <ProfileStatCell icon="book" value={userStats.stories} label="Hikâye" color={colors.primary} />
             <View style={styles.statsDivider} />
-            <StatCell
+            <ProfileStatCell
               icon="people"
               value={userStats.followers}
               label="Takipçi"
@@ -412,41 +370,25 @@ export default observer(function ProfileScreen() {
               onPress={() => router.push(`/profile/followers/${currentUser.id}` as any)}
             />
             <View style={styles.statsDivider} />
-            <StatCell
+            <ProfileStatCell
               icon="leaf"
               value={userStats.following}
               label="Takip"
-              color={themeColors.primary}
+              color={colors.primary}
               onPress={() => router.push(`/profile/following/${currentUser.id}` as any)}
             />
             <View style={styles.statsDivider} />
-            <StatCell icon="heart" value={userStats.likes} label="Beğeni" color={themeColors.bloom} />
+            <ProfileStatCell icon="heart" value={userStats.likes} label="Beğeni" color={colors.bloom} />
           </View>
         </View>
 
         {/* ── Bahçem — published stories shelf ─────────────────── */}
-        {publishedUserStories.length > 0 && (
-          <View style={{ marginTop: 8 }}>
-            <View style={styles.gardenHeader}>
-              <Text variant="heading" style={{ fontWeight: '700' }}>Bahçem</Text>
-              <Text variant="caption" tone="textLight">{publishedUserStories.length} açan hikâye</Text>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.gardenShelf}
-            >
-              {publishedUserStories.slice(0, 6).map((story: Story) => (
-                <StoryCardSpine
-                  key={story.id}
-                  story={story}
-                  width={118}
-                  onPress={() => handleStoryPress(story.id)}
-                />
-              ))}
-            </ScrollView>
-          </View>
-        )}
+        <ProfileStoryShelf
+          title="Bahçem"
+          count={publishedUserStories.length}
+          stories={publishedUserStories}
+          onStoryPress={(story) => handleStoryPress(story.id)}
+        />
 
         {/* ── Tabs ──────────────────────────────────────────────── */}
         <View style={styles.tabsWrap}>
@@ -461,10 +403,10 @@ export default observer(function ProfileScreen() {
         <View style={styles.tabContent}>
           {activeTab === 'stories' ? (
             isLoading ? (
-              <ActivityIndicator color={themeColors.primary} style={{ marginVertical: 32 }} />
+              <ActivityIndicator color={colors.primary} style={{ marginVertical: 32 }} />
             ) : publishedUserStories.length === 0 ? (
               <View style={styles.empty}>
-                <Ionicons name="document-outline" size={32} color={themeColors.textSecondary} />
+                <Ionicons name="document-outline" size={32} color={colors.textSecondary} />
                 <Text variant="body" tone="textSecondary" style={{ marginTop: 8 }}>Henüz yayınlanan hikaye yok</Text>
                 <Button
                   label="İlk Hikayeni Yaz"
@@ -495,36 +437,24 @@ export default observer(function ProfileScreen() {
                 onPress={() => setShowMessageModal(true)}
               >
                 <Text variant="body" tone="textSecondary" style={{ flex: 1 }}>Bir mesaj yaz...</Text>
-                <Ionicons name="camera-outline" size={20} color={themeColors.textSecondary} />
+                <Ionicons name="camera-outline" size={20} color={colors.textSecondary} />
               </TouchableOpacity>
 
               {userConversations.length === 0 ? (
                 <View style={styles.empty}>
-                  <Ionicons name="chatbubble-ellipses-outline" size={32} color={themeColors.textSecondary} />
+                  <Ionicons name="chatbubble-ellipses-outline" size={32} color={colors.textSecondary} />
                   <Text variant="body" tone="textSecondary" style={{ marginTop: 8 }}>Henüz mesaj paylaşmadın</Text>
                 </View>
               ) : (
                 <View style={{ gap: Spacing.md }}>
                   {userConversations.map((conversation: Conversation) => (
-                    <TouchableOpacity
+                    <ProfileConversationCard
                       key={conversation.id}
-                      style={[styles.convCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                      conversation={conversation}
                       onPress={() => router.push(`/conversation/${conversation.id}` as any)}
-                    >
-                      <Text variant="body" style={{ flex: 1 }}>{conversation.content}</Text>
-                      {conversation.image && (
-                        <TouchableOpacity onPress={() => handleOpenImageModal(conversation.image!)}>
-                          <Image source={{ uri: conversation.image }} style={styles.convImg} contentFit="cover" />
-                        </TouchableOpacity>
-                      )}
-                      <View style={styles.convStats}>
-                        <StatPill icon="heart-outline" value={conversation.likesCount || 0} color={themeColors.textSecondary} />
-                        <StatPill icon="chatbubble-outline" value={conversation.commentsCount || 0} color={themeColors.textSecondary} />
-                        <TouchableOpacity onPress={() => handleDeleteConversation(conversation)} style={{ marginLeft: 'auto' }}>
-                          <Ionicons name="ellipsis-vertical" size={16} color={themeColors.textLight} />
-                        </TouchableOpacity>
-                      </View>
-                    </TouchableOpacity>
+                      onImagePress={handleOpenImageModal}
+                      onDelete={() => handleDeleteConversation(conversation)}
+                    />
                   ))}
                 </View>
               )}
@@ -540,14 +470,14 @@ export default observer(function ProfileScreen() {
               style={[styles.menuItem, { backgroundColor: colors.surface, borderColor: colors.border }]}
               onPress={() => item.route && router.push(item.route as any)}
             >
-              <View style={[styles.menuIcon, { backgroundColor: themeColors.primarySoft }]}>
-                <Ionicons name={item.icon as any} size={20} color={themeColors.primary} />
+              <View style={[styles.menuIcon, { backgroundColor: colors.primarySoft }]}>
+                <Ionicons name={item.icon as any} size={20} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text variant="subheading" style={{ fontSize: 15 }}>{item.title}</Text>
                 <Text variant="caption" tone="textSecondary">{item.subtitle}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={16} color={themeColors.textLight} />
+              <Ionicons name="chevron-forward" size={16} color={colors.textLight} />
             </TouchableOpacity>
           ))}
         </View>
@@ -569,7 +499,7 @@ export default observer(function ProfileScreen() {
             </TouchableOpacity>
             <Text variant="subheading">Mesaj Paylaş</Text>
             <TouchableOpacity
-              style={[styles.shareBtn, { backgroundColor: themeColors.primary, opacity: !messageContent.trim() || isPosting ? 0.5 : 1 }]}
+              style={[styles.shareBtn, { backgroundColor: colors.primary, opacity: !messageContent.trim() || isPosting ? 0.5 : 1 }]}
               onPress={handlePostMessage}
               disabled={!messageContent.trim() || isPosting}
             >
@@ -595,7 +525,7 @@ export default observer(function ProfileScreen() {
               <View style={{ position: 'relative', marginBottom: 16 }}>
                 <Image source={{ uri: messageImage }} style={{ width: '100%', height: 180, borderRadius: Radius.lg }} contentFit="cover" />
                 <TouchableOpacity style={{ position: 'absolute', top: 8, right: 8 }} onPress={() => setMessageImage(null)}>
-                  <Ionicons name="close-circle" size={24} color={themeColors.error} />
+                  <Ionicons name="close-circle" size={24} color={colors.error} />
                 </TouchableOpacity>
               </View>
             )}
@@ -603,7 +533,7 @@ export default observer(function ProfileScreen() {
               style={[styles.photoBtn, { backgroundColor: colors.surface }]}
               onPress={handlePickMessageImage}
             >
-              <Ionicons name="camera-outline" size={20} color={themeColors.primary} />
+              <Ionicons name="camera-outline" size={20} color={colors.primary} />
               <Text variant="label" tone="primary">Fotoğraf Ekle</Text>
             </TouchableOpacity>
             <View style={[styles.notifyRow, { backgroundColor: colors.surface }]}>
@@ -612,7 +542,7 @@ export default observer(function ProfileScreen() {
                 <Text variant="caption" tone="textSecondary">Takipçilerin bu mesajı bildirim olarak alsın</Text>
               </View>
               <TouchableOpacity
-                style={[styles.toggle, { backgroundColor: notifyFollowers ? themeColors.primary : colors.border }]}
+                style={[styles.toggle, { backgroundColor: notifyFollowers ? colors.primary : colors.border }]}
                 onPress={() => setNotifyFollowers(!notifyFollowers)}
               >
                 <View style={[styles.toggleThumb, notifyFollowers && styles.toggleThumbOn]} />
@@ -715,63 +645,7 @@ function RankProgressCard({ onPress, style }: { onPress?: () => void; style?: an
   );
 }
 
-function StatCell({
-  icon,
-  value,
-  label,
-  color,
-  onPress,
-}: {
-  icon: any;
-  value: number;
-  label: string;
-  color: string;
-  onPress?: () => void;
-}) {
-  const fmt = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}b` : `${n}`);
-  return (
-    <TouchableOpacity onPress={onPress} disabled={!onPress} style={{ flex: 1, alignItems: 'center', gap: 3 }}>
-      <Ionicons name={icon} size={16} color={color} />
-      <Text variant="heading" style={{ fontSize: 20, lineHeight: 24, fontWeight: '700' }}>{fmt(value)}</Text>
-      <Text variant="caption" tone="textLight">{label}</Text>
-    </TouchableOpacity>
-  );
-}
-
-function StatPill({ icon, value, color }: { icon: any; value: number; color: string }) {
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-      <Ionicons name={icon} size={14} color={color} />
-      <Text variant="caption" tone="textSecondary">{value}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  hero: {
-    height: 108,
-    overflow: 'hidden',
-    backgroundColor: '#6644C0',
-  },
-  heroWatermark: {
-    position: 'absolute',
-    right: -14,
-    top: -14,
-    opacity: 0.18,
-  },
-  heroActions: {
-    position: 'absolute',
-    top: 10,
-    right: Spacing.screenX,
-    flexDirection: 'row',
-    gap: 4,
-  },
-  heroAvatarWrap: {
-    position: 'absolute',
-    left: Spacing.screenX,
-    top: 56,
-    zIndex: 10,
-  },
   identity: {
     paddingHorizontal: Spacing.screenX,
     paddingTop: 48,
@@ -803,18 +677,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.08)',
     marginVertical: 4,
   },
-  gardenHeader: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.screenX,
-    marginBottom: 12,
-  },
-  gardenShelf: {
-    paddingHorizontal: Spacing.screenX,
-    gap: Spacing.md,
-    paddingBottom: 8,
-  },
   tabsWrap: {
     paddingHorizontal: Spacing.screenX,
     marginTop: 20,
@@ -831,25 +693,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     borderWidth: 1,
     marginBottom: 16,
-  },
-  convCard: {
-    padding: 14,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    marginBottom: Spacing.md,
-  },
-  convImg: {
-    width: '100%',
-    height: 150,
-    borderRadius: Radius.md,
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  convStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginTop: 8,
   },
   empty: {
     alignItems: 'center',

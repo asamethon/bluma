@@ -2,23 +2,23 @@ import ImageModal from '@/components/ImageModal';
 import ReportSheet from '@/components/ReportSheet';
 import {
   Screen,
-  Avatar,
-  Badge,
-  BloomMark,
   Button,
   IconButton,
   SegmentedControl,
-  StoryCardSpine,
   StoryRow,
   Text,
 } from '@/components/ui';
 import { CategoryMeta, Radius, Spacing, useTheme } from '@/constants/theme';
+import { useFollow } from '@/features/social/hooks/useFollow';
+import { ProfileConversationCard } from '@/features/profile/components/ProfileConversationCard';
+import { ProfileGradientHero } from '@/features/profile/components/ProfileGradientHero';
+import { ProfileStatCell } from '@/features/profile/components/ProfileStatCell';
+import { ProfileStoryShelf } from '@/features/profile/components/ProfileStoryShelf';
 import { authActions, authState$, User } from '@/store/authStore';
 import { moderationActions, moderationState$ } from '@/store/moderationStore';
 import { Conversation, Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { observer } from '@legendapp/state/react';
-import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -30,11 +30,6 @@ import {
   View,
 } from 'react-native';
 
-function fmt(n?: number) {
-  const v = n || 0;
-  return v >= 1000 ? `${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}b` : `${v}`;
-}
-
 export default observer(function UserProfileScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -42,9 +37,7 @@ export default observer(function UserProfileScreen() {
   const { user: currentUser } = authState$.get();
 
   const [user, setUser] = useState<User | null>(null);
-  const [isFollowing, setIsFollowing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'stories' | 'conversations'>('stories');
   const [userStories, setUserStories] = useState<Story[]>([]);
   const [userConversations, setUserConversations] = useState<Conversation[]>([]);
@@ -62,16 +55,23 @@ export default observer(function UserProfileScreen() {
   // tam ekran spinner'a düşüp baştan yükleniyordu ("gidip gelme" bug'ı).
   const currentUserId = currentUser?.id;
 
+  // Takip durumu + optimistic toggle: features/social/useFollow.
+  // Takipçi sayacı da optimistic güncellenir (hatada ters delta gelir).
+  const follow = useFollow(
+    user?.id,
+    useCallback((delta: number) => {
+      setUser(u => u
+        ? { ...u, followersCount: Math.max(0, (u.followersCount || 0) + delta) }
+        : u);
+    }, [])
+  );
+
   const loadUserData = useCallback(async () => {
     try {
       setIsLoading(true);
       const userData = await authActions.getUserById(id);
       if (userData) {
         setUser(userData);
-        if (currentUserId && currentUserId !== userData.id) {
-          const following = await authActions.isFollowingUser(userData.id);
-          setIsFollowing(following);
-        }
         loadUserStories(userData.id);
         const unsub = await loadUserConversations(userData.id);
         return unsub;
@@ -81,7 +81,7 @@ export default observer(function UserProfileScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [id, currentUserId]);
+  }, [id]);
 
   useEffect(() => {
     let convUnsub: (() => void) | undefined;
@@ -136,34 +136,15 @@ export default observer(function UserProfileScreen() {
     } catch { setConversationsLoading(false); }
   };
 
-  // Optimistic: UI anında güncellenir, Firestore işi arka planda yürür,
-  // hata olursa geri alınır. Buton spinner'ı beklemeye gerek kalmaz.
-  const applyFollowState = (next: boolean) => {
-    setIsFollowing(next);
-    setUser(u => u
-      ? { ...u, followersCount: Math.max(0, (u.followersCount || 0) + (next ? 1 : -1)) }
-      : u);
-  };
-
-  const performFollowToggle = (next: boolean) => {
-    if (isFollowLoading || !user) return;
-    setIsFollowLoading(true);
-    applyFollowState(next);
-    (next ? authActions.followUser(user.id) : authActions.unfollowUser(user.id))
-      .then(r => { if (!r?.success) applyFollowState(!next); })
-      .catch(() => applyFollowState(!next))
-      .finally(() => setIsFollowLoading(false));
-  };
-
   const handleFollow = () => {
     if (!user || !currentUser) return;
-    if (isFollowing) {
+    if (follow.isFollowing) {
       Alert.alert('Takipten Çık', `${user.displayName} adlı kullanıcıyı takipten çıkmak istiyor musun?`, [
         { text: 'İptal', style: 'cancel' },
-        { text: 'Takipten Çık', style: 'destructive', onPress: () => performFollowToggle(false) },
+        { text: 'Takipten Çık', style: 'destructive', onPress: follow.toggle },
       ]);
     } else {
-      performFollowToggle(true);
+      follow.toggle();
     }
   };
 
@@ -193,10 +174,8 @@ export default observer(function UserProfileScreen() {
           onPress: async () => {
             const r = await moderationActions.blockUser(user.id);
             if (r.success) {
-              if (isFollowing) {
-                await authActions.unfollowUser(user.id);
-                setIsFollowing(false);
-              }
+              // Engellenen kullanıcı takipteyse takibi de bırak (optimistic)
+              if (follow.isFollowing) follow.toggle();
               Alert.alert('Engellendi', 'Bu kullanıcı artık sana gösterilmeyecek.');
             } else {
               Alert.alert('Hata', r.error || 'Engelleme başarısız.');
@@ -241,64 +220,27 @@ export default observer(function UserProfileScreen() {
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         {/* ── Hero ──────────────────────────────────────────────── */}
-        <View style={styles.hero}>
-          {/* diagonal deeper violet — simulates linear-gradient(120deg, violet-500, violet-700) */}
-          <View
-            pointerEvents="none"
-            style={{
-              position: "absolute",
-              left: -60,
-              bottom: -60,
-              width: 220,
-              height: 220,
-              borderRadius: 110,
-              backgroundColor: "#4B2DA8",
-              opacity: 0.55,
-            }}
-          />
-          {/* genre color accent upper-right — simulates radial at 80% -10% */}
-          <View
-            pointerEvents="none"
-            style={{
-              position: "absolute",
-              right: -30,
-              top: -30,
-              width: 180,
-              height: 180,
-              borderRadius: 90,
-              backgroundColor: genreAccent,
-              opacity: 0.38,
-            }}
-          />
-          {/* BloomMark watermark */}
-          <View
-            pointerEvents="none"
-            style={{ position: "absolute", right: -14, top: -8, opacity: 0.16 }}
-          >
-            <BloomMark size={140} color="#fff" coreColor="#fff" />
-          </View>
-          {/* Back + more buttons */}
-          <View style={styles.heroActions}>
-            <IconButton
-              icon="chevron-back"
-              color="#fff"
-              size={38}
-              onPress={() => router.back()}
-            />
-            {currentUser?.id !== user.id && (
-              <IconButton icon="ellipsis-horizontal" color="#fff" size={38} onPress={() => setShowMenu(true)} />
-            )}
-          </View>
-          {/* Avatar */}
-        </View>
-        <View style={styles.heroAvatar}>
-          <Avatar
-            uri={user.profileImage}
-            name={user.displayName}
-            size={88}
-            ring
-          />
-        </View>
+        <ProfileGradientHero
+          avatarUri={user.profileImage}
+          avatarName={user.displayName}
+          accentColor={genreAccent}
+          height={132}
+          watermarkSize={140}
+          avatarTop={72}
+          actions={
+            <View style={styles.heroActions}>
+              <IconButton
+                icon="chevron-back"
+                color="#fff"
+                size={38}
+                onPress={() => router.back()}
+              />
+              {currentUser?.id !== user.id && (
+                <IconButton icon="ellipsis-horizontal" color="#fff" size={38} onPress={() => setShowMenu(true)} />
+              )}
+            </View>
+          }
+        />
 
         {/* ── Identity ──────────────────────────────────────────── */}
         <View style={styles.identity}>
@@ -330,12 +272,11 @@ export default observer(function UserProfileScreen() {
           {/* Actions */}
           {!isOwnProfile && (
             <View style={styles.actionRow}>
-              {/* Optimistic akış: spinner yok — etiket anında değişir,
-                  isFollowLoading yalnızca çift tıklamayı engeller. */}
+              {/* Optimistic akış (useFollow): spinner yok, etiket anında değişir */}
               <Button
-                label={isFollowing ? "Takip Ediliyor" : "Takip Et"}
-                variant={isFollowing ? "secondary" : "primary"}
-                icon={isFollowing ? "checkmark" : "add"}
+                label={follow.isFollowing ? "Takip Ediliyor" : "Takip Et"}
+                variant={follow.isFollowing ? "secondary" : "primary"}
+                icon={follow.isFollowing ? "checkmark" : "add"}
                 size="md"
                 onPress={handleFollow}
                 style={{ flex: 1 }}
@@ -356,7 +297,7 @@ export default observer(function UserProfileScreen() {
               { backgroundColor: colors.surfaceVariant },
             ]}
           >
-            <StatCell
+            <ProfileStatCell
               icon="book"
               value={userStories.length}
               label="Hikâye"
@@ -365,7 +306,7 @@ export default observer(function UserProfileScreen() {
             <View
               style={[styles.statsDivider, { backgroundColor: colors.border }]}
             />
-            <StatCell
+            <ProfileStatCell
               icon="people"
               value={user.followersCount || 0}
               label="Takipçi"
@@ -377,7 +318,7 @@ export default observer(function UserProfileScreen() {
             <View
               style={[styles.statsDivider, { backgroundColor: colors.border }]}
             />
-            <StatCell
+            <ProfileStatCell
               icon="leaf"
               value={user.followingCount || 0}
               label="Takip"
@@ -390,41 +331,12 @@ export default observer(function UserProfileScreen() {
         </View>
 
         {/* ── Garden shelf ──────────────────────────────────────── */}
-        {userStories.length > 0 && (
-          <View style={{ marginTop: 8 }}>
-            <View
-              style={[
-                styles.rowBetween,
-                { paddingHorizontal: Spacing.screenX, marginBottom: 12 },
-              ]}
-            >
-              <Text variant="heading" style={{ fontWeight: "700" }}>
-                {`${firstName}'in Bahçesi`}
-              </Text>
-              <Text variant="caption" tone="textLight">
-                {userStories.length} açan hikâye
-              </Text>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{
-                paddingHorizontal: Spacing.screenX,
-                gap: Spacing.md,
-                paddingBottom: 8,
-              }}
-            >
-              {userStories.slice(0, 6).map((story) => (
-                <StoryCardSpine
-                  key={story.id}
-                  story={story}
-                  width={118}
-                  onPress={() => router.push(`/story/${story.id}/preview`)}
-                />
-              ))}
-            </ScrollView>
-          </View>
-        )}
+        <ProfileStoryShelf
+          title={`${firstName}'in Bahçesi`}
+          count={userStories.length}
+          stories={userStories}
+          onStoryPress={(story) => router.push(`/story/${story.id}/preview`)}
+        />
 
         {/* ── Tabs ──────────────────────────────────────────────── */}
         <View
@@ -498,71 +410,17 @@ export default observer(function UserProfileScreen() {
           ) : (
             <View style={{ gap: Spacing.md }}>
               {userConversations.map((conversation) => (
-                <TouchableOpacity
+                <ProfileConversationCard
                   key={conversation.id}
-                  style={[
-                    styles.convCard,
-                    {
-                      backgroundColor: colors.surface,
-                      borderColor: colors.border,
-                    },
-                  ]}
+                  conversation={conversation}
                   onPress={() =>
                     router.push(`/conversation/${conversation.id}` as any)
                   }
-                >
-                  <Text variant="body" style={{ flex: 1 }}>
-                    {conversation.content}
-                  </Text>
-                  {conversation.image && (
-                    <TouchableOpacity
-                      onPress={() => {
-                        setSelectedModalImage(conversation.image!);
-                        setImageModalVisible(true);
-                      }}
-                    >
-                      <Image
-                        source={{ uri: conversation.image }}
-                        style={styles.convImg}
-                        contentFit="cover"
-                      />
-                    </TouchableOpacity>
-                  )}
-                  <View style={{ flexDirection: "row", gap: 12, marginTop: 8 }}>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 4,
-                      }}
-                    >
-                      <Ionicons
-                        name="heart-outline"
-                        size={14}
-                        color={colors.textSecondary}
-                      />
-                      <Text variant="caption" tone="textSecondary">
-                        {conversation.likesCount || 0}
-                      </Text>
-                    </View>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 4,
-                      }}
-                    >
-                      <Ionicons
-                        name="chatbubble-outline"
-                        size={14}
-                        color={colors.textSecondary}
-                      />
-                      <Text variant="caption" tone="textSecondary">
-                        {conversation.commentsCount || 0}
-                      </Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
+                  onImagePress={(imageUri) => {
+                    setSelectedModalImage(imageUri);
+                    setImageModalVisible(true);
+                  }}
+                />
               ))}
             </View>
           )}
@@ -605,22 +463,7 @@ export default observer(function UserProfileScreen() {
   );
 });
 
-function StatCell({ icon, value, label, color, onPress }: { icon: any; value: number; label: string; color: string; onPress?: () => void }) {
-  return (
-    <TouchableOpacity onPress={onPress} disabled={!onPress} style={{ flex: 1, alignItems: 'center', gap: 3 }}>
-      <Ionicons name={icon} size={16} color={color} />
-      <Text variant="heading" style={{ fontSize: 20, lineHeight: 24, fontWeight: '700' }}>{fmt(value)}</Text>
-      <Text variant="caption" tone="textLight">{label}</Text>
-    </TouchableOpacity>
-  );
-}
-
 const styles = StyleSheet.create({
-  hero: {
-    height: 132,
-    overflow: "hidden",
-    backgroundColor: "#6644C0",
-  },
   menuBackdrop: {
     position: 'absolute',
     top: 0,
@@ -651,18 +494,9 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
   },
   heroActions: {
-    position: "absolute",
-    top: 10,
-    left: Spacing.screenX,
-    right: Spacing.screenX,
+    flex: 1,
     flexDirection: "row",
     justifyContent: "space-between",
-  },
-  heroAvatar: {
-    position: "absolute",
-    left: Spacing.screenX,
-    top: 72,
-    zIndex: 999,
   },
   identity: {
     paddingHorizontal: Spacing.screenX,
@@ -687,25 +521,8 @@ const styles = StyleSheet.create({
     width: 1,
     marginVertical: 4,
   },
-  rowBetween: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-  },
   empty: {
     alignItems: "center",
     paddingVertical: 40,
-  },
-  convCard: {
-    padding: 14,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-  },
-  convImg: {
-    width: "100%",
-    height: 150,
-    borderRadius: Radius.md,
-    marginTop: 8,
-    marginBottom: 4,
   },
 });
