@@ -23,7 +23,7 @@ import { Story } from "@/types";
 import { observer } from "@legendapp/state/react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Pressable,
   RefreshControl,
@@ -139,9 +139,15 @@ export default observer(function HomeScreen() {
 
   const { stories: rawStories = [] } = storyState$.get();
   // Engellenen yazarları ve (tercih kapalıysa) 18+ içeriği akıştan çıkar (reaktif)
-  moderationState$.blockedUserIds.get();
-  preferencesState$.showMatureContent.get();
-  const allStories = preferencesActions.filterMature(moderationActions.filterBlocked(rawStories));
+  const blockedIds = moderationState$.blockedUserIds.get();
+  const matureOn = preferencesState$.showMatureContent.get();
+  // useMemo şart: filterMature/filterBlocked her render'da yeni bir array
+  // referansı döndürüyordu, bu da aşağıdaki editorsPicks effect'inin
+  // (dep: [allStories]) her render'da tetiklenmesine yol açıyordu.
+  const allStories = useMemo(
+    () => preferencesActions.filterMature(moderationActions.filterBlocked(rawStories)),
+    [rawStories, blockedIds, matureOn]
+  );
   const newest = [...allStories]
     .sort(
       (a, b) =>

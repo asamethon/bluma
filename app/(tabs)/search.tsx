@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { observer } from '@legendapp/state/react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -50,9 +50,7 @@ export default observer(function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [allStories, setAllStories] = useState<Story[]>([]);
-  const [filteredStories, setFilteredStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSearching, setIsSearching] = useState(false);
   const [searchUsers, setSearchUsers] = useState<User[]>([]);
   const [isSearchingUsers, setIsSearchingUsers] = useState(false);
   const [recentSearches, setRecentSearches] = useState<SearchHistoryItem[]>([]);
@@ -83,27 +81,23 @@ export default observer(function SearchScreen() {
   // Tercih/engel değişince listeyi tazele (reaktif)
   const matureOn = preferencesState$.showMatureContent.get();
   const blockedCount = moderationState$.blockedUserIds.get().length;
-  useEffect(() => { filterAndSortStories(); }, [matureOn, blockedCount]);
 
-  const filterAndSortStories = useCallback(() => {
-    setIsSearching(true);
-    setTimeout(() => {
-      // Engellenen yazarları ve (tercih kapalıysa) 18+ içeriği gizle
-      let filtered = preferencesActions.filterMature(moderationActions.filterBlocked([...allStories]));
-      if (selectedGenre) filtered = filtered.filter(s => s.category === selectedGenre);
-      if (searchQuery.trim()) {
-        const t = searchQuery.toLowerCase();
-        filtered = filtered.filter(s =>
-          (s.title + (s.author?.displayName || '') + s.description).toLowerCase().includes(t) ||
-          (s.tags?.some((tag: string) => tag.toLowerCase().includes(t)))
-        );
-      }
-      setFilteredStories(filtered);
-      setIsSearching(false);
-    }, 200);
-  }, [searchQuery, selectedGenre, allStories]);
-
-  useEffect(() => { filterAndSortStories(); }, [searchQuery, selectedGenre, allStories, filterAndSortStories]);
+  // Türetilmiş değer — eskiden useState+useEffect+setTimeout ile tutuluyordu.
+  // Filtreleme senkron ve ucuz; render'da hesaplamak fazladan bir render
+  // turu ve yapay 200ms gecikmeyi ortadan kaldırır.
+  const filteredStories = useMemo(() => {
+    // Engellenen yazarları ve (tercih kapalıysa) 18+ içeriği gizle
+    let filtered = preferencesActions.filterMature(moderationActions.filterBlocked(allStories));
+    if (selectedGenre) filtered = filtered.filter(s => s.category === selectedGenre);
+    if (searchQuery.trim()) {
+      const t = searchQuery.toLowerCase();
+      filtered = filtered.filter(s =>
+        (s.title + (s.author?.displayName || '') + s.description).toLowerCase().includes(t) ||
+        (s.tags?.some((tag: string) => tag.toLowerCase().includes(t)))
+      );
+    }
+    return filtered;
+  }, [allStories, selectedGenre, searchQuery, matureOn, blockedCount]);
 
   useEffect(() => {
     if (searchQuery.trim().length >= 2) searchUsersByQuery(searchQuery);
@@ -190,9 +184,9 @@ export default observer(function SearchScreen() {
     router.push(`/story/${story.id}/preview`);
   };
 
-  const isEmpty = !isLoading && !isSearching && !isSearchingUsers && filteredStories.length === 0 && searchUsers.length === 0;
+  const isEmpty = !isLoading && !isSearchingUsers && filteredStories.length === 0 && searchUsers.length === 0;
   const showIdle = !searchQuery.trim() && !selectedGenre;
-  const busy = isLoading || isSearching || isSearchingUsers;
+  const busy = isLoading || isSearchingUsers;
 
   return (
     <Screen style={{ flex: 1, backgroundColor: colors.background }}>
