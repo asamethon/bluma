@@ -1,0 +1,100 @@
+import { authActions, authState$ } from '@/store/authStore';
+import { storyActions, storyState$ } from '@/store/storyStore';
+import { AuthGateSheet } from '@/components/AuthGateSheet';
+import { GuestProvider } from '@/contexts/GuestContext';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { observer } from '@legendapp/state/react';
+import {
+  useFonts,
+  Spectral_400Regular,
+  Spectral_400Regular_Italic,
+  Spectral_700Bold,
+  Spectral_700Bold_Italic,
+} from '@expo-google-fonts/spectral';
+import {
+  HankenGrotesk_400Regular,
+  HankenGrotesk_500Medium,
+  HankenGrotesk_600SemiBold,
+  HankenGrotesk_700Bold,
+  HankenGrotesk_800ExtraBold,
+} from '@expo-google-fonts/hanken-grotesk';
+import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
+import React, { useCallback, useEffect, useState } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import 'react-native-reanimated';
+
+import { useColorScheme } from '@/hooks/useColorScheme';
+
+SplashScreen.preventAutoHideAsync();
+
+export default observer(function RootLayout() {
+  const colorScheme = useColorScheme();
+  const [loaded] = useFonts({
+    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    Spectral_400Regular,
+    Spectral_400Regular_Italic,
+    Spectral_700Bold,
+    Spectral_700Bold_Italic,
+    HankenGrotesk_400Regular,
+    HankenGrotesk_500Medium,
+    HankenGrotesk_600SemiBold,
+    HankenGrotesk_700Bold,
+    HankenGrotesk_800ExtraBold,
+  });
+  const { isLoading } = authState$.get();
+  const storiesLoaded = storyState$.storiesLoaded.get();
+  const [splashTimedOut, setSplashTimedOut] = useState(false);
+
+  useEffect(() => {
+    authActions.initializeAuth();
+    // Prefetch the public stories feed during the splash so screens render
+    // with data already in the store instead of flashing an empty state.
+    storyActions.setupStoriesListener();
+    // Safety net: never hold the splash longer than this even if the feed is
+    // slow or the device is offline.
+    const t = setTimeout(() => setSplashTimedOut(true), 4000);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Ready once fonts + auth are done AND the stories feed has loaded (or we
+  // hit the timeout fallback).
+  const ready = loaded && !isLoading && (storiesLoaded || splashTimedOut);
+
+  // Hide the native splash only after the root view has laid out, so it stays
+  // up until the first frame is painted — no black flash between splash and app.
+  const onLayoutRootView = useCallback(() => {
+    if (ready) {
+      SplashScreen.hideAsync();
+    }
+  }, [ready]);
+
+  if (!ready) {
+    return null;
+  }
+
+  return (
+    <GestureHandlerRootView
+      style={{ flex: 1, backgroundColor: '#2A1B52' }}
+      onLayout={onLayoutRootView}
+    >
+      <SafeAreaProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <BottomSheetModalProvider>
+            <GuestProvider>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="+not-found" />
+              </Stack>
+              <StatusBar style="auto" />
+              <AuthGateSheet />
+            </GuestProvider>
+          </BottomSheetModalProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
+});

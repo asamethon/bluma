@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "626165614889",
+    "project_id": "bluma-dc10e",
+    "storage_bucket": "bluma-dc10e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:626165614889:android:your_android_app_id",
+        "android_client_info": {
+          "package_name": "com.bluma.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "626165614889-8logf9c1pufo9h0llo9jvp4cfvq98asl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAstI5WA0br8wT11c52_m9sy8bVFYEyRBc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "626165614889-8logf9c1pufo9h0llo9jvp4cfvq98asl.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+} 

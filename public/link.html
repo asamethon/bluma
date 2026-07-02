@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bluma'da aç</title>
+  <!-- ───────────────────────────────────────────────────────────────
+       Bluma smart link / deferred deep link.
+       Visiting https://bluma-dc10e.web.app/user/<id> (or /story/<id>):
+         • tries to open the installed app via the bluma:// custom scheme
+         • if the app isn't installed, falls back to the App Store / Play Store
+       The original path is preserved by Firebase rewrites, so we read it
+       straight from location.pathname.
+  ──────────────────────────────────────────────────────────────── -->
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #2A1B52;
+      color: #fff;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 24px;
+    }
+    .mark {
+      width: 84px; height: 84px; border-radius: 26px;
+      background: #7C5CD0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 44px; margin-bottom: 22px;
+      box-shadow: 0 12px 40px rgba(124,92,208,.5);
+    }
+    h1 { font-size: 26px; margin: 0 0 8px; letter-spacing: -.4px; }
+    p  { font-size: 15px; opacity: .8; margin: 0 0 28px; max-width: 320px; line-height: 1.5; }
+    .btn {
+      display: inline-block; text-decoration: none;
+      background: #FF5C8A; color: #fff;
+      font-weight: 700; font-size: 16px;
+      padding: 15px 30px; border-radius: 999px;
+      box-shadow: 0 8px 24px rgba(255,92,138,.45);
+    }
+    .alt { margin-top: 18px; font-size: 14px; }
+    .alt a { color: #C9BCF2; }
+  </style>
+</head>
+<body>
+  <div class="mark">🌸</div>
+  <h1>bluma</h1>
+  <p id="msg">Uygulamada açılıyor… Açılmazsa aşağıdaki butona dokun.</p>
+  <a class="btn" id="cta" href="#">Bluma'yı Aç</a>
+  <div class="alt"><a id="store" href="#">Uygulaman yok mu? İndir</a></div>
+
+  <script>
+    (function () {
+      // ── Store links ──────────────────────────────────────────────
+      var ANDROID_URL = "https://play.google.com/store/apps/details?id=com.asamethon.bluma";
+      // Full canonical App Store URL (locale + slug) is more reliable than the
+      // bare /app/id… form.
+      var IOS_URL = "https://apps.apple.com/tr/app/bluma/id6749180146";
+
+      // ── Resolve the deep-link path (e.g. /user/abc -> user/abc) ───
+      var path = window.location.pathname.replace(/^\/+/, "");
+      var APP_SCHEME = "bluma://" + path;
+
+      var ua = navigator.userAgent || "";
+      var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+      var isAndroid = /Android/.test(ua);
+      var storeUrl = isIOS ? IOS_URL : ANDROID_URL;
+
+      document.getElementById("cta").setAttribute("href", APP_SCHEME);
+      document.getElementById("store").setAttribute("href", storeUrl);
+
+      // Desktop: no app to open, just offer the stores.
+      if (!isIOS && !isAndroid) {
+        document.getElementById("msg").textContent =
+          "Bluma'yı telefonunda açmak için bu bağlantıyı telefonundan ziyaret et.";
+        document.getElementById("cta").setAttribute("href", ANDROID_URL);
+        return;
+      }
+
+      // ── Open the app, else fall back to the store ────────────────
+      // When the installed app launches, the page is backgrounded — iOS/Android
+      // fire visibilitychange / pagehide / blur. We flag that and DON'T redirect.
+      // The timeout is deliberately long (2.6s) so the iOS "Open in Bluma?"
+      // confirm dialog has time to be read & tapped before the store fallback
+      // could fire (this was the bug: a short timer dismissed the prompt and
+      // jumped to the App Store even though the app was installed).
+      var appOpened = false;
+      function markOpened() { appOpened = true; }
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) markOpened();
+      });
+      window.addEventListener("pagehide", markOpened);
+      window.addEventListener("blur", markOpened);
+
+      var fallback = setTimeout(function () {
+        if (!appOpened && !document.hidden) window.location.replace(storeUrl);
+      }, 2600);
+
+      // Kick off the app-open attempt.
+      window.location.href = APP_SCHEME;
+
+      // Manual button: try the scheme again and stop the store fallback.
+      document.getElementById("cta").addEventListener("click", function () {
+        appOpened = true;
+        clearTimeout(fallback);
+      });
+    })();
+  </script>
+</body>
+</html>

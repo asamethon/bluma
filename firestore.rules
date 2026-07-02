@@ -1,0 +1,189 @@
+rules_version = '2';
+
+// Bluma Firestore security rules.
+// Design: the app supports guest browsing (discover/stories/profiles are
+// publicly readable), while writes are restricted to what each flow actually
+// needs. Social counters (likesCount, followersCount, ...) are updated
+// client-side with atomic increments, so non-owners may only touch those
+// specific fields — never content.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+    // True when the update touches nothing beyond the given keys.
+    function onlyChanges(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    // User profiles — public read (guest browsing). Only the owner edits their
+    // own document, except the followersCount counter which is incremented by
+    // the follower during follow/unfollow.
+    match /users/{userId} {
+      allow read: if true;
+      allow create, delete: if isOwner(userId);
+      allow update: if isOwner(userId)
+        || (isSignedIn() && onlyChanges(['followersCount']));
+
+      // followers — written cross-user on follow/unfollow, but a user may only
+      // add/remove *their own* follower doc (doc id == follower's uid).
+      match /followers/{followerId} {
+        allow read: if true;
+        allow write: if isSignedIn() && request.auth.uid == followerId;
+      }
+      // following — only the list owner writes.
+      match /following/{followingId} {
+        allow read: if true;
+        allow write: if isOwner(userId);
+      }
+      // Blocked users — private to the owner.
+      match /blocked/{blockedUserId} {
+        allow read, write: if isOwner(userId);
+      }
+      // Personal library subcollections — public read, owner-only write.
+      match /likedStories/{docId} {
+        allow read: if true;
+        allow write: if isOwner(userId);
+      }
+      match /savedStories/{docId} {
+        allow read: if true;
+        allow write: if isOwner(userId);
+      }
+      match /likedConversations/{docId} {
+        allow read: if true;
+        allow write: if isOwner(userId);
+      }
+      match /readingLists/{listId} {
+        allow read: if true;
+        allow write: if isOwner(userId);
+      }
+    }
+
+    // Books catalog — public read; only the author writes.
+    match /books/{bookId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+
+      match /chapters/{chapterId} {
+        allow read: if true;
+        allow write: if isSignedIn()
+          && get(/databases/$(database)/documents/books/$(bookId)).data.authorId == request.auth.uid;
+      }
+    }
+
+    // Stories — public read (discover). The author owns the content; other
+    // signed-in users may only bump the social counters.
+    match /stories/{storyId} {
+      // The story author may clean up any subcollection doc (deleting their
+      // story, moderating comments). NOTE: story deletion must remove
+      // subcollections *before* the story doc, or this lookup fails.
+      function isStoryAuthor() {
+        return isSignedIn()
+          && get(/databases/$(database)/documents/stories/$(storyId)).data.authorId == request.auth.uid;
+      }
+
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.authorId == request.auth.uid
+        || onlyChanges(['likesCount', 'commentsCount', 'viewsCount'])
+      );
+
+      // Story likes — one may only create/delete their own like (the story
+      // author may also clean up while deleting the story).
+      match /likes/{likeId} {
+        allow read: if true;
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow delete: if (isSignedIn() && resource.data.userId == request.auth.uid) || isStoryAuthor();
+      }
+
+      // Comments — author of the comment edits/deletes; the story author may
+      // also delete (moderation/cleanup); others may only bump the like counter.
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow delete: if (isSignedIn() && resource.data.userId == request.auth.uid) || isStoryAuthor();
+        allow update: if isSignedIn() && (
+          resource.data.userId == request.auth.uid
+          || onlyChanges(['likesCount'])
+        );
+
+        match /likes/{likeId} {
+          allow read: if true;
+          allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+          allow delete: if (isSignedIn() && resource.data.userId == request.auth.uid) || isStoryAuthor();
+        }
+      }
+
+      // View records — append-only per user; the author may clean up when
+      // deleting the story.
+      match /views/{viewId} {
+        allow read: if true;
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow delete: if isStoryAuthor();
+      }
+    }
+
+    // Conversations — same ownership model as stories.
+    match /conversations/{conversationId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+      // updatedAt is included because commenting bumps it alongside the counter.
+      allow update: if isSignedIn() && (
+        resource.data.authorId == request.auth.uid
+        || onlyChanges(['likesCount', 'commentsCount', 'viewsCount', 'updatedAt'])
+      );
+
+      match /likes/{likeId} {
+        allow read: if true;
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      }
+    }
+
+    match /conversationComments/{commentId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid
+        || onlyChanges(['likesCount'])
+      );
+    }
+
+    // Notifications — anyone signed-in may create (like/comment/follow events
+    // are written by the acting user), but only the recipient can read,
+    // mark-as-read or delete them.
+    match /notifications/{notificationId} {
+      allow create: if isSignedIn();
+      allow read, update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Per-user notification preferences (doc id == user id).
+    match /notificationSettings/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Expo push tokens (doc id == user id). The owner registers their token;
+    // other signed-in users read it to deliver a push for their action.
+    match /userPushTokens/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(userId);
+    }
+
+    // Content reports — a signed-in user may file a report for themselves.
+    // Reports are reviewed out-of-band (admin/console); clients cannot read,
+    // edit or delete them.
+    match /reports/{reportId} {
+      allow create: if isSignedIn() && request.resource.data.reporterId == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+  }
+}

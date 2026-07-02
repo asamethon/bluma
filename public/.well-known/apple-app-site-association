@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["RUXJ98MZ8W.com.asamethon.bluma"],
+        "components": [
+          { "/": "/user/*", "comment": "Kullanıcı profilleri" },
+          { "/": "/story/*", "comment": "Hikayeler" }
+        ]
+      }
+    ]
+  }
+}
