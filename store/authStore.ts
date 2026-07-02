@@ -693,41 +693,37 @@ export const authActions = {
       if (!currentUser) return { success: false, error: 'Kullanıcı bulunamadı.' };
 
       const db = firestore();
-      
-      // Add to current user's following
+
+      // Asıl takip ilişkisi: iki doküman paralel yazılır. Yalnızca bunlar
+      // beklenir — sayaçlar ve bildirim arka planda yürür ki buton saniyelerce
+      // dönmesin (push bildirimi HTTP çağrısı tek başına 1-3 sn sürebiliyor).
       const currentUserFollowingRef = db.collection('users').doc(currentUser.id).collection('following').doc(userIdToFollow);
-      await currentUserFollowingRef.set({
-        userId: userIdToFollow,
-        followedAt: firestore.FieldValue.serverTimestamp(),
-      });
-
-      // Add to target user's followers
       const targetUserFollowersRef = db.collection('users').doc(userIdToFollow).collection('followers').doc(currentUser.id);
-      await targetUserFollowersRef.set({
-        userId: currentUser.id,
-        followedAt: firestore.FieldValue.serverTimestamp(),
-      });
+      await Promise.all([
+        currentUserFollowingRef.set({
+          userId: userIdToFollow,
+          followedAt: firestore.FieldValue.serverTimestamp(),
+        }),
+        targetUserFollowersRef.set({
+          userId: currentUser.id,
+          followedAt: firestore.FieldValue.serverTimestamp(),
+        }),
+      ]);
 
-      // Update follower/following counts — atomik increment; karşı tarafın
-      // dokümanına yazma kurallar gereği sadece followersCount alanıyla sınırlı.
-      await db.collection('users').doc(currentUser.id).update({
+      // Sayaçlar — atomik increment, arka planda; hata takibi bozmaz.
+      db.collection('users').doc(currentUser.id).update({
         followingCount: firestore.FieldValue.increment(1),
-      });
-
-      // Sayaç güncellemesi takip ilişkisini bozmasın: hata olsa da devam et.
-      await db.collection('users').doc(userIdToFollow).update({
+      }).catch((e: any) => console.error('Following count update error:', e));
+      db.collection('users').doc(userIdToFollow).update({
         followersCount: firestore.FieldValue.increment(1),
       }).catch((e: any) => console.error('Followers count update error:', e));
 
-      // Create follow notification (sadece Firestore'a kaydet)
-      // Yerel bildirim sadece takip edilen kullanıcı uygulamayı açık tutuyorsa gösterilir
-      await notificationActions.createFollowNotification(
-        currentUser.id, // Takip edenin ID'si
-        userIdToFollow, // Takip edilenin ID'si
-        currentUser.displayName // Takip edenin adı
-      );
-
-
+      // Bildirim (in-app + push) — arka planda.
+      notificationActions.createFollowNotification(
+        currentUser.id,
+        userIdToFollow,
+        currentUser.displayName
+      ).catch((e: any) => console.error('Follow notification error:', e));
 
       // Update local state
       authState$.user.set({
@@ -749,21 +745,19 @@ export const authActions = {
       if (!currentUser) return { success: false, error: 'Kullanıcı bulunamadı.' };
 
       const db = firestore();
-      
-      // Remove from current user's following
+
+      // İlişki dokümanları paralel silinir; sayaçlar arka planda (bkz. followUser).
       const currentUserFollowingRef = db.collection('users').doc(currentUser.id).collection('following').doc(userIdToUnfollow);
-      await currentUserFollowingRef.delete();
-
-      // Remove from target user's followers
       const targetUserFollowersRef = db.collection('users').doc(userIdToUnfollow).collection('followers').doc(currentUser.id);
-      await targetUserFollowersRef.delete();
+      await Promise.all([
+        currentUserFollowingRef.delete(),
+        targetUserFollowersRef.delete(),
+      ]);
 
-      // Update follower/following counts — atomik increment (bkz. followUser).
-      await db.collection('users').doc(currentUser.id).update({
+      db.collection('users').doc(currentUser.id).update({
         followingCount: firestore.FieldValue.increment(-1),
-      });
-
-      await db.collection('users').doc(userIdToUnfollow).update({
+      }).catch((e: any) => console.error('Following count update error:', e));
+      db.collection('users').doc(userIdToUnfollow).update({
         followersCount: firestore.FieldValue.increment(-1),
       }).catch((e: any) => console.error('Followers count update error:', e));
 

@@ -56,13 +56,19 @@ export default observer(function UserProfileScreen() {
   const blockedIds = moderationState$.blockedUserIds.get();
   const isBlocked = !!user && blockedIds.includes(user.id);
 
+  // ÖNEMLİ: yalnızca primitive currentUser?.id'ye bağlıyız. Daha önce
+  // currentUser OBJESİNE bağlıydı; followUser local auth state'i her
+  // güncellediğinde yeni obje referansı bu effect'i tetikliyor, sayfa
+  // tam ekran spinner'a düşüp baştan yükleniyordu ("gidip gelme" bug'ı).
+  const currentUserId = currentUser?.id;
+
   const loadUserData = useCallback(async () => {
     try {
       setIsLoading(true);
       const userData = await authActions.getUserById(id);
       if (userData) {
         setUser(userData);
-        if (currentUser && currentUser.id !== userData.id) {
+        if (currentUserId && currentUserId !== userData.id) {
           const following = await authActions.isFollowingUser(userData.id);
           setIsFollowing(following);
         }
@@ -75,7 +81,7 @@ export default observer(function UserProfileScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [id, currentUser]);
+  }, [id, currentUserId]);
 
   useEffect(() => {
     let convUnsub: (() => void) | undefined;
@@ -86,9 +92,9 @@ export default observer(function UserProfileScreen() {
       }
     };
     load();
-    if (currentUser?.id) moderationActions.loadBlockedUsers();
+    if (currentUserId) moderationActions.loadBlockedUsers();
     return () => { if (convUnsub) convUnsub(); };
-  }, [id, loadUserData, currentUser?.id]);
+  }, [id, loadUserData, currentUserId]);
 
   const loadUserStories = async (userId: string) => {
     try {
@@ -130,31 +136,34 @@ export default observer(function UserProfileScreen() {
     } catch { setConversationsLoading(false); }
   };
 
-  const handleFollow = async () => {
+  // Optimistic: UI anında güncellenir, Firestore işi arka planda yürür,
+  // hata olursa geri alınır. Buton spinner'ı beklemeye gerek kalmaz.
+  const applyFollowState = (next: boolean) => {
+    setIsFollowing(next);
+    setUser(u => u
+      ? { ...u, followersCount: Math.max(0, (u.followersCount || 0) + (next ? 1 : -1)) }
+      : u);
+  };
+
+  const performFollowToggle = (next: boolean) => {
+    if (isFollowLoading || !user) return;
+    setIsFollowLoading(true);
+    applyFollowState(next);
+    (next ? authActions.followUser(user.id) : authActions.unfollowUser(user.id))
+      .then(r => { if (!r?.success) applyFollowState(!next); })
+      .catch(() => applyFollowState(!next))
+      .finally(() => setIsFollowLoading(false));
+  };
+
+  const handleFollow = () => {
     if (!user || !currentUser) return;
     if (isFollowing) {
       Alert.alert('Takipten Çık', `${user.displayName} adlı kullanıcıyı takipten çıkmak istiyor musun?`, [
         { text: 'İptal', style: 'cancel' },
-        { text: 'Takipten Çık', style: 'destructive', onPress: async () => {
-          try {
-            setIsFollowLoading(true);
-            const r = await authActions.unfollowUser(user.id);
-            if (r.success) {
-              setIsFollowing(false);
-              setUser({ ...user, followersCount: Math.max((user.followersCount || 0) - 1, 0) });
-            }
-          } finally { setIsFollowLoading(false); }
-        }},
+        { text: 'Takipten Çık', style: 'destructive', onPress: () => performFollowToggle(false) },
       ]);
     } else {
-      try {
-        setIsFollowLoading(true);
-        const r = await authActions.followUser(user.id);
-        if (r.success) {
-          setIsFollowing(true);
-          setUser({ ...user, followersCount: (user.followersCount || 0) + 1 });
-        }
-      } finally { setIsFollowLoading(false); }
+      performFollowToggle(true);
     }
   };
 
@@ -321,12 +330,13 @@ export default observer(function UserProfileScreen() {
           {/* Actions */}
           {!isOwnProfile && (
             <View style={styles.actionRow}>
+              {/* Optimistic akış: spinner yok — etiket anında değişir,
+                  isFollowLoading yalnızca çift tıklamayı engeller. */}
               <Button
                 label={isFollowing ? "Takip Ediliyor" : "Takip Et"}
                 variant={isFollowing ? "secondary" : "primary"}
                 icon={isFollowing ? "checkmark" : "add"}
                 size="md"
-                loading={isFollowLoading}
                 onPress={handleFollow}
                 style={{ flex: 1 }}
               />
@@ -389,7 +399,7 @@ export default observer(function UserProfileScreen() {
               ]}
             >
               <Text variant="heading" style={{ fontWeight: "700" }}>
-                {firstName}'in Bahçesi
+                {`${firstName}'in Bahçesi`}
               </Text>
               <Text variant="caption" tone="textLight">
                 {userStories.length} açan hikâye

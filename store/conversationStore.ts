@@ -429,9 +429,9 @@ export const conversationActions = {
           await deleteDoc(userLikedConversationsDoc.docs[0].ref);
         }
         
-        // Gerçek beğeni sayısını hesapla
-        const allLikes = await getDocs(collection(db, 'conversations', conversationId, 'likes'));
-        await updateDoc(conversationRef, { likesCount: allLikes.size });
+        // Atomik azalt — tüm likes koleksiyonunu okuyup saymak her beğeni
+        // geri almada O(n) okumaydı.
+        await updateDoc(conversationRef, { likesCount: increment(-1) });
       } else {
         // Like - conversations/{conversationId}/likes koleksiyonuna ekle
         await addDoc(collection(db, 'conversations', conversationId, 'likes'), {
@@ -445,10 +445,9 @@ export const conversationActions = {
           createdAt: serverTimestamp(),
         });
         
-        // Gerçek beğeni sayısını hesapla
-        const allLikes = await getDocs(collection(db, 'conversations', conversationId, 'likes'));
-        await updateDoc(conversationRef, { likesCount: allLikes.size });
-        
+        // Atomik artır (bkz. unlike dalındaki not).
+        await updateDoc(conversationRef, { likesCount: increment(1) });
+
         // Bildirim gönderme işlemini arka planda yap
         this.sendConversationLikeNotification(conversationId, userId);
       }

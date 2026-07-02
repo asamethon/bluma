@@ -142,11 +142,9 @@ export default observer(function CommentsScreen() {
     }
 
     try {
-      const result = await storyActions.likeComment(id, commentId);
-      if (result.success) {
-        // Reload comments to get updated like status
-        await storyActions.loadStoryComments(id);
-      }
+      // Tam liste reload'u YOK — ekrandaki real-time listener sayaç
+      // değişikliğini kendisi getirir; reload tüm listeyi titretiyordu.
+      await storyActions.likeComment(id, commentId);
     } catch (error) {
       console.error('Like comment error:', error);
     }
@@ -190,10 +188,8 @@ export default observer(function CommentsScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              const result = await storyActions.deleteComment(id, commentId);
-              if (result.success) {
-                await storyActions.loadStoryComments(id);
-              }
+              // Reload gereksiz — real-time listener silinen yorumu düşürür.
+              await storyActions.deleteComment(id, commentId);
             } catch (error) {
               console.error('Delete comment error:', error);
             }
