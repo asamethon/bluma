@@ -1,5 +1,5 @@
-import { Colors } from "@/constants/Colors";
 import { pushNotificationService } from "@/services/pushNotificationService";
+import { useTheme } from "@/constants/theme";
 import { authActions, authState$ } from "@/store/authStore";
 import { preferencesActions, preferencesState$ } from "@/store/preferencesStore";
 import { Ionicons } from "@expo/vector-icons";
@@ -12,14 +12,12 @@ import {
     Switch,
     Text,
     TouchableOpacity,
-    useColorScheme,
     View,
 } from "react-native";
 import { Screen } from '@/components/ui';
 
 export default function SettingsScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
   const { user } = authState$.get();

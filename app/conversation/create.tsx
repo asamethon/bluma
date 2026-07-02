@@ -1,4 +1,3 @@
-import { Colors } from '@/constants/Colors';
 import { imageUploadService } from '@/services/imageUploadService';
 import { pushNotificationService } from '@/services/pushNotificationService';
 import { authState$ } from '@/store/authStore';
@@ -17,14 +16,13 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  useColorScheme,
   View,
 } from 'react-native';
 import { Screen } from '@/components/ui';
+import { useTheme } from '@/constants/theme';
 
 export default observer(function CreateConversationScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const { colors } = useTheme();
   const router = useRouter();
   const currentUser = authState$.user.get();
 

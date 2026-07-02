@@ -1,5 +1,5 @@
-import { Colors } from "@/constants/Colors";
 import { authActions, authState$ } from "@/store/authStore";
+import { useTheme } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { observer } from "@legendapp/state/react";
 import { Stack, useRouter } from "expo-router";
@@ -13,7 +13,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  useColorScheme,
   View,
 } from "react-native";
 import { Screen } from '@/components/ui';
@@ -36,8 +35,7 @@ const FAQS: Faq[] = [
 ];
 
 export default observer(function HelpScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
   const { user: currentUser } = authState$.get();

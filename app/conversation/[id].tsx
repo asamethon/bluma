@@ -1,5 +1,4 @@
 import ImageModal from '@/components/ImageModal';
-import { Colors } from '@/constants/Colors';
 import { imageUploadService } from '@/services/imageUploadService';
 import { authState$ } from '@/store/authStore';
 import { conversationActions, conversationState$ } from '@/store/conversationStore';
@@ -19,14 +18,13 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  useColorScheme,
   View,
 } from 'react-native';
 import { Screen } from '@/components/ui';
+import { useTheme } from '@/constants/theme';
 
 export default observer(function ConversationDetailScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const { colors } = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const currentUser = authState$.user.get();

@@ -1,4 +1,4 @@
-import { Colors } from '@/constants/Colors';
+import { useTheme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import React from 'react';
@@ -8,7 +8,6 @@ import {
     Pressable,
     StyleSheet,
     TouchableOpacity,
-    useColorScheme,
     View,
 } from 'react-native';
 
@@ -21,8 +20,7 @@ interface ImageModalProps {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("screen");
 
 export default function ImageModal({ visible, imageUri, onClose }: ImageModalProps) {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const { colors } = useTheme();
 
   return (
     <Modal

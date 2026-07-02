@@ -1,5 +1,5 @@
-import { Colors } from '@/constants/Colors';
 import { authState$ } from '@/store/authStore';
+import { useTheme } from '@/constants/theme';
 import { storyActions, storyState$ } from '@/store/storyStore';
 import { Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,14 +13,12 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
-    useColorScheme,
     View,
 } from 'react-native';
 import { Screen } from '@/components/ui';
 
 export default observer(function DraftsScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const { colors } = useTheme();
   const router = useRouter();
   const { user: currentUser } = authState$.get();
   const { userStories, isLoading } = storyState$.get();

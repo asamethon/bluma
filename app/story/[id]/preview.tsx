@@ -1,5 +1,5 @@
-import { Colors } from '@/constants/Colors';
 import { authState$ } from '@/store/authStore';
+import { useTheme } from '@/constants/theme';
 import { storyActions, storyState$ } from '@/store/storyStore';
 import { Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,7 +13,6 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  useColorScheme,
   View,
 } from 'react-native';
 import { Screen } from '@/components/ui';
@@ -26,8 +25,7 @@ const H_GAP = 16;
 
 export default function StoryPreviewScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const { colors } = useTheme();
   const router = useRouter();
   const { bottom } = useSafeAreaInsets();
 

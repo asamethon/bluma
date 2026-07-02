@@ -1,5 +1,4 @@
 import ReportSheet from '@/components/ReportSheet';
-import { Colors } from '@/constants/Colors';
 import { authState$ } from '@/store/authStore';
 import { storyActions, storyState$ } from '@/store/storyStore';
 import { Comment } from '@/types';
@@ -18,17 +17,16 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  useColorScheme,
   View,
 } from 'react-native';
 import { Screen } from '@/components/ui';
+import { useTheme } from '@/constants/theme';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 export default observer(function CommentsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const { colors } = useTheme();
   const { user: currentUser } = authState$.get();
   const { storyComments = [] } = storyState$.get();
   

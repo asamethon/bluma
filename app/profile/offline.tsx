@@ -1,5 +1,5 @@
-import { Colors } from '@/constants/Colors';
 import { storyActions, storyState$ } from '@/store/storyStore';
+import { useTheme } from '@/constants/theme';
 import { Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { observer } from '@legendapp/state/react';
@@ -13,14 +13,12 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  useColorScheme,
   View,
 } from 'react-native';
 import { Screen } from '@/components/ui';
 
 export default observer(function OfflineLibraryScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const { colors } = useTheme();
   const router = useRouter();
   const { offlineStories } = storyState$.get();
 

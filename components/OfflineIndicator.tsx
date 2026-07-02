@@ -1,12 +1,11 @@
-import { Colors } from '@/constants/Colors';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { useTheme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Animated,
     StyleSheet,
     Text,
-    useColorScheme,
     View
 } from 'react-native';
 
@@ -15,8 +14,7 @@ interface OfflineIndicatorProps {
 }
 
 export default function OfflineIndicator({ showWhenOnline = false }: OfflineIndicatorProps) {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const { colors } = useTheme();
   const networkState = useNetworkStatus();
 
   const [slideAnim] = useState(new Animated.Value(-60));
