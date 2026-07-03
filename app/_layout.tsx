@@ -19,7 +19,7 @@ import {
   HankenGrotesk_700Bold,
   HankenGrotesk_800ExtraBold,
 } from '@expo-google-fonts/hanken-grotesk';
-import { getAnalytics, logScreenView } from '@react-native-firebase/analytics';
+import { getAnalytics, logEvent } from '@react-native-firebase/analytics';
 import { Stack, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -55,7 +55,10 @@ export default observer(function RootLayout() {
   // bu event hangi ekranların kullanıldığını gösterir.
   useEffect(() => {
     if (!pathname) return;
-    logScreenView(getAnalytics(), { screen_name: pathname, screen_class: pathname })
+    // logScreenView() dahili olarak hâlâ eski (deprecated) native metodu
+    // çağırıyor ve konsola uyarı basıyor — 'screen_view' event'ini doğrudan
+    // logEvent() ile göndermek RNFirebase'in önerdiği (uyarısız) yol.
+    logEvent(getAnalytics(), 'screen_view', { screen_name: pathname, screen_class: pathname })
       .catch(() => {});
   }, [pathname]);
 
