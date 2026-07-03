@@ -13,7 +13,7 @@ import {
   increment,
 } from '@react-native-firebase/firestore';
 import { notificationActions } from '../../../store/notificationStore';
-import { authState$, User } from '../../../store/authStore';
+import { authState$, User } from '@/store/authState';
 
 // Follow a user
 async function followUser(userIdToFollow: string) {

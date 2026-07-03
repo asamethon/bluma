@@ -14,9 +14,9 @@ import {
     updateDoc,
     where,
 } from '@react-native-firebase/firestore';
-import { authState$ } from '../../../store/authStore';
+import { authState$ } from '@/store/authState';
 import { notificationActions } from '../../../store/notificationStore';
-import { storyState$ } from '../../../store/storyStore';
+import { storyState$ } from '@/store/storyState';
 import { getStoryById } from './storyApi';
 
 // Like/Unlike story

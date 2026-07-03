@@ -12,7 +12,7 @@ import {
   deleteDoc,
   serverTimestamp,
 } from '@react-native-firebase/firestore';
-import { authState$, User } from '../../../store/authStore';
+import { authState$, User } from '@/store/authState';
 
 // Check if username is available
 async function checkUsernameAvailability(username: string): Promise<boolean> {

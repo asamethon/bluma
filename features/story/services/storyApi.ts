@@ -1,4 +1,4 @@
-import analytics from '@react-native-firebase/analytics';
+import { getAnalytics, logEvent } from '@react-native-firebase/analytics';
 import { Story } from '@/types';
 import {
     addDoc,
@@ -14,9 +14,9 @@ import {
     where,
     query,
 } from '@react-native-firebase/firestore';
-import { authState$ } from '../../../store/authStore';
+import { authState$ } from '@/store/authState';
 import { notificationActions } from '../../../store/notificationStore';
-import { storyState$ } from '../../../store/storyStore';
+import { storyState$ } from '@/store/storyState';
 import { getUserById } from './userCache';
 
 // Story CRUD operations
@@ -72,7 +72,7 @@ export async function createStory(storyData: Omit<Story, 'id' | 'createdAt' | 'u
         'new_story'
       ).catch(() => {});
 
-      analytics().logEvent('story_publish', { story_id: docRef.id }).catch(() => {});
+      logEvent(getAnalytics(), 'story_publish', { story_id: docRef.id }).catch(() => {});
     }
 
     storyState$.isLoading.set(false);
@@ -124,7 +124,7 @@ export async function updateStory(storyId: string, updates: Partial<Story>) {
         notificationActions.announceStoryToFollowers(
           user.id, authorName, storyId, title, 'new_story'
         ).catch(() => {});
-        analytics().logEvent('story_publish', { story_id: storyId }).catch(() => {});
+        logEvent(getAnalytics(), 'story_publish', { story_id: storyId }).catch(() => {});
       } else if (staysPublished && chapterAdded) {
         notificationActions.announceStoryToFollowers(
           user.id, authorName, storyId, title, 'new_chapter', updates.chaptersCount

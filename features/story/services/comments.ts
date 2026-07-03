@@ -16,10 +16,10 @@ import {
     updateDoc,
     where,
 } from '@react-native-firebase/firestore';
-import { authState$ } from '../../../store/authStore';
+import { authState$ } from '@/store/authState';
 import { moderationActions } from '../../../store/moderationStore';
 import { notificationActions } from '../../../store/notificationStore';
-import { storyState$ } from '../../../store/storyStore';
+import { storyState$ } from '@/store/storyState';
 import { getStoryById } from './storyApi';
 import { getUserById } from './userCache';
 

@@ -2,7 +2,7 @@ import { signOutFromGoogle } from '@/config/googleSignIn';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAuth, onAuthStateChanged, signOut as firebaseSignOut, getIdToken } from '@react-native-firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp } from '@react-native-firebase/firestore';
-import { authState$, User } from '../../../store/authStore';
+import { authState$, User } from '@/store/authState';
 
 // User real-time listener için unsubscribe fonksiyonu
 let userUnsubscribe: (() => void) | null = null;
@@ -87,11 +87,17 @@ async function initializeAuth() {
 
           console.log('Firebase auth initialization successful');
         } catch (firebaseError: any) {
-          console.error('Error with Firebase user:', firebaseError);
+          // 'no-current-user': onAuthStateChanged bazen native oturum
+          // temizlendikten hemen sonra hâlâ eski (stale) bir user objesiyle
+          // tetiklenebiliyor — getIdToken() o anda "oturum yok" hatası verir.
+          // Bu gerçek bir hata değil, kullanıcı zaten çıkış yapmış demektir,
+          // bu yüzden bu iki bilinen kod için console.error yerine console.log.
+          const isBenign = firebaseError.code === 'auth/user-not-found' || firebaseError.code === 'auth/no-current-user';
+          if (isBenign) console.log('Firebase user not found / no current user:', firebaseError.code);
+          else console.error('Error with Firebase user:', firebaseError);
 
-          // Handle specific Firebase errors
-          if (firebaseError.code === 'auth/user-not-found') {
-            console.log('Firebase user not found, clearing local data');
+          if (isBenign) {
+            console.log('Clearing local data');
             // Clear any stale local data and sign out
             try {
               await firebaseSignOut(getAuth());

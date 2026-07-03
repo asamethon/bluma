@@ -1,7 +1,7 @@
 import { offlineStorageService } from '@/services/offlineStorageService';
 import { Story } from '@/types';
 import NetInfo from '@react-native-community/netinfo';
-import { storyState$ } from '../../../store/storyStore';
+import { storyState$ } from '@/store/storyState';
 import { getStoryById } from './storyApi';
 
 // ===== OFFLINE STORY MANAGEMENT =====

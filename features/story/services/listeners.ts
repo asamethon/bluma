@@ -9,9 +9,9 @@ import {
     query,
     where,
 } from '@react-native-firebase/firestore';
-import { authState$ } from '../../../store/authStore';
+import { authState$ } from '@/store/authState';
 import { moderationActions } from '../../../store/moderationStore';
-import { storyState$ } from '../../../store/storyStore';
+import { storyState$ } from '@/store/storyState';
 import { loadDiscoverStories, loadFollowingStories } from './discover';
 import { loadOfflineStories } from './offline';
 import { getStoryById } from './storyApi';

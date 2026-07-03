@@ -5,13 +5,14 @@ import {
 import { Spacing, categoryColor, useTheme } from '@/constants/theme';
 import { buildStoryShareUrl } from '@/utils/deepLinks';
 import { useGuestGate } from '@/contexts/GuestContext';
-import { authActions, authState$ } from '@/store/authStore';
+import { useFollow } from '@/features/social/hooks/useFollow';
+import { authState$ } from '@/store/authStore';
 import { challengeActions } from '@/store/challengeStore';
 import { moderationActions } from '@/store/moderationStore';
 import { storyActions, storyState$ } from '@/store/storyStore';
 import { Ionicons } from '@expo/vector-icons';
 import { observer } from '@legendapp/state/react';
-import analytics from '@react-native-firebase/analytics';
+import { getAnalytics, logEvent } from '@react-native-firebase/analytics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
@@ -70,8 +71,6 @@ export default observer(function ReaderScreen() {
   const [showMenu, setShowMenu] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
   const [listSheetVisible, setListSheetVisible] = useState(false);
-  const [isFollowingAuthor, setIsFollowingAuthor] = useState(false);
-  const [followBusy, setFollowBusy] = useState(false);
 
   // Chrome visibility — animated
   const chromeAnim = useRef(new Animated.Value(1)).current;
@@ -103,7 +102,7 @@ export default observer(function ReaderScreen() {
       // Asıl okuma görüntülenmeyi saymalı (bilgi ekranı tek kaynak olmamalı).
       // Store, kullanıcı başına 3 görüntülenme ile sınırlar; misafirleri saymaz.
       storyActions.incrementStoryViews(id);
-      analytics().logEvent('story_read', { story_id: String(id) }).catch(() => {});
+      logEvent(getAnalytics(), 'story_read', { story_id: String(id) }).catch(() => {});
     }
   }, [id]);
 
@@ -141,31 +140,11 @@ export default observer(function ReaderScreen() {
     if (currentStory && currentStory.id === id) setStory(currentStory);
   }, [currentStory, id]);
 
-  // Yazarın takip durumunu yükle (giriş yapmış kullanıcı için)
-  useEffect(() => {
-    const authorId = story?.authorId;
-    if (!authorId || isGuest || !currentUser?.id || authorId === currentUser.id) return;
-    authActions.isFollowingUser(authorId)
-      .then(setIsFollowingAuthor)
-      .catch(() => {});
-  }, [story?.authorId, isGuest, currentUser?.id]);
-
-  const handleToggleFollow = async () => {
-    if (!story?.authorId || followBusy) return;
+  // Yazar takibi — optimistic mantık features/social/useFollow'da
+  const follow = useFollow(story?.authorId);
+  const handleToggleFollow = () => {
     if (!requireAuth('follow')) return;
-    const next = !isFollowingAuthor;
-    setIsFollowingAuthor(next); // optimistic
-    setFollowBusy(true);
-    try {
-      const r = next
-        ? await authActions.followUser(story.authorId)
-        : await authActions.unfollowUser(story.authorId);
-      if (!r?.success) setIsFollowingAuthor(!next);
-    } catch {
-      setIsFollowingAuthor(!next);
-    } finally {
-      setFollowBusy(false);
-    }
+    follow.toggle();
   };
 
   const loadStory = async () => {
@@ -418,12 +397,11 @@ export default observer(function ReaderScreen() {
               <Text variant="subheading" style={{ fontWeight: '700' }}>{story.author?.displayName || 'Yazar'}</Text>
               <Text variant="caption" tone="textSecondary">@{story.author?.username || story.author?.email?.split('@')[0] || 'yazar'}</Text>
             </View>
-            {currentUser?.id !== story.authorId && (
+            {!follow.isSelf && (
               <Button
-                label={isFollowingAuthor ? 'Takip Ediliyor' : 'Takip Et'}
-                variant={isFollowingAuthor ? 'ghost' : 'outline'}
+                label={follow.isFollowing ? 'Takip Ediliyor' : 'Takip Et'}
+                variant={follow.isFollowing ? 'ghost' : 'outline'}
                 size="sm"
-                disabled={followBusy}
                 onPress={handleToggleFollow}
               />
             )}

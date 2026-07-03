@@ -17,7 +17,7 @@ import {
   setDoc,
   serverTimestamp,
 } from '@react-native-firebase/firestore';
-import { authState$, User } from '../../../store/authStore';
+import { authState$, User } from '@/store/authState';
 
 // Sign in with email
 async function signInWithEmail(email: string, password: string) {

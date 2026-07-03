@@ -11,8 +11,8 @@ import {
     updateDoc,
     where,
 } from '@react-native-firebase/firestore';
-import { authState$ } from '../../../store/authStore';
-import { storyState$ } from '../../../store/storyStore';
+import { authState$ } from '@/store/authState';
+import { storyState$ } from '@/store/storyState';
 
 // Hikaye görüntülenme sayısını artır (kullanıcı bazlı limit ile)
 export async function incrementStoryViews(storyId: string) {

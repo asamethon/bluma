@@ -15,7 +15,7 @@ import {
   serverTimestamp,
 } from '@react-native-firebase/firestore';
 import { notificationActions } from '../../../store/notificationStore';
-import { authState$, User } from '../../../store/authStore';
+import { authState$, User } from '@/store/authState';
 
 // Sign in with Google
 async function signInWithGoogle() {
