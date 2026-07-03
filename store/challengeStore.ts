@@ -1,5 +1,11 @@
 import { observable } from '@legendapp/state';
-import firestore from '@react-native-firebase/firestore';
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  updateDoc,
+  arrayUnion,
+} from '@react-native-firebase/firestore';
 
 // ─────────────────────────────────────────────────────────────────
 // Sabit tanımlar — değişmez, kodda yaşar
@@ -116,11 +122,11 @@ function getWeekStartStr(): string {
 export const challengeActions = {
   async loadProgress(userId: string) {
     try {
-      const userRef = firestore().collection('users').doc(userId);
-      const doc = await userRef.get();
-      if (!doc.exists) return;
+      const userRef = doc(getFirestore(), 'users', userId);
+      const userDoc = await getDoc(userRef);
+      if (!userDoc.exists) return;
 
-      const data = doc.data() as any;
+      const data = userDoc.data() as any;
       const today = getTodayStr();
       const weekStart = getWeekStartStr();
       const isNewWeek = (data.challengeWeekStart || '') < weekStart;
@@ -166,7 +172,7 @@ export const challengeActions = {
 
       // Streak ve lastActiveDate'i geri yaz
       if (data.lastActiveDate !== today || isNewWeek) {
-        await userRef.update({
+        await updateDoc(userRef, {
           streak: newStreak,
           lastActiveDate: today,
           challengeWeekStart: weekStart,
@@ -191,9 +197,9 @@ export const challengeActions = {
       challengeState$.xp.set(newXp);
       challengeState$.claimedChallenges.set(newClaimed);
 
-      await firestore().collection('users').doc(userId).update({
+      await updateDoc(doc(getFirestore(), 'users', userId), {
         xp: newXp,
-        claimedChallenges: firestore.FieldValue.arrayUnion(challengeId),
+        claimedChallenges: arrayUnion(challengeId),
       });
     } catch (error) {
       console.error('challengeStore claimChallenge hatası:', error);
@@ -212,7 +218,7 @@ export const challengeActions = {
 
       challengeState$.challengeProgress.set(progress);
 
-      await firestore().collection('users').doc(userId).update({
+      await updateDoc(doc(getFirestore(), 'users', userId), {
         challengeProgress: progress,
       });
     } catch (error) {

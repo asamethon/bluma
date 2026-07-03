@@ -1,4 +1,17 @@
-import firestore from '@react-native-firebase/firestore';
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  deleteDoc,
+  updateDoc,
+  query,
+  where,
+  serverTimestamp,
+  increment,
+} from '@react-native-firebase/firestore';
 import { notificationActions } from '../../../store/notificationStore';
 import { authState$, User } from '../../../store/authStore';
 
@@ -8,30 +21,30 @@ async function followUser(userIdToFollow: string) {
     const currentUser = authState$.user.get();
     if (!currentUser) return { success: false, error: 'Kullanıcı bulunamadı.' };
 
-    const db = firestore();
+    const db = getFirestore();
 
     // Asıl takip ilişkisi: iki doküman paralel yazılır. Yalnızca bunlar
     // beklenir — sayaçlar ve bildirim arka planda yürür ki buton saniyelerce
     // dönmesin (push bildirimi HTTP çağrısı tek başına 1-3 sn sürebiliyor).
-    const currentUserFollowingRef = db.collection('users').doc(currentUser.id).collection('following').doc(userIdToFollow);
-    const targetUserFollowersRef = db.collection('users').doc(userIdToFollow).collection('followers').doc(currentUser.id);
+    const currentUserFollowingRef = doc(db, 'users', currentUser.id, 'following', userIdToFollow);
+    const targetUserFollowersRef = doc(db, 'users', userIdToFollow, 'followers', currentUser.id);
     await Promise.all([
-      currentUserFollowingRef.set({
+      setDoc(currentUserFollowingRef, {
         userId: userIdToFollow,
-        followedAt: firestore.FieldValue.serverTimestamp(),
+        followedAt: serverTimestamp(),
       }),
-      targetUserFollowersRef.set({
+      setDoc(targetUserFollowersRef, {
         userId: currentUser.id,
-        followedAt: firestore.FieldValue.serverTimestamp(),
+        followedAt: serverTimestamp(),
       }),
     ]);
 
     // Sayaçlar — atomik increment, arka planda; hata takibi bozmaz.
-    db.collection('users').doc(currentUser.id).update({
-      followingCount: firestore.FieldValue.increment(1),
+    updateDoc(doc(db, 'users', currentUser.id), {
+      followingCount: increment(1),
     }).catch((e: any) => console.error('Following count update error:', e));
-    db.collection('users').doc(userIdToFollow).update({
-      followersCount: firestore.FieldValue.increment(1),
+    updateDoc(doc(db, 'users', userIdToFollow), {
+      followersCount: increment(1),
     }).catch((e: any) => console.error('Followers count update error:', e));
 
     // Bildirim (in-app + push) — arka planda.
@@ -60,21 +73,21 @@ async function unfollowUser(userIdToUnfollow: string) {
     const currentUser = authState$.user.get();
     if (!currentUser) return { success: false, error: 'Kullanıcı bulunamadı.' };
 
-    const db = firestore();
+    const db = getFirestore();
 
     // İlişki dokümanları paralel silinir; sayaçlar arka planda (bkz. followUser).
-    const currentUserFollowingRef = db.collection('users').doc(currentUser.id).collection('following').doc(userIdToUnfollow);
-    const targetUserFollowersRef = db.collection('users').doc(userIdToUnfollow).collection('followers').doc(currentUser.id);
+    const currentUserFollowingRef = doc(db, 'users', currentUser.id, 'following', userIdToUnfollow);
+    const targetUserFollowersRef = doc(db, 'users', userIdToUnfollow, 'followers', currentUser.id);
     await Promise.all([
-      currentUserFollowingRef.delete(),
-      targetUserFollowersRef.delete(),
+      deleteDoc(currentUserFollowingRef),
+      deleteDoc(targetUserFollowersRef),
     ]);
 
-    db.collection('users').doc(currentUser.id).update({
-      followingCount: firestore.FieldValue.increment(-1),
+    updateDoc(doc(db, 'users', currentUser.id), {
+      followingCount: increment(-1),
     }).catch((e: any) => console.error('Following count update error:', e));
-    db.collection('users').doc(userIdToUnfollow).update({
-      followersCount: firestore.FieldValue.increment(-1),
+    updateDoc(doc(db, 'users', userIdToUnfollow), {
+      followersCount: increment(-1),
     }).catch((e: any) => console.error('Followers count update error:', e));
 
     // Update local state
@@ -96,9 +109,9 @@ async function isFollowingUser(userId: string): Promise<boolean> {
     const currentUser = authState$.user.get();
     if (!currentUser) return false;
 
-    const db = firestore();
-    const followingRef = db.collection('users').doc(currentUser.id).collection('following').doc(userId);
-    const followingDoc = await followingRef.get();
+    const db = getFirestore();
+    const followingRef = doc(db, 'users', currentUser.id, 'following', userId);
+    const followingDoc = await getDoc(followingRef);
 
     return followingDoc.exists();
   } catch (error) {
@@ -110,8 +123,8 @@ async function isFollowingUser(userId: string): Promise<boolean> {
 // Get user followers count
 async function getUserFollowersCount(userId: string): Promise<number> {
   try {
-    const db = firestore();
-    const userDoc = await db.collection('users').doc(userId).get();
+    const db = getFirestore();
+    const userDoc = await getDoc(doc(db, 'users', userId));
     const userData = userDoc.data();
     return userData?.followersCount || 0;
   } catch (error) {
@@ -123,8 +136,8 @@ async function getUserFollowersCount(userId: string): Promise<number> {
 // Search users by username or display name
 async function searchUsers(searchQuery: string): Promise<User[]> {
   try {
-    const db = firestore();
-    const usersRef = db.collection('users');
+    const db = getFirestore();
+    const usersRef = collection(db, 'users');
 
     // Clean search query
     const cleanQuery = searchQuery.toLowerCase().trim();
@@ -135,12 +148,12 @@ async function searchUsers(searchQuery: string): Promise<User[]> {
     const users: User[] = [];
 
     // Search by username (exact match first, then contains)
-    const exactUsernameQuery = usersRef.where('username', '==', cleanQuery);
-    const exactUsernameSnapshot = await exactUsernameQuery.get();
+    const exactUsernameQuery = query(usersRef, where('username', '==', cleanQuery));
+    const exactUsernameSnapshot = await getDocs(exactUsernameQuery);
 
     // Search by username (contains - for partial matches)
-    const usernameQuery = usersRef.where('username', '>=', cleanQuery).where('username', '<=', cleanQuery + '');
-    const usernameSnapshot = await usernameQuery.get();
+    const usernameQuery = query(usersRef, where('username', '>=', cleanQuery), where('username', '<=', cleanQuery + ''));
+    const usernameSnapshot = await getDocs(usernameQuery);
 
     // Search by display name (contains). displayName büyük harfle
     // saklanabildiği için hem küçük harfli hem baş harfi büyük varyantı
@@ -150,7 +163,7 @@ async function searchUsers(searchQuery: string): Promise<User[]> {
     const displayNameVariants = Array.from(new Set([cleanQuery, capitalizedQuery]));
     const displayNameSnapshots = await Promise.all(
       displayNameVariants.map(v =>
-        usersRef.where('displayName', '>=', v).where('displayName', '<=', v + '').get()
+        getDocs(query(usersRef, where('displayName', '>=', v), where('displayName', '<=', v + '')))
       )
     );
 

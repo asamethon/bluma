@@ -1,6 +1,22 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  reauthenticateWithCredential,
+  updatePassword,
+  updateProfile,
+  getIdToken,
+  EmailAuthProvider,
+} from '@react-native-firebase/auth';
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+} from '@react-native-firebase/firestore';
 import { authState$, User } from '../../../store/authStore';
 
 // Sign in with email
@@ -8,14 +24,14 @@ async function signInWithEmail(email: string, password: string) {
   try {
     authState$.isLoading.set(true);
 
-    const authInstance = auth();
-    const userCredential = await authInstance.signInWithEmailAndPassword(email, password);
+    const authInstance = getAuth();
+    const userCredential = await signInWithEmailAndPassword(authInstance, email, password);
     const firebaseUser = userCredential.user;
 
     // Get user data from Firestore
-    const db = firestore();
-    const userDocRef = db.collection('users').doc(firebaseUser.uid);
-    const userDoc = await userDocRef.get();
+    const db = getFirestore();
+    const userDocRef = doc(db, 'users', firebaseUser.uid);
+    const userDoc = await getDoc(userDocRef);
     let userData = userDoc.data();
 
     if (!userData) {
@@ -25,15 +41,15 @@ async function signInWithEmail(email: string, password: string) {
         email: firebaseUser.email || '',
         displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
         authProvider: 'email' as const,
-        createdAt: firestore.FieldValue.serverTimestamp(),
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       };
 
-      await userDocRef.set(userData);
+      await setDoc(userDocRef, userData);
     }
 
     // Get Firebase token
-    const token = await firebaseUser.getIdToken();
+    const token = await getIdToken(firebaseUser);
 
     // Update state
     authState$.token.set(token);
@@ -98,12 +114,12 @@ async function signUpWithEmail(email: string, password: string, displayName: str
   try {
     authState$.isLoading.set(true);
 
-    const authInstance = auth();
-    const userCredential = await authInstance.createUserWithEmailAndPassword(email, password);
+    const authInstance = getAuth();
+    const userCredential = await createUserWithEmailAndPassword(authInstance, email, password);
     const firebaseUser = userCredential.user;
 
     // Update Firebase profile
-    await firebaseUser.updateProfile({
+    await updateProfile(firebaseUser, {
       displayName: displayName,
     });
 
@@ -113,17 +129,17 @@ async function signUpWithEmail(email: string, password: string, displayName: str
       email: firebaseUser.email || '',
       displayName: displayName,
       authProvider: 'email' as const,
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
 
     // Save to Firestore
-    const db = firestore();
-    const userDocRef = db.collection('users').doc(firebaseUser.uid);
-    await userDocRef.set(userData);
+    const db = getFirestore();
+    const userDocRef = doc(db, 'users', firebaseUser.uid);
+    await setDoc(userDocRef, userData);
 
     // Get Firebase token
-    const token = await firebaseUser.getIdToken();
+    const token = await getIdToken(firebaseUser);
 
     // Update state
     authState$.token.set(token);
@@ -182,7 +198,7 @@ async function resetPassword(email: string) {
     authState$.isLoading.set(true);
 
     // Send password reset email
-    await auth().sendPasswordResetEmail(email);
+    await sendPasswordResetEmail(getAuth(), email);
 
     console.log('Password reset email sent successfully');
     return { success: true };
@@ -209,7 +225,7 @@ async function resetPassword(email: string) {
 async function changePassword(currentPassword: string, newPassword: string) {
   try {
     const user = authState$.user.get();
-    const firebaseUser = auth().currentUser;
+    const firebaseUser = getAuth().currentUser;
     if (!user || !firebaseUser) {
       return { success: false, error: 'Oturum bulunamadı. Lütfen tekrar giriş yap.' };
     }
@@ -220,9 +236,9 @@ async function changePassword(currentPassword: string, newPassword: string) {
       };
     }
 
-    const credential = auth.EmailAuthProvider.credential(user.email, currentPassword);
-    await firebaseUser.reauthenticateWithCredential(credential);
-    await firebaseUser.updatePassword(newPassword);
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(firebaseUser, credential);
+    await updatePassword(firebaseUser, newPassword);
 
     console.log('Password changed successfully');
     return { success: true };

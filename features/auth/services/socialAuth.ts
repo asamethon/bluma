@@ -1,7 +1,19 @@
 import { signInWithGoogle as signInWithGoogleSDK } from '@/config/googleSignIn';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import {
+  getAuth,
+  signInWithCredential,
+  getIdToken,
+  GoogleAuthProvider,
+  AppleAuthProvider,
+} from '@react-native-firebase/auth';
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+} from '@react-native-firebase/firestore';
 import { notificationActions } from '../../../store/notificationStore';
 import { authState$, User } from '../../../store/authStore';
 
@@ -21,21 +33,21 @@ async function signInWithGoogle() {
     console.log('Google Sign-In userInfo:', userInfo);
 
     // Create Firebase credential
-    const credential = auth.GoogleAuthProvider.credential(userInfo.data.idToken);
+    const credential = GoogleAuthProvider.credential(userInfo.data.idToken);
     console.log('Google credential created');
 
     // Sign in to Firebase
-    const authInstance = auth();
-    const userCredential = await authInstance.signInWithCredential(credential);
+    const authInstance = getAuth();
+    const userCredential = await signInWithCredential(authInstance, credential);
     const firebaseUser = userCredential.user;
     console.log('Firebase user created:', firebaseUser.uid);
 
     // Get or create user data in Firestore
     let userData: User;
     try {
-      const db = firestore();
-      const userDocRef = db.collection('users').doc(firebaseUser.uid);
-      const userDoc = await userDocRef.get();
+      const db = getFirestore();
+      const userDocRef = doc(db, 'users', firebaseUser.uid);
+      const userDoc = await getDoc(userDocRef);
       let existingUserData = userDoc.data();
 
       if (!existingUserData) {
@@ -45,12 +57,12 @@ async function signInWithGoogle() {
           email: userInfo.data.user.email,
           displayName: userInfo.data.user.name,
           authProvider: 'google' as const,
-          createdAt: firestore.FieldValue.serverTimestamp(),
-          updatedAt: firestore.FieldValue.serverTimestamp(),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
         };
 
         // Save to Firestore
-        await userDocRef.set(userData);
+        await setDoc(userDocRef, userData);
         console.log('New user data saved to Firestore');
       } else {
         // Update existing user data
@@ -60,15 +72,15 @@ async function signInWithGoogle() {
           email: userInfo.data.user.email,
           displayName: userInfo.data.user.name,
           authProvider: 'google' as const,
-          updatedAt: firestore.FieldValue.serverTimestamp(),
+          updatedAt: serverTimestamp(),
         };
 
-        await userDocRef.set({
+        await setDoc(userDocRef, {
           id: firebaseUser.uid,
           email: userInfo.data.user.email,
           displayName: userInfo.data.user.name,
           authProvider: 'google' as const,
-          updatedAt: firestore.FieldValue.serverTimestamp(),
+          updatedAt: serverTimestamp(),
         }, { merge: true });
         console.log('Existing user data updated in Firestore');
       }
@@ -93,7 +105,7 @@ async function signInWithGoogle() {
     }
 
     // Get Firebase token
-    const token = await firebaseUser.getIdToken();
+    const token = await getIdToken(firebaseUser);
     console.log('Google sign in successful with Firebase');
 
     // Update state
@@ -173,22 +185,22 @@ async function signInWithApple(credential: any) {
   try {
     authState$.isLoading.set(true);
 
-    const authInstance = auth();
-    const db = firestore();
+    const authInstance = getAuth();
+    const db = getFirestore();
 
     // Create Firebase credential for Apple
-    const appleCredential = auth.AppleAuthProvider.credential(
+    const appleCredential = AppleAuthProvider.credential(
       credential.identityToken,
       credential.nonce
     );
 
     // Sign in to Firebase with Apple credential
-    const firebaseUserCredential = await authInstance.signInWithCredential(appleCredential);
+    const firebaseUserCredential = await signInWithCredential(authInstance, appleCredential);
     const firebaseUser = firebaseUserCredential.user;
 
     // Get or create user data in Firestore
-    const userDocRef = db.collection('users').doc(firebaseUser.uid);
-    const userDoc = await userDocRef.get();
+    const userDocRef = doc(db, 'users', firebaseUser.uid);
+    const userDoc = await getDoc(userDocRef);
     let userData = userDoc.data();
 
     if (!userData) {
@@ -198,12 +210,12 @@ async function signInWithApple(credential: any) {
         email: firebaseUser.email || credential.email || 'user@icloud.com',
         displayName: firebaseUser.displayName || credential.fullName?.givenName || 'Apple User',
         authProvider: 'apple' as const,
-        createdAt: firestore.FieldValue.serverTimestamp(),
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       };
 
       // Save to Firestore
-      await userDocRef.set(userData);
+      await setDoc(userDocRef, userData);
       console.log('New Apple user data saved to Firestore');
     } else {
       // Update existing user data
@@ -211,19 +223,19 @@ async function signInWithApple(credential: any) {
         ...userData,
         email: firebaseUser.email || credential.email || userData.email,
         displayName: firebaseUser.displayName || credential.fullName?.givenName || userData.displayName,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: serverTimestamp(),
       };
 
-      await userDocRef.set({
+      await setDoc(userDocRef, {
         email: userData.email,
         displayName: userData.displayName,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: serverTimestamp(),
       }, { merge: true });
       console.log('Existing Apple user data updated in Firestore');
     }
 
     // Get Firebase token
-    const token = await firebaseUser.getIdToken();
+    const token = await getIdToken(firebaseUser);
     console.log('Apple sign in successful with Firebase');
 
     // Update state

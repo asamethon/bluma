@@ -1,7 +1,7 @@
 import { signOutFromGoogle } from '@/config/googleSignIn';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import { getAuth, onAuthStateChanged, signOut as firebaseSignOut, getIdToken } from '@react-native-firebase/auth';
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp } from '@react-native-firebase/firestore';
 import { authState$, User } from '../../../store/authStore';
 
 // User real-time listener için unsubscribe fonksiyonu
@@ -19,14 +19,9 @@ async function initializeAuth() {
     authState$.token.set(null);
 
     try {
-      if (!auth || typeof auth !== 'function') {
-        console.log('Firebase auth not available');
-        return;
-      }
-
       // Wait for Firebase to restore auth state from persistence
       const currentUser = await new Promise<any>((resolve) => {
-        const unsubscribe = auth().onAuthStateChanged((user) => {
+        const unsubscribe = onAuthStateChanged(getAuth(), (user) => {
           unsubscribe();
           resolve(user);
         });
@@ -36,7 +31,7 @@ async function initializeAuth() {
       if (currentUser) {
         try {
           // User is signed in to Firebase
-          const token = await currentUser.getIdToken();
+          const token = await getIdToken(currentUser);
           console.log('Got Firebase token');
 
           // Update state
@@ -46,46 +41,44 @@ async function initializeAuth() {
 
           // Try to get user data from Firestore (optional)
           try {
-            if (firestore && typeof firestore === 'function') {
-              const userDocRef = firestore().collection('users').doc(currentUser.uid);
-              const userDoc = await userDocRef.get();
+            const userDocRef = doc(getFirestore(), 'users', currentUser.uid);
+            const userDoc = await getDoc(userDocRef);
 
-              if (userDoc.exists()) {
-                const userData = userDoc.data() as User;
-                authState$.user.set(userData);
+            if (userDoc.exists()) {
+              const userData = userDoc.data() as User;
+              authState$.user.set(userData);
 
-                if (userData.username && userData.interests) {
-                  authState$.hasCompletedOnboarding.set(true);
-                }
-              } else {
-                // User exists in Firebase but not in Firestore - create user document
-                console.log('User exists in Firebase but not in Firestore, creating user document');
-                try {
-                  const newUser: User = {
-                    id: currentUser.uid,
-                    email: currentUser.email || '',
-                    displayName: currentUser.displayName || 'Kullanıcı',
-                    authProvider: 'google',
-                    createdAt: firestore.FieldValue.serverTimestamp(),
-                    updatedAt: firestore.FieldValue.serverTimestamp(),
-                  };
-
-                  await userDocRef.set(newUser);
-                  authState$.user.set(newUser);
-                  console.log('User document created successfully');
-                } catch (createError) {
-                  console.log('Error creating user document:', createError);
-                  // Don't fail auth if we can't create user document
-                }
+              if (userData.username && userData.interests) {
+                authState$.hasCompletedOnboarding.set(true);
               }
-
-              // Save push token
+            } else {
+              // User exists in Firebase but not in Firestore - create user document
+              console.log('User exists in Firebase but not in Firestore, creating user document');
               try {
-                const { pushNotificationService } = await import('@/services/pushNotificationService');
-                await pushNotificationService.saveUserPushToken(currentUser.uid);
-              } catch (pushError) {
-                console.log('Push token kaydedilirken hata (non-critical):', pushError);
+                const newUser: User = {
+                  id: currentUser.uid,
+                  email: currentUser.email || '',
+                  displayName: currentUser.displayName || 'Kullanıcı',
+                  authProvider: 'google',
+                  createdAt: serverTimestamp(),
+                  updatedAt: serverTimestamp(),
+                };
+
+                await setDoc(userDocRef, newUser);
+                authState$.user.set(newUser);
+                console.log('User document created successfully');
+              } catch (createError) {
+                console.log('Error creating user document:', createError);
+                // Don't fail auth if we can't create user document
               }
+            }
+
+            // Save push token
+            try {
+              const { pushNotificationService } = await import('@/services/pushNotificationService');
+              await pushNotificationService.saveUserPushToken(currentUser.uid);
+            } catch (pushError) {
+              console.log('Push token kaydedilirken hata (non-critical):', pushError);
             }
           } catch (firestoreError) {
             console.log('Firestore error (non-critical):', firestoreError);
@@ -101,7 +94,7 @@ async function initializeAuth() {
             console.log('Firebase user not found, clearing local data');
             // Clear any stale local data and sign out
             try {
-              await auth().signOut();
+              await firebaseSignOut(getAuth());
               await AsyncStorage.multiRemove([
                 'userToken',
                 'userData',
@@ -174,7 +167,7 @@ async function signOut() {
     authState$.isLoading.set(true);
 
     // Sign out from Firebase
-    await auth().signOut();
+    await firebaseSignOut(getAuth());
 
     // Sign out from Google if user was signed in with Google
     const authProvider = await AsyncStorage.getItem('authProvider');
@@ -227,12 +220,12 @@ function setupUserListener(userId: string) {
       return;
     }
 
-    const db = firestore();
-    const userDocRef = db.collection('users').doc(userId);
+    const db = getFirestore();
+    const userDocRef = doc(db, 'users', userId);
 
-    const unsubscribe = userDocRef.onSnapshot((doc) => {
-      if (doc.exists()) {
-        const userData = doc.data() as User;
+    const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const userData = docSnap.data() as User;
         authState$.user.set(userData);
         console.log('User data updated in real-time');
       }

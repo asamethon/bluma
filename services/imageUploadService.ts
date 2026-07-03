@@ -1,5 +1,5 @@
 import { IMAGE_SERVER_URL } from '@/constants/config';
-import auth from '@react-native-firebase/auth';
+import { getAuth, getIdToken } from '@react-native-firebase/auth';
 // SDK 54+ 'expo-file-system' ana girişinden readAsStringAsync'i kaldırdı;
 // base64 fallback için legacy girişini kullanıyoruz.
 import * as FileSystem from 'expo-file-system/legacy';
@@ -50,7 +50,8 @@ async function uploadToImageServer(imageUri: string, kind: ImageKind): Promise<s
   }
   try {
     console.log(`[imageUpload] ${kind} görseli sunucuya yükleniyor: ${IMAGE_SERVER_URL}`);
-    const idToken = await auth().currentUser?.getIdToken();
+    const currentUser = getAuth().currentUser;
+    const idToken = currentUser ? await getIdToken(currentUser) : undefined;
     if (!idToken) {
       console.warn('Image server: no signed-in user / ID token, falling back to base64');
       return null;

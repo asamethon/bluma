@@ -1,15 +1,26 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import { getAuth, reauthenticateWithCredential, EmailAuthProvider, deleteUser } from '@react-native-firebase/auth';
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  query,
+  where,
+  deleteDoc,
+  serverTimestamp,
+} from '@react-native-firebase/firestore';
 import { authState$, User } from '../../../store/authStore';
 
 // Check if username is available
 async function checkUsernameAvailability(username: string): Promise<boolean> {
   try {
-    const db = firestore();
-    const usersRef = db.collection('users');
-    const q = usersRef.where('username', '==', username);
-    const querySnapshot = await q.get();
+    const db = getFirestore();
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('username', '==', username));
+    const querySnapshot = await getDocs(q);
 
     return querySnapshot.empty; // true if username is available, false if taken
   } catch (error: any) {
@@ -29,8 +40,8 @@ async function checkUsernameAvailability(username: string): Promise<boolean> {
 // Get user by ID
 async function getUserById(userId: string): Promise<User | null> {
   try {
-    const db = firestore();
-    const userDoc = await db.collection('users').doc(userId).get();
+    const db = getFirestore();
+    const userDoc = await getDoc(doc(db, 'users', userId));
 
     if (userDoc.exists()) {
       return { id: userDoc.id, ...userDoc.data() } as User;
@@ -48,7 +59,7 @@ async function completeOnboarding(userData: { username: string; interests: strin
   try {
     authState$.isLoading.set(true);
 
-    const db = firestore();
+    const db = getFirestore();
 
     // Check if username is available
     const isUsernameAvailable = await checkUsernameAvailability(userData.username);
@@ -67,10 +78,10 @@ async function completeOnboarding(userData: { username: string; interests: strin
       };
 
       // Save to Firestore
-      const userDocRef = db.collection('users').doc(currentUser.id);
-      await userDocRef.set({
+      const userDocRef = doc(db, 'users', currentUser.id);
+      await setDoc(userDocRef, {
         ...updatedUser,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: serverTimestamp(),
       }, { merge: true });
 
       // Save to AsyncStorage
@@ -98,13 +109,13 @@ async function updateUserProfile(updatedUser: User) {
   try {
     authState$.isLoading.set(true);
 
-    const db = firestore();
+    const db = getFirestore();
 
     // Save to Firestore
-    const userDocRef = db.collection('users').doc(updatedUser.id);
-    await userDocRef.set({
+    const userDocRef = doc(db, 'users', updatedUser.id);
+    await setDoc(userDocRef, {
       ...updatedUser,
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      updatedAt: serverTimestamp(),
     });
 
     // Save to AsyncStorage
@@ -133,7 +144,7 @@ async function deleteAccount(password?: string) {
       return { success: false, error: 'Kullanıcı bulunamadı.' };
     }
 
-    const firebaseUser = auth().currentUser;
+    const firebaseUser = getAuth().currentUser;
     if (!firebaseUser) {
       return { success: false, error: 'Firebase kullanıcısı bulunamadı.' };
     }
@@ -141,8 +152,8 @@ async function deleteAccount(password?: string) {
     // If password is provided, re-authenticate user
     if (password && currentUser.authProvider === 'email') {
       try {
-        const credential = auth.EmailAuthProvider.credential(currentUser.email, password);
-        await firebaseUser.reauthenticateWithCredential(credential);
+        const credential = EmailAuthProvider.credential(currentUser.email, password);
+        await reauthenticateWithCredential(firebaseUser, credential);
         console.log('User re-authenticated successfully');
       } catch (reauthError: any) {
         if (reauthError.code === 'auth/wrong-password') {
@@ -155,37 +166,37 @@ async function deleteAccount(password?: string) {
       }
     }
 
-    const db = firestore();
+    const db = getFirestore();
 
     // Delete user's stories
-    const storiesRef = db.collection('stories').where('authorId', '==', currentUser.id);
-    const storiesSnapshot = await storiesRef.get();
-    const storyDeletionPromises = storiesSnapshot.docs.map(doc => doc.ref.delete());
+    const storiesRef = query(collection(db, 'stories'), where('authorId', '==', currentUser.id));
+    const storiesSnapshot = await getDocs(storiesRef);
+    const storyDeletionPromises = storiesSnapshot.docs.map(d => deleteDoc(d.ref));
     await Promise.all(storyDeletionPromises);
 
     // Delete user's conversations
-    const conversationsRef = db.collection('conversations').where('authorId', '==', currentUser.id);
-    const conversationsSnapshot = await conversationsRef.get();
-    const conversationDeletionPromises = conversationsSnapshot.docs.map(doc => doc.ref.delete());
+    const conversationsRef = query(collection(db, 'conversations'), where('authorId', '==', currentUser.id));
+    const conversationsSnapshot = await getDocs(conversationsRef);
+    const conversationDeletionPromises = conversationsSnapshot.docs.map(d => deleteDoc(d.ref));
     await Promise.all(conversationDeletionPromises);
 
     // Delete user's followers/following relationships
-    const followersRef = db.collection('users').doc(currentUser.id).collection('followers');
-    const followingRef = db.collection('users').doc(currentUser.id).collection('following');
+    const followersRef = collection(db, 'users', currentUser.id, 'followers');
+    const followingRef = collection(db, 'users', currentUser.id, 'following');
 
-    const followersSnapshot = await followersRef.get();
-    const followingSnapshot = await followingRef.get();
+    const followersSnapshot = await getDocs(followersRef);
+    const followingSnapshot = await getDocs(followingRef);
 
-    const followerDeletionPromises = followersSnapshot.docs.map(doc => doc.ref.delete());
-    const followingDeletionPromises = followingSnapshot.docs.map(doc => doc.ref.delete());
+    const followerDeletionPromises = followersSnapshot.docs.map(d => deleteDoc(d.ref));
+    const followingDeletionPromises = followingSnapshot.docs.map(d => deleteDoc(d.ref));
 
     await Promise.all([...followerDeletionPromises, ...followingDeletionPromises]);
 
     // Delete user document
-    await db.collection('users').doc(currentUser.id).delete();
+    await deleteDoc(doc(db, 'users', currentUser.id));
 
     // Delete Firebase auth user
-    await firebaseUser.delete();
+    await deleteUser(firebaseUser);
 
     // Clear AsyncStorage
     await AsyncStorage.multiRemove([
