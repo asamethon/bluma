@@ -1,6 +1,6 @@
 import { imageUploadService } from '@/services/imageUploadService';
 import { authState$ } from '@/store/authStore';
-import { storyActions, storyState$ } from '@/store/storyStore';
+import { storyActions } from '@/store/storyStore';
 import { StoryCategory } from '@/types';
 import { useFocusEffect, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,7 +14,14 @@ export type Chapter = { id: string; title: string; content: string };
 export function useWriteForm() {
   const router = useRouter();
   const { user: currentUser } = authState$.get();
-  const { isLoading } = storyState$.get();
+
+  // storyState$.isLoading GLOBAL bir bayrak — keşfet akışı, takip edilenler,
+  // kitap işlemleri gibi ilgisiz arka plan yüklemeleri de aynı bayrağı
+  // kullanıyor. Yazma ekranının kendi kaydet/yayınla butonu bu paylaşılan
+  // bayrağa bağlıyken, başka bir ekrandaki arka plan yükleme sürerken
+  // Önizle/Yayınla kalıcı olarak disabled görünüyordu. Ekranın kendi
+  // gönderim durumunu ayrı, yerel bir state'te tutuyoruz.
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [writeMode, setWriteMode] = useState<'quick' | 'advanced'>('quick');
   const [focusMode, setFocusMode] = useState(false);
@@ -178,6 +185,7 @@ export function useWriteForm() {
 
   const handleSaveDraft = async () => {
     if (!validateAndWarn()) return;
+    setIsSubmitting(true);
     try {
       let coverUrl: string | undefined;
       if (coverImage && !coverImage.startsWith('http')) {
@@ -199,6 +207,8 @@ export function useWriteForm() {
       }
     } catch {
       Alert.alert('Hata', 'Hikaye kaydedilemedi.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -217,6 +227,7 @@ export function useWriteForm() {
         {
           text: 'Yayınla',
           onPress: async () => {
+            setIsSubmitting(true);
             try {
               let coverUrl: string | undefined;
               if (coverImage && !coverImage.startsWith('http')) {
@@ -238,6 +249,8 @@ export function useWriteForm() {
               }
             } catch {
               Alert.alert('Hata', 'Hikaye yayınlanamadı.');
+            } finally {
+              setIsSubmitting(false);
             }
           },
         },
@@ -301,7 +314,7 @@ export function useWriteForm() {
 
   return {
     currentUser,
-    isLoading,
+    isLoading: isSubmitting,
 
     writeMode, setWriteMode,
     focusMode, setFocusMode,

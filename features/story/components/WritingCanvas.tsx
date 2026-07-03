@@ -73,8 +73,14 @@ const createStyles = () =>
       fontFamily: Fonts.serif,
       fontSize: 25,
       fontWeight: '700',
-      lineHeight: 30,
+      // Kalın serif fontun (Spectral_700Bold) üst çıkıntısı (özellikle Türkçe
+      // "İ/Ğ/Ş" gibi aksanlı harflerde) 30'luk lineHeight + padding:0 ile
+      // üstten kesiliyordu — oran 25/34'e çıkarıldı (input/component/görsel
+      // kalıntısız Text'lerde aynı sorun yok, çünkü onlar padding:0 + tight
+      // lineHeight kombinasyonuyla sınırlı değil).
+      lineHeight: 34,
       padding: 0,
+      paddingTop: 4,
       marginBottom: 4,
     },
     divider: {
