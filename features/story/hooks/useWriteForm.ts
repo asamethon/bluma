@@ -105,14 +105,22 @@ export function useWriteForm() {
   }, [draftKey, writeMode, storyTitle, chapterTitle, storyContent, storyCategory,
       storyDescription, storyTags, coverImage, isCompleted, chapters]);
 
-  const wordCount = storyContent.trim() ? storyContent.trim().split(/\s+/).length : 0;
-  const charCount = storyContent.length;
+  // Detaylı (advanced) modda gerçek içerik storyContent'te değil
+  // chapters[i].content'te tutulur — buildStoryData ile aynı birleştirme
+  // mantığı burada da kullanılmalı, yoksa kelime/karakter sayacı ve
+  // yayınlama doğrulaması hep boş storyContent'e bakıp hiç ilerlemez.
+  const effectiveContent = writeMode === 'quick'
+    ? storyContent
+    : chapters.map(c => c.content).join('\n§§\n');
+
+  const wordCount = effectiveContent.trim() ? effectiveContent.trim().split(/\s+/).length : 0;
+  const charCount = effectiveContent.length;
   const readMin = Math.max(1, Math.ceil(wordCount / 200));
 
   const getReadingTime = (text: string) =>
     Math.max(1, Math.ceil(text.trim().split(/\s+/).filter(w => w).length / 200));
 
-  const isValid = storyTitle.trim().length >= 3 && storyContent.trim().length >= 50;
+  const isValid = storyTitle.trim().length >= 3 && effectiveContent.trim().length >= 50;
 
   const resetForm = () => {
     setStoryTitle(''); setChapterTitle(''); setStoryContent('');
@@ -125,9 +133,7 @@ export function useWriteForm() {
   };
 
   const buildStoryData = (isPublished: boolean) => {
-    const content = writeMode === 'quick'
-      ? storyContent
-      : chapters.map(c => c.content).join('\n§§\n');
+    const content = effectiveContent;
     const data: any = {
       title: storyTitle.trim(),
       description: storyDescription.trim() || storyContent.substring(0, 200) + '...',
@@ -163,7 +169,7 @@ export function useWriteForm() {
       Alert.alert('Başlık eksik', 'Hikaye başlığı en az 3 karakter olmalı.');
       return false;
     }
-    if (storyContent.trim().length < 50) {
+    if (effectiveContent.trim().length < 50) {
       Alert.alert('İçerik eksik', 'Hikaye içeriği en az 50 karakter olmalı.');
       return false;
     }
