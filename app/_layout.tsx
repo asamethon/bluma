@@ -1,5 +1,6 @@
 import { authActions, authState$ } from '@/store/authStore';
 import { storyActions, storyState$ } from '@/store/storyStore';
+import { configureGoogleSignIn } from '@/config/googleSignIn';
 import { AuthGateSheet } from '@/components/AuthGateSheet';
 import { GuestProvider } from '@/contexts/GuestContext';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
@@ -31,6 +32,11 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 SplashScreen.preventAutoHideAsync();
+
+// GoogleSignin.configure() en erken, uygulama açılışında bir kez çağrılmalı —
+// çağrılmadan signIn() denenirse native SDK "No active configuration"
+// hatası veriyordu (Google ile giriş hiç çalışmıyordu).
+configureGoogleSignIn();
 
 export default observer(function RootLayout() {
   const colorScheme = useColorScheme();
