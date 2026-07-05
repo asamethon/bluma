@@ -1,9 +1,7 @@
 import { BloomMark } from "@/components/ui/BloomMark";
 import { Fonts, Radius, Spacing, useTheme } from "@/constants/theme";
 import { useGuestGate } from "@/contexts/GuestContext";
-import { authState$ } from "@/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
-import { observer } from "@legendapp/state/react";
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
@@ -14,6 +12,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAppSelector } from '@/store/hooks';
 
 // Route order matches <Tabs> in _layout. "write" is the centre bloom action.
 export const tabsData = [
@@ -83,10 +82,10 @@ function WriteFab({ focused, onPress }: { focused: boolean; onPress: () => void 
   );
 }
 
-export default observer(function CustomTabBar({ state, navigation }: { state: any; navigation: any }) {
+export default function CustomTabBar({ state, navigation }: { state: any; navigation: any }) {
   const { colors, scheme, shadows } = useTheme();
   const { bottom } = useSafeAreaInsets();
-  const { isGuest } = authState$.get();
+  const { isGuest } = useAppSelector(s => s.auth);
   const { requireAuth } = useGuestGate();
   const router = useRouter();
 
@@ -136,7 +135,7 @@ export default observer(function CustomTabBar({ state, navigation }: { state: an
       </View>
     </View>
   );
-});
+}
 
 const styles = StyleSheet.create({
   host: {

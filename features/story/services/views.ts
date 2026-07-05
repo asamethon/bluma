@@ -11,13 +11,13 @@ import {
     updateDoc,
     where,
 } from '@react-native-firebase/firestore';
-import { authState$ } from '@/store/authState';
-import { storyState$ } from '@/store/storyState';
+import { store } from '@/store';
+import { patchStory } from '@/store/slices/storySlice';
 
 // Hikaye görüntülenme sayısını artır (kullanıcı bazlı limit ile)
 export async function incrementStoryViews(storyId: string) {
   try {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) return;
 
     const firestore = getFirestore();
@@ -51,14 +51,17 @@ export async function incrementStoryViews(storyId: string) {
     });
 
     // UI state'lerini yerelde +1 güncelle
-    const bump = (stories: Story[]) =>
-      stories.map(s => s.id === storyId ? { ...s, viewsCount: (s.viewsCount || 0) + 1 } : s);
-    storyState$.stories.set(bump);
-    storyState$.discoverStories.set(bump);
-    storyState$.followingStories.set(bump);
-    const cur = storyState$.currentStory.get();
+    const bump = (list: Story[]) =>
+      list.map(s => s.id === storyId ? { ...s, viewsCount: (s.viewsCount || 0) + 1 } : s);
+    const { stories, discoverStories, followingStories } = store.getState().story;
+    store.dispatch(patchStory({
+      stories: bump(stories),
+      discoverStories: bump(discoverStories),
+      followingStories: bump(followingStories),
+    }));
+    const cur = store.getState().story.currentStory;
     if (cur && cur.id === storyId) {
-      storyState$.currentStory.set({ ...cur, viewsCount: (cur.viewsCount || 0) + 1 });
+      store.dispatch(patchStory({ currentStory: { ...cur, viewsCount: (cur.viewsCount || 0) + 1 } }));
     }
 
   } catch (error) {

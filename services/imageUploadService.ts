@@ -8,7 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Platform } from 'react-native';
 
 // Görsel türleri — sunucu tarafındaki boyutlandırmayla eşleşir (server/index.js).
-type ImageKind = 'profile' | 'cover' | 'comment';
+type ImageKind = 'profile' | 'cover' | 'comment' | 'content';
 
 // İstemci tarafı ön-sıkıştırma: yükleme boyutunu düşürür; sunucu yoksa
 // base64 fallback'inin Firestore'a sığmasını sağlar.
@@ -16,6 +16,7 @@ const CLIENT_COMPRESSION: Record<ImageKind, { width: number; compress: number }>
   profile: { width: 512, compress: 0.7 },
   cover: { width: 900, compress: 0.75 },
   comment: { width: 400, compress: 0.3 },
+  content: { width: 1000, compress: 0.75 },
 };
 
 async function compressImage(imageUri: string, kind: ImageKind): Promise<string> {
@@ -137,6 +138,12 @@ export const imageUploadService = {
     return processAndUpload(imageUri, 'comment', 'Yorum resmi işlenirken bir hata oluştu.');
   },
 
+  // Hikaye içeriğine gömülü resim — kitap kapağından bağımsız, ayrı bir
+  // yükleme türü (server/index.js KINDS.content).
+  async uploadStoryContentImage(imageUri: string): Promise<string> {
+    return processAndUpload(imageUri, 'content', 'Hikaye görseli işlenirken bir hata oluştu.');
+  },
+
   // Galeriden resim seç
   async pickImageFromGallery(): Promise<string | null> {
     try {
@@ -221,6 +228,33 @@ export const imageUploadService = {
       return null;
     } catch (error) {
       console.error('Error picking comment image:', error);
+      throw new Error('Resim seçilirken bir hata oluştu.');
+    }
+  },
+
+  // Hikaye içeriğine eklenecek resim seç — kitap kapağı gibi 3:4 oranına
+  // zorlanmaz (serbest kırpma), çünkü içerik görseli her oranda olabilir.
+  async pickContentImage(): Promise<string | null> {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (permissionResult.granted === false) {
+        throw new Error('Galeri erişim izni gerekli.');
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        return result.assets[0].uri;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error picking content image:', error);
       throw new Error('Resim seçilirken bir hata oluştu.');
     }
   },

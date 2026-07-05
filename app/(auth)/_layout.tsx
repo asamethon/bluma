@@ -1,7 +1,6 @@
-import { observer } from "@legendapp/state/react";
 import { Stack } from "expo-router";
 
-export default observer(function AuthLayout() {
+export default function AuthLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="walkthrough" />
@@ -10,4 +9,4 @@ export default observer(function AuthLayout() {
       <Stack.Screen name="onboarding" />
     </Stack>
   );
-});
+}

@@ -14,10 +14,10 @@ import {
     updateDoc,
     where,
 } from '@react-native-firebase/firestore';
-import { authState$ } from '@/store/authState';
 import { notificationActions } from '../../../store/notificationStore';
-import { storyState$ } from '@/store/storyState';
 import { getStoryById } from './storyApi';
+import { patchStory } from '@/store/slices/storySlice';
+import { store } from '@/store';
 
 // Like/Unlike story
 // Optimistic: UI'yi anında günceller, Firebase işini arka planda yürütür.
@@ -25,34 +25,32 @@ import { getStoryById } from './storyApi';
 // güncellenir (her dokunuşta O(n) okuma yapmaz).
 export async function likeStory(storyId: string) {
   try {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) {
       throw new Error('User not authenticated');
     }
 
-    const wasLiked = storyState$.likedStories.get().some(s => s.id === storyId);
+    const wasLiked = store.getState().story.likedStories.some(s => s.id === storyId);
 
     // Hedef hikâyeyi state'lerden bul (likedStories'a eklemek için)
     const findStory = (): Story | undefined =>
-      storyState$.stories.get().find(s => s.id === storyId) ||
-      storyState$.discoverStories.get().find(s => s.id === storyId) ||
-      storyState$.followingStories.get().find(s => s.id === storyId) ||
-      (storyState$.currentStory.get()?.id === storyId ? storyState$.currentStory.get()! : undefined);
+      store.getState().story.stories.find(s => s.id === storyId) ||
+      store.getState().story.discoverStories.find(s => s.id === storyId) ||
+      store.getState().story.followingStories.find(s => s.id === storyId) ||
+      (store.getState().story.currentStory?.id === storyId ? store.getState().story.currentStory! : undefined);
 
     // 1) Optimistic likesCount güncellemesi (tüm feed state'leri + currentStory)
     applyLikeDelta(storyId, wasLiked ? -1 : 1);
 
     // 2) Optimistic likedStories listesi
     if (wasLiked) {
-      storyState$.likedStories.set(prev => prev.filter(s => s.id !== storyId));
+      store.dispatch(patchStory({ likedStories: store.getState().story.likedStories.filter(s => s.id !== storyId) }));
     } else {
       const story = findStory();
       if (story) {
-        storyState$.likedStories.set(prev =>
-          prev.some(s => s.id === storyId)
-            ? prev
-            : [{ ...story, likesCount: (story.likesCount || 0) + 1 }, ...prev]
-        );
+        store.dispatch(patchStory({ likedStories: store.getState().story.likedStories.some(s => s.id === storyId)
+            ? store.getState().story.likedStories
+            : [{ ...story, likesCount: (story.likesCount || 0) + 1 }, ...store.getState().story.likedStories] }));
       }
     }
 
@@ -70,12 +68,15 @@ export async function likeStory(storyId: string) {
 export function applyLikeDelta(storyId: string, delta: number) {
   const upd = (arr: Story[]) =>
     arr.map(s => s.id === storyId ? { ...s, likesCount: Math.max(0, (s.likesCount || 0) + delta) } : s);
-  storyState$.stories.set(upd);
-  storyState$.discoverStories.set(upd);
-  storyState$.followingStories.set(upd);
-  const cur = storyState$.currentStory.get();
+  const { stories, discoverStories, followingStories } = store.getState().story;
+  store.dispatch(patchStory({
+    stories: upd(stories),
+    discoverStories: upd(discoverStories),
+    followingStories: upd(followingStories),
+  }));
+  const cur = store.getState().story.currentStory;
   if (cur && cur.id === storyId) {
-    storyState$.currentStory.set({ ...cur, likesCount: Math.max(0, (cur.likesCount || 0) + delta) });
+    store.dispatch(patchStory({ currentStory: { ...cur, likesCount: Math.max(0, (cur.likesCount || 0) + delta) } }));
   }
 }
 
@@ -128,7 +129,7 @@ export async function performLikeStoryFirebaseOperation(storyId: string, userId:
 // Bildirim gönderme işlemini arka planda yap
 export async function sendLikeNotification(storyId: string, userId: string) {
   try {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user) return;
 
     const storyData = await getStoryById(storyId);
@@ -162,42 +163,38 @@ export async function sendLikeNotification(storyId: string, userId: string) {
 
 // UI'yi geri al (hata durumunda)
 export function revertLikeStoryUI(storyId: string) {
-  const currentStories = storyState$.stories.get();
+  const currentStories = store.getState().story.stories;
   const storyIndex = currentStories.findIndex(s => s.id === storyId);
 
   if (storyIndex !== -1) {
     const story = currentStories[storyIndex];
-    const isCurrentlyLiked = storyState$.likedStories.get().some(s => s.id === storyId);
+    const isCurrentlyLiked = store.getState().story.likedStories.some(s => s.id === storyId);
 
     if (isCurrentlyLiked) {
       // Geri al: unlike yapılmışsa like'a çevir
-      storyState$.stories.set(prev =>
-        prev.map(s => s.id === storyId
+      store.dispatch(patchStory({ stories: store.getState().story.stories.map(s => s.id === storyId
           ? { ...s, likesCount: (s.likesCount || 0) + 1 }
           : s
-        )
-      );
-      storyState$.likedStories.set(prev => [...prev, story]);
+        ) }));
+      store.dispatch(patchStory({ likedStories: [...store.getState().story.likedStories, story] }));
     } else {
       // Geri al: like yapılmışsa unlike'a çevir
-      storyState$.stories.set(prev =>
-        prev.map(s => s.id === storyId
+      store.dispatch(patchStory({ stories: store.getState().story.stories.map(s => s.id === storyId
           ? { ...s, likesCount: Math.max(0, (s.likesCount || 0) - 1) }
           : s
-        )
-      );
-      storyState$.likedStories.set(prev => prev.filter(s => s.id !== storyId));
+        ) }));
+      store.dispatch(patchStory({ likedStories: store.getState().story.likedStories.filter(s => s.id !== storyId) }));
     }
   }
 }
 
 export async function isStoryLiked(storyId: string): Promise<boolean> {
   try {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) return false;
 
     // Real-time likedStories state'inden kontrol et
-    const likedStories = storyState$.likedStories.get();
+    const likedStories = store.getState().story.likedStories;
     return likedStories.some(story => story.id === storyId);
   } catch (error) {
     console.error('Check story like error:', error);
@@ -219,12 +216,10 @@ export async function updateStoryLikesCount(storyId: string) {
     await updateDoc(storyRef, { likesCount: realLikesCount });
 
     // UI'yi güncelle
-    storyState$.stories.set(prev =>
-      prev.map(s => s.id === storyId
+    store.dispatch(patchStory({ stories: store.getState().story.stories.map(s => s.id === storyId
         ? { ...s, likesCount: realLikesCount }
         : s
-      )
-    );
+      ) }));
   } catch (error) {
     console.error('Update story likes count error:', error);
   }
@@ -233,7 +228,7 @@ export async function updateStoryLikesCount(storyId: string) {
 // LikedStories state'ini Firebase'den yenile
 export async function refreshLikedStoriesState() {
   try {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) return;
 
     const firestore = getFirestore();
@@ -246,7 +241,7 @@ export async function refreshLikedStoriesState() {
     const fetched = await Promise.all(
       snapshot.docs.map(likeDoc => getStoryById(likeDoc.data().storyId))
     );
-    storyState$.likedStories.set(fetched.filter((s): s is Story => !!s));
+    store.dispatch(patchStory({ likedStories: fetched.filter((s): s is Story => !!s) }));
   } catch (error) {
     console.error('Refresh liked stories state error:', error);
   }
@@ -254,7 +249,7 @@ export async function refreshLikedStoriesState() {
 
 export async function loadLikedStories() {
   try {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) return;
 
     const firestore = getFirestore();
@@ -267,7 +262,7 @@ export async function loadLikedStories() {
     const fetched = await Promise.all(
       snapshot.docs.map(likeDoc => getStoryById(likeDoc.data().storyId))
     );
-    storyState$.likedStories.set(fetched.filter((s): s is Story => !!s));
+    store.dispatch(patchStory({ likedStories: fetched.filter((s): s is Story => !!s) }));
   } catch (error) {
     console.error('Load liked stories error:', error);
   }

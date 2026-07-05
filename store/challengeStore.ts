@@ -1,4 +1,3 @@
-import { observable } from '@legendapp/state';
 import {
   getFirestore,
   doc,
@@ -6,6 +5,10 @@ import {
   updateDoc,
   arrayUnion,
 } from '@react-native-firebase/firestore';
+import { store } from './index';
+import { patchChallenge, setChallengeState } from './slices/challengeSlice';
+
+export type { ChallengeState } from './slices/challengeSlice';
 
 // ─────────────────────────────────────────────────────────────────
 // Sabit tanımlar — değişmez, kodda yaşar
@@ -71,26 +74,6 @@ export const WEEKLY_FEATURED = {
   cur: 0,
   goal: 5,
 };
-
-// ─────────────────────────────────────────────────────────────────
-// State
-// ─────────────────────────────────────────────────────────────────
-
-export interface ChallengeState {
-  xp: number;
-  streak: number;
-  challengeProgress: Record<string, number>;
-  claimedChallenges: string[];
-  isLoaded: boolean;
-}
-
-export const challengeState$ = observable<ChallengeState>({
-  xp: 0,
-  streak: 0,
-  challengeProgress: {},
-  claimedChallenges: [],
-  isLoaded: false,
-});
 
 // ─────────────────────────────────────────────────────────────────
 // Yardımcılar
@@ -162,13 +145,13 @@ export const challengeActions = {
         challengeProgress[c.id] = Math.min(newStreak, c.goal);
       });
 
-      challengeState$.set({
+      store.dispatch(setChallengeState({
         xp: data.xp || 0,
         streak: newStreak,
         challengeProgress,
         claimedChallenges: data.claimedChallenges || [],
         isLoaded: true,
-      });
+      }));
 
       // Streak ve lastActiveDate'i geri yaz
       if (data.lastActiveDate !== today || isNewWeek) {
@@ -187,15 +170,14 @@ export const challengeActions = {
   async claimChallenge(userId: string, challengeId: string) {
     const def = CHALLENGE_DEFS.find(c => c.id === challengeId);
     if (!def) return;
-    const already = challengeState$.claimedChallenges.get().includes(challengeId);
-    if (already) return;
+    const { xp, claimedChallenges } = store.getState().challenge;
+    if (claimedChallenges.includes(challengeId)) return;
 
     try {
-      const newXp = challengeState$.xp.get() + def.xp;
-      const newClaimed = [...challengeState$.claimedChallenges.get(), challengeId];
+      const newXp = xp + def.xp;
+      const newClaimed = [...claimedChallenges, challengeId];
 
-      challengeState$.xp.set(newXp);
-      challengeState$.claimedChallenges.set(newClaimed);
+      store.dispatch(patchChallenge({ xp: newXp, claimedChallenges: newClaimed }));
 
       await updateDoc(doc(getFirestore(), 'users', userId), {
         xp: newXp,
@@ -208,7 +190,7 @@ export const challengeActions = {
 
   async trackAction(userId: string, tracker: Tracker, amount = 1) {
     try {
-      const progress = { ...challengeState$.challengeProgress.get() };
+      const progress = { ...store.getState().challenge.challengeProgress };
 
       CHALLENGE_DEFS.forEach(c => {
         if (c.tracker === tracker) {
@@ -216,7 +198,7 @@ export const challengeActions = {
         }
       });
 
-      challengeState$.challengeProgress.set(progress);
+      store.dispatch(patchChallenge({ challengeProgress: progress }));
 
       await updateDoc(doc(getFirestore(), 'users', userId), {
         challengeProgress: progress,

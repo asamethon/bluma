@@ -16,17 +16,17 @@ import {
     updateDoc,
     where,
 } from '@react-native-firebase/firestore';
-import { authState$ } from '@/store/authState';
 import { moderationActions } from '../../../store/moderationStore';
 import { notificationActions } from '../../../store/notificationStore';
-import { storyState$ } from '@/store/storyState';
 import { getStoryById } from './storyApi';
 import { getUserById } from './userCache';
+import { patchStory } from '@/store/slices/storySlice';
+import { store } from '@/store';
 
 // Comment operations
 export async function addComment(storyId: string, content: string, parentId?: string) {
   try {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) {
       throw new Error('User not authenticated');
     }
@@ -188,7 +188,7 @@ export async function deleteComment(storyId: string, commentId: string) {
 
 export async function likeComment(storyId: string, commentId: string) {
   try {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) {
       throw new Error('User not authenticated');
     }
@@ -326,7 +326,7 @@ export async function loadStoryComments(storyId: string) {
     const visibleComments = moderationActions
       .filterBlocked(topLevelComments)
       .map(c => ({ ...c, replies: c.replies ? moderationActions.filterBlocked(c.replies) : c.replies }));
-    storyState$.storyComments.set(visibleComments);
+    store.dispatch(patchStory({ storyComments: visibleComments }));
   } catch (error) {
     console.error('Load comments error:', error);
   }

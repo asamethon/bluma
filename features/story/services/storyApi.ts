@@ -14,16 +14,16 @@ import {
     where,
     query,
 } from '@react-native-firebase/firestore';
-import { authState$ } from '@/store/authState';
 import { notificationActions } from '../../../store/notificationStore';
-import { storyState$ } from '@/store/storyState';
 import { getUserById } from './userCache';
+import { patchStory } from '@/store/slices/storySlice';
+import { store } from '@/store';
 
 // Story CRUD operations
 export async function createStory(storyData: Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'likesCount' | 'commentsCount' | 'viewsCount' | 'author'>) {
   try {
-    storyState$.isLoading.set(true);
-    const { user } = authState$.get();
+    store.dispatch(patchStory({ isLoading: true }));
+    const { user } = store.getState().auth;
 
     if (!user?.id) {
       throw new Error('User not authenticated');
@@ -75,12 +75,12 @@ export async function createStory(storyData: Omit<Story, 'id' | 'createdAt' | 'u
       logEvent(getAnalytics(), 'story_publish', { story_id: docRef.id }).catch(() => {});
     }
 
-    storyState$.isLoading.set(false);
+    store.dispatch(patchStory({ isLoading: false }));
     return { success: true, storyId: docRef.id };
   } catch (error) {
     console.error('Create story error:', error);
-    storyState$.isLoading.set(false);
-    storyState$.error.set(error instanceof Error ? error.message : 'Story creation failed');
+    store.dispatch(patchStory({ isLoading: false }));
+    store.dispatch(patchStory({ error: error instanceof Error ? error.message : 'Story creation failed' }));
     return { success: false, error: error instanceof Error ? error.message : 'Story creation failed' };
   }
 }
@@ -110,7 +110,7 @@ export async function updateStory(storyId: string, updates: Partial<Story>) {
 
     // Takipçi duyuruları (arka planda): taslak→yayın geçişi "yeni hikâye",
     // yayındaki hikâyeye bölüm eklenmesi "yeni bölüm" bildirimi üretir.
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (user?.id === currentStoryData.authorId) {
       const authorName = user.displayName || user.username || 'Takip ettiğin bir yazar';
       const title = updates.title || currentStoryData.title;
@@ -141,7 +141,7 @@ export async function updateStory(storyId: string, updates: Partial<Story>) {
 
 export async function deleteStory(storyId: string) {
   try {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) {
       throw new Error('User not authenticated');
     }
@@ -216,7 +216,7 @@ export async function getStoryById(storyId: string): Promise<Story | null> {
 
 export async function loadUserStories(userId: string) {
   try {
-    storyState$.isLoading.set(true);
+    store.dispatch(patchStory({ isLoading: true }));
     const firestore = getFirestore();
     const storiesQuery = query(
       collection(firestore, 'stories'),
@@ -248,17 +248,17 @@ export async function loadUserStories(userId: string) {
       return dateB.getTime() - dateA.getTime();
     });
 
-    storyState$.userStories.set(stories);
+    store.dispatch(patchStory({ userStories: stories }));
   } catch (error) {
     console.error('Load user stories error:', error);
   } finally {
-    storyState$.isLoading.set(false);
+    store.dispatch(patchStory({ isLoading: false }));
   }
 }
 
 export async function loadPublishedUserStories(userId: string) {
   try {
-    storyState$.isLoading.set(true);
+    store.dispatch(patchStory({ isLoading: true }));
     const firestore = getFirestore();
     const storiesQuery = query(
       collection(firestore, 'stories'),
@@ -296,7 +296,7 @@ export async function loadPublishedUserStories(userId: string) {
     console.error('Load published user stories error:', error);
     return [];
   } finally {
-    storyState$.isLoading.set(false);
+    store.dispatch(patchStory({ isLoading: false }));
   }
 }
 

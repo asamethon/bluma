@@ -2,7 +2,7 @@ import { Button } from '@/components/ui';
 import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface WritingBottomBarProps {
   wordCount: number;
@@ -12,6 +12,8 @@ interface WritingBottomBarProps {
   onInsertBullet: () => void;
   onInsertSceneBreak: () => void;
   onInsertParagraph: () => void;
+  onInsertImage: () => void;
+  imageUploading: boolean;
   onPreview: () => void;
   onPublish: () => void;
   isValid: boolean;
@@ -22,7 +24,7 @@ interface WritingBottomBarProps {
 // Yazma ekranının alt sabit çubuğu — kelime sayacı, biçim araçları, aksiyon butonları
 export function WritingBottomBar({
   wordCount, charCount, readMin, onOpenCoverSheet, onInsertBullet, onInsertSceneBreak,
-  onInsertParagraph, onPreview, onPublish, isValid, isLoading, paddingBottom,
+  onInsertParagraph, onInsertImage, imageUploading, onPreview, onPublish, isValid, isLoading, paddingBottom,
 }: WritingBottomBarProps) {
   const { colors } = useTheme();
   const s = createStyles();
@@ -55,6 +57,14 @@ export function WritingBottomBar({
           <Ionicons name="return-down-forward-outline" size={22} color={colors.textSecondary} />
         </TouchableOpacity>
         <View style={{ flex: 1 }} />
+        {/* Hikaye içine resim ekle — kapak resminden ayrı, imlece eklenir */}
+        <TouchableOpacity style={s.toolBtn} onPress={onInsertImage} disabled={imageUploading}>
+          {imageUploading ? (
+            <ActivityIndicator size="small" color={colors.textSecondary} />
+          ) : (
+            <Ionicons name="images-outline" size={22} color={colors.textSecondary} />
+          )}
+        </TouchableOpacity>
       </View>
 
       {/* Action buttons */}

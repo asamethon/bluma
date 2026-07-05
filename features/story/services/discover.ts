@@ -8,14 +8,14 @@ import {
     query,
     where,
 } from '@react-native-firebase/firestore';
-import { authState$ } from '@/store/authState';
-import { storyState$ } from '@/store/storyState';
 import { getUserById } from './userCache';
+import { patchStory } from '@/store/slices/storySlice';
+import { store } from '@/store';
 
 // Keşfet algoritması - Popüler hikayeleri getir
 export async function loadDiscoverStories() {
   try {
-    storyState$.isLoading.set(true);
+    store.dispatch(patchStory({ isLoading: true }));
     const firestore = getFirestore();
 
     // Son 30 gün içindeki yayınlanan hikayeleri getir
@@ -57,11 +57,11 @@ export async function loadDiscoverStories() {
     // İlk 50 hikayeyi al
     const topStories = storiesWithScores.slice(0, 50).map(({ popularityScore, ...story }) => story);
 
-    storyState$.discoverStories.set(topStories);
+    store.dispatch(patchStory({ discoverStories: topStories }));
   } catch (error) {
     console.error('Load discover stories error:', error);
   } finally {
-    storyState$.isLoading.set(false);
+    store.dispatch(patchStory({ isLoading: false }));
   }
 }
 
@@ -96,13 +96,13 @@ export function calculatePopularityScore(story: Story): number {
 // Takip edilen kullanıcıların hikayelerini getir
 export async function loadFollowingStories() {
   try {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) {
-      storyState$.followingStories.set([]);
+      store.dispatch(patchStory({ followingStories: [] }));
       return;
     }
 
-    storyState$.isLoading.set(true);
+    store.dispatch(patchStory({ isLoading: true }));
     const firestore = getFirestore();
 
     // Takip edilen kullanıcıları getir
@@ -120,7 +120,7 @@ export async function loadFollowingStories() {
       .filter(Boolean);
 
     if (followingUserIds.length === 0) {
-      storyState$.followingStories.set([]);
+      store.dispatch(patchStory({ followingStories: [] }));
       return;
     }
 
@@ -162,12 +162,12 @@ export async function loadFollowingStories() {
       return dateB.getTime() - dateA.getTime();
     });
 
-    storyState$.followingStories.set(allStories.slice(0, 50));
+    store.dispatch(patchStory({ followingStories: allStories.slice(0, 50) }));
   } catch (error) {
     console.error('Load following stories error:', error);
-    storyState$.followingStories.set([]);
+    store.dispatch(patchStory({ followingStories: [] }));
   } finally {
-    storyState$.isLoading.set(false);
+    store.dispatch(patchStory({ isLoading: false }));
   }
 }
 

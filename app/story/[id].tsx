@@ -6,12 +6,13 @@ import { Spacing, categoryColor, useTheme } from '@/constants/theme';
 import { buildStoryShareUrl } from '@/utils/deepLinks';
 import { useGuestGate } from '@/contexts/GuestContext';
 import { useFollow } from '@/features/social/hooks/useFollow';
-import { authState$ } from '@/store/authStore';
+import { StoryImage } from '@/features/story/components/StoryImage';
+import { parseImageToken, stripImageTokens } from '@/features/story/utils/imageToken';
 import { challengeActions } from '@/store/challengeStore';
 import { moderationActions } from '@/store/moderationStore';
-import { storyActions, storyState$ } from '@/store/storyStore';
+import { storyActions } from '@/store/storyStore';
+import { useAppSelector } from '@/store/hooks';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import { getAnalytics, logEvent } from '@react-native-firebase/analytics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -51,14 +52,14 @@ function stripHtml(raw: string): string {
     .trim();
 }
 
-export default observer(function ReaderScreen() {
+export default function ReaderScreen() {
   const { id, chapter } = useLocalSearchParams<{ id: string; chapter?: string }>();
   const router = useRouter();
   const { colors, fonts, scheme } = useTheme();
   const insets = useSafeAreaInsets();
-  const { user: currentUser, isGuest } = authState$.get();
+  const { user: currentUser, isGuest } = useAppSelector(s => s.auth);
   const { requireAuth, startAuth } = useGuestGate();
-  const { currentStory, likedStories, savedStories } = storyState$.get();
+  const { currentStory, likedStories, savedStories } = useAppSelector(s => s.story);
 
   const [story, setStory] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -296,7 +297,7 @@ export default observer(function ReaderScreen() {
   const chapterTitle = story.chapterTitles?.[currentChapterIndex]
     ? `Bölüm ${currentChapterIndex + 1} — ${story.chapterTitles[currentChapterIndex]}`
     : `Bölüm ${currentChapterIndex + 1}`;
-  const readingTime = Math.max(1, Math.ceil((currentContent?.split(/\s+/).length || 0) / 200));
+  const readingTime = Math.max(1, Math.ceil((stripImageTokens(currentContent || '').split(/\s+/).length || 0) / 200));
   const accentColor = categoryColor(story.category, colors.primary);
 
   // Split current chapter into display paragraphs
@@ -304,9 +305,9 @@ export default observer(function ReaderScreen() {
   const allParas = currentContent.split('\n\n').filter((p: string) => p.trim().length > 0);
   const gated = isGuest;
   const currentParas = gated ? allParas.slice(0, PREVIEW_PARAS) : allParas;
-  const dropChar = currentParas[0]?.charAt(0) || '';
-  const firstParaRest = (currentParas[0] || '').slice(1);
-  const remainingParas = currentParas.slice(1);
+  // Damla harf (drop cap) yalnızca ilk METİN paragrafına uygulanır —
+  // paragraf bir [[img:URL]] belirteciyse resim olarak render edilir.
+  const firstTextIndex = currentParas.findIndex((p: string) => !parseImageToken(p));
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -420,25 +421,32 @@ export default observer(function ReaderScreen() {
             </View>
           )}
 
-          {/* Content — first paragraph with drop cap */}
+          {/* Content — first text paragraph with drop cap, inline images rendered as images */}
           {currentContent ? (
             <View style={{ marginTop: 8 }}>
-              {/* Drop cap — first paragraph */}
-              <View style={styles.dropCapRow}>
-                <Text style={[styles.dropCap, { color: accentColor, fontFamily: fonts.serif }]}>
-                  {dropChar}
-                </Text>
-                <Text style={[styles.bodyText, { fontSize, lineHeight: fontSize * 1.7, flex: 1, color: colors.text, fontFamily: fonts.serif }]}>
-                  {firstParaRest}
-                </Text>
-              </View>
-
-              {/* Remaining paragraphs of current chapter */}
-              {remainingParas.map((para: string, i: number) => (
-                <Text key={i} style={[styles.bodyText, { fontSize, lineHeight: fontSize * 1.7, marginTop: fontSize, color: colors.text, fontFamily: fonts.serif }]}>
-                  {para}
-                </Text>
-              ))}
+              {currentParas.map((para: string, i: number) => {
+                const imageUrl = parseImageToken(para);
+                if (imageUrl) {
+                  return <StoryImage key={i} uri={imageUrl} />;
+                }
+                if (i === firstTextIndex) {
+                  return (
+                    <View key={i} style={styles.dropCapRow}>
+                      <Text style={[styles.dropCap, { color: accentColor, fontFamily: fonts.serif }]}>
+                        {para.charAt(0)}
+                      </Text>
+                      <Text style={[styles.bodyText, { fontSize, lineHeight: fontSize * 1.7, flex: 1, color: colors.text, fontFamily: fonts.serif }]}>
+                        {para.slice(1)}
+                      </Text>
+                    </View>
+                  );
+                }
+                return (
+                  <Text key={i} style={[styles.bodyText, { fontSize, lineHeight: fontSize * 1.7, marginTop: fontSize, color: colors.text, fontFamily: fonts.serif }]}>
+                    {para}
+                  </Text>
+                );
+              })}
             </View>
           ) : (
             <Text style={[styles.bodyText, { fontSize, lineHeight: fontSize * 1.7, color: colors.textSecondary, fontStyle: 'italic' }]}>
@@ -641,7 +649,7 @@ export default observer(function ReaderScreen() {
       />
     </View>
   );
-});
+}
 
 const styles = StyleSheet.create({
   topChrome: {

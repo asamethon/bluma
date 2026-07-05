@@ -1,6 +1,5 @@
 import { pushNotificationService } from '@/services/pushNotificationService';
 import { Notification, NotificationSettings } from '@/types';
-import { observable } from '@legendapp/state';
 import {
   collection,
   deleteDoc,
@@ -18,22 +17,10 @@ import {
   where,
   writeBatch
 } from '@react-native-firebase/firestore';
+import { store } from './index';
+import { patchNotification } from './slices/notificationSlice';
 
-
-export interface NotificationState {
-  notifications: Notification[];
-  unreadCount: number;
-  isLoading: boolean;
-  settings: NotificationSettings | null;
-}
-
-// Create observable state
-export const notificationState$ = observable<NotificationState>({
-  notifications: [],
-  unreadCount: 0,
-  isLoading: true,
-  settings: null,
-});
+export type { NotificationState } from './slices/notificationSlice';
 
 // Notification actions
 export const notificationActions = {
@@ -41,7 +28,7 @@ export const notificationActions = {
   async initializeNotifications(userId: string) {
     try {
       console.log('Initializing notifications for userId:', userId);
-      notificationState$.isLoading.set(true);
+      store.dispatch(patchNotification({ isLoading: true }));
       
       const db = getFirestore();
       const notificationsRef = collection(db, 'notifications');
@@ -82,8 +69,7 @@ export const notificationActions = {
           unread: unreadCount,
         });
         
-        notificationState$.notifications.set(notifications);
-        notificationState$.unreadCount.set(unreadCount);
+        store.dispatch(patchNotification({ notifications, unreadCount }));
         
         // Badge count update removed - using local notifications only
       }, (error) => {
@@ -93,13 +79,13 @@ export const notificationActions = {
       // Load notification settings
       await notificationActions.loadNotificationSettings(userId);
       
-      notificationState$.isLoading.set(false);
+      store.dispatch(patchNotification({ isLoading: false }));
       console.log('Notifications initialization completed');
-      
+
       return unsubscribe; // Return unsubscribe function
     } catch (error) {
       console.error('Initialize notifications error:', error);
-      notificationState$.isLoading.set(false);
+      store.dispatch(patchNotification({ isLoading: false }));
     }
   },
 
@@ -111,7 +97,7 @@ export const notificationActions = {
       const settingsDoc = await getDoc(settingsRef);
       
       if (settingsDoc.exists()) {
-        notificationState$.settings.set(settingsDoc.data() as NotificationSettings);
+        store.dispatch(patchNotification({ settings: settingsDoc.data() as NotificationSettings }));
       } else {
         // Create default settings
         const defaultSettings: NotificationSettings = {
@@ -127,7 +113,7 @@ export const notificationActions = {
         };
         
         await setDoc(settingsRef, defaultSettings);
-        notificationState$.settings.set(defaultSettings);
+        store.dispatch(patchNotification({ settings: defaultSettings }));
       }
     } catch (error) {
       console.error('Load notification settings error:', error);
@@ -565,12 +551,9 @@ export const notificationActions = {
       });
       
       // Update local state
-      const currentSettings = notificationState$.settings.get();
+      const currentSettings = store.getState().notification.settings;
       if (currentSettings) {
-        notificationState$.settings.set({
-          ...currentSettings,
-          ...settings,
-        });
+        store.dispatch(patchNotification({ settings: { ...currentSettings, ...settings } }));
       }
     } catch (error) {
       console.error('Update notification settings error:', error);
@@ -579,11 +562,11 @@ export const notificationActions = {
 
   // Get unread count
   getUnreadCount(): number {
-    return notificationState$.unreadCount.get();
+    return store.getState().notification.unreadCount;
   },
 
   // Check if user has unread notifications
   hasUnreadNotifications(): boolean {
-    return notificationState$.unreadCount.get() > 0;
+    return store.getState().notification.unreadCount > 0;
   },
-}; 
+};

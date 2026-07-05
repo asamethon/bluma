@@ -2,10 +2,9 @@ import {
   Screen, Avatar, BloomMark, Text } from '@/components/ui';
 import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
 import { useGuestGate } from '@/contexts/GuestContext';
-import { authState$ } from '@/store/authStore';
-import { notificationActions, notificationState$ } from '@/store/notificationStore';
+import { useAppSelector } from '@/store/hooks';
+import { notificationActions } from '@/store/notificationStore';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
 import {
@@ -139,14 +138,14 @@ function NotifGuestState({ colors, fonts, startAuth }: any) {
 }
 
 /* ── Screen ────────────────────────────────────────────────────────────── */
-export default observer(function NotificationsScreen() {
+export default function NotificationsScreen() {
   const { colors, fonts } = useTheme();
   const router = useRouter();
   const { startAuth } = useGuestGate();
   const unsubRef = useRef<(() => void) | null>(null);
-  const { isGuest } = authState$.get();
-  const currentUser = authState$.user.get();
-  const { notifications, isLoading, unreadCount } = notificationState$.get();
+  const isGuest = useAppSelector(s => s.auth.isGuest);
+  const currentUser = useAppSelector(s => s.auth.user);
+  const { notifications, isLoading, unreadCount } = useAppSelector(s => s.notification);
 
   // Hook'lar her render'da aynı sırada çağrılmalı — bu useEffect erken
   // return'den ÖNCE durmalı (misafir → giriş geçişinde hook sırası bozuluyordu).
@@ -242,7 +241,7 @@ export default observer(function NotificationsScreen() {
       />
     </Screen>
   );
-});
+}
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

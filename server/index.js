@@ -6,7 +6,7 @@
 // açık JWKS anahtarlarıyla doğrulanır).
 //
 // Endpoint'ler:
-//   POST /upload?kind=profile|cover|comment   (Authorization: Bearer <idToken>,
+//   POST /upload?kind=profile|cover|comment|content   (Authorization: Bearer <idToken>,
 //                                              multipart alan adı: "image")
 //     → { "url": "https://.../i/cover/<id>.webp" }
 //   GET  /i/<kind>/<file>                      (1 yıl immutable cache)
@@ -33,6 +33,7 @@ const KINDS = {
   profile: { width: 512, quality: 80 },
   cover: { width: 900, quality: 80 },
   comment: { width: 800, quality: 75 },
+  content: { width: 1000, quality: 80 },
 };
 
 const JWKS = createRemoteJWKSet(

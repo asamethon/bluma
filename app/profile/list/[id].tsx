@@ -1,9 +1,10 @@
 import { Screen, StoryRow, Text } from '@/components/ui';
 import { Spacing, useTheme } from '@/constants/theme';
-import { readingListActions, readingListState$ } from '@/store/readingListStore';
+import { store } from '@/store';
+import { useAppSelector } from '@/store/hooks';
+import { readingListActions } from '@/store/readingListStore';
 import { Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -16,12 +17,12 @@ import {
   View,
 } from 'react-native';
 
-export default observer(function ReadingListDetailScreen() {
+export default function ReadingListDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
   const router = useRouter();
 
-  const lists = readingListState$.lists.get();
+  const lists = useAppSelector(s => s.readingList.lists);
   const list = lists.find(l => l.id === id);
 
   const [stories, setStories] = useState<Story[]>([]);
@@ -36,9 +37,12 @@ export default observer(function ReadingListDetailScreen() {
   };
 
   useEffect(() => {
-    if (readingListState$.lists.get().length === 0) readingListActions.loadLists().then(load);
+    // İlk açılışta listeler henüz yüklenmemişse önce onları çek (reaktif
+    // olmayan tek seferlik okuma — effect'i lists'e bağlamamak için getState).
+    if (store.getState().readingList.lists.length === 0) readingListActions.loadLists().then(load);
     else load();
     // storyIds değişince (ekle/çıkar) yeniden yükle
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, list?.storyIds.length]);
 
   const onRefresh = async () => {
@@ -103,7 +107,7 @@ export default observer(function ReadingListDetailScreen() {
       </ScrollView>
     </Screen>
   );
-});
+}
 
 const styles = StyleSheet.create({
   header: {

@@ -7,13 +7,11 @@ import {
   RANKS,
   WEEKLY_FEATURED,
   challengeActions,
-  challengeState$,
   getRankIndex,
   type Pillar,
 } from '@/store/challengeStore';
-import { authState$ } from '@/store/authStore';
+import { useAppSelector } from '@/store/hooks';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -32,11 +30,11 @@ function fmtXp(n: number) {
   return n >= 1000 ? `${(n / 1000).toFixed(1)}b` : `${n}`;
 }
 
-export default observer(function ChallengesScreen() {
+export default function ChallengesScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-  const { user: currentUser } = authState$.get();
-  const { xp, streak, challengeProgress, claimedChallenges } = challengeState$.get();
+  const currentUser = useAppSelector(s => s.auth.user);
+  const { xp, streak, challengeProgress, claimedChallenges } = useAppSelector(s => s.challenge);
 
   const [filter, setFilter] = useState<FilterValue>('all');
 
@@ -338,7 +336,7 @@ export default observer(function ChallengesScreen() {
       </ScrollView>
     </Screen>
   );
-});
+}
 
 const styles = StyleSheet.create({
   header: {

@@ -1,12 +1,12 @@
 import { Avatar, Button, Screen, Text } from '@/components/ui';
 import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
 import { imageUploadService } from '@/services/imageUploadService';
-import { authActions, authState$, User } from '@/store/authStore';
+import { authActions, User } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
+import { useAppSelector } from '@/store/hooks';
 import {
   ActivityIndicator,
   Alert,
@@ -20,10 +20,10 @@ import {
 
 type UsernameStatus = 'checking' | 'available' | 'taken' | null;
 
-export default observer(function EditProfileScreen() {
+export default function EditProfileScreen() {
   const router = useRouter();
   const { colors, shadows } = useTheme();
-  const { user } = authState$.get();
+  const { user } = useAppSelector(s => s.auth);
 
   const [formData, setFormData] = useState({
     displayName: '',
@@ -392,7 +392,7 @@ export default observer(function EditProfileScreen() {
       </View>
     </Screen>
   );
-});
+}
 
 // ── Reusable field ─────────────────────────────────────────────
 function Field({

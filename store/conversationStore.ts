@@ -1,6 +1,5 @@
 import { pushNotificationService } from '@/services/pushNotificationService';
 import { Conversation, ConversationComment, User } from '@/types';
-import { observable } from '@legendapp/state';
 import {
   addDoc,
   collection,
@@ -20,33 +19,18 @@ import {
   updateDoc,
   where
 } from '@react-native-firebase/firestore';
-import { authActions, authState$ } from './authStore';
+import { authActions } from './authStore';
+import { store } from './index';
+import { patchConversation } from './slices/conversationSlice';
 
-export interface ConversationState {
-  conversations: Conversation[];
-  userConversations: Conversation[];
-  likedConversations: Conversation[];
-  isLoading: boolean;
-  currentConversation: Conversation | null;
-  currentConversationComments: ConversationComment[];
-}
-
-// Create observable state
-export const conversationState$ = observable<ConversationState>({
-  conversations: [],
-  userConversations: [],
-  likedConversations: [],
-  isLoading: true,
-  currentConversation: null,
-  currentConversationComments: [],
-});
+export type { ConversationState } from './slices/conversationSlice';
 
 // Conversation actions
 export const conversationActions = {
   // Initialize conversations
   async initializeConversations() {
     try {
-      conversationState$.isLoading.set(true);
+      store.dispatch(patchConversation({ isLoading: true }));
       
       const db = getFirestore();
       const conversationsRef = collection(db, 'conversations');
@@ -79,14 +63,13 @@ export const conversationActions = {
           }
         }
         
-        conversationState$.conversations.set(conversations);
-        conversationState$.isLoading.set(false);
+        store.dispatch(patchConversation({ conversations, isLoading: false }));
       });
-      
+
       return unsubscribe;
     } catch (error) {
       console.error('Initialize conversations error:', error);
-      conversationState$.isLoading.set(false);
+      store.dispatch(patchConversation({ isLoading: false }));
     }
   },
 
@@ -130,7 +113,7 @@ export const conversationActions = {
         }
         
         console.log('Final conversations array:', conversations.length);
-        conversationState$.userConversations.set(conversations);
+        store.dispatch(patchConversation({ userConversations: conversations }));
       });
       
       return unsubscribe;
@@ -166,16 +149,16 @@ export const conversationActions = {
           }
           
           // Update the conversation in userConversations if it exists
-          const currentUserConversations = conversationState$.userConversations.get();
-          const updatedConversations = currentUserConversations.map(conv => 
+          const currentUserConversations = store.getState().conversation.userConversations;
+          const updatedConversations = currentUserConversations.map(conv =>
             conv.id === conversationId ? conversationData : conv
           );
-          conversationState$.userConversations.set(updatedConversations);
-          
+          store.dispatch(patchConversation({ userConversations: updatedConversations }));
+
           // Also update in currentConversation if it's the same
-          const currentConversation = conversationState$.currentConversation.get();
+          const currentConversation = store.getState().conversation.currentConversation;
           if (currentConversation?.id === conversationId) {
-            conversationState$.currentConversation.set(conversationData);
+            store.dispatch(patchConversation({ currentConversation: conversationData }));
           }
         }
       });
@@ -234,7 +217,7 @@ export const conversationActions = {
         } as unknown as Conversation));
         
         console.log('Final liked conversations array:', likedConversations.length);
-        conversationState$.likedConversations.set(likedConversations);
+        store.dispatch(patchConversation({ likedConversations }));
       });
       
       return unsubscribe;
@@ -288,7 +271,7 @@ export const conversationActions = {
           }
         }
         
-        conversationState$.currentConversation.set(conversationData);
+        store.dispatch(patchConversation({ currentConversation: conversationData }));
         return conversationData;
       }
       
@@ -333,7 +316,7 @@ export const conversationActions = {
           }
         }
         
-        conversationState$.currentConversationComments.set(comments);
+        store.dispatch(patchConversation({ currentConversationComments: comments }));
       });
       
       return unsubscribe;
@@ -345,7 +328,7 @@ export const conversationActions = {
   // Add comment to conversation
   async addComment(conversationId: string, content: string, image?: string) {
     try {
-      const currentUser = authState$.user.get();
+      const currentUser = store.getState().auth.user;
       if (!currentUser) {
         return { success: false, error: 'Kullanıcı bulunamadı.' };
       }
@@ -391,7 +374,7 @@ export const conversationActions = {
   // Like conversation
   async likeConversation(conversationId: string) {
     try {
-      const currentUser = authState$.user.get();
+      const currentUser = store.getState().auth.user;
       if (!currentUser) {
         return { success: false, error: 'Kullanıcı bulunamadı.' };
       }
@@ -461,7 +444,7 @@ export const conversationActions = {
   // Conversation beğeni bildirimi gönder
   async sendConversationLikeNotification(conversationId: string, likerId: string) {
     try {
-      const currentUser = authState$.user.get();
+      const currentUser = store.getState().auth.user;
       if (!currentUser) return;
 
       const db = getFirestore();
@@ -530,7 +513,7 @@ export const conversationActions = {
   // Conversation yorum bildirimi gönder
   async sendConversationCommentNotification(conversationId: string, commenterId: string, commentText: string) {
     try {
-      const currentUser = authState$.user.get();
+      const currentUser = store.getState().auth.user;
       if (!currentUser) return;
 
       const db = getFirestore();
@@ -599,31 +582,30 @@ export const conversationActions = {
 
   // UI'yi geri al (hata durumunda)
   revertLikeConversationUI(conversationId: string) {
-    const currentConversations = conversationState$.conversations.get();
-    const conversationIndex = currentConversations.findIndex(c => c.id === conversationId);
-    
-    if (conversationIndex !== -1) {
-      const conversation = currentConversations[conversationIndex];
-      const isCurrentlyLiked = conversationState$.likedConversations.get().some(c => c.id === conversationId);
-      
+    const { conversations, likedConversations } = store.getState().conversation;
+    const conversation = conversations.find(c => c.id === conversationId);
+
+    if (conversation) {
+      const isCurrentlyLiked = likedConversations.some(c => c.id === conversationId);
+
       if (isCurrentlyLiked) {
         // Geri al: unlike yapılmışsa like'a çevir
-        conversationState$.conversations.set(prev => 
-          prev.map(c => c.id === conversationId 
+        store.dispatch(patchConversation({
+          conversations: conversations.map(c => c.id === conversationId
             ? { ...c, likesCount: (c.likesCount || 0) + 1 }
             : c
-          )
-        );
-        conversationState$.likedConversations.set(prev => [...prev, conversation]);
+          ),
+          likedConversations: [...likedConversations, conversation],
+        }));
       } else {
         // Geri al: like yapılmışsa unlike'a çevir
-        conversationState$.conversations.set(prev => 
-          prev.map(c => c.id === conversationId 
+        store.dispatch(patchConversation({
+          conversations: conversations.map(c => c.id === conversationId
             ? { ...c, likesCount: Math.max(0, (c.likesCount || 0) - 1) }
             : c
-          )
-        );
-        conversationState$.likedConversations.set(prev => prev.filter(c => c.id !== conversationId));
+          ),
+          likedConversations: likedConversations.filter(c => c.id !== conversationId),
+        }));
       }
     }
   },
@@ -631,11 +613,11 @@ export const conversationActions = {
   // Check if conversation is liked
   async isConversationLiked(conversationId: string): Promise<boolean> {
     try {
-      const currentUser = authState$.user.get();
+      const currentUser = store.getState().auth.user;
       if (!currentUser?.id) return false;
 
       // Real-time likedConversations state'inden kontrol et
-      const likedConversations = conversationState$.likedConversations.get();
+      const likedConversations = store.getState().conversation.likedConversations;
       return likedConversations.some(conversation => conversation.id === conversationId);
     } catch (error) {
       console.error('Check conversation like error:', error);

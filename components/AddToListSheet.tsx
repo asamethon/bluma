@@ -1,7 +1,7 @@
 import { Radius, Spacing, useTheme } from '@/constants/theme';
-import { readingListActions, readingListState$ } from '@/store/readingListStore';
+import { useAppSelector } from '@/store/hooks';
+import { readingListActions } from '@/store/readingListStore';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
@@ -22,10 +22,10 @@ interface Props {
   storyId: string | null;
 }
 
-export default observer(function AddToListSheet({ visible, onClose, storyId }: Props) {
+export default function AddToListSheet({ visible, onClose, storyId }: Props) {
   const { colors } = useTheme();
   const { bottom } = useSafeAreaInsets();
-  const lists = readingListState$.lists.get();
+  const lists = useAppSelector(s => s.readingList.lists);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
 
@@ -121,7 +121,7 @@ export default observer(function AddToListSheet({ visible, onClose, storyId }: P
       </View>
     </Modal>
   );
-});
+}
 
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },

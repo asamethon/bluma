@@ -1,12 +1,11 @@
 import { Screen, Switch, Text } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
-import { authState$ } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { observer } from '@legendapp/state/react';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useAppSelector } from '@/store/hooks';
 
 type PrivacyState = {
   privateAccount: boolean;
@@ -29,10 +28,10 @@ const ROWS: { key: keyof PrivacyState; icon: keyof typeof Ionicons.glyphMap; tit
   { key: 'discoverable', icon: 'search-outline', title: 'Aramada Göster', caption: 'Profilin arama sonuçlarında ve önerilerde çıksın' },
 ];
 
-export default observer(function PrivacyScreen() {
+export default function PrivacyScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { user } = authState$.get();
+  const { user } = useAppSelector(s => s.auth);
   const styles = createStyles(colors);
 
   const storageKey = `privacySettings:${user?.id ?? 'guest'}`;
@@ -101,7 +100,7 @@ export default observer(function PrivacyScreen() {
       </ScrollView>
     </Screen>
   );
-});
+}
 
 const createStyles = (colors: any) =>
   StyleSheet.create({

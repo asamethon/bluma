@@ -12,7 +12,8 @@ import {
   deleteDoc,
   serverTimestamp,
 } from '@react-native-firebase/firestore';
-import { authState$, User } from '@/store/authState';
+import { patchAuth, User } from '@/store/slices/authSlice';
+import { store } from '@/store';
 
 // Check if username is available
 async function checkUsernameAvailability(username: string): Promise<boolean> {
@@ -57,7 +58,7 @@ async function getUserById(userId: string): Promise<User | null> {
 // Complete onboarding
 async function completeOnboarding(userData: { username: string; interests: string[]; bio: string }) {
   try {
-    authState$.isLoading.set(true);
+    store.dispatch(patchAuth({ isLoading: true }));
 
     const db = getFirestore();
 
@@ -68,7 +69,7 @@ async function completeOnboarding(userData: { username: string; interests: strin
     }
 
     // Update user data
-    const currentUser = authState$.user.get();
+    const currentUser = store.getState().auth.user;
     if (currentUser) {
       const updatedUser = {
         ...currentUser,
@@ -89,8 +90,8 @@ async function completeOnboarding(userData: { username: string; interests: strin
       await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
 
       // Update state
-      authState$.user.set(updatedUser);
-      authState$.hasCompletedOnboarding.set(true);
+      store.dispatch(patchAuth({ user: updatedUser }));
+      store.dispatch(patchAuth({ hasCompletedOnboarding: true }));
 
       console.log('Onboarding completed successfully');
       return { success: true };
@@ -100,14 +101,14 @@ async function completeOnboarding(userData: { username: string; interests: strin
     console.error('Onboarding error:', error);
     return { success: false, error: 'Profil oluşturulurken bir hata oluştu.' };
   } finally {
-    authState$.isLoading.set(false);
+    store.dispatch(patchAuth({ isLoading: false }));
   }
 }
 
 // Update user profile
 async function updateUserProfile(updatedUser: User) {
   try {
-    authState$.isLoading.set(true);
+    store.dispatch(patchAuth({ isLoading: true }));
 
     const db = getFirestore();
 
@@ -122,7 +123,7 @@ async function updateUserProfile(updatedUser: User) {
     await AsyncStorage.setItem('userData', JSON.stringify(updatedUser));
 
     // Update state
-    authState$.user.set(updatedUser);
+    store.dispatch(patchAuth({ user: updatedUser }));
 
     console.log('Profile updated successfully');
     return { success: true };
@@ -130,16 +131,16 @@ async function updateUserProfile(updatedUser: User) {
     console.error('Profile update error:', error);
     return { success: false, error: 'Profil güncellenirken bir hata oluştu.' };
   } finally {
-    authState$.isLoading.set(false);
+    store.dispatch(patchAuth({ isLoading: false }));
   }
 }
 
 // Delete user account
 async function deleteAccount(password?: string) {
   try {
-    authState$.isLoading.set(true);
+    store.dispatch(patchAuth({ isLoading: true }));
 
-    const currentUser = authState$.user.get();
+    const currentUser = store.getState().auth.user;
     if (!currentUser) {
       return { success: false, error: 'Kullanıcı bulunamadı.' };
     }
@@ -207,17 +208,17 @@ async function deleteAccount(password?: string) {
     ]);
 
     // Reset state
-    authState$.isAuthenticated.set(false);
-    authState$.hasCompletedOnboarding.set(false);
-    authState$.user.set(null);
-    authState$.token.set(null);
-    authState$.isLoading.set(false);
+    store.dispatch(patchAuth({ isAuthenticated: false }));
+    store.dispatch(patchAuth({ hasCompletedOnboarding: false }));
+    store.dispatch(patchAuth({ user: null }));
+    store.dispatch(patchAuth({ token: null }));
+    store.dispatch(patchAuth({ isLoading: false }));
 
     console.log('Account deletion successful');
     return { success: true };
   } catch (error: any) {
     console.error('Account deletion error:', error);
-    authState$.isLoading.set(false);
+    store.dispatch(patchAuth({ isLoading: false }));
 
     if (error.code === 'auth/requires-recent-login') {
       return { success: false, error: 'Hesap silmek için şifreni tekrar girmen gerekiyor.' };

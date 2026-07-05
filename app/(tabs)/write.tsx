@@ -8,12 +8,11 @@ import { WritingBottomBar } from '@/features/story/components/WritingBottomBar';
 import { WritingCanvas } from '@/features/story/components/WritingCanvas';
 import { WritingSetupCard } from '@/features/story/components/WritingSetupCard';
 import { useWriteForm } from '@/features/story/hooks/useWriteForm';
-import { observer } from '@legendapp/state/react';
 import React from 'react';
 import { ActivityIndicator, Keyboard, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export default observer(function WriteScreen() {
+export default function WriteScreen() {
   const { colors } = useTheme();
   const { bottom: safeBottom } = useSafeAreaInsets();
   // Tab bar: 64px bar + safe area bottom padding (minimum 10px)
@@ -97,6 +96,8 @@ export default observer(function WriteScreen() {
         onInsertBullet={() => f.insertAtCursor('\n• ')}
         onInsertSceneBreak={() => f.insertAtCursor('\n\n* * *\n\n')}
         onInsertParagraph={() => f.insertAtCursor('\n\n')}
+        onInsertImage={f.handleInsertImage}
+        imageUploading={f.imageUploading}
         onPreview={() => { Keyboard.dismiss(); f.setPreviewVisible(true); }}
         onPublish={f.handlePublish}
         isValid={f.isValid}
@@ -142,7 +143,7 @@ export default observer(function WriteScreen() {
       )}
     </Screen>
   );
-});
+}
 
 const createStyles = (colors: any) =>
   StyleSheet.create({

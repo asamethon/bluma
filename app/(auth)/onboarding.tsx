@@ -1,11 +1,11 @@
 import {
   Screen, BloomMark, Button, Text } from '@/components/ui';
 import { CategoryMeta, Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
-import { authActions, authState$ } from '@/store/authStore';
+import { authActions } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from "@legendapp/state/react";
 import { Redirect } from 'expo-router';
 import React, { useState } from 'react';
+import { useAppSelector } from '@/store/hooks';
 import {
   Alert,
   ScrollView,
@@ -39,14 +39,14 @@ const STEPS = [
 ];
 const TOTAL = STEPS.length;
 
-export default observer(function OnboardingScreen() {
+export default function OnboardingScreen() {
   const { colors, fonts } = useTheme();
   const [step, setStep]   = useState(0);
   const [intent, setIntent] = useState<Intent>(null);
   const [userData, setUserData] = useState({ username: '', displayName: '', interests: [] as string[], bio: '' });
   const [usernameStatus, setUsernameStatus] = useState<'checking' | 'available' | 'taken' | null>(null);
 
-  const { isLoading, isAuthenticated, hasCompletedOnboarding } = authState$.get();
+  const { isLoading, isAuthenticated, hasCompletedOnboarding } = useAppSelector(s => s.auth);
   if (!isAuthenticated) return <Redirect href="/(auth)/signin" />;
   if (hasCompletedOnboarding) return <Redirect href="/" />;
 
@@ -339,7 +339,7 @@ export default observer(function OnboardingScreen() {
       </View>
     </Screen>
   );
-});
+}
 
 const s = StyleSheet.create({
   progressHeader: {

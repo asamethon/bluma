@@ -1,11 +1,13 @@
-import { authActions, authState$ } from '@/store/authStore';
-import { storyActions, storyState$ } from '@/store/storyStore';
+import { authActions } from '@/store/authStore';
+import { storyActions } from '@/store/storyStore';
+import { store } from '@/store';
+import { useAppSelector } from '@/store/hooks';
 import { configureGoogleSignIn } from '@/config/googleSignIn';
 import { AuthGateSheet } from '@/components/AuthGateSheet';
 import { GuestProvider } from '@/contexts/GuestContext';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import { observer } from '@legendapp/state/react';
+import { Provider } from 'react-redux';
 import {
   useFonts,
   Spectral_400Regular,
@@ -38,7 +40,16 @@ SplashScreen.preventAutoHideAsync();
 // hatası veriyordu (Google ile giriş hiç çalışmıyordu).
 configureGoogleSignIn();
 
-export default observer(function RootLayout() {
+export default function RootLayout() {
+  // useAppSelector kullanan iç bileşen Provider'ın altında olmalı.
+  return (
+    <Provider store={store}>
+      <RootLayoutInner />
+    </Provider>
+  );
+}
+
+function RootLayoutInner() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
@@ -52,8 +63,8 @@ export default observer(function RootLayout() {
     HankenGrotesk_700Bold,
     HankenGrotesk_800ExtraBold,
   });
-  const { isLoading } = authState$.get();
-  const storiesLoaded = storyState$.storiesLoaded.get();
+  const isLoading = useAppSelector(s => s.auth.isLoading);
+  const storiesLoaded = useAppSelector(s => s.story.storiesLoaded);
   const [splashTimedOut, setSplashTimedOut] = useState(false);
   const pathname = usePathname();
 
@@ -116,4 +127,4 @@ export default observer(function RootLayout() {
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
-});
+}

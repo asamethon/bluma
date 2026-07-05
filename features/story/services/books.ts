@@ -12,16 +12,16 @@ import {
     serverTimestamp,
     where,
 } from '@react-native-firebase/firestore';
-import { authState$ } from '@/store/authState';
-import { storyState$ } from '@/store/storyState';
 import { updateUserStoriesCount } from './storyApi';
 import { getUserById } from './userCache';
+import { patchStory } from '@/store/slices/storySlice';
+import { store } from '@/store';
 
 // Book CRUD operations
 export async function createBook(bookData: Omit<Book, 'id' | 'createdAt' | 'updatedAt' | 'likesCount' | 'commentsCount' | 'viewsCount' | 'author'>) {
   try {
-    storyState$.isLoading.set(true);
-    const { user } = authState$.get();
+    store.dispatch(patchStory({ isLoading: true }));
+    const { user } = store.getState().auth;
 
     if (!user?.id) {
       throw new Error('User not authenticated');
@@ -47,12 +47,12 @@ export async function createBook(bookData: Omit<Book, 'id' | 'createdAt' | 'upda
       await updateUserStoriesCount(user.id, 1);
     }
 
-    storyState$.isLoading.set(false);
+    store.dispatch(patchStory({ isLoading: false }));
     return { success: true, bookId: docRef.id };
   } catch (error) {
     console.error('Create book error:', error);
-    storyState$.isLoading.set(false);
-    storyState$.error.set(error instanceof Error ? error.message : 'Book creation failed');
+    store.dispatch(patchStory({ isLoading: false }));
+    store.dispatch(patchStory({ error: error instanceof Error ? error.message : 'Book creation failed' }));
     return { success: false, error: error instanceof Error ? error.message : 'Book creation failed' };
   }
 }
@@ -110,7 +110,7 @@ export async function loadUserBooks(userId: string): Promise<Book[]> {
 
 export async function deleteBook(bookId: string) {
   try {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) {
       throw new Error('User not authenticated');
     }

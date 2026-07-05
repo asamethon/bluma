@@ -13,12 +13,13 @@ import {
   increment,
 } from '@react-native-firebase/firestore';
 import { notificationActions } from '../../../store/notificationStore';
-import { authState$, User } from '@/store/authState';
+import { patchAuth, User } from '@/store/slices/authSlice';
+import { store } from '@/store';
 
 // Follow a user
 async function followUser(userIdToFollow: string) {
   try {
-    const currentUser = authState$.user.get();
+    const currentUser = store.getState().auth.user;
     if (!currentUser) return { success: false, error: 'Kullanıcı bulunamadı.' };
 
     const db = getFirestore();
@@ -55,10 +56,10 @@ async function followUser(userIdToFollow: string) {
     ).catch((e: any) => console.error('Follow notification error:', e));
 
     // Update local state
-    authState$.user.set({
+    store.dispatch(patchAuth({ user: {
       ...currentUser,
       followingCount: (currentUser.followingCount || 0) + 1,
-    });
+    } }));
 
     return { success: true };
   } catch (error) {
@@ -70,7 +71,7 @@ async function followUser(userIdToFollow: string) {
 // Unfollow a user
 async function unfollowUser(userIdToUnfollow: string) {
   try {
-    const currentUser = authState$.user.get();
+    const currentUser = store.getState().auth.user;
     if (!currentUser) return { success: false, error: 'Kullanıcı bulunamadı.' };
 
     const db = getFirestore();
@@ -91,10 +92,10 @@ async function unfollowUser(userIdToUnfollow: string) {
     }).catch((e: any) => console.error('Followers count update error:', e));
 
     // Update local state
-    authState$.user.set({
+    store.dispatch(patchAuth({ user: {
       ...currentUser,
       followingCount: Math.max((currentUser.followingCount || 0) - 1, 0),
-    });
+    } }));
 
     return { success: true };
   } catch (error) {
@@ -106,7 +107,7 @@ async function unfollowUser(userIdToUnfollow: string) {
 // Check if current user is following another user
 async function isFollowingUser(userId: string): Promise<boolean> {
   try {
-    const currentUser = authState$.user.get();
+    const currentUser = store.getState().auth.user;
     if (!currentUser) return false;
 
     const db = getFirestore();

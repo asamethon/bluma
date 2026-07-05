@@ -1,6 +1,7 @@
 import { imageUploadService } from '@/services/imageUploadService';
-import { authState$ } from '@/store/authStore';
-import { storyActions, storyState$ } from '@/store/storyStore';
+import { store } from '@/store';
+import { useAppSelector } from '@/store/hooks';
+import { storyActions } from '@/store/storyStore';
 import { StoryCategory } from '@/types';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -13,8 +14,8 @@ export type EditChapter = { id: string; title: string; content: string; isPublis
 // Ekran (`app/story/edit/[id].tsx`) yalnızca bu hook'u çağırıp bileşen dizer.
 export function useEditStoryForm(id: string | string[] | undefined) {
   const router = useRouter();
-  const { user: currentUser } = authState$.get();
-  const { isLoading } = storyState$.get();
+  const currentUser = useAppSelector(s => s.auth.user);
+  const isLoading = useAppSelector(s => s.story.isLoading);
 
   // Loading states
   const [isLoadingStory, setIsLoadingStory] = useState(true);
@@ -66,7 +67,7 @@ export function useEditStoryForm(id: string | string[] | undefined) {
       setIsLoadingStory(true);
 
       // Get story from store or fetch from API
-      const stories = storyState$.stories.get();
+      const stories = store.getState().story.stories;
       let story = stories.find(s => s.id === storyId);
 
       if (!story) {

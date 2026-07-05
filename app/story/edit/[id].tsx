@@ -6,12 +6,11 @@ import { EditLoadingOverlay } from '@/features/story/components/EditLoadingOverl
 import { EditQuickWriteForm } from '@/features/story/components/EditQuickWriteForm';
 import { EditScreenHeader } from '@/features/story/components/EditScreenHeader';
 import { useEditStoryForm } from '@/features/story/hooks/useEditStoryForm';
-import { observer } from '@legendapp/state/react';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-export default observer(function StoryEditScreen() {
+export default function StoryEditScreen() {
   const { colors } = useTheme();
   const { id } = useLocalSearchParams();
   const form = useEditStoryForm(id);
@@ -159,7 +158,7 @@ export default observer(function StoryEditScreen() {
       {form.isLoading && <EditLoadingOverlay />}
     </Screen>
   );
-});
+}
 
 const createStyles = (colors: any) =>
   StyleSheet.create({

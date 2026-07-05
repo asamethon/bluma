@@ -9,13 +9,13 @@ import {
     query,
     where,
 } from '@react-native-firebase/firestore';
-import { authState$ } from '@/store/authState';
 import { moderationActions } from '../../../store/moderationStore';
-import { storyState$ } from '@/store/storyState';
 import { loadDiscoverStories, loadFollowingStories } from './discover';
 import { loadOfflineStories } from './offline';
 import { getStoryById } from './storyApi';
 import { getUserById } from './userCache';
+import { patchStory } from '@/store/slices/storySlice';
+import { store } from '@/store';
 
 // Real-time listener'lar için unsubscribe fonksiyonları
 let storiesUnsubscribe: (() => void) | null = null;
@@ -102,7 +102,7 @@ export function setupPublishedUserStoriesListener(userId: string) {
         });
       }
 
-      storyState$.publishedUserStories.set(publishedStoriesList);
+      store.dispatch(patchStory({ publishedUserStories: publishedStoriesList }));
       console.log('Published user stories updated:', publishedStoriesList.length);
     }, (error) => {
       console.error('Published user stories listener error:', error);
@@ -158,7 +158,7 @@ export function setupPublishedUserStoriesListenerWithClientFiltering(userId: str
         }
       }
 
-      storyState$.publishedUserStories.set(publishedStoriesList);
+      store.dispatch(patchStory({ publishedUserStories: publishedStoriesList }));
       console.log('Published user stories updated (client-side filtering):', publishedStoriesList.length);
     }, (error) => {
       console.error('Published user stories listener error (client-side):', error);
@@ -171,7 +171,7 @@ export function setupPublishedUserStoriesListenerWithClientFiltering(userId: str
 
 // Stories real-time listener
 export function setupStoriesListener() {
-  // Idempotent: a single shared listener feeds storyState$.stories. Calling
+  // Idempotent: a single shared listener feeds story.stories. Calling
   // this again (e.g. from a screen mount) while one is active is a no-op, so
   // the splash prefetch and screen listeners never duplicate.
   if (storiesUnsubscribe) return;
@@ -198,12 +198,12 @@ export function setupStoriesListener() {
         });
       }
 
-      storyState$.stories.set(storiesList);
-      storyState$.storiesLoaded.set(true);
+      store.dispatch(patchStory({ stories: storiesList }));
+      store.dispatch(patchStory({ storiesLoaded: true }));
     }, (error) => {
       console.error('Stories listener error:', error);
       // Don't hold the splash forever if the feed errors out.
-      storyState$.storiesLoaded.set(true);
+      store.dispatch(patchStory({ storiesLoaded: true }));
     });
   } catch (error) {
     console.error('Setup stories listener error:', error);
@@ -216,7 +216,7 @@ export function setupLikedStoriesListener() {
   // aksi hâlde her ekran odaklanışında üstüne yeni listener kuruluyordu.
   if (likedStoriesUnsubscribe) return;
   try {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) return;
 
     const firestore = getFirestore();
@@ -231,7 +231,7 @@ export function setupLikedStoriesListener() {
       const fetched = await Promise.all(
         snapshot.docs.map(likeDoc => getStoryById(likeDoc.data().storyId))
       );
-      storyState$.likedStories.set(fetched.filter((s): s is Story => !!s));
+      store.dispatch(patchStory({ likedStories: fetched.filter((s): s is Story => !!s) }));
     }, (error: any) => {
       console.error('Liked stories listener error:', error);
 
@@ -250,7 +250,7 @@ export function setupSavedStoriesListener() {
   // Idempotent (bkz. setupLikedStoriesListener)
   if (savedStoriesUnsubscribe) return;
   try {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) return;
 
     const firestore = getFirestore();
@@ -263,7 +263,7 @@ export function setupSavedStoriesListener() {
       const fetched = await Promise.all(
         snapshot.docs.map(saveDoc => getStoryById(saveDoc.data().storyId))
       );
-      storyState$.savedStories.set(fetched.filter((s): s is Story => !!s));
+      store.dispatch(patchStory({ savedStories: fetched.filter((s): s is Story => !!s) }));
     }, (error: any) => {
       console.error('Saved stories listener error:', error);
 
@@ -358,7 +358,7 @@ export function setupCommentsListener(storyId: string) {
       const visibleComments = moderationActions
         .filterBlocked(topLevelComments)
         .map(c => ({ ...c, replies: c.replies ? moderationActions.filterBlocked(c.replies) : c.replies }));
-      storyState$.storyComments.set(visibleComments);
+      store.dispatch(patchStory({ storyComments: visibleComments }));
     }, (error) => {
       console.error('Comments listener error:', error);
     });
@@ -384,7 +384,7 @@ export function setupStoryDetailListener(storyId: string) {
           author: author || { id: '', email: '', displayName: '', authProvider: 'email' },
         };
 
-        storyState$.currentStory.set(story);
+        store.dispatch(patchStory({ currentStory: story }));
       }
     }, (error) => {
       console.error('Story detail listener error:', error);

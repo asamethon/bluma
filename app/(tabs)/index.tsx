@@ -14,13 +14,11 @@ import {
 import { CategoryMeta, Radius, Spacing, categoryColor, useTheme } from "@/constants/theme";
 import { useGuestGate } from "@/contexts/GuestContext";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
-import { authState$ } from "@/store/authStore";
-import { moderationActions, moderationState$ } from "@/store/moderationStore";
-import { preferencesActions, preferencesState$ } from "@/store/preferencesStore";
-import { notificationState$ } from "@/store/notificationStore";
-import { storyActions, storyState$ } from "@/store/storyStore";
+import { useAppSelector } from "@/store/hooks";
+import { moderationActions } from "@/store/moderationStore";
+import { preferencesActions } from "@/store/preferencesStore";
+import { storyActions } from "@/store/storyStore";
 import { Story } from "@/types";
-import { observer } from "@legendapp/state/react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
@@ -46,12 +44,13 @@ const CATEGORY_RAIL = [
   "poetry",
 ];
 
-export default observer(function HomeScreen() {
+export default function HomeScreen() {
   const { colors, shadows } = useTheme();
   const router = useRouter();
   const networkStatus = useNetworkStatus();
-  const { user: currentUser, isGuest } = authState$.get();
-  const { unreadCount } = notificationState$.get();
+  const currentUser = useAppSelector(s => s.auth.user);
+  const isGuest = useAppSelector(s => s.auth.isGuest);
+  const unreadCount = useAppSelector(s => s.notification.unreadCount);
   const { startAuth } = useGuestGate();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -138,10 +137,10 @@ export default observer(function HomeScreen() {
     router.push(`/story/${storyId}/preview`);
   };
 
-  const { stories: rawStories = [] } = storyState$.get();
+  const rawStories = useAppSelector(s => s.story.stories);
   // Engellenen yazarları ve (tercih kapalıysa) 18+ içeriği akıştan çıkar (reaktif)
-  const blockedIds = moderationState$.blockedUserIds.get();
-  const matureOn = preferencesState$.showMatureContent.get();
+  const blockedIds = useAppSelector(s => s.moderation.blockedUserIds);
+  const matureOn = useAppSelector(s => s.preferences.showMatureContent);
   // useMemo şart: filterMature/filterBlocked her render'da yeni bir array
   // referansı döndürüyordu, bu da aşağıdaki editorsPicks effect'inin
   // (dep: [allStories]) her render'da tetiklenmesine yol açıyordu.
@@ -476,7 +475,7 @@ export default observer(function HomeScreen() {
       />
     </Screen>
   );
-});
+}
 
 const createStyles = (colors: any) =>
   StyleSheet.create({

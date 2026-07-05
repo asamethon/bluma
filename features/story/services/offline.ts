@@ -1,7 +1,8 @@
 import { offlineStorageService } from '@/services/offlineStorageService';
 import { Story } from '@/types';
 import NetInfo from '@react-native-community/netinfo';
-import { storyState$ } from '@/store/storyState';
+import { store } from '@/store';
+import { clearDownloadProgress, patchStory, setDownloadProgress } from '@/store/slices/storySlice';
 import { getStoryById } from './storyApi';
 
 // ===== OFFLINE STORY MANAGEMENT =====
@@ -10,7 +11,7 @@ import { getStoryById } from './storyApi';
 export async function loadOfflineStories() {
   try {
     const offlineStories = await offlineStorageService.getOfflineStories();
-    storyState$.offlineStories.set(offlineStories);
+    store.dispatch(patchStory({ offlineStories: offlineStories }));
   } catch (error) {
     console.error('Load offline stories error:', error);
   }
@@ -20,28 +21,18 @@ export async function loadOfflineStories() {
 export async function downloadStoryOffline(story: Story): Promise<{ success: boolean; error?: string }> {
   try {
     // İndirme durumunu başlat
-    storyState$.isDownloading.set(prev => ({
-      ...prev,
-      [story.id]: 0
-    }));
+    store.dispatch(setDownloadProgress({ storyId: story.id, progress: 0 }));
 
     // Progress listener'ı kur
     const progressInterval = setInterval(async () => {
       const progress = await offlineStorageService.getDownloadProgress(story.id);
       if (progress) {
-        storyState$.isDownloading.set(prev => ({
-          ...prev,
-          [story.id]: progress.progress
-        }));
+        store.dispatch(setDownloadProgress({ storyId: story.id, progress: progress.progress }));
 
         if (progress.status === 'completed' || progress.status === 'failed') {
           clearInterval(progressInterval);
           // İndirme durumunu temizle
-          storyState$.isDownloading.set(prev => {
-            const newState = { ...prev };
-            delete newState[story.id];
-            return newState;
-          });
+          store.dispatch(clearDownloadProgress(story.id));
         }
       }
     }, 100);
@@ -67,9 +58,7 @@ export async function deleteOfflineStory(storyId: string): Promise<boolean> {
     const success = await offlineStorageService.deleteOfflineStory(storyId);
     if (success) {
       // State'i güncelle
-      storyState$.offlineStories.set(prev =>
-        prev.filter(story => story.id !== storyId)
-      );
+      store.dispatch(patchStory({ offlineStories: store.getState().story.offlineStories.filter(story => story.id !== storyId) }));
     }
     return success;
   } catch (error) {
@@ -120,8 +109,7 @@ export async function clearAllOfflineData(): Promise<boolean> {
   try {
     const success = await offlineStorageService.clearAllOfflineData();
     if (success) {
-      storyState$.offlineStories.set([]);
-      storyState$.isDownloading.set({});
+      store.dispatch(patchStory({ offlineStories: [], isDownloading: {} }));
     }
     return success;
   } catch (error) {
@@ -147,12 +135,12 @@ export async function cleanupOldOfflineStories(): Promise<number> {
 
 // İndirme progress'ini getir
 export function getDownloadProgress(storyId: string): number {
-  return storyState$.isDownloading.get()[storyId] || 0;
+  return store.getState().story.isDownloading[storyId] || 0;
 }
 
 // Hikayenin indirilip indirilmediğini kontrol et
 export function isStoryDownloading(storyId: string): boolean {
-  return storyId in storyState$.isDownloading.get();
+  return storyId in store.getState().story.isDownloading;
 }
 
 // ===== OFFLINE-AWARE STORY FETCHING =====
@@ -199,7 +187,7 @@ export async function getStoriesWithOfflineFallback(): Promise<{
 
     if (isOnline) {
       // Online ise normal hikayeleri getir
-      const currentStories = storyState$.stories.get();
+      const currentStories = store.getState().story.stories;
       return {
         stories: currentStories,
         isFromCache: false,

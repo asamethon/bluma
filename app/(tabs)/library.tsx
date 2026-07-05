@@ -6,10 +6,8 @@ import {
   Text,
 } from '@/components/ui';
 import { Spacing, useTheme } from '@/constants/theme';
-import { authState$ } from '@/store/authStore';
-import { storyActions, storyState$ } from '@/store/storyStore';
+import { storyActions } from '@/store/storyStore';
 import { Story } from '@/types';
-import { observer } from '@legendapp/state/react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
@@ -19,6 +17,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppSelector } from '@/store/hooks';
 
 interface LibrarySection {
   title: string;
@@ -26,12 +25,12 @@ interface LibrarySection {
   data: Story[];
 }
 
-export default observer(function LibraryScreen() {
+export default function LibraryScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user: currentUser, isGuest } = authState$.get();
-  const { savedStories, likedStories } = storyState$.get();
+  const { user: currentUser, isGuest } = useAppSelector(s => s.auth);
+  const { savedStories, likedStories } = useAppSelector(s => s.story);
   const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
@@ -131,7 +130,7 @@ export default observer(function LibraryScreen() {
       />
     </View>
   );
-});
+}
 
 const styles = StyleSheet.create({
   root: { flex: 1 },

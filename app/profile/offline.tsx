@@ -1,8 +1,7 @@
-import { storyActions, storyState$ } from '@/store/storyStore';
+import { storyActions } from '@/store/storyStore';
 import { useTheme } from '@/constants/theme';
 import { Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -16,11 +15,12 @@ import {
   View,
 } from 'react-native';
 import { Screen } from '@/components/ui';
+import { useAppSelector } from '@/store/hooks';
 
-export default observer(function OfflineLibraryScreen() {
+export default function OfflineLibraryScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-  const { offlineStories } = storyState$.get();
+  const { offlineStories } = useAppSelector(s => s.story);
 
   const [refreshing, setRefreshing] = useState(false);
   const [storageInfo, setStorageInfo] = useState({ used: 0, total: 0, count: 0 });
@@ -263,7 +263,7 @@ export default observer(function OfflineLibraryScreen() {
       </ScrollView>
     </Screen>
   );
-});
+}
 
 const createStyles = (colors: any) =>
   StyleSheet.create({

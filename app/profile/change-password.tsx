@@ -1,16 +1,16 @@
 import { Button, Screen, Text } from '@/components/ui';
 import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
-import { authActions, authState$ } from '@/store/authStore';
+import { authActions } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { useAppSelector } from '@/store/hooks';
 
-export default observer(function ChangePasswordScreen() {
+export default function ChangePasswordScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { user } = authState$.get();
+  const { user } = useAppSelector(s => s.auth);
   const styles = createStyles(colors);
 
   const isEmailAccount = user?.authProvider === 'email';
@@ -152,7 +152,7 @@ export default observer(function ChangePasswordScreen() {
       </ScrollView>
     </Screen>
   );
-});
+}
 
 function PasswordField({
   colors,

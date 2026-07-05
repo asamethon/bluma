@@ -1,13 +1,12 @@
 import { Screen, Switch, Text } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { pushNotificationService } from '@/services/pushNotificationService';
-import { authState$ } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { observer } from '@legendapp/state/react';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useAppSelector } from '@/store/hooks';
 
 type NotifState = {
   push: boolean;
@@ -41,10 +40,10 @@ const ACTIVITY: Row[] = [
   { key: 'newFollower', icon: 'person-add-outline', title: 'Yeni Takipçi', caption: 'Biri seni takip etmeye başladığında' },
 ];
 
-export default observer(function NotificationSettingsScreen() {
+export default function NotificationSettingsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { user } = authState$.get();
+  const { user } = useAppSelector(s => s.auth);
   const styles = createStyles(colors);
 
   const storageKey = `notificationSettings:${user?.id ?? 'guest'}`;
@@ -137,7 +136,7 @@ export default observer(function NotificationSettingsScreen() {
       </ScrollView>
     </Screen>
   );
-});
+}
 
 const createStyles = (colors: any) =>
   StyleSheet.create({

@@ -1,9 +1,8 @@
 import ReportSheet from '@/components/ReportSheet';
-import { authState$ } from '@/store/authStore';
-import { storyActions, storyState$ } from '@/store/storyStore';
+import { storyActions } from '@/store/storyStore';
+import { useAppSelector } from '@/store/hooks';
 import { Comment } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -23,12 +22,12 @@ import { Screen } from '@/components/ui';
 import { useTheme } from '@/constants/theme';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
-export default observer(function CommentsScreen() {
+export default function CommentsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
-  const { user: currentUser } = authState$.get();
-  const { storyComments = [] } = storyState$.get();
+  const { user: currentUser } = useAppSelector(s => s.auth);
+  const { storyComments = [] } = useAppSelector(s => s.story);
   
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -398,7 +397,7 @@ export default observer(function CommentsScreen() {
       />
     </Screen>
   );
-});
+}
 
 const createStyles = (colors: any) =>
   StyleSheet.create({

@@ -1,12 +1,12 @@
 import {
   Screen, Button, Text } from "@/components/ui";
 import { Fonts, Radius, Spacing, useTheme } from "@/constants/theme";
-import { authActions, authState$ } from "@/store/authStore";
+import { authActions } from "@/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
-import { observer } from "@legendapp/state/react";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { Redirect, useRouter } from "expo-router";
 import React, { useState } from "react";
+import { useAppSelector } from '@/store/hooks';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -61,12 +61,12 @@ function LabeledInput({
   );
 }
 
-export default observer(function SignInScreen() {
+export default function SignInScreen() {
   const router = useRouter();
   const { colors, fonts } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { isLoading, isAuthenticated, hasCompletedOnboarding } = authState$.get();
+  const { isLoading, isAuthenticated, hasCompletedOnboarding } = useAppSelector(s => s.auth);
   const [showPassword, setShowPassword] = useState(false);
 
   if (isAuthenticated && hasCompletedOnboarding) return <Redirect href="/" />;
@@ -269,7 +269,7 @@ export default observer(function SignInScreen() {
       </KeyboardAvoidingView>
     </Screen>
   );
-});
+}
 
 const s = StyleSheet.create({
   scrollContent: {

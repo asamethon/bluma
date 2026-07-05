@@ -10,10 +10,9 @@ import { invalidateUserCache, userCacheActions } from '@/features/story/services
 import { viewsActions } from '@/features/story/services/views';
 
 // Geriye dönük uyumluluk için: mevcut import edenler `storyStore`'dan
-// `invalidateUserCache`/`storyState$`/`StoryState` alıyordu.
+// `invalidateUserCache`/`StoryState` alıyordu.
 export { invalidateUserCache };
-export type { StoryState } from './storyState';
-export { storyState$ } from './storyState';
+export type { StoryState } from './slices/storySlice';
 
 export const storyActions = {
   ...userCacheActions,

@@ -1,7 +1,6 @@
-import { authActions, authState$ } from "@/store/authStore";
+import { authActions } from "@/store/authStore";
 import { useTheme } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { observer } from "@legendapp/state/react";
 import { Stack, useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
@@ -16,6 +15,7 @@ import {
   View,
 } from "react-native";
 import { Screen } from '@/components/ui';
+import { useAppSelector } from '@/store/hooks';
 
 type Faq = { q: string; a: string };
 
@@ -34,11 +34,11 @@ const FAQS: Faq[] = [
   },
 ];
 
-export default observer(function HelpScreen() {
+export default function HelpScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
-  const { user: currentUser } = authState$.get();
+  const { user: currentUser } = useAppSelector(s => s.auth);
 
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -345,7 +345,7 @@ export default observer(function HelpScreen() {
       </Modal>
     </Screen>
   );
-});
+}
 
 const createStyles = (colors: any) =>
   StyleSheet.create({

@@ -1,9 +1,7 @@
-import { authState$ } from '@/store/authStore';
 import { useTheme } from '@/constants/theme';
-import { storyActions, storyState$ } from '@/store/storyStore';
+import { storyActions } from '@/store/storyStore';
 import { Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -16,12 +14,13 @@ import {
   View,
 } from 'react-native';
 import { Screen } from '@/components/ui';
+import { useAppSelector } from '@/store/hooks';
 
-export default observer(function SavedStoriesScreen() {
+export default function SavedStoriesScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-  const { user: currentUser } = authState$.get();
-  const { savedStories, isLoading } = storyState$.get();
+  const { user: currentUser } = useAppSelector(s => s.auth);
+  const { savedStories, isLoading } = useAppSelector(s => s.story);
   
   const [refreshing, setRefreshing] = useState(false);
 
@@ -236,7 +235,7 @@ export default observer(function SavedStoriesScreen() {
       </ScrollView>
     </Screen>
   );
-});
+}
 
 const createStyles = (colors: any) =>
   StyleSheet.create({

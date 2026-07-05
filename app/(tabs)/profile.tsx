@@ -14,14 +14,14 @@ import { ProfileConversationCard } from '@/features/profile/components/ProfileCo
 import { ProfileGradientHero } from '@/features/profile/components/ProfileGradientHero';
 import { ProfileStatCell } from '@/features/profile/components/ProfileStatCell';
 import { ProfileStoryShelf } from '@/features/profile/components/ProfileStoryShelf';
-import { CHALLENGE_DEFS, RANKS, challengeActions, challengeState$, getRankIndex } from '@/store/challengeStore';
+import { CHALLENGE_DEFS, RANKS, challengeActions, getRankIndex } from '@/store/challengeStore';
 import { imageUploadService } from '@/services/imageUploadService';
-import { authActions, authState$ } from '@/store/authStore';
-import { conversationActions, conversationState$ } from '@/store/conversationStore';
-import { storyActions, storyState$ } from '@/store/storyStore';
+import { authActions } from '@/store/authStore';
+import { conversationActions } from '@/store/conversationStore';
+import { useAppSelector } from '@/store/hooks';
+import { storyActions } from '@/store/storyStore';
 import { Conversation, Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -38,12 +38,14 @@ import {
 } from 'react-native';
 import { buildProfileShareUrl } from '@/utils/deepLinks';
 
-export default observer(function ProfileScreen() {
+export default function ProfileScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-  const { user: currentUser, isGuest } = authState$.get();
-  const { isLoading, publishedUserStories } = storyState$.get();
-  const { userConversations } = conversationState$.get();
+  const currentUser = useAppSelector(s => s.auth.user);
+  const isGuest = useAppSelector(s => s.auth.isGuest);
+  const isLoading = useAppSelector(s => s.story.isLoading);
+  const publishedUserStories = useAppSelector(s => s.story.publishedUserStories);
+  const userConversations = useAppSelector(s => s.conversation.userConversations);
   const [imageModalVisible, setImageModalVisible] = React.useState(false);
   const [selectedModalImage, setSelectedModalImage] = React.useState<string | null>(null);
 
@@ -553,12 +555,12 @@ export default observer(function ProfileScreen() {
       </Modal>
     </Screen>
   );
-});
+}
 
 
 function RankProgressCard({ onPress, style }: { onPress?: () => void; style?: any }) {
   const { colors } = useTheme();
-  const { xp, streak, challengeProgress, claimedChallenges } = challengeState$.get();
+  const { xp, streak, challengeProgress, claimedChallenges } = useAppSelector(s => s.challenge);
   const rankIndex = getRankIndex(xp);
   const rank = RANKS[rankIndex];
   const nextRank = RANKS[rankIndex + 1];

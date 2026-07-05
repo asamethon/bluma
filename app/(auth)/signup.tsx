@@ -1,12 +1,12 @@
 import {
   Screen, Button, Text } from '@/components/ui';
 import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
-import { authActions, authState$ } from '@/store/authStore';
+import { authActions } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { Redirect, router, useRouter } from 'expo-router';
 import React, { useState } from 'react';
+import { useAppSelector } from '@/store/hooks';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -79,9 +79,9 @@ function isStrongPassword(pw: string): boolean {
 const STR_LABELS = ['', 'Zayıf', 'Orta', 'İyi', 'Güçlü'];
 const STR_COLORS = ['transparent', '#E5604F', '#E6B95C', '#46B98A', '#2FA98A'];
 
-export default observer(function SignUpScreen() {
+export default function SignUpScreen() {
   const { colors, fonts } = useTheme();
-  const { isLoading, isAuthenticated, hasCompletedOnboarding } = authState$.get();
+  const { isLoading, isAuthenticated, hasCompletedOnboarding } = useAppSelector(s => s.auth);
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [agree, setAgree] = useState(true);
@@ -314,7 +314,7 @@ export default observer(function SignUpScreen() {
       </KeyboardAvoidingView>
     </Screen>
   );
-});
+}
 
 const s = StyleSheet.create({
   scrollContent: {

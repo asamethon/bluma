@@ -1,11 +1,12 @@
 import { imageUploadService } from '@/services/imageUploadService';
-import { authState$ } from '@/store/authStore';
+import { useAppSelector } from '@/store/hooks';
 import { storyActions } from '@/store/storyStore';
 import { StoryCategory } from '@/types';
 import { useFocusEffect, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Keyboard } from 'react-native';
+import { buildImageToken, stripImageTokens } from '../utils/imageToken';
 
 export type Chapter = { id: string; title: string; content: string };
 
@@ -13,15 +14,16 @@ export type Chapter = { id: string; title: string; content: string };
 // app/(tabs)/write.tsx yalnızca bu hook'u çağırıp bileşen dizer.
 export function useWriteForm() {
   const router = useRouter();
-  const { user: currentUser } = authState$.get();
+  const currentUser = useAppSelector(s => s.auth.user);
 
-  // storyState$.isLoading GLOBAL bir bayrak — keşfet akışı, takip edilenler,
+  // story.isLoading GLOBAL bir bayrak — keşfet akışı, takip edilenler,
   // kitap işlemleri gibi ilgisiz arka plan yüklemeleri de aynı bayrağı
   // kullanıyor. Yazma ekranının kendi kaydet/yayınla butonu bu paylaşılan
   // bayrağa bağlıyken, başka bir ekrandaki arka plan yükleme sürerken
   // Önizle/Yayınla kalıcı olarak disabled görünüyordu. Ekranın kendi
   // gönderim durumunu ayrı, yerel bir state'te tutuyoruz.
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
 
   const [writeMode, setWriteMode] = useState<'quick' | 'advanced'>('quick');
   const [focusMode, setFocusMode] = useState(false);
@@ -120,14 +122,18 @@ export function useWriteForm() {
     ? storyContent
     : chapters.map(c => c.content).join('\n§§\n');
 
-  const wordCount = effectiveContent.trim() ? effectiveContent.trim().split(/\s+/).length : 0;
-  const charCount = effectiveContent.length;
+  // Sayaç ve doğrulama, resim belirteçlerini (\n[[img:URL]]\n) saymaz — yoksa
+  // yalnızca resim ekleyip hiç metin yazmayan bir kullanıcı yanlışlıkla
+  // yayınlama eşiğini (min. 50 karakter) geçmiş görünür.
+  const textOnlyContent = stripImageTokens(effectiveContent);
+  const wordCount = textOnlyContent.trim() ? textOnlyContent.trim().split(/\s+/).length : 0;
+  const charCount = textOnlyContent.length;
   const readMin = Math.max(1, Math.ceil(wordCount / 200));
 
   const getReadingTime = (text: string) =>
-    Math.max(1, Math.ceil(text.trim().split(/\s+/).filter(w => w).length / 200));
+    Math.max(1, Math.ceil(stripImageTokens(text).trim().split(/\s+/).filter(w => w).length / 200));
 
-  const isValid = storyTitle.trim().length >= 3 && effectiveContent.trim().length >= 50;
+  const isValid = storyTitle.trim().length >= 3 && textOnlyContent.trim().length >= 50;
 
   const resetForm = () => {
     setStoryTitle(''); setChapterTitle(''); setStoryContent('');
@@ -176,7 +182,7 @@ export function useWriteForm() {
       Alert.alert('Başlık eksik', 'Hikaye başlığı en az 3 karakter olmalı.');
       return false;
     }
-    if (effectiveContent.trim().length < 50) {
+    if (textOnlyContent.trim().length < 50) {
       Alert.alert('İçerik eksik', 'Hikaye içeriği en az 50 karakter olmalı.');
       return false;
     }
@@ -276,6 +282,22 @@ export function useWriteForm() {
     }
   };
 
+  // Hikaye kapağından bağımsız — içeriğin ortasına eklenen resim.
+  // İmleç konumuna bir [[img:URL]] belirteci ekler (bkz. utils/imageToken).
+  const handleInsertImage = async () => {
+    try {
+      const uri = await imageUploadService.pickContentImage();
+      if (!uri) return;
+      setImageUploading(true);
+      const url = await imageUploadService.uploadStoryContentImage(uri);
+      insertAtCursor(buildImageToken(url));
+    } catch (e) {
+      Alert.alert('Hata', e instanceof Error ? e.message : 'Resim eklenemedi.');
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
   const handleAddChapter = () => {
     const next = [...chapters, { id: Date.now().toString(), title: `Bölüm ${chapters.length + 1}`, content: '' }];
     setChapters(next);
@@ -315,6 +337,7 @@ export function useWriteForm() {
   return {
     currentUser,
     isLoading: isSubmitting,
+    imageUploading,
 
     writeMode, setWriteMode,
     focusMode, setFocusMode,
@@ -346,6 +369,7 @@ export function useWriteForm() {
     handlePublish,
     handlePickCover,
     handleTakePhoto,
+    handleInsertImage,
     handleAddChapter,
     handleDeleteChapter,
     updateChapter,

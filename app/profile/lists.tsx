@@ -1,9 +1,8 @@
 import { Screen, Text } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
-import { authState$ } from '@/store/authStore';
-import { readingListActions, readingListState$ } from '@/store/readingListStore';
+import { useAppSelector } from '@/store/hooks';
+import { readingListActions } from '@/store/readingListStore';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -16,12 +15,12 @@ import {
   View,
 } from 'react-native';
 
-export default observer(function ReadingListsScreen() {
+export default function ReadingListsScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-  const { user: currentUser } = authState$.get();
-  const lists = readingListState$.lists.get();
-  const loaded = readingListState$.loaded.get();
+  const currentUser = useAppSelector(s => s.auth.user);
+  const lists = useAppSelector(s => s.readingList.lists);
+  const loaded = useAppSelector(s => s.readingList.loaded);
 
   const [refreshing, setRefreshing] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -128,7 +127,7 @@ export default observer(function ReadingListsScreen() {
       </ScrollView>
     </Screen>
   );
-});
+}
 
 const styles = StyleSheet.create({
   header: {

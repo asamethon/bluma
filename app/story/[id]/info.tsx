@@ -1,5 +1,4 @@
 import OfflineIndicator from '@/components/OfflineIndicator';
-import { authState$ } from '@/store/authStore';
 import { storyActions } from '@/store/storyStore';
 import { Story } from '@/types';
 import { buildStoryShareUrl } from '@/utils/deepLinks';
@@ -19,6 +18,7 @@ import {
 } from 'react-native';
 import { Screen } from '@/components/ui';
 import { useTheme } from '@/constants/theme';
+import { store } from '@/store';
 
 export default function StoryInfoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -68,7 +68,7 @@ export default function StoryInfoScreen() {
   }, [id]);
 
   const handleToggleSave = async () => {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) {
       Alert.alert('Giriş Gerekli', 'Kütüphaneye eklemek için giriş yapmalısın.');
       return;

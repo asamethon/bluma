@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Chapter } from '../hooks/useWriteForm';
+import { StoryImage } from './StoryImage';
+import { parseImageToken } from '../utils/imageToken';
 
 interface StoryPreviewModalProps {
   visible: boolean;
@@ -70,9 +72,11 @@ export function StoryPreviewModal({
                     {ch.title || `Bölüm ${ci + 1}`}
                   </Text>
                 )}
-                {paras.length > 0 ? paras.map((p, pi) => (
-                  <Text key={pi} style={[s.previewBody, { color: colors.text }]}>{p}</Text>
-                )) : (
+                {paras.length > 0 ? paras.map((p, pi) => {
+                  const imageUrl = parseImageToken(p);
+                  if (imageUrl) return <StoryImage key={pi} uri={imageUrl} />;
+                  return <Text key={pi} style={[s.previewBody, { color: colors.text }]}>{p}</Text>;
+                }) : (
                   <Text style={[s.previewBody, { color: colors.textLight, fontStyle: 'italic' }]}>
                     Bu bölümde henüz içerik yok.
                   </Text>

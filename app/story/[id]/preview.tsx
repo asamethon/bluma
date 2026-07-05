@@ -1,6 +1,6 @@
-import { authState$ } from '@/store/authStore';
+import { store } from '@/store';
 import { useTheme } from '@/constants/theme';
-import { storyActions, storyState$ } from '@/store/storyStore';
+import { storyActions } from '@/store/storyStore';
 import { Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -45,7 +45,7 @@ export default function StoryPreviewScreen() {
       setIsLoading(true);
       try {
         // Önce memory'deki hikayeyi kontrol et (anında göster)
-        const { stories, userStories, publishedUserStories } = storyState$.get();
+        const { stories, userStories, publishedUserStories } = store.getState().story;
         const memoryStory = stories.find(s => s.id === id) || 
                            userStories.find(s => s.id === id) || 
                            publishedUserStories.find(s => s.id === id);
@@ -132,7 +132,7 @@ export default function StoryPreviewScreen() {
   };
 
   const handleSave = async () => {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id || !current) return;
     await storyActions.saveStory(current.id);
   };

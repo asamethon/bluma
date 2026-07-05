@@ -9,12 +9,12 @@ import {
 } from '@/components/ui';
 import { CategoryMeta, Radius, Spacing, categoryColor, useTheme } from '@/constants/theme';
 import { FollowButton } from '@/features/social/components/FollowButton';
-import { authActions, authState$, User } from '@/store/authStore';
-import { moderationActions, moderationState$ } from '@/store/moderationStore';
-import { preferencesActions, preferencesState$ } from '@/store/preferencesStore';
+import { authActions, User } from '@/store/authStore';
+import { useAppSelector } from '@/store/hooks';
+import { moderationActions } from '@/store/moderationStore';
+import { preferencesActions } from '@/store/preferencesStore';
 import { Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -43,9 +43,10 @@ interface SearchHistoryItem {
   timestamp: number;
 }
 
-export default observer(function SearchScreen() {
+export default function SearchScreen() {
   const { colors } = useTheme();
   const router = useRouter();
+  const currentUserId = useAppSelector(s => s.auth.user?.id);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
@@ -75,12 +76,13 @@ export default observer(function SearchScreen() {
     loadAllStories();
     loadRecentSearches();
     preferencesActions.load();
-    if (authState$.get().user?.id) moderationActions.loadBlockedUsers();
+    if (currentUserId) moderationActions.loadBlockedUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Tercih/engel değişince listeyi tazele (reaktif)
-  const matureOn = preferencesState$.showMatureContent.get();
-  const blockedCount = moderationState$.blockedUserIds.get().length;
+  const matureOn = useAppSelector(s => s.preferences.showMatureContent);
+  const blockedCount = useAppSelector(s => s.moderation.blockedUserIds.length);
 
   // Türetilmiş değer — eskiden useState+useEffect+setTimeout ile tutuluyordu.
   // Filtreleme senkron ve ucuz; render'da hesaplamak fazladan bir render
@@ -368,7 +370,7 @@ export default observer(function SearchScreen() {
       />
     </Screen>
   );
-});
+}
 
 const styles = StyleSheet.create({
   headerRow: {

@@ -1,5 +1,4 @@
 import { Story } from '@/types';
-import { observable } from '@legendapp/state';
 import {
   addDoc,
   arrayRemove,
@@ -14,37 +13,27 @@ import {
   serverTimestamp,
   updateDoc,
 } from '@react-native-firebase/firestore';
-import { authState$ } from './authStore';
+import { store } from './index';
+import {
+  addStoryToList,
+  patchReadingList,
+  removeList,
+  removeStoryFromList,
+  updateList,
+  upsertList,
+  type ReadingListMeta,
+} from './slices/readingListSlice';
 import { storyActions } from './storyStore';
 
-export interface ReadingListMeta {
-  id: string;
-  name: string;
-  description?: string;
-  isPublic: boolean;
-  storyIds: string[];
-  createdAt?: any;
-  updatedAt?: any;
-}
-
-export interface ReadingListState {
-  lists: ReadingListMeta[];
-  loaded: boolean;
-}
-
-export const readingListState$ = observable<ReadingListState>({
-  lists: [],
-  loaded: false,
-});
+export type { ReadingListMeta, ReadingListState } from './slices/readingListSlice';
 
 const listsRef = (uid: string) => collection(getFirestore(), 'users', uid, 'readingLists');
 
 export const readingListActions = {
   async loadLists() {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) {
-      readingListState$.lists.set([]);
-      readingListState$.loaded.set(true);
+      store.dispatch(patchReadingList({ lists: [], loaded: true }));
       return;
     }
     try {
@@ -61,16 +50,16 @@ export const readingListActions = {
           updatedAt: data.updatedAt,
         };
       });
-      readingListState$.lists.set(lists);
+      store.dispatch(patchReadingList({ lists }));
     } catch (error) {
       console.error('Load reading lists error:', error);
     } finally {
-      readingListState$.loaded.set(true);
+      store.dispatch(patchReadingList({ loaded: true }));
     }
   },
 
   async createList(name: string, opts?: { description?: string; isPublic?: boolean }) {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) return { success: false, error: 'Giriş gerekli.' };
     const trimmed = name.trim();
     if (!trimmed) return { success: false, error: 'Liste adı boş olamaz.' };
@@ -83,10 +72,13 @@ export const readingListActions = {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      readingListState$.lists.set(prev => [
-        { id: ref.id, name: trimmed, description: opts?.description || '', isPublic: opts?.isPublic !== false, storyIds: [] },
-        ...prev,
-      ]);
+      store.dispatch(upsertList({
+        id: ref.id,
+        name: trimmed,
+        description: opts?.description || '',
+        isPublic: opts?.isPublic !== false,
+        storyIds: [],
+      }));
       return { success: true, listId: ref.id };
     } catch (error) {
       console.error('Create reading list error:', error);
@@ -95,13 +87,13 @@ export const readingListActions = {
   },
 
   async renameList(listId: string, name: string) {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) return { success: false, error: 'Giriş gerekli.' };
     const trimmed = name.trim();
     if (!trimmed) return { success: false, error: 'Liste adı boş olamaz.' };
     try {
       await updateDoc(doc(listsRef(user.id), listId), { name: trimmed, updatedAt: serverTimestamp() });
-      readingListState$.lists.set(prev => prev.map(l => l.id === listId ? { ...l, name: trimmed } : l));
+      store.dispatch(updateList({ listId, patch: { name: trimmed } }));
       return { success: true };
     } catch (error) {
       console.error('Rename reading list error:', error);
@@ -110,11 +102,11 @@ export const readingListActions = {
   },
 
   async deleteList(listId: string) {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) return { success: false, error: 'Giriş gerekli.' };
     try {
       await deleteDoc(doc(listsRef(user.id), listId));
-      readingListState$.lists.set(prev => prev.filter(l => l.id !== listId));
+      store.dispatch(removeList(listId));
       return { success: true };
     } catch (error) {
       console.error('Delete reading list error:', error);
@@ -123,20 +115,16 @@ export const readingListActions = {
   },
 
   isInList(listId: string, storyId: string) {
-    const list = readingListState$.lists.get().find(l => l.id === listId);
+    const list = store.getState().readingList.lists.find(l => l.id === listId);
     return !!list && list.storyIds.includes(storyId);
   },
 
   async addStory(listId: string, storyId: string) {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) return { success: false, error: 'Giriş gerekli.' };
     try {
       // Optimistic
-      readingListState$.lists.set(prev => prev.map(l =>
-        l.id === listId && !l.storyIds.includes(storyId)
-          ? { ...l, storyIds: [...l.storyIds, storyId] }
-          : l
-      ));
+      store.dispatch(addStoryToList({ listId, storyId }));
       await updateDoc(doc(listsRef(user.id), listId), {
         storyIds: arrayUnion(storyId),
         updatedAt: serverTimestamp(),
@@ -150,14 +138,10 @@ export const readingListActions = {
   },
 
   async removeStory(listId: string, storyId: string) {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) return { success: false, error: 'Giriş gerekli.' };
     try {
-      readingListState$.lists.set(prev => prev.map(l =>
-        l.id === listId
-          ? { ...l, storyIds: l.storyIds.filter(s => s !== storyId) }
-          : l
-      ));
+      store.dispatch(removeStoryFromList({ listId, storyId }));
       await updateDoc(doc(listsRef(user.id), listId), {
         storyIds: arrayRemove(storyId),
         updatedAt: serverTimestamp(),
@@ -172,7 +156,7 @@ export const readingListActions = {
 
   // Bir listenin hikâyelerini (sıralı) yükle
   async getListStories(listId: string): Promise<Story[]> {
-    const list = readingListState$.lists.get().find(l => l.id === listId);
+    const list = store.getState().readingList.lists.find(l => l.id === listId);
     if (!list || list.storyIds.length === 0) return [];
     const fetched = await Promise.all(list.storyIds.map(sid => storyActions.getStoryById(sid)));
     return fetched.filter((s): s is Story => !!s);

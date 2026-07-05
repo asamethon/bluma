@@ -17,12 +17,13 @@ import {
   setDoc,
   serverTimestamp,
 } from '@react-native-firebase/firestore';
-import { authState$, User } from '@/store/authState';
+import { patchAuth, User } from '@/store/slices/authSlice';
+import { store } from '@/store';
 
 // Sign in with email
 async function signInWithEmail(email: string, password: string) {
   try {
-    authState$.isLoading.set(true);
+    store.dispatch(patchAuth({ isLoading: true }));
 
     const authInstance = getAuth();
     const userCredential = await signInWithEmailAndPassword(authInstance, email, password);
@@ -52,17 +53,17 @@ async function signInWithEmail(email: string, password: string) {
     const token = await getIdToken(firebaseUser);
 
     // Update state
-    authState$.token.set(token);
-    authState$.user.set(userData as User);
-    authState$.isAuthenticated.set(true);
-    authState$.isGuest.set(false);
+    store.dispatch(patchAuth({ token: token }));
+    store.dispatch(patchAuth({ user: userData as User }));
+    store.dispatch(patchAuth({ isAuthenticated: true }));
+    store.dispatch(patchAuth({ isGuest: false }));
 
     // Check if user has completed onboarding
     if (userData.username && userData.interests) {
-      authState$.hasCompletedOnboarding.set(true);
+      store.dispatch(patchAuth({ hasCompletedOnboarding: true }));
       await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
     } else {
-      authState$.hasCompletedOnboarding.set(false);
+      store.dispatch(patchAuth({ hasCompletedOnboarding: false }));
       await AsyncStorage.setItem('hasCompletedOnboarding', 'false');
     }
 
@@ -79,7 +80,7 @@ async function signInWithEmail(email: string, password: string) {
     }
 
     // Set loading to false before returning
-    authState$.isLoading.set(false);
+    store.dispatch(patchAuth({ isLoading: false }));
 
     return { success: true };
   } catch (error: any) {
@@ -105,14 +106,14 @@ async function signInWithEmail(email: string, password: string) {
       return { success: false, error: 'Giriş yapılırken bir hata oluştu.' };
     }
   } finally {
-    authState$.isLoading.set(false);
+    store.dispatch(patchAuth({ isLoading: false }));
   }
 }
 
 // Sign up with email
 async function signUpWithEmail(email: string, password: string, displayName: string) {
   try {
-    authState$.isLoading.set(true);
+    store.dispatch(patchAuth({ isLoading: true }));
 
     const authInstance = getAuth();
     const userCredential = await createUserWithEmailAndPassword(authInstance, email, password);
@@ -142,11 +143,11 @@ async function signUpWithEmail(email: string, password: string, displayName: str
     const token = await getIdToken(firebaseUser);
 
     // Update state
-    authState$.token.set(token);
-    authState$.user.set(userData as User);
-    authState$.isAuthenticated.set(true);
-    authState$.isGuest.set(false);
-    authState$.hasCompletedOnboarding.set(false); // New user needs onboarding
+    store.dispatch(patchAuth({ token: token }));
+    store.dispatch(patchAuth({ user: userData as User }));
+    store.dispatch(patchAuth({ isAuthenticated: true }));
+    store.dispatch(patchAuth({ isGuest: false }));
+    store.dispatch(patchAuth({ hasCompletedOnboarding: false })); // New user needs onboarding
 
     // Save to AsyncStorage
     await AsyncStorage.setItem('userToken', token);
@@ -162,7 +163,7 @@ async function signUpWithEmail(email: string, password: string, displayName: str
     }
 
     // Set loading to false before returning
-    authState$.isLoading.set(false);
+    store.dispatch(patchAuth({ isLoading: false }));
 
     return { success: true };
   } catch (error: any) {
@@ -188,14 +189,14 @@ async function signUpWithEmail(email: string, password: string, displayName: str
       return { success: false, error: 'Kayıt olurken bir hata oluştu.' };
     }
   } finally {
-    authState$.isLoading.set(false);
+    store.dispatch(patchAuth({ isLoading: false }));
   }
 }
 
 // Reset password
 async function resetPassword(email: string) {
   try {
-    authState$.isLoading.set(true);
+    store.dispatch(patchAuth({ isLoading: true }));
 
     // Send password reset email
     await sendPasswordResetEmail(getAuth(), email);
@@ -217,14 +218,14 @@ async function resetPassword(email: string) {
       return { success: false, error: 'Şifre sıfırlama e-postası gönderilirken bir hata oluştu.' };
     }
   } finally {
-    authState$.isLoading.set(false);
+    store.dispatch(patchAuth({ isLoading: false }));
   }
 }
 
 // Change password (email accounts only) — reauthenticate, then update.
 async function changePassword(currentPassword: string, newPassword: string) {
   try {
-    const user = authState$.user.get();
+    const user = store.getState().auth.user;
     const firebaseUser = getAuth().currentUser;
     if (!user || !firebaseUser) {
       return { success: false, error: 'Oturum bulunamadı. Lütfen tekrar giriş yap.' };

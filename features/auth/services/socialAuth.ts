@@ -15,12 +15,13 @@ import {
   serverTimestamp,
 } from '@react-native-firebase/firestore';
 import { notificationActions } from '../../../store/notificationStore';
-import { authState$, User } from '@/store/authState';
+import { patchAuth, User } from '@/store/slices/authSlice';
+import { store } from '@/store';
 
 // Sign in with Google
 async function signInWithGoogle() {
   try {
-    authState$.isLoading.set(true);
+    store.dispatch(patchAuth({ isLoading: true }));
     console.log('Google sign in started');
 
     const result = await signInWithGoogleSDK();
@@ -109,18 +110,18 @@ async function signInWithGoogle() {
     console.log('Google sign in successful with Firebase');
 
     // Update state
-    authState$.token.set(token);
-    authState$.user.set(userData as User);
-    authState$.isAuthenticated.set(true);
-    authState$.isGuest.set(false);
+    store.dispatch(patchAuth({ token: token }));
+    store.dispatch(patchAuth({ user: userData as User }));
+    store.dispatch(patchAuth({ isAuthenticated: true }));
+    store.dispatch(patchAuth({ isGuest: false }));
 
     // Check if user has completed onboarding
     if (userData.username && userData.interests) {
-      authState$.hasCompletedOnboarding.set(true);
+      store.dispatch(patchAuth({ hasCompletedOnboarding: true }));
       await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
       console.log('User has completed onboarding');
     } else {
-      authState$.hasCompletedOnboarding.set(false);
+      store.dispatch(patchAuth({ hasCompletedOnboarding: false }));
       await AsyncStorage.setItem('hasCompletedOnboarding', 'false');
       console.log('User needs to complete onboarding');
 
@@ -141,12 +142,12 @@ async function signInWithGoogle() {
     }
 
     // Set loading to false before returning
-    authState$.isLoading.set(false);
+    store.dispatch(patchAuth({ isLoading: false }));
 
     return { success: true };
   } catch (error: any) {
     console.error('Google Sign-In error:', error);
-    authState$.isLoading.set(false);
+    store.dispatch(patchAuth({ isLoading: false }));
 
     if (error.code === 'auth/account-exists-with-different-credential') {
       return { success: false, error: 'Bu e-posta adresi farklı bir yöntemle kayıtlı.' };
@@ -176,14 +177,14 @@ async function signInWithGoogle() {
       return { success: false, error: 'Google ile giriş yapılırken bir hata oluştu.' };
     }
   } finally {
-    authState$.isLoading.set(false);
+    store.dispatch(patchAuth({ isLoading: false }));
   }
 }
 
 // Sign in with Apple
 async function signInWithApple(credential: any) {
   try {
-    authState$.isLoading.set(true);
+    store.dispatch(patchAuth({ isLoading: true }));
 
     const authInstance = getAuth();
     const db = getFirestore();
@@ -239,18 +240,18 @@ async function signInWithApple(credential: any) {
     console.log('Apple sign in successful with Firebase');
 
     // Update state
-    authState$.token.set(token);
-    authState$.user.set(userData as User);
-    authState$.isAuthenticated.set(true);
-    authState$.isGuest.set(false);
+    store.dispatch(patchAuth({ token: token }));
+    store.dispatch(patchAuth({ user: userData as User }));
+    store.dispatch(patchAuth({ isAuthenticated: true }));
+    store.dispatch(patchAuth({ isGuest: false }));
 
     // Check if user has completed onboarding
     if (userData.username && userData.interests) {
-      authState$.hasCompletedOnboarding.set(true);
+      store.dispatch(patchAuth({ hasCompletedOnboarding: true }));
       await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
       console.log('Apple user has completed onboarding');
     } else {
-      authState$.hasCompletedOnboarding.set(false);
+      store.dispatch(patchAuth({ hasCompletedOnboarding: false }));
       await AsyncStorage.setItem('hasCompletedOnboarding', 'false');
       console.log('Apple user needs to complete onboarding');
 
@@ -272,12 +273,12 @@ async function signInWithApple(credential: any) {
     }
 
     // Set loading to false before returning
-    authState$.isLoading.set(false);
+    store.dispatch(patchAuth({ isLoading: false }));
 
     return { success: true };
   } catch (error: any) {
     console.error('Apple sign in error:', error);
-    authState$.isLoading.set(false);
+    store.dispatch(patchAuth({ isLoading: false }));
 
     if (error.code === 'auth/account-exists-with-different-credential') {
       return { success: false, error: 'Bu e-posta adresi farklı bir yöntemle kayıtlı.' };
@@ -299,7 +300,7 @@ async function signInWithApple(credential: any) {
       return { success: false, error: 'Apple ile giriş yapılırken bir hata oluştu.' };
     }
   } finally {
-    authState$.isLoading.set(false);
+    store.dispatch(patchAuth({ isLoading: false }));
   }
 }
 

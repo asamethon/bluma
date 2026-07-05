@@ -1,5 +1,6 @@
-import { authActions, authState$ } from '@/store/authStore';
+import { authActions } from '@/store/authStore';
 import { useCallback, useEffect, useState } from 'react';
+import { useAppSelector } from '@/store/hooks';
 
 // Optimistic takip hook'u — mimarinin referans implementasyonu
 // (bkz. docs/ARCHITECTURE.md). UI anında güncellenir, Firestore işi arka
@@ -12,7 +13,7 @@ export function useFollow(
   targetUserId: string | undefined,
   onCountChange?: (delta: number) => void
 ) {
-  const currentUserId = authState$.user.get()?.id;
+  const currentUserId = useAppSelector(s => s.auth.user?.id);
   const isSelf = !!targetUserId && targetUserId === currentUserId;
 
   const [isFollowing, setIsFollowing] = useState(false);

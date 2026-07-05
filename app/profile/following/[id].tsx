@@ -2,11 +2,11 @@
 import {
   Screen, Avatar, Text } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
-import { authActions, authState$, User } from '@/store/authStore';
+import { authActions, User } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
+import { useAppSelector } from '@/store/hooks';
 import {
   ActivityIndicator,
   Alert,
@@ -20,11 +20,11 @@ import {
 
 type Tab = 'followers' | 'following';
 
-export default observer(function FollowingScreen() {
+export default function FollowingScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { user: currentUser } = authState$.get();
+  const { user: currentUser } = useAppSelector(s => s.auth);
 
   const [tab, setTab] = useState<Tab>('following');
   const [searchQuery, setSearchQuery] = useState('');
@@ -208,7 +208,7 @@ export default observer(function FollowingScreen() {
       )}
     </Screen>
   );
-});
+}
 
 function fmtN(n?: number) {
   const v = n || 0;

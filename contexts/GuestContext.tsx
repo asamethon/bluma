@@ -1,7 +1,6 @@
-import { authState$ } from '@/store/authStore';
-import { observer } from '@legendapp/state/react';
 import { useRouter } from 'expo-router';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useAppSelector } from '@/store/hooks';
 
 export type GateReason = 'follow' | 'like' | 'save' | 'comment' | 'write' | 'read' | 'default';
 
@@ -31,9 +30,9 @@ export const GATE_REASONS: Record<GateReason, { icon: string; title: string; sub
   default: { icon: 'leaf',               title: "Bluma'ya katıl",      sub: 'Bunu yapmak için ücretsiz bir hesaba ihtiyacın var.' },
 };
 
-export const GuestProvider = observer(function GuestProvider({ children }: { children: React.ReactNode }) {
+export const GuestProvider = function GuestProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { isAuthenticated, isGuest } = authState$.get();
+  const { isAuthenticated, isGuest } = useAppSelector(s => s.auth);
   const [gate, setGate] = useState<{ reason: GateReason } | null>(null);
   const pending = useRef<(() => void) | null>(null);
 
@@ -68,4 +67,4 @@ export const GuestProvider = observer(function GuestProvider({ children }: { chi
       {children}
     </GuestContext.Provider>
   );
-});
+}

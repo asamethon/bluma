@@ -1,7 +1,8 @@
 import { pushNotificationService } from "@/services/pushNotificationService";
 import { useTheme } from "@/constants/theme";
-import { authActions, authState$ } from "@/store/authStore";
-import { preferencesActions, preferencesState$ } from "@/store/preferencesStore";
+import { authActions } from "@/store/authStore";
+import { useAppSelector } from "@/store/hooks";
+import { preferencesActions } from "@/store/preferencesStore";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
@@ -20,7 +21,7 @@ export default function SettingsScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
-  const { user } = authState$.get();
+  const user = useAppSelector(s => s.auth.user);
 
   // Local toggles (persist integration can be added later)
   const [pushEnabled, setPushEnabled] = useState(true);
@@ -28,14 +29,15 @@ export default function SettingsScreen() {
   const [newChapterEnabled, setNewChapterEnabled] = useState(true);
   const [likesEnabled, setLikesEnabled] = useState(true);
   const [commentsEnabled, setCommentsEnabled] = useState(true);
-  const [matureEnabled, setMatureEnabled] = useState(preferencesState$.showMatureContent.get());
+  // Redux'tan okunur; setShowMatureContent optimistic dispatch ettiği için
+  // ayrı lokal state gerekmez.
+  const matureEnabled = useAppSelector(s => s.preferences.showMatureContent);
 
   useEffect(() => {
-    preferencesActions.load().then(() => setMatureEnabled(preferencesState$.showMatureContent.get()));
+    preferencesActions.load();
   }, []);
 
   const handleToggleMature = (value: boolean) => {
-    setMatureEnabled(value);
     preferencesActions.setShowMatureContent(value);
   };
 

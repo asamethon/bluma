@@ -1,11 +1,11 @@
 import {
   Screen, BloomMark } from '@/components/ui';
 import { Fonts } from '@/constants/theme';
-import { authActions, authState$ } from '@/store/authStore';
+import { authActions } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import { Redirect, useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
+import { useAppSelector } from '@/store/hooks';
 import {
   Animated,
   Dimensions,
@@ -26,7 +26,7 @@ type Phase = 'splash' | 'welcome';
 // Persist across remounts so back-navigating from signin/signup skips splash
 let _splashShown = false;
 
-export default observer(function WalkthroughScreen() {
+export default function WalkthroughScreen() {
   const router = useRouter();
   const [phase, setPhase] = React.useState<Phase>(_splashShown ? 'welcome' : 'splash');
 
@@ -104,7 +104,7 @@ export default observer(function WalkthroughScreen() {
   }, [phase]);
 
   /* ── auth redirects ────────────────────────────────────── */
-  const { isAuthenticated, hasCompletedOnboarding } = authState$.get();
+  const { isAuthenticated, hasCompletedOnboarding } = useAppSelector(s => s.auth);
   if (isAuthenticated && hasCompletedOnboarding) return <Redirect href="/" />;
   if (isAuthenticated && !hasCompletedOnboarding) return <Redirect href="/(auth)/onboarding" />;
 
@@ -225,7 +225,7 @@ export default observer(function WalkthroughScreen() {
       </Screen>
     </View>
   );
-});
+}
 
 const styles = StyleSheet.create({
   /* splash */

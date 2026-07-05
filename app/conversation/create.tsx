@@ -1,9 +1,7 @@
 import { imageUploadService } from '@/services/imageUploadService';
 import { pushNotificationService } from '@/services/pushNotificationService';
-import { authState$ } from '@/store/authStore';
 import { conversationActions } from '@/store/conversationStore';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -20,11 +18,12 @@ import {
 } from 'react-native';
 import { Screen } from '@/components/ui';
 import { useTheme } from '@/constants/theme';
+import { useAppSelector } from '@/store/hooks';
 
-export default observer(function CreateConversationScreen() {
+export default function CreateConversationScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-  const currentUser = authState$.user.get();
+  const currentUser = useAppSelector(s => s.auth.user);
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -299,7 +298,7 @@ export default observer(function CreateConversationScreen() {
       </KeyboardAvoidingView>
     </Screen>
   );
-});
+}
 
 const createStyles = (colors: any) =>
   StyleSheet.create({

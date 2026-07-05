@@ -11,30 +11,30 @@ import {
     setDoc,
     where,
 } from '@react-native-firebase/firestore';
-import { authState$ } from '@/store/authState';
-import { storyState$ } from '@/store/storyState';
 import { getStoryById } from './storyApi';
+import { patchStory } from '@/store/slices/storySlice';
+import { store } from '@/store';
 
 // Save/Unsave story
 export async function saveStory(storyId: string) {
   try {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) {
       throw new Error('User not authenticated');
     }
 
     // Önce UI'yi hemen güncelle (optimistic update)
-    const currentStories = storyState$.stories.get();
+    const currentStories = store.getState().story.stories;
     const story = currentStories.find(s => s.id === storyId);
-    const isCurrentlySaved = storyState$.savedStories.get().some(s => s.id === storyId);
+    const isCurrentlySaved = store.getState().story.savedStories.some(s => s.id === storyId);
 
     if (isCurrentlySaved) {
       // Unsave - UI'yi hemen güncelle
-      storyState$.savedStories.set(prev => prev.filter(s => s.id !== storyId));
+      store.dispatch(patchStory({ savedStories: store.getState().story.savedStories.filter(s => s.id !== storyId) }));
     } else {
       // Save - UI'yi hemen güncelle
       if (story) {
-        storyState$.savedStories.set(prev => [...prev, story]);
+        store.dispatch(patchStory({ savedStories: [...store.getState().story.savedStories, story] }));
       }
     }
 
@@ -80,28 +80,28 @@ export async function performSaveStoryFirebaseOperation(storyId: string, userId:
 
 // UI'yi geri al (hata durumunda)
 export function revertSaveStoryUI(storyId: string) {
-  const isCurrentlySaved = storyState$.savedStories.get().some(s => s.id === storyId);
-  const currentStories = storyState$.stories.get();
+  const isCurrentlySaved = store.getState().story.savedStories.some(s => s.id === storyId);
+  const currentStories = store.getState().story.stories;
   const story = currentStories.find(s => s.id === storyId);
 
   if (isCurrentlySaved) {
     // Geri al: unsave yapılmışsa save'a çevir
     if (story) {
-      storyState$.savedStories.set(prev => [...prev, story]);
+      store.dispatch(patchStory({ savedStories: [...store.getState().story.savedStories, story] }));
     }
   } else {
     // Geri al: save yapılmışsa unsave'a çevir
-    storyState$.savedStories.set(prev => prev.filter(s => s.id !== storyId));
+    store.dispatch(patchStory({ savedStories: store.getState().story.savedStories.filter(s => s.id !== storyId) }));
   }
 }
 
 export async function isStorySaved(storyId: string): Promise<boolean> {
   try {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) return false;
 
     // Önce local state'i kontrol et (daha hızlı)
-    const savedStories = storyState$.savedStories.get();
+    const savedStories = store.getState().story.savedStories;
     const isSaved = savedStories.some(story => story.id === storyId);
 
     if (savedStories.length > 0) {
@@ -125,7 +125,7 @@ export async function isStorySaved(storyId: string): Promise<boolean> {
 
 export async function loadSavedStories() {
   try {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) return;
 
     const firestore = getFirestore();
@@ -138,7 +138,7 @@ export async function loadSavedStories() {
     const fetched = await Promise.all(
       snapshot.docs.map(saveDoc => getStoryById(saveDoc.data().storyId))
     );
-    storyState$.savedStories.set(fetched.filter((s): s is Story => !!s));
+    store.dispatch(patchStory({ savedStories: fetched.filter((s): s is Story => !!s) }));
   } catch (error) {
     console.error('Load saved stories error:', error);
   }

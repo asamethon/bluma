@@ -2,7 +2,8 @@ import { signOutFromGoogle } from '@/config/googleSignIn';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAuth, onAuthStateChanged, signOut as firebaseSignOut, getIdToken } from '@react-native-firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp } from '@react-native-firebase/firestore';
-import { authState$, User } from '@/store/authState';
+import { patchAuth, User } from '@/store/slices/authSlice';
+import { store } from '@/store';
 
 // User real-time listener için unsubscribe fonksiyonu
 let userUnsubscribe: (() => void) | null = null;
@@ -12,11 +13,11 @@ async function initializeAuth() {
   try {
     console.log('Starting auth initialization...');
 
-    authState$.isLoading.set(true);
-    authState$.isAuthenticated.set(false);
-    authState$.hasCompletedOnboarding.set(false);
-    authState$.user.set(null);
-    authState$.token.set(null);
+    store.dispatch(patchAuth({ isLoading: true }));
+    store.dispatch(patchAuth({ isAuthenticated: false }));
+    store.dispatch(patchAuth({ hasCompletedOnboarding: false }));
+    store.dispatch(patchAuth({ user: null }));
+    store.dispatch(patchAuth({ token: null }));
 
     try {
       // Wait for Firebase to restore auth state from persistence
@@ -35,9 +36,9 @@ async function initializeAuth() {
           console.log('Got Firebase token');
 
           // Update state
-          authState$.token.set(token);
-          authState$.isAuthenticated.set(true);
-          authState$.isGuest.set(false);
+          store.dispatch(patchAuth({ token: token }));
+          store.dispatch(patchAuth({ isAuthenticated: true }));
+          store.dispatch(patchAuth({ isGuest: false }));
 
           // Try to get user data from Firestore (optional)
           try {
@@ -46,10 +47,10 @@ async function initializeAuth() {
 
             if (userDoc.exists()) {
               const userData = userDoc.data() as User;
-              authState$.user.set(userData);
+              store.dispatch(patchAuth({ user: userData }));
 
               if (userData.username && userData.interests) {
-                authState$.hasCompletedOnboarding.set(true);
+                store.dispatch(patchAuth({ hasCompletedOnboarding: true }));
               }
             } else {
               // User exists in Firebase but not in Firestore - create user document
@@ -65,7 +66,7 @@ async function initializeAuth() {
                 };
 
                 await setDoc(userDocRef, newUser);
-                authState$.user.set(newUser);
+                store.dispatch(patchAuth({ user: newUser }));
                 console.log('User document created successfully');
               } catch (createError) {
                 console.log('Error creating user document:', createError);
@@ -112,14 +113,14 @@ async function initializeAuth() {
             }
 
             // Reset state to ensure clean slate
-            authState$.set({
+            store.dispatch(patchAuth({
               isLoading: false,
               isAuthenticated: false,
               hasCompletedOnboarding: false,
               isGuest: false,
               user: null,
               token: null,
-            });
+            }));
             return;
           }
 
@@ -162,7 +163,7 @@ async function initializeAuth() {
     // Already set safe defaults above
   } finally {
     console.log('Auth initialization completed');
-    authState$.isLoading.set(false);
+    store.dispatch(patchAuth({ isLoading: false }));
   }
 }
 
@@ -170,7 +171,7 @@ async function initializeAuth() {
 async function signOut() {
   try {
     // Set loading to true during sign out
-    authState$.isLoading.set(true);
+    store.dispatch(patchAuth({ isLoading: true }));
 
     // Sign out from Firebase
     await firebaseSignOut(getAuth());
@@ -190,31 +191,31 @@ async function signOut() {
     ]);
 
     // Reset state
-    authState$.isAuthenticated.set(false);
-    authState$.hasCompletedOnboarding.set(false);
-    authState$.isGuest.set(false);
-    authState$.user.set(null);
-    authState$.token.set(null);
-    authState$.isLoading.set(false);
+    store.dispatch(patchAuth({ isAuthenticated: false }));
+    store.dispatch(patchAuth({ hasCompletedOnboarding: false }));
+    store.dispatch(patchAuth({ isGuest: false }));
+    store.dispatch(patchAuth({ user: null }));
+    store.dispatch(patchAuth({ token: null }));
+    store.dispatch(patchAuth({ isLoading: false }));
 
     console.log('Sign out successful');
   } catch (error) {
     console.error('Sign out error:', error);
     // Ensure loading is set to false even on error
-    authState$.isLoading.set(false);
+    store.dispatch(patchAuth({ isLoading: false }));
   }
 }
 
 function continueAsGuest() {
-  authState$.isGuest.set(true);
-  authState$.isAuthenticated.set(false);
-  authState$.hasCompletedOnboarding.set(false);
-  authState$.isLoading.set(false);
+  store.dispatch(patchAuth({ isGuest: true }));
+  store.dispatch(patchAuth({ isAuthenticated: false }));
+  store.dispatch(patchAuth({ hasCompletedOnboarding: false }));
+  store.dispatch(patchAuth({ isLoading: false }));
 }
 
 // Check if user is fully authenticated (signed in + onboarded)
 function isFullyAuthenticated(): boolean {
-  const state = authState$.get();
+  const state = store.getState().auth;
   return state.isAuthenticated && state.hasCompletedOnboarding;
 }
 
@@ -232,7 +233,7 @@ function setupUserListener(userId: string) {
     const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
       if (docSnap.exists()) {
         const userData = docSnap.data() as User;
-        authState$.user.set(userData);
+        store.dispatch(patchAuth({ user: userData }));
         console.log('User data updated in real-time');
       }
     }, (error: any) => {

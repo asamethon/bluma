@@ -1,4 +1,3 @@
-import { observable } from '@legendapp/state';
 import {
   addDoc,
   collection,
@@ -9,7 +8,10 @@ import {
   serverTimestamp,
   setDoc,
 } from '@react-native-firebase/firestore';
-import { authState$ } from './authStore';
+import { store } from './index';
+import { addBlockedUser, patchModeration, removeBlockedUser } from './slices/moderationSlice';
+
+export type { ModerationState } from './slices/moderationSlice';
 
 export type ReportTargetType = 'story' | 'comment' | 'user' | 'conversation';
 
@@ -34,44 +36,33 @@ export const REPORT_REASONS: { value: ReportReason; label: string }[] = [
   { value: 'other', label: 'Diğer' },
 ];
 
-export interface ModerationState {
-  blockedUserIds: string[];
-  loaded: boolean;
-}
-
-export const moderationState$ = observable<ModerationState>({
-  blockedUserIds: [],
-  loaded: false,
-});
-
 export const moderationActions = {
   // Engellenen kullanıcıları yükle (giriş yapan kullanıcı için)
   async loadBlockedUsers() {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) {
-      moderationState$.blockedUserIds.set([]);
-      moderationState$.loaded.set(true);
+      store.dispatch(patchModeration({ blockedUserIds: [], loaded: true }));
       return;
     }
     try {
       const db = getFirestore();
       const snap = await getDocs(collection(db, 'users', user.id, 'blocked'));
-      moderationState$.blockedUserIds.set(snap.docs.map(d => d.id));
+      store.dispatch(patchModeration({ blockedUserIds: snap.docs.map(d => d.id) }));
     } catch (error) {
       console.error('Load blocked users error:', error);
     } finally {
-      moderationState$.loaded.set(true);
+      store.dispatch(patchModeration({ loaded: true }));
     }
   },
 
   isBlocked(userId?: string | null): boolean {
     if (!userId) return false;
-    return moderationState$.blockedUserIds.get().includes(userId);
+    return store.getState().moderation.blockedUserIds.includes(userId);
   },
 
   // Bir kullanıcı listesini/akışını engellenenlerden arındır
   filterBlocked<T extends { authorId?: string; userId?: string }>(items: T[]): T[] {
-    const blocked = moderationState$.blockedUserIds.get();
+    const blocked = store.getState().moderation.blockedUserIds;
     if (blocked.length === 0) return items;
     return items.filter(it => {
       const owner = (it.authorId ?? it.userId) as string | undefined;
@@ -80,7 +71,7 @@ export const moderationActions = {
   },
 
   async blockUser(userId: string) {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) return { success: false, error: 'Giriş gerekli.' };
     if (userId === user.id) return { success: false, error: 'Kendini engelleyemezsin.' };
     try {
@@ -88,9 +79,7 @@ export const moderationActions = {
       await setDoc(doc(db, 'users', user.id, 'blocked', userId), {
         createdAt: serverTimestamp(),
       });
-      moderationState$.blockedUserIds.set(prev =>
-        prev.includes(userId) ? prev : [...prev, userId]
-      );
+      store.dispatch(addBlockedUser(userId));
       return { success: true };
     } catch (error) {
       console.error('Block user error:', error);
@@ -99,12 +88,12 @@ export const moderationActions = {
   },
 
   async unblockUser(userId: string) {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) return { success: false, error: 'Giriş gerekli.' };
     try {
       const db = getFirestore();
       await deleteDoc(doc(db, 'users', user.id, 'blocked', userId));
-      moderationState$.blockedUserIds.set(prev => prev.filter(id => id !== userId));
+      store.dispatch(removeBlockedUser(userId));
       return { success: true };
     } catch (error) {
       console.error('Unblock user error:', error);
@@ -121,7 +110,7 @@ export const moderationActions = {
     reportedUserId?: string;
     contextId?: string; // ör. yorum için storyId
   }) {
-    const { user } = authState$.get();
+    const { user } = store.getState().auth;
     if (!user?.id) return { success: false, error: 'Giriş gerekli.' };
     try {
       const db = getFirestore();

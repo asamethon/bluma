@@ -1,10 +1,9 @@
 import ImageModal from '@/components/ImageModal';
 import { imageUploadService } from '@/services/imageUploadService';
-import { authState$ } from '@/store/authStore';
-import { conversationActions, conversationState$ } from '@/store/conversationStore';
+import { useAppSelector } from '@/store/hooks';
+import { conversationActions } from '@/store/conversationStore';
 import { ConversationComment } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import { collection, getDocs, getFirestore, query, where } from '@react-native-firebase/firestore';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -23,15 +22,15 @@ import {
 import { Screen } from '@/components/ui';
 import { useTheme } from '@/constants/theme';
 
-export default observer(function ConversationDetailScreen() {
+export default function ConversationDetailScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const currentUser = authState$.user.get();
+  const currentUser = useAppSelector(s => s.auth.user);
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const commentsUnsubscribeRef = useRef<(() => void) | null>(null);
 
-  const { currentConversation, currentConversationComments, likedConversations } = conversationState$.get();
+  const { currentConversation, currentConversationComments, likedConversations } = useAppSelector(s => s.conversation);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -423,7 +422,7 @@ export default observer(function ConversationDetailScreen() {
       />
     </Screen>
   );
-});
+}
 
 const createStyles = (colors: any) =>
   StyleSheet.create({

@@ -14,11 +14,11 @@ import { ProfileConversationCard } from '@/features/profile/components/ProfileCo
 import { ProfileGradientHero } from '@/features/profile/components/ProfileGradientHero';
 import { ProfileStatCell } from '@/features/profile/components/ProfileStatCell';
 import { ProfileStoryShelf } from '@/features/profile/components/ProfileStoryShelf';
-import { authActions, authState$, User } from '@/store/authStore';
-import { moderationActions, moderationState$ } from '@/store/moderationStore';
+import { authActions, User } from '@/store/authStore';
+import { useAppSelector } from '@/store/hooks';
+import { moderationActions } from '@/store/moderationStore';
 import { Conversation, Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
-import { observer } from '@legendapp/state/react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -30,11 +30,11 @@ import {
   View,
 } from 'react-native';
 
-export default observer(function UserProfileScreen() {
+export default function UserProfileScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
-  const { user: currentUser } = authState$.get();
+  const currentUser = useAppSelector(s => s.auth.user);
 
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,7 +46,7 @@ export default observer(function UserProfileScreen() {
   const [selectedModalImage, setSelectedModalImage] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
-  const blockedIds = moderationState$.blockedUserIds.get();
+  const blockedIds = useAppSelector(s => s.moderation.blockedUserIds);
   const isBlocked = !!user && blockedIds.includes(user.id);
 
   // ÖNEMLİ: yalnızca primitive currentUser?.id'ye bağlıyız. Daha önce
@@ -461,7 +461,7 @@ export default observer(function UserProfileScreen() {
       />
     </Screen>
   );
-});
+}
 
 const styles = StyleSheet.create({
   menuBackdrop: {
