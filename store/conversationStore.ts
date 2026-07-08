@@ -1,4 +1,3 @@
-import { pushNotificationService } from '@/services/pushNotificationService';
 import { Conversation, ConversationComment, User } from '@/types';
 import {
   addDoc,
@@ -20,6 +19,7 @@ import {
   where
 } from '@react-native-firebase/firestore';
 import { authActions } from './authStore';
+import { notificationActions } from './notificationStore';
 import { store } from './index';
 import { patchConversation } from './slices/conversationSlice';
 
@@ -466,45 +466,28 @@ export const conversationActions = {
       const likerName = currentUser.displayName || currentUser.username || "Bir kullanıcı";
       const conversationTitle = conversationData.title || "Konuşmanız";
 
-      // Bildirim işlemlerini paralel yap
-      Promise.all([
-        // Firestore notification
-        (async () => {
-          try {
-            const notificationsRef = collection(db, 'notifications');
-            await addDoc(notificationsRef, {
-              userId: conversationAuthorId,
-              type: 'like',
-              title: 'Yeni Beğeni',
-              message: `${likerName} "${conversationTitle}" konuşmanızı beğendi`,
-              data: {
-                conversationId,
-                likerId,
-                likerProfileImage: currentUser.profileImage,
-              },
-              isRead: false,
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
-            });
-          } catch (error) {
-            console.error('Error creating like notification in Firestore:', error);
-          }
-        })(),
-        // Push notification
-        pushNotificationService.sendNotificationToUser(
-          conversationAuthorId,
-          'Yeni Beğeni!',
-          `${likerName} "${conversationTitle}" konuşmanızı beğendi.`,
-          {
-            type: 'conversation',
+      // Firestore'a bildirim yaz — push gönderimi VPS'teki push-worker'ın işi
+      // (notifications onCreate'i dinler, bkz. YAPILACAKLAR 3.1).
+      try {
+        const notificationsRef = collection(db, 'notifications');
+        await addDoc(notificationsRef, {
+          userId: conversationAuthorId,
+          senderId: likerId,
+          type: 'like',
+          title: 'Yeni Beğeni',
+          message: `${likerName} "${conversationTitle}" konuşmanızı beğendi`,
+          data: {
             conversationId,
             likerId,
-            profileImage: currentUser.profileImage,
-          }
-        ),
-      ]).catch((error) => {
+            likerProfileImage: currentUser.profileImage,
+          },
+          isRead: false,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      } catch (error) {
         console.error('Conversation like notification error:', error);
-      });
+      }
     } catch (error) {
       console.error('Send conversation like notification error:', error);
     }
@@ -535,46 +518,29 @@ export const conversationActions = {
       const commenterName = currentUser.displayName || currentUser.username || "Bir kullanıcı";
       const conversationTitle = conversationData.title || "Konuşmanız";
 
-      // Bildirim işlemlerini paralel yap
-      Promise.all([
-        // Firestore notification
-        (async () => {
-          try {
-            const notificationsRef = collection(db, 'notifications');
-            await addDoc(notificationsRef, {
-              userId: conversationAuthorId,
-              type: 'comment',
-              title: 'Yeni Yorum',
-              message: `${commenterName} "${conversationTitle}" konuşmanıza yorum yaptı`,
-              data: {
-                conversationId,
-                commenterId,
-                commentText,
-                commenterProfileImage: currentUser.profileImage,
-              },
-              isRead: false,
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
-            });
-          } catch (error) {
-            console.error('Error creating comment notification in Firestore:', error);
-          }
-        })(),
-        // Push notification
-        pushNotificationService.sendNotificationToUser(
-          conversationAuthorId,
-          'Yeni Yorum!',
-          `${commenterName} "${conversationTitle}" konuşmanıza yorum yaptı: ${commentText.substring(0, 50)}${commentText.length > 50 ? '...' : ''}`,
-          {
-            type: 'conversation',
+      // Firestore'a bildirim yaz — push gönderimi VPS'teki push-worker'ın işi
+      // (notifications onCreate'i dinler, bkz. YAPILACAKLAR 3.1).
+      try {
+        const notificationsRef = collection(db, 'notifications');
+        await addDoc(notificationsRef, {
+          userId: conversationAuthorId,
+          senderId: commenterId,
+          type: 'comment',
+          title: 'Yeni Yorum',
+          message: `${commenterName} "${conversationTitle}" konuşmanıza yorum yaptı`,
+          data: {
             conversationId,
             commenterId,
-            profileImage: currentUser.profileImage,
-          }
-        ),
-      ]).catch((error) => {
+            commentText,
+            commenterProfileImage: currentUser.profileImage,
+          },
+          isRead: false,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      } catch (error) {
         console.error('Conversation comment notification error:', error);
-      });
+      }
     } catch (error) {
       console.error('Send conversation comment notification error:', error);
     }
@@ -677,44 +643,27 @@ export const conversationActions = {
       
       console.log('Found', followersSnapshot.docs.length, 'followers');
       
-      // Create notifications for each follower
+      // Create notifications for each follower — notificationActions.createNotification
+      // kullanılır ki senderId/alan seti kuralla (bkz. YAPILACAKLAR 0.3) tutarlı olsun.
+      const title = `${author.displayName || author.username} yeni bir konuşma başlattı`;
+      const message = `"${author.displayName || author.username}" takip ettiğiniz kişi yeni bir konuşma başlattı. Hemen katılın!`;
       const notificationPromises = followersSnapshot.docs.map(async (followerDoc: any) => {
         const followerId = followerDoc.id;
-        
-        const notificationData = {
-          id: `${conversationId}_${followerId}_${Date.now()}`,
+        if (followerId === author.id) return;
+
+        await notificationActions.createNotification({
           userId: followerId,
+          senderId: author.id,
           type: 'conversation_announcement',
-          title: `${author.displayName || author.username} yeni bir konuşma başlattı`,
-          message: `"${author.displayName || author.username}" takip ettiğiniz kişi yeni bir konuşma başlattı. Hemen katılın!`,
+          title,
+          message,
           data: {
-            conversationId: conversationId,
+            conversationId,
             authorId: author.id,
             authorName: author.displayName || author.username,
           },
           isRead: false,
-          createdAt: serverTimestamp(),
-        };
-        
-        // Add notification to user's notifications collection
-        const notificationRef = doc(db, 'notifications', notificationData.id);
-        await setDoc(notificationRef, notificationData);
-        
-        // Send push notification
-        try {
-          console.log('Attempting to send push notification to follower:', followerId);
-          const pushResult = await pushNotificationService.sendNotificationToUser(
-            followerId,
-            notificationData.title,
-            notificationData.message,
-            notificationData.data
-          );
-          console.log('Push notification result for follower:', followerId, 'Success:', pushResult);
-        } catch (error) {
-          console.error('Error sending push notification to follower:', followerId, error);
-        }
-        
-        console.log('Notification created for follower:', followerId);
+        });
       });
       
       await Promise.all(notificationPromises);

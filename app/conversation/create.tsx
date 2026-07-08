@@ -1,5 +1,4 @@
 import { imageUploadService } from '@/services/imageUploadService';
-import { pushNotificationService } from '@/services/pushNotificationService';
 import { conversationActions } from '@/store/conversationStore';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -17,7 +16,7 @@ import {
   View,
 } from 'react-native';
 import { Screen } from '@/components/ui';
-import { useTheme } from '@/constants/theme';
+import { ContentMaxWidth, useTheme } from '@/constants/theme';
 import { useAppSelector } from '@/store/hooks';
 
 export default function CreateConversationScreen() {
@@ -136,7 +135,7 @@ export default function CreateConversationScreen() {
   const styles = createStyles(colors);
 
   return (
-    <Screen style={styles.container}>
+    <Screen style={styles.container} maxContentWidth={ContentMaxWidth.content}>
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -269,31 +268,6 @@ export default function CreateConversationScreen() {
               <Text style={styles.tipText}>Takipçilerinizin yorum yapmasını teşvik edin</Text>
             </View>
           </View>
-
-          {/* Debug Section */}
-          {__DEV__ && (
-            <View style={styles.debugContainer}>
-              <Text style={styles.debugTitle}>Debug (Sadece Geliştirme)</Text>
-              <TouchableOpacity
-                style={styles.debugButton}
-                onPress={async () => {
-                  if (currentUser?.id) {
-                    console.log('Testing push notification for user:', currentUser.id);
-                    const result = await pushNotificationService.sendNotificationToUser(
-                      currentUser.id,
-                      'Test Bildirimi',
-                      'Bu bir test bildirimidir!',
-                      { test: true }
-                    );
-                    console.log('Test push notification result:', result);
-                    Alert.alert('Test Sonucu', `Push notification gönderildi: ${result}`);
-                  }
-                }}
-              >
-                <Text style={styles.debugButtonText}>Test Push Notification</Text>
-              </TouchableOpacity>
-            </View>
-          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </Screen>
@@ -319,7 +293,7 @@ const createStyles = (colors: any) =>
       borderBottomColor: colors.border,
     },
     headerTitle: {
-      fontSize: 18,
+      fontSize: 18, lineHeight: 23,
       fontWeight: '600',
       color: colors.text,
     },
@@ -331,7 +305,7 @@ const createStyles = (colors: any) =>
       opacity: 0.5,
     },
     headerButtonText: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       fontWeight: '600',
     },
     content: {
@@ -342,13 +316,13 @@ const createStyles = (colors: any) =>
       marginTop: 24,
     },
     inputLabel: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       fontWeight: '600',
       color: colors.text,
       marginBottom: 8,
     },
     titleInput: {
-      fontSize: 20,
+      fontSize: 20, lineHeight: 26,
       fontWeight: '600',
       borderWidth: 1,
       borderRadius: 12,
@@ -357,7 +331,7 @@ const createStyles = (colors: any) =>
       textAlignVertical: 'top',
     },
     contentInput: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       borderWidth: 1,
       borderRadius: 12,
       padding: 16,
@@ -365,7 +339,7 @@ const createStyles = (colors: any) =>
       textAlignVertical: 'top',
     },
     characterCount: {
-      fontSize: 12,
+      fontSize: 12, lineHeight: 16,
       color: colors.textSecondary,
       textAlign: 'right',
       marginTop: 4,
@@ -377,7 +351,7 @@ const createStyles = (colors: any) =>
       borderRadius: 12,
     },
     tipsTitle: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       fontWeight: '600',
       color: colors.text,
       marginBottom: 12,
@@ -413,7 +387,7 @@ const createStyles = (colors: any) =>
       flex: 1,
     },
     announceTitle: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       fontWeight: '600',
       color: colors.text,
       marginBottom: 4,
@@ -432,7 +406,7 @@ const createStyles = (colors: any) =>
       borderColor: colors.border,
     },
     debugTitle: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       fontWeight: '600',
       color: colors.text,
       marginBottom: 12,
@@ -445,7 +419,7 @@ const createStyles = (colors: any) =>
     },
     debugButtonText: {
       color: colors.background,
-      fontSize: 14,
+      fontSize: 14, lineHeight: 18,
       fontWeight: '600',
     },
     imageSelectButton: {
@@ -458,7 +432,7 @@ const createStyles = (colors: any) =>
       marginTop: 8,
     },
     imageSelectText: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       fontWeight: '500',
       marginTop: 8,
     },

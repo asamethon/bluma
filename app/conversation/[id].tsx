@@ -20,7 +20,7 @@ import {
   View,
 } from 'react-native';
 import { Screen } from '@/components/ui';
-import { useTheme } from '@/constants/theme';
+import { ContentMaxWidth, useTheme } from '@/constants/theme';
 
 export default function ConversationDetailScreen() {
   const { colors } = useTheme();
@@ -313,7 +313,7 @@ export default function ConversationDetailScreen() {
 
   if (!currentConversation) {
     return (
-      <Screen style={styles.container}>
+      <Screen style={styles.container} maxContentWidth={ContentMaxWidth.content}>
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Konuşma yükleniyor...</Text>
         </View>
@@ -322,7 +322,7 @@ export default function ConversationDetailScreen() {
   }
 
   return (
-    <Screen style={styles.container}>
+    <Screen style={styles.container} maxContentWidth={ContentMaxWidth.content}>
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -443,7 +443,7 @@ const createStyles = (colors: any) =>
       borderBottomColor: colors.border,
     },
     headerTitle: {
-      fontSize: 18,
+      fontSize: 18, lineHeight: 23,
       fontWeight: '600',
       color: colors.text,
     },
@@ -456,7 +456,7 @@ const createStyles = (colors: any) =>
       alignItems: 'center',
     },
     loadingText: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       color: colors.textSecondary,
     },
     listContainer: {
@@ -484,17 +484,17 @@ const createStyles = (colors: any) =>
       flex: 1,
     },
     authorName: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       fontWeight: '600',
       color: colors.text,
     },
     conversationTime: {
-      fontSize: 12,
+      fontSize: 12, lineHeight: 16,
       color: colors.textSecondary,
       marginTop: 2,
     },
     conversationTitle: {
-      fontSize: 20,
+      fontSize: 20, lineHeight: 26,
       fontWeight: '700',
       color: colors.text,
       marginBottom: 12,
@@ -515,7 +515,7 @@ const createStyles = (colors: any) =>
       gap: 6,
     },
     statText: {
-      fontSize: 14,
+      fontSize: 14, lineHeight: 18,
       color: colors.textSecondary,
     },
     commentItem: {
@@ -540,12 +540,12 @@ const createStyles = (colors: any) =>
       flex: 1,
     },
     commentAuthor: {
-      fontSize: 14,
+      fontSize: 14, lineHeight: 18,
       fontWeight: '600',
       color: colors.text,
     },
     commentTime: {
-      fontSize: 12,
+      fontSize: 12, lineHeight: 16,
       color: colors.textSecondary,
       marginTop: 2,
     },
@@ -623,13 +623,13 @@ const createStyles = (colors: any) =>
       alignItems: 'center',
     },
     emptyCommentsText: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       fontWeight: '600',
       color: colors.textSecondary,
       marginBottom: 4,
     },
     emptyCommentsSubtext: {
-      fontSize: 14,
+      fontSize: 14, lineHeight: 18,
       color: colors.textSecondary,
     },
     conversationImage: {
