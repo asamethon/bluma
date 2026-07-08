@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice';
 import challengeReducer from './slices/challengeSlice';
 import conversationReducer from './slices/conversationSlice';
+import messagingReducer from './slices/messagingSlice';
 import moderationReducer from './slices/moderationSlice';
 import notificationReducer from './slices/notificationSlice';
 import preferencesReducer from './slices/preferencesSlice';
@@ -18,6 +19,7 @@ export const store = configureStore({
     challenge: challengeReducer,
     notification: notificationReducer,
     conversation: conversationReducer,
+    messaging: messagingReducer,
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({

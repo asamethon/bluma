@@ -70,6 +70,13 @@ export const moderationActions = {
     });
   },
 
+  // Şikayet üzerine admin'in gizlediği içerikleri akıştan çıkar — yazarın
+  // kendisi kendi taslak/gizli hikâyesini stüdyosunda görmeye devam eder,
+  // bu filtre yalnızca genel akışlar (feed/discover/search) için (bkz. 2.7).
+  filterHidden<T extends { isHidden?: boolean }>(items: T[]): T[] {
+    return items.filter(it => !it.isHidden);
+  },
+
   async blockUser(userId: string) {
     const { user } = store.getState().auth;
     if (!user?.id) return { success: false, error: 'Giriş gerekli.' };
