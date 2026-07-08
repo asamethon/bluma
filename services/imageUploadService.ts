@@ -10,6 +10,14 @@ import { Platform } from 'react-native';
 // Görsel türleri — sunucu tarafındaki boyutlandırmayla eşleşir (server/index.js).
 type ImageKind = 'profile' | 'cover' | 'comment' | 'content';
 
+// Sunucu NSFW moderasyonu görseli reddettiğinde (HTTP 451) kullanıcıya
+// gösterilecek mesaj. Bu hata base64 fallback'e DÜŞMEZ — yükleme iptal olur.
+const EXPLICIT_REJECTION_MESSAGE =
+  'Bu görsel topluluk kurallarımıza uygun değil. Lütfen başka bir görsel seçin.';
+function isExplicitRejection(error: unknown): boolean {
+  return error instanceof Error && error.message === EXPLICIT_REJECTION_MESSAGE;
+}
+
 // İstemci tarafı ön-sıkıştırma: yükleme boyutunu düşürür; sunucu yoksa
 // base64 fallback'inin Firestore'a sığmasını sağlar.
 const CLIENT_COMPRESSION: Record<ImageKind, { width: number; compress: number }> = {
@@ -73,6 +81,12 @@ async function uploadToImageServer(imageUri: string, kind: ImageKind): Promise<s
       }
     );
 
+    // 451 = NSFW moderasyonu reddetti. Base64 fallback'e DÜŞME — kullanıcıya
+    // hata göster (aksi halde reddedilen görsel Firestore'a gömülerek sızardı).
+    if (response.status === 451) {
+      console.warn('Image server rejected explicit content (451)');
+      throw new Error(EXPLICIT_REJECTION_MESSAGE);
+    }
     if (response.status !== 200) {
       console.warn(`Image server upload failed: HTTP ${response.status} ${(response.body || '').slice(0, 200)}`);
       return null;
@@ -85,6 +99,8 @@ async function uploadToImageServer(imageUri: string, kind: ImageKind): Promise<s
     console.log('[imageUpload] Yükleme başarılı:', data.url);
     return data.url;
   } catch (error) {
+    // NSFW reddi (451) fallback'e düşmemeli — yukarı fırlat.
+    if (isExplicitRejection(error)) throw error;
     console.warn('Image server unreachable, falling back to base64:', error);
     return null;
   }
@@ -115,7 +131,8 @@ async function processAndUpload(imageUri: string, kind: ImageKind, errorMessage:
     return dataUrl;
   } catch (error) {
     console.error(`Error processing ${kind} image:`, error);
-    if (error instanceof Error && error.message.includes('çok büyük')) {
+    // NSFW reddi ve "çok büyük" hatalarını olduğu gibi kullanıcıya ilet.
+    if (isExplicitRejection(error) || (error instanceof Error && error.message.includes('çok büyük'))) {
       throw error;
     }
     throw new Error(errorMessage);
