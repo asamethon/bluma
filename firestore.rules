@@ -15,9 +15,33 @@ service cloud.firestore {
     function isOwner(uid) {
       return isSignedIn() && request.auth.uid == uid;
     }
+    // Moderasyon custom claim'i (Firebase Console / Admin SDK ile atanır).
+    // Bkz. YAPILACAKLAR 2.7 — şikâyet edilen içeriği gizlemek için.
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
     // True when the update touches nothing beyond the given keys.
     function onlyChanges(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+    // True when `field` changes by exactly n (atomic increment/decrement).
+    function bumpBy(field, n) {
+      return request.resource.data[field] == resource.data.get(field, 0) + n;
+    }
+    // Social counters: a non-owner may only bump `field` by +1 (new
+    // like/comment/view) or move it down to some non-negative value (unlike,
+    // comment deletion — which can remove several replies at once, so the
+    // decrement isn't always exactly -1). Arbitrary inflation is blocked.
+    function isCounterBump(field) {
+      return onlyChanges([field]) && (
+        bumpBy(field, 1) ||
+        (request.resource.data[field] < resource.data.get(field, 0) && request.resource.data[field] >= 0)
+      );
+    }
+    // `resource` is null on the very first write (doc doesn't exist yet) —
+    // resource.data would throw, so guard before reading a prior value.
+    function priorValue(field) {
+      return resource == null ? 0 : resource.data.get(field, 0);
     }
 
     // User profiles — public read (guest browsing). Only the owner edits their
@@ -27,7 +51,7 @@ service cloud.firestore {
       allow read: if true;
       allow create, delete: if isOwner(userId);
       allow update: if isOwner(userId)
-        || (isSignedIn() && onlyChanges(['followersCount']));
+        || (isSignedIn() && isCounterBump('followersCount'));
 
       // followers — written cross-user on follow/unfollow, but a user may only
       // add/remove *their own* follower doc (doc id == follower's uid).
@@ -61,6 +85,11 @@ service cloud.firestore {
         allow read: if true;
         allow write: if isOwner(userId);
       }
+      // Reading progress (per story) — private, owner-only. Powers "resume
+      // reading" across devices instead of device-local AsyncStorage.
+      match /readingProgress/{storyId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // Books catalog — public read; only the author writes.
@@ -87,13 +116,38 @@ service cloud.firestore {
           && get(/databases/$(database)/documents/stories/$(storyId)).data.authorId == request.auth.uid;
       }
 
-      allow read: if true;
+      // Public stories are readable by anyone; drafts only by their author.
+      allow read: if resource.data.isPublished == true
+        || (isSignedIn() && resource.data.authorId == request.auth.uid);
       allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
       allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
       allow update: if isSignedIn() && (
         resource.data.authorId == request.auth.uid
-        || onlyChanges(['likesCount', 'commentsCount', 'viewsCount'])
+        || isCounterBump('likesCount')
+        || isCounterBump('commentsCount')
+        || isCounterBump('viewsCount')
+        || (isAdmin() && onlyChanges(['isHidden']))
       );
+
+      // Chapter bodies (bkz. YAPILACAKLAR 2.2) — okuma kuralı ebeveyn hikâye
+      // dokümanıyla aynı (yayında herkes, taslakta yalnızca yazar); yazma
+      // yalnızca yazara ait.
+      match /chapters/{chapterId} {
+        allow read: if get(/databases/$(database)/documents/stories/$(storyId)).data.isPublished == true
+          || isStoryAuthor();
+        // Yazar bölüm içeriğini yazar; başka bir okur yalnızca likesCount'u
+        // ±1 bump edebilir (bölüm-bazlı beğeni, bkz. YAPILACAKLAR 2.3).
+        allow create, delete: if isStoryAuthor();
+        allow update: if isStoryAuthor() || isCounterBump('likesCount');
+
+        // Bölüm beğenileri — bir okur yalnızca kendi beğeni dokümanını
+        // oluşturabilir/silebilir.
+        match /likes/{likeId} {
+          allow read: if true;
+          allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+          allow delete: if (isSignedIn() && resource.data.userId == request.auth.uid) || isStoryAuthor();
+        }
+      }
 
       // Story likes — one may only create/delete their own like (the story
       // author may also clean up while deleting the story).
@@ -111,7 +165,7 @@ service cloud.firestore {
         allow delete: if (isSignedIn() && resource.data.userId == request.auth.uid) || isStoryAuthor();
         allow update: if isSignedIn() && (
           resource.data.userId == request.auth.uid
-          || onlyChanges(['likesCount'])
+          || isCounterBump('likesCount')
         );
 
         match /likes/{likeId} {
@@ -121,11 +175,14 @@ service cloud.firestore {
         }
       }
 
-      // View records — append-only per user; the author may clean up when
-      // deleting the story.
-      match /views/{viewId} {
+      // View records — doc id == viewer's uid, `count` capped at 3. One doc
+      // read instead of a query, and the doc count IS the unique-reader
+      // count (no need to scan for distinct userIds).
+      match /views/{userId} {
         allow read: if true;
-        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow write: if isSignedIn() && request.auth.uid == userId
+          && request.resource.data.count == priorValue('count') + 1
+          && request.resource.data.count <= 3;
         allow delete: if isStoryAuthor();
       }
     }
@@ -138,7 +195,12 @@ service cloud.firestore {
       // updatedAt is included because commenting bumps it alongside the counter.
       allow update: if isSignedIn() && (
         resource.data.authorId == request.auth.uid
-        || onlyChanges(['likesCount', 'commentsCount', 'viewsCount', 'updatedAt'])
+        || isCounterBump('likesCount')
+        || isCounterBump('viewsCount')
+        || (onlyChanges(['commentsCount', 'updatedAt']) && (
+          bumpBy('commentsCount', 1) ||
+          (request.resource.data.commentsCount < resource.data.get('commentsCount', 0) && request.resource.data.commentsCount >= 0)
+        ))
       );
 
       match /likes/{likeId} {
@@ -154,28 +216,40 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow update: if isSignedIn() && (
         resource.data.userId == request.auth.uid
-        || onlyChanges(['likesCount'])
+        || isCounterBump('likesCount')
       );
     }
 
     // Notifications — anyone signed-in may create (like/comment/follow events
     // are written by the acting user), but only the recipient can read,
-    // mark-as-read or delete them.
+    // mark-as-read or delete them. `senderId` must be the caller themselves
+    // (prevents spoofing notifications as coming from someone else), and
+    // `type`/field set are constrained so a signed-in user can't smuggle
+    // arbitrary content into another user's notification feed.
     match /notifications/{notificationId} {
-      allow create: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.senderId == request.auth.uid
+        && request.resource.data.type in
+          ['follow', 'like', 'comment', 'mention', 'story_published', 'new_chapter', 'welcome', 'conversation_announcement']
+        && request.resource.data.keys().hasOnly(
+          ['userId', 'senderId', 'type', 'title', 'message', 'data', 'isRead', 'createdAt', 'updatedAt']);
       allow read, update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
-    // Per-user notification preferences (doc id == user id).
+    // Per-user notification preferences (doc id == user id) — yalnızca
+    // sahibi okur/yazar. Push gönderimi artık VPS'teki push-worker'da (Admin
+    // SDK, kurallara tabi değil) — istemcinin başka birinin tercihini okumaya
+    // ihtiyacı yok (bkz. YAPILACAKLAR 3.1, server/push-worker/).
     match /notificationSettings/{userId} {
       allow read, write: if isOwner(userId);
     }
 
-    // Expo push tokens (doc id == user id). The owner registers their token;
-    // other signed-in users read it to deliver a push for their action.
+    // Expo push tokens (doc id == user id) — yalnızca sahibi okur/yazar.
+    // Önceden herhangi bir oturumlu kullanıcı okuyup Expo'ya doğrudan istek
+    // atabiliyordu (bkz. YAPILACAKLAR 0.3); artık gönderim VPS'teki
+    // push-worker'da (Admin SDK ile, bu kurala tabi değil).
     match /userPushTokens/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isOwner(userId);
+      allow read, write: if isOwner(userId);
     }
 
     // Content reports — a signed-in user may file a report for themselves.
@@ -184,6 +258,33 @@ service cloud.firestore {
     match /reports/{reportId} {
       allow create: if isSignedIn() && request.resource.data.reporterId == request.auth.uid;
       allow read, update, delete: if false;
+    }
+
+    // Direct messages (DM). Thread doküman ID'si iki katılımcı ID'sinden
+    // deterministik üretilir. Yalnızca katılımcılar okur/yazar. Mesajlar
+    // değiştirilemez; okunmamış sayaçları thread doc'unda tutulur.
+    match /messageThreads/{threadId} {
+      allow read: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow create: if isSignedIn()
+        && request.auth.uid in request.resource.data.participants
+        && request.resource.data.participants.size() == 2;
+      // participants değiştirilemez — bir katılımcının kendini/başkasını
+      // thread'e ekleyip/çıkarabilmesi (ör. mesajları başka bir hesaba
+      // yönlendirmek) engellenir (bkz. YAPILACAKLAR 2.8).
+      allow update: if isSignedIn() && request.auth.uid in resource.data.participants
+        && request.resource.data.participants == resource.data.participants;
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        function threadParticipants() {
+          return get(/databases/$(database)/documents/messageThreads/$(threadId)).data.participants;
+        }
+        allow read: if isSignedIn() && request.auth.uid in threadParticipants();
+        allow create: if isSignedIn()
+          && request.resource.data.senderId == request.auth.uid
+          && request.auth.uid in threadParticipants();
+        allow update, delete: if false;
+      }
     }
   }
 }
