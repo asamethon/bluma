@@ -1,79 +1,65 @@
 import { Screen, Switch, Text } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { pushNotificationService } from '@/services/pushNotificationService';
-import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { notificationActions } from '@/store/notificationStore';
 import { useAppSelector } from '@/store/hooks';
+import { NotificationSettings } from '@/types';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useEffect } from 'react';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
-type NotifState = {
-  push: boolean;
-  email: boolean;
-  newChapter: boolean;
-  likes: boolean;
-  comments: boolean;
-  newFollower: boolean;
+const DEFAULTS: Omit<NotificationSettings, 'userId' | 'updatedAt'> = {
+  pushNotifications: true,
+  emailNotifications: false,
+  storyNotifications: true,
+  likeNotifications: true,
+  commentNotifications: true,
+  followNotifications: true,
+  mentionNotifications: true,
 };
 
-const DEFAULTS: NotifState = {
-  push: true,
-  email: false,
-  newChapter: true,
-  likes: true,
-  comments: true,
-  newFollower: true,
-};
-
-type Row = { key: keyof NotifState; icon: keyof typeof Ionicons.glyphMap; title: string; caption: string };
+type Row = { key: keyof typeof DEFAULTS; icon: keyof typeof Ionicons.glyphMap; title: string; caption: string };
 
 const CHANNELS: Row[] = [
-  { key: 'push', icon: 'notifications-outline', title: 'Push Bildirimleri', caption: 'Telefonuna anlık bildirim gönderelim' },
-  { key: 'email', icon: 'mail-outline', title: 'E-posta Bildirimleri', caption: 'Önemli güncellemeleri e-posta ile al' },
+  { key: 'pushNotifications', icon: 'notifications-outline', title: 'Push Bildirimleri', caption: 'Telefonuna anlık bildirim gönderelim' },
+  { key: 'emailNotifications', icon: 'mail-outline', title: 'E-posta Bildirimleri', caption: 'Önemli güncellemeleri e-posta ile al' },
 ];
 
 const ACTIVITY: Row[] = [
-  { key: 'newChapter', icon: 'book-outline', title: 'Yeni Bölüm', caption: 'Takip ettiğin yazarlar bölüm yayınlayınca' },
-  { key: 'likes', icon: 'heart-outline', title: 'Beğeniler', caption: 'Hikayelerin beğeni aldığında' },
-  { key: 'comments', icon: 'chatbubble-ellipses-outline', title: 'Yorumlar', caption: 'İçeriklerine yorum yapıldığında' },
-  { key: 'newFollower', icon: 'person-add-outline', title: 'Yeni Takipçi', caption: 'Biri seni takip etmeye başladığında' },
+  { key: 'storyNotifications', icon: 'book-outline', title: 'Yeni Bölüm', caption: 'Takip ettiğin yazarlar bölüm yayınlayınca' },
+  { key: 'likeNotifications', icon: 'heart-outline', title: 'Beğeniler', caption: 'Hikayelerin beğeni aldığında' },
+  { key: 'commentNotifications', icon: 'chatbubble-ellipses-outline', title: 'Yorumlar', caption: 'İçeriklerine yorum yapıldığında' },
+  { key: 'followNotifications', icon: 'person-add-outline', title: 'Yeni Takipçi', caption: 'Biri seni takip etmeye başladığında' },
 ];
 
+// Bildirim tercihleri Redux/Firestore üzerinden (notificationStore) yönetilir
+// — burada sadece AsyncStorage'a değil, gönderim tarafının da okuduğu
+// notificationSettings/{userId} dokümanına yazılır (bkz. pushNotificationService).
 export default function NotificationSettingsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { user } = useAppSelector(s => s.auth);
+  const settings = useAppSelector(s => s.notification.settings);
   const styles = createStyles(colors);
 
-  const storageKey = `notificationSettings:${user?.id ?? 'guest'}`;
-  const [state, setState] = useState<NotifState>(DEFAULTS);
-
   useEffect(() => {
-    (async () => {
-      try {
-        const raw = await AsyncStorage.getItem(storageKey);
-        if (raw) setState({ ...DEFAULTS, ...JSON.parse(raw) });
-      } catch {}
-    })();
-  }, [storageKey]);
+    if (user?.id) notificationActions.loadNotificationSettings(user.id);
+  }, [user?.id]);
 
-  const toggle = async (key: keyof NotifState, value: boolean) => {
-    const nextState = { ...state, [key]: value };
-    setState(nextState);
-    try {
-      await AsyncStorage.setItem(storageKey, JSON.stringify(nextState));
-    } catch {}
+  const state = { ...DEFAULTS, ...settings };
 
-    // Turning push on registers the device token so notifications can reach it.
-    if (key === 'push' && value && user?.id) {
-      try {
-        await pushNotificationService.saveUserPushToken(user.id);
-      } catch {}
+  const toggle = (key: keyof typeof DEFAULTS, value: boolean) => {
+    if (!user?.id) return;
+    notificationActions.updateNotificationSettings(user.id, { [key]: value });
+
+    // Push'u açarken cihaz token'ını kaydet (izin isteği dahil).
+    if (key === 'pushNotifications' && value) {
+      pushNotificationService.saveUserPushToken(user.id).catch(() => {});
     }
   };
 
-  const pushOff = !state.push;
+  const pushOff = !state.pushNotifications;
 
   const renderRow = (row: Row, disabled: boolean) => (
     <View style={[styles.row, disabled && { opacity: 0.45 }]}>

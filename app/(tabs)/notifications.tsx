@@ -1,6 +1,6 @@
 import {
   Screen, Avatar, BloomMark, Text } from '@/components/ui';
-import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
+import { ContentMaxWidth, Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
 import { useGuestGate } from '@/contexts/GuestContext';
 import { useAppSelector } from '@/store/hooks';
 import { notificationActions } from '@/store/notificationStore';
@@ -117,7 +117,7 @@ function NotifGuestState({ colors, fonts, startAuth }: any) {
       <View style={[{ width: 80, height: 80, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 18 }, { backgroundColor: colors.primarySoft }]}>
         <Ionicons name="notifications-outline" size={36} color={colors.primary} />
       </View>
-      <Text style={{ fontFamily: fonts.serif, fontSize: 22, fontWeight: '700', color: colors.text, textAlign: 'center', marginBottom: 8 }}>
+      <Text style={{ fontFamily: fonts.serif, fontSize: 22, lineHeight: 31, fontWeight: '700', color: colors.text, textAlign: 'center', marginBottom: 8 }}>
         Bildirimler burada
       </Text>
       <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: 24 }}>
@@ -127,11 +127,11 @@ function NotifGuestState({ colors, fonts, startAuth }: any) {
         style={{ height: 50, paddingHorizontal: 28, borderRadius: 999, backgroundColor: '#FF5C8A', flexDirection: 'row', alignItems: 'center', gap: 8 }}
         onPress={() => startAuth('signup')}
       >
-        <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Hesap Oluştur</Text>
+        <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15, lineHeight: 20}}>Hesap Oluştur</Text>
         <Ionicons name="arrow-forward" size={16} color="#fff" />
       </TouchableOpacity>
       <TouchableOpacity style={{ marginTop: 14 }} onPress={() => startAuth('login')}>
-        <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 14 }}>Zaten hesabın var mı? Giriş yap</Text>
+        <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 14, lineHeight: 18}}>Zaten hesabın var mı? Giriş yap</Text>
       </TouchableOpacity>
     </View>
   );
@@ -159,7 +159,7 @@ export default function NotificationsScreen() {
 
   if (isGuest || !currentUser) {
     return (
-      <Screen style={[styles.container, { backgroundColor: colors.background }]}>
+      <Screen style={[styles.container, { backgroundColor: colors.background }]} maxContentWidth={ContentMaxWidth.content}>
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <Text style={[styles.heading, { fontFamily: fonts.serif, color: colors.text }]}>Bildirimler</Text>
         </View>
@@ -195,7 +195,7 @@ export default function NotificationsScreen() {
   };
 
   return (
-    <Screen style={[styles.container, { backgroundColor: colors.background }]}>
+    <Screen style={[styles.container, { backgroundColor: colors.background }]} maxContentWidth={ContentMaxWidth.content}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Text style={[styles.heading, { fontFamily: fonts.serif, color: colors.text }]}>
@@ -206,7 +206,7 @@ export default function NotificationsScreen() {
             onPress={() => currentUser?.id && notificationActions.markAllAsRead(currentUser.id)}
             style={[styles.markAllBtn, { backgroundColor: colors.primarySoft }]}
           >
-            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>
+            <Text style={{ fontSize: 12, lineHeight: 16, fontWeight: '700', color: colors.primary }}>
               Tümünü okundu işaretle
             </Text>
           </TouchableOpacity>
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.screenX, paddingTop: 12, paddingBottom: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  heading: { fontSize: 26, fontWeight: '700', letterSpacing: -0.4, lineHeight: 32 },
+  heading: { fontSize: 26, fontWeight: '700', letterSpacing: -0.4, lineHeight: 36 },
   markAllBtn: {
     paddingHorizontal: 12, paddingVertical: 7, borderRadius: Radius.pill,
   },
@@ -278,9 +278,9 @@ const styles = StyleSheet.create({
   },
 
   textBlock: { flex: 1 },
-  title: { fontSize: 14, fontWeight: '600', marginBottom: 2 },
+  title: { fontSize: 14, lineHeight: 18, fontWeight: '600', marginBottom: 2 },
   message: { fontSize: 13, lineHeight: 18, marginBottom: 4 },
-  time: { fontSize: 11, fontWeight: '600' },
+  time: { fontSize: 11, lineHeight: 14, fontWeight: '600' },
 
   deleteBtn: { padding: 4, marginTop: 2 },
   separator: { height: StyleSheet.hairlineWidth },
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', marginBottom: 16,
   },
   emptyTitle: {
-    fontSize: 20, fontWeight: '700', textAlign: 'center', marginBottom: 6,
+    fontSize: 20, lineHeight: 26, fontWeight: '700', textAlign: 'center', marginBottom: 6,
   },
   emptyBody: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
 });

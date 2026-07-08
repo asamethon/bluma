@@ -1,4 +1,3 @@
-import { pushNotificationService } from '@/services/pushNotificationService';
 import { Notification, NotificationSettings } from '@/types';
 import {
   collection,
@@ -233,6 +232,7 @@ export const notificationActions = {
           try {
             await notificationActions.createNotification({
               userId: followerId,
+              senderId: authorId,
               type: kind === 'new_story' ? 'story_published' : 'new_chapter',
               title,
               message,
@@ -242,10 +242,6 @@ export const notificationActions = {
                 ...(chapterNumber ? { chapterNumber } : {}),
               } as any,
               isRead: false,
-            });
-            await pushNotificationService.sendNotificationToUser(followerId, title, message, {
-              type: 'story',
-              storyId,
             });
           } catch (error) {
             console.error('Announce to follower error:', followerId, error);
@@ -282,6 +278,7 @@ export const notificationActions = {
 
       const notification: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'> = {
         userId: followedUserId,
+        senderId: followerId,
         type: 'follow',
         title: 'Yeni Takipçi',
         message: `${followerName} seni takip etmeye başladı`,
@@ -290,22 +287,7 @@ export const notificationActions = {
       };
       
       await notificationActions.createNotification(notification);
-      
-      // Send push notification to the user being followed
-      try {
-        await pushNotificationService.sendNotificationToUser(
-          followedUserId,
-          'Yeni Takipçi!',
-          `${followerName} seni takip etmeye başladı.`,
-          {
-            type: 'profile',
-            userId: followerId,
-            profileImage: followerProfileImage
-          }
-        );
-      } catch (error) {
-        console.log('Push notification error:', error);
-      }
+      // Push gönderimi VPS'teki push-worker'ın işi (bkz. YAPILACAKLAR 3.1).
     } catch (error) {
       console.error('Create follow notification error:', error);
     }
@@ -337,6 +319,7 @@ export const notificationActions = {
 
       const notification: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'> = {
         userId: storyOwnerId,
+        senderId: likerId,
         type: 'like',
         title: 'Yeni Beğeni',
         message: `${likerName} "${storyTitle}" hikayeni beğendi`,
@@ -377,6 +360,7 @@ export const notificationActions = {
 
       const notification: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'> = {
         userId: storyOwnerId,
+        senderId: commenterId,
         type: 'comment',
         title: 'Yeni Yorum',
         message: `${commenterName} "${storyTitle}" hikayene yorum yaptı`,
@@ -390,122 +374,12 @@ export const notificationActions = {
     }
   },
 
-  // Create conversation like notification
-  async createConversationLikeNotification(likerId: string, conversationOwnerId: string, likerName: string, conversationId: string) {
-    try {
-      if (likerId === conversationOwnerId) return; // Don't notify if user likes their own conversation
-      
-      // Get liker's profile image
-      let likerProfileImage = null;
-      try {
-        const likerDoc = await getDoc(doc(getFirestore(), 'users', likerId));
-        if (likerDoc.exists()) {
-          likerProfileImage = likerDoc.data()?.profileImage;
-        }
-      } catch (error) {
-        console.log('Error getting liker profile image:', error);
-      }
-
-      const notificationData: any = {
-        conversationId,
-      };
-      
-      // Sadece profile image varsa ekle
-      if (likerProfileImage) {
-        notificationData.likerProfileImage = likerProfileImage;
-      }
-
-      const notification: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'> = {
-        userId: conversationOwnerId,
-        type: 'like',
-        title: 'Yeni Beğeni',
-        message: `${likerName} mesajını beğendi`,
-        data: notificationData,
-        isRead: false,
-      };
-      
-      await notificationActions.createNotification(notification);
-      
-      // Send push notification
-      try {
-        await pushNotificationService.sendNotificationToUser(
-          conversationOwnerId,
-          'Mesajın Beğenildi!',
-          `${likerName} mesajını beğendi.`,
-          {
-            type: 'conversation',
-            conversationId
-          }
-        );
-      } catch (error) {
-        console.log('Push notification error:', error);
-      }
-    } catch (error) {
-      console.error('Create conversation like notification error:', error);
-    }
-  },
-
-  // Create conversation comment notification
-  async createConversationCommentNotification(commenterId: string, conversationOwnerId: string, commenterName: string, conversationId: string, commentText: string) {
-    try {
-      if (commenterId === conversationOwnerId) return; // Don't notify if user comments on their own conversation
-      
-      // Get commenter's profile image
-      let commenterProfileImage = null;
-      try {
-        const commenterDoc = await getDoc(doc(getFirestore(), 'users', commenterId));
-        if (commenterDoc.exists()) {
-          commenterProfileImage = commenterDoc.data()?.profileImage;
-        }
-      } catch (error) {
-        console.log('Error getting commenter profile image:', error);
-      }
-
-      const notificationData: any = {
-        conversationId,
-        commentText,
-      };
-      
-      // Sadece profile image varsa ekle
-      if (commenterProfileImage) {
-        notificationData.commenterProfileImage = commenterProfileImage;
-      }
-
-      const notification: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'> = {
-        userId: conversationOwnerId,
-        type: 'comment',
-        title: 'Yeni Yorum',
-        message: `${commenterName} mesajına yorum yaptı`,
-        data: notificationData,
-        isRead: false,
-      };
-      
-      await notificationActions.createNotification(notification);
-      
-      // Send push notification
-      try {
-        await pushNotificationService.sendNotificationToUser(
-          conversationOwnerId,
-          'Yeni Yorum!',
-          `${commenterName} mesajına yorum yaptı.`,
-          {
-            type: 'conversation',
-            conversationId
-          }
-        );
-      } catch (error) {
-        console.log('Push notification error:', error);
-      }
-    } catch (error) {
-      console.error('Create conversation comment notification error:', error);
-    }
-  },
-
   // Create mention notification
   async createMentionNotification(mentionerId: string, mentionedUserId: string, mentionerName: string, storyTitle: string, storyId: string) {
     try {
       const notification: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'> = {
         userId: mentionedUserId,
+        senderId: mentionerId,
         type: 'mention',
         title: 'Seni Etiketledi',
         message: `${mentionerName} "${storyTitle}" hikayesinde seni etiketledi`,
@@ -527,6 +401,7 @@ export const notificationActions = {
     try {
       const notification: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'> = {
         userId,
+        senderId: userId,
         type: 'welcome',
         title: 'Bluma\'ya Hoş Geldin!',
         message: `Merhaba ${userName}! Hikayelerini paylaşmaya başlayabilirsin.`,
@@ -539,24 +414,23 @@ export const notificationActions = {
     }
   },
 
-  // Update notification settings
+  // Bildirim tercihini güncelle — optimistic: UI anında güncellenir, Firestore
+  // yazımı arka planda; hata olursa önceki değere geri alınır.
   async updateNotificationSettings(userId: string, settings: Partial<NotificationSettings>) {
+    const previous = store.getState().notification.settings;
+    if (previous) {
+      store.dispatch(patchNotification({ settings: { ...previous, ...settings } }));
+    }
     try {
       const db = getFirestore();
       const settingsRef = doc(db, 'notificationSettings', userId);
-      
       await updateDoc(settingsRef, {
         ...settings,
         updatedAt: serverTimestamp(),
       });
-      
-      // Update local state
-      const currentSettings = store.getState().notification.settings;
-      if (currentSettings) {
-        store.dispatch(patchNotification({ settings: { ...currentSettings, ...settings } }));
-      }
     } catch (error) {
       console.error('Update notification settings error:', error);
+      if (previous) store.dispatch(patchNotification({ settings: previous }));
     }
   },
 

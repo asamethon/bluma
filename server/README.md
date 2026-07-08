@@ -4,6 +4,14 @@ Uygulamanın profil fotoğrafı / kapak / yorum görsellerini barındıran küç
 Firebase ID token doğrular (service account gerekmez), görseli webp'e çevirip
 diske yazar, 1 yıl cache ile sunar.
 
+**NSFW moderasyonu ([nsfw.js](nsfw.js)):** Her yükleme, diske yazılmadan önce
+`nsfwjs` (TensorFlow.js) ile YEREL olarak sınıflandırılır — dış API yok, ücretsiz.
+Explicit (Porn/Hentai/Sexy eşik üstü) görsel `HTTP 451` ile reddedilir; client bunu
+base64 fallback'e düşmeden kullanıcıya hata olarak gösterir. Model açılışta bir kez
+belleğe yüklenir (~25MB). Eşikler env ile ayarlanır (aşağıya bak). Model yüklenemezse
+varsayılan davranış fail-open'dır (yükleme geçer, reaktif moderasyon devreye girer);
+`NSFW_FAIL_CLOSED=true` ile katı moda alınabilir.
+
 > **Canlı kurulum (Tem 2026):** Hostinger VPS (srv1344443, 76.13.254.132),
 > `https://img.d4tecompany.com` — nginx reverse proxy + certbot (Let's Encrypt).
 > Aynı nginx `arabatahmin.com` sitelerini de barındırıyor; Caddy KULLANILMIYOR.
@@ -46,6 +54,11 @@ Environment=HOST=127.0.0.1
 Environment=FIREBASE_PROJECT_ID=bluma-dc10e
 Environment=DATA_DIR=/var/lib/bluma-images
 Environment=PUBLIC_BASE_URL=https://img.d4tecompany.com
+# NSFW moderasyon eşikleri (opsiyonel — varsayılanlar nsfw.js'te)
+# Environment=NSFW_PORN_THRESHOLD=0.6
+# Environment=NSFW_HENTAI_THRESHOLD=0.6
+# Environment=NSFW_SEXY_THRESHOLD=0.9
+# Environment=NSFW_FAIL_CLOSED=false
 # Sandbox
 NoNewPrivileges=true
 ProtectSystem=full
@@ -110,6 +123,13 @@ rsync -av --exclude node_modules --exclude data server/ root@76.13.254.132:/opt/
 # Sunucuda:
 cd /opt/bluma-image-server && npm install --omit=dev && systemctl restart bluma-image-server
 ```
+
+> **NSFW bağımlılığı (ilk kurulumda dikkat):** `@tensorflow/tfjs-node` yerel (native)
+> bir pakettir; `npm install` prebuilt binary indirir, ilk kurulum birkaç dakika
+> sürebilir. Kurulumdan sonra başlangıç logunda **`nsfw: model yüklendi`** satırını
+> gör: `journalctl -u bluma-image-server -n 20`. Bu satır yerine "model YÜKLENEMEDİ"
+> görüyorsan model indirilememiştir (fail-open: yüklemeler çalışır ama filtre pasiftir).
+> Testi: bariz explicit bir görsel yüklemeyi dene → `HTTP 451` + logda "upload rejected (explicit)".
 
 ## Yedekleme
 

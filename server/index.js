@@ -19,6 +19,7 @@ import rateLimit from 'express-rate-limit';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import multer from 'multer';
 import sharp from 'sharp';
+import { checkImage, loadNsfwModel } from './nsfw.js';
 
 const PORT = Number(process.env.PORT || 8788);
 // Yalnızca loopback'i dinle — dış dünyaya nginx/reverse proxy konuşur.
@@ -80,6 +81,19 @@ app.post('/upload', uploadLimiter, upload.single('image'), async (req, res) => {
   const cfg = KINDS[kind];
   if (!req.file?.buffer?.length) return res.status(400).json({ error: 'no image' });
 
+  // NSFW moderasyonu: explicit görseli diske yazmadan reddet. 451 = içerik
+  // politikası reddi (client bunu base64 fallback'e DÜŞMEDEN kullanıcıya gösterir).
+  try {
+    const verdict = await checkImage(req.file.buffer);
+    if (verdict?.explicit) {
+      console.warn(`upload rejected (explicit): uid=${uid} kind=${kind} score=${JSON.stringify(verdict.score)}`);
+      return res.status(451).json({ error: 'explicit_content', message: 'Bu görsel topluluk kurallarına uygun değil.' });
+    }
+  } catch (err) {
+    // Kontrol hatası olursa fail-open: yüklemeye devam et, reaktif moderasyon yakalar.
+    console.error('nsfw check error:', err?.message || err);
+  }
+
   try {
     const processed = await sharp(req.file.buffer)
       .rotate() // EXIF yönünü uygula
@@ -107,7 +121,11 @@ app.use('/i', express.static(DATA_DIR, {
   fallthrough: false,
 }));
 
-app.listen(PORT, HOST, () => {
-  console.log(`bluma-image-server listening on ${HOST}:${PORT} (project: ${FIREBASE_PROJECT_ID})`);
-  console.log(`public base url: ${PUBLIC_BASE_URL}, data dir: ${DATA_DIR}`);
+// NSFW modelini açılışta ısıt (indirme bir kereliktir), sonra dinlemeye başla.
+// Model yüklenemese bile (loadNsfwModel fırlatmaz) sunucu ayağa kalkar.
+loadNsfwModel().finally(() => {
+  app.listen(PORT, HOST, () => {
+    console.log(`bluma-image-server listening on ${HOST}:${PORT} (project: ${FIREBASE_PROJECT_ID})`);
+    console.log(`public base url: ${PUBLIC_BASE_URL}, data dir: ${DATA_DIR}`);
+  });
 });
