@@ -10,6 +10,7 @@ export interface User {
   website?: string;
   location?: string;
   authProvider: 'email' | 'google' | 'apple';
+  appleUserId?: string; // Apple'ın kararlı kullanıcı ID'si — hesap silmede refreshAsync reauth için gerekir
   followersCount?: number;
   followingCount?: number;
   storiesCount?: number;

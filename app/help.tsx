@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { Screen } from '@/components/ui';
 import { useAppSelector } from '@/store/hooks';
+import { openPrivacyPolicy, openTermsOfService } from '@/utils/legal';
 
 type Faq = { q: string; a: string };
 
@@ -53,16 +54,6 @@ export default function HelpScreen() {
     if (supported) Linking.openURL(url);
   };
 
-  const openLink = async (url: string) => {
-    const supported = await Linking.canOpenURL(url);
-    if (supported) {
-      Linking.openURL(url);
-    } else {
-      // Fallback to web browser if the app can't handle the URL
-      const webUrl = url.startsWith('http') ? url : `https://${url}`;
-      Linking.openURL(webUrl);
-    }
-  };
 
   const handleDeleteAccount = () => {
     if (!currentUser) {
@@ -217,9 +208,7 @@ export default function HelpScreen() {
           <View style={styles.card}>
             <TouchableOpacity
               style={styles.row}
-              onPress={() =>
-                openLink("https://sites.google.com/view/bluma-privacy-policy")
-              }
+              onPress={openPrivacyPolicy}
             >
               <View style={styles.rowLeft}>
                 <Ionicons
@@ -237,11 +226,7 @@ export default function HelpScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.row, styles.rowNoBorder]}
-              onPress={() =>
-                openLink(
-                  "https://sites.google.com/view/bluma-terms-and-conditions"
-                )
-              }
+              onPress={openTermsOfService}
             >
               <View style={styles.rowLeft}>
                 <Ionicons
@@ -361,14 +346,14 @@ const createStyles = (colors: any) =>
     headerTitle: {
       flex: 1,
       textAlign: "left",
-      fontSize: 24,
+      fontSize: 24, lineHeight: 31,
       fontWeight: "800",
       color: colors.text,
       marginLeft: 8,
     },
     section: { paddingHorizontal: 16, paddingTop: 16 },
     sectionTitle: {
-      fontSize: 14,
+      fontSize: 14, lineHeight: 18,
       fontWeight: "700",
       color: colors.textSecondary,
       marginBottom: 8,
@@ -396,7 +381,7 @@ const createStyles = (colors: any) =>
       marginLeft: 6,
       color: colors.text,
       fontWeight: "600",
-      fontSize: 15,
+      fontSize: 15, lineHeight: 20,
     },
     faqAnswer: {
       marginTop: 8,
@@ -429,12 +414,12 @@ const createStyles = (colors: any) =>
       paddingHorizontal: 4,
     },
     modalCancelText: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       color: colors.textSecondary,
       fontWeight: '500',
     },
     modalTitle: {
-      fontSize: 18,
+      fontSize: 18, lineHeight: 23,
       fontWeight: '600',
       color: colors.text,
     },
@@ -449,7 +434,7 @@ const createStyles = (colors: any) =>
       marginBottom: 20,
     },
     warningTitle: {
-      fontSize: 20,
+      fontSize: 20, lineHeight: 26,
       fontWeight: '700',
       color: colors.warning,
       marginTop: 12,
@@ -466,7 +451,7 @@ const createStyles = (colors: any) =>
       marginBottom: 20,
     },
     passwordLabel: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       fontWeight: '600',
       color: colors.text,
       marginBottom: 8,
@@ -478,7 +463,7 @@ const createStyles = (colors: any) =>
       borderRadius: 12,
       paddingHorizontal: 16,
       paddingVertical: 16,
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       color: colors.text,
     },
     deleteButton: {
@@ -496,7 +481,7 @@ const createStyles = (colors: any) =>
       opacity: 0.6,
     },
     deleteButtonText: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       fontWeight: '600',
       color: colors.white,
     },

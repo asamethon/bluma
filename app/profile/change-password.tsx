@@ -201,7 +201,7 @@ const fieldStyles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     height: 48,
   },
-  input: { flex: 1, fontFamily: Fonts.sansRegular, fontSize: 15, paddingVertical: 0 },
+  input: { flex: 1, fontFamily: Fonts.sansRegular, fontSize: 15, lineHeight: 20, paddingVertical: 0 },
 });
 
 const createStyles = (colors: any) =>

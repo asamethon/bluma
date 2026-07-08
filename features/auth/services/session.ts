@@ -173,6 +173,19 @@ async function signOut() {
     // Set loading to true during sign out
     store.dispatch(patchAuth({ isLoading: true }));
 
+    // Bir sonraki kullanıcı bu cihazda önceki kullanıcının okuma ilerlemesini
+    // görmesin diye çıkıştan önce temizle (uid hâlâ state'te iken).
+    const signingOutUserId = store.getState().auth.user?.id;
+    if (signingOutUserId) {
+      const { readingProgressActions } = await import('@/features/story/services/readingProgress');
+      await readingProgressActions.clearReadingProgressCache(signingOutUserId);
+    }
+
+    // Kullanıcı doküman dinleyicisini kapat — profil ekranında kurulmuş
+    // olabilir; açık kalırsa yerel cache'den gelecek bir sonraki snapshot
+    // user'ı geri doldurup misafir moduna geçişi bozar.
+    cleanupUserListener();
+
     // Sign out from Firebase
     await firebaseSignOut(getAuth());
 
@@ -190,10 +203,13 @@ async function signOut() {
       'hasCompletedOnboarding',
     ]);
 
-    // Reset state
+    // Reset state — çıkış sonrası misafir moduna düşer (app genelinde
+    // "oturum yok" tek karşılığı isGuest:true; false bırakılırsa profil/ana
+    // sayfa/kütüphane gibi isGuest'e bakan ekranlar ne "misafir" ne "giriş
+    // yapılmış" durumunu karşılamadığından bozuk/asılı kalıyordu).
     store.dispatch(patchAuth({ isAuthenticated: false }));
     store.dispatch(patchAuth({ hasCompletedOnboarding: false }));
-    store.dispatch(patchAuth({ isGuest: false }));
+    store.dispatch(patchAuth({ isGuest: true }));
     store.dispatch(patchAuth({ user: null }));
     store.dispatch(patchAuth({ token: null }));
     store.dispatch(patchAuth({ isLoading: false }));
@@ -226,6 +242,14 @@ function setupUserListener(userId: string) {
       console.log('Invalid userId for user listener');
       return;
     }
+
+    // Idempotent olmalı: profil ekranı her focus'ta bunu yeniden çağırıyor
+    // (useFocusEffect). Önceki dinleyici kapatılmadan üzerine yazılırsa
+    // eskisi arka planda sızdırılmış olarak yaşamaya devam ediyor; sign
+    // out sonrası bu sızmış dinleyici, Firestore'un yerel cache'inden
+    // gelen eski (silinmemiş) kullanıcı verisiyle tetiklenip user'ı
+    // patchAuth ile geri dolduruyor ve misafir moduna geçişi bozuyordu.
+    cleanupUserListener();
 
     const db = getFirestore();
     const userDocRef = doc(db, 'users', userId);

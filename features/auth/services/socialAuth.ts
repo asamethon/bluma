@@ -1,5 +1,6 @@
 import { signInWithGoogle as signInWithGoogleSDK } from '@/config/googleSignIn';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAnalytics, logEvent } from '@react-native-firebase/analytics';
 import {
   getAuth,
   signInWithCredential,
@@ -65,6 +66,7 @@ async function signInWithGoogle() {
         // Save to Firestore
         await setDoc(userDocRef, userData);
         console.log('New user data saved to Firestore');
+        logEvent(getAnalytics(), 'sign_up', { method: 'google' }).catch(() => {});
       } else {
         // Update existing user data
         userData = {
@@ -211,6 +213,7 @@ async function signInWithApple(credential: any) {
         email: firebaseUser.email || credential.email || 'user@icloud.com',
         displayName: firebaseUser.displayName || credential.fullName?.givenName || 'Apple User',
         authProvider: 'apple' as const,
+        appleUserId: credential.user,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
@@ -218,18 +221,21 @@ async function signInWithApple(credential: any) {
       // Save to Firestore
       await setDoc(userDocRef, userData);
       console.log('New Apple user data saved to Firestore');
+      logEvent(getAnalytics(), 'sign_up', { method: 'apple' }).catch(() => {});
     } else {
       // Update existing user data
       userData = {
         ...userData,
         email: firebaseUser.email || credential.email || userData.email,
         displayName: firebaseUser.displayName || credential.fullName?.givenName || userData.displayName,
+        appleUserId: userData.appleUserId || credential.user,
         updatedAt: serverTimestamp(),
       };
 
       await setDoc(userDocRef, {
         email: userData.email,
         displayName: userData.displayName,
+        appleUserId: userData.appleUserId,
         updatedAt: serverTimestamp(),
       }, { merge: true });
       console.log('Existing Apple user data updated in Firestore');

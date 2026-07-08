@@ -1,11 +1,10 @@
-import { pushNotificationService } from "@/services/pushNotificationService";
 import { useTheme } from "@/constants/theme";
 import { authActions } from "@/store/authStore";
 import { useAppSelector } from "@/store/hooks";
 import { preferencesActions } from "@/store/preferencesStore";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import {
     Alert,
     ScrollView,
@@ -21,14 +20,7 @@ export default function SettingsScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
-  const user = useAppSelector(s => s.auth.user);
 
-  // Local toggles (persist integration can be added later)
-  const [pushEnabled, setPushEnabled] = useState(true);
-  const [emailEnabled, setEmailEnabled] = useState(false);
-  const [newChapterEnabled, setNewChapterEnabled] = useState(true);
-  const [likesEnabled, setLikesEnabled] = useState(true);
-  const [commentsEnabled, setCommentsEnabled] = useState(true);
   // Redux'tan okunur; setShowMatureContent optimistic dispatch ettiği için
   // ayrı lokal state gerekmez.
   const matureEnabled = useAppSelector(s => s.preferences.showMatureContent);
@@ -49,7 +41,7 @@ export default function SettingsScreen() {
         style: "destructive",
         onPress: () => {
           authActions.signOut();
-          router.push("/(auth)/signin");
+          router.replace("/");
         },
       },
     ]);
@@ -126,76 +118,24 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Bildirimler</Text>
           <View style={styles.card}>
-            <View style={styles.row}>
+            <TouchableOpacity
+              style={[styles.row, styles.rowNoBorder]}
+              onPress={() => router.push("/profile/notification-settings")}
+            >
               <View style={styles.rowLeft}>
                 <Ionicons
                   name="notifications-outline"
                   size={20}
                   color={colors.primary}
                 />
-                <Text style={styles.rowTitle}>Push Bildirimleri</Text>
+                <Text style={styles.rowTitle}>Bildirim Tercihleri</Text>
               </View>
-              <Switch
-                value={pushEnabled}
-                onValueChange={async (val) => {
-                  setPushEnabled(val);
-                  if (val && user?.id) {
-                    // Request permission and save token
-                    await pushNotificationService.saveUserPushToken(user.id);
-                  }
-                }}
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color={colors.textSecondary}
               />
-            </View>
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Ionicons
-                  name="mail-outline"
-                  size={20}
-                  color={colors.primary}
-                />
-                <Text style={styles.rowTitle}>E-posta Bildirimleri</Text>
-              </View>
-              <Switch value={emailEnabled} onValueChange={setEmailEnabled} />
-            </View>
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Ionicons
-                  name="book-outline"
-                  size={20}
-                  color={colors.primary}
-                />
-                <Text style={styles.rowTitle}>Yeni Bölüm Yayınlanınca</Text>
-              </View>
-              <Switch
-                value={newChapterEnabled}
-                onValueChange={setNewChapterEnabled}
-              />
-            </View>
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Ionicons
-                  name="heart-outline"
-                  size={20}
-                  color={colors.primary}
-                />
-                <Text style={styles.rowTitle}>Beğeniler</Text>
-              </View>
-              <Switch value={likesEnabled} onValueChange={setLikesEnabled} />
-            </View>
-            <View style={[styles.row, styles.rowNoBorder]}>
-              <View style={styles.rowLeft}>
-                <Ionicons
-                  name="chatbubble-ellipses-outline"
-                  size={20}
-                  color={colors.primary}
-                />
-                <Text style={styles.rowTitle}>Yorumlar</Text>
-              </View>
-              <Switch
-                value={commentsEnabled}
-                onValueChange={setCommentsEnabled}
-              />
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -274,14 +214,14 @@ const createStyles = (colors: any) =>
     headerTitle: {
       flex: 1,
       textAlign: "left",
-      fontSize: 24,
+      fontSize: 24, lineHeight: 31,
       fontWeight: "800",
       color: colors.text,
       marginLeft: 8,
     },
     section: { paddingHorizontal: 16, paddingTop: 16 },
     sectionTitle: {
-      fontSize: 14,
+      fontSize: 14, lineHeight: 18,
       fontWeight: "700",
       color: colors.textSecondary,
       marginBottom: 8,
@@ -309,13 +249,13 @@ const createStyles = (colors: any) =>
       marginLeft: 6,
       color: colors.text,
       fontWeight: "600",
-      fontSize: 15,
+      fontSize: 15, lineHeight: 20,
     },
     rowSub: {
       marginLeft: 6,
       marginTop: 2,
       color: colors.textSecondary,
-      fontSize: 12,
+      fontSize: 12, lineHeight: 16,
     },
     version: { color: colors.textSecondary, fontWeight: "600" },
   });

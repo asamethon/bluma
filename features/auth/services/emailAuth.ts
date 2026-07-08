@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAnalytics, logEvent } from '@react-native-firebase/analytics';
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -161,6 +162,9 @@ async function signUpWithEmail(email: string, password: string, displayName: str
     } catch (error) {
       console.log('Push token kaydedilirken hata (non-critical):', error);
     }
+
+    // Retention funnel'ı için (bkz. YAPILACAKLAR 3.2) — kayıt olayı
+    logEvent(getAnalytics(), 'sign_up', { method: 'email' }).catch(() => {});
 
     // Set loading to false before returning
     store.dispatch(patchAuth({ isLoading: false }));

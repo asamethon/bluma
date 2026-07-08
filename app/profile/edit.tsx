@@ -499,6 +499,7 @@ const fieldStyles = StyleSheet.create({
     flex: 1,
     fontFamily: Fonts.sansRegular,
     fontSize: 15,
+    lineHeight: 20,
     paddingVertical: 0,
   },
   bioInput: {
