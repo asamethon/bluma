@@ -7,28 +7,36 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:626165614889:android:your_android_app_id",
+        "mobilesdk_app_id": "1:626165614889:android:67830ab9767da634950f38",
         "android_client_info": {
-          "package_name": "com.bluma.app"
+          "package_name": "com.d4tecompany.bluma"
         }
       },
       "oauth_client": [
         {
-          "client_id": "626165614889-8logf9c1pufo9h0llo9jvp4cfvq98asl.apps.googleusercontent.com",
+          "client_id": "626165614889-crsvdlrp4oommq6eiu14ltn372l10al7.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAstI5WA0br8wT11c52_m9sy8bVFYEyRBc"
+          "current_key": "AIzaSyBEB97C2ruq4jn_ougye5U3y_Q-U9s0vMM"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "626165614889-8logf9c1pufo9h0llo9jvp4cfvq98asl.apps.googleusercontent.com",
+              "client_id": "626165614889-crsvdlrp4oommq6eiu14ltn372l10al7.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "626165614889-8logf9c1pufo9h0llo9jvp4cfvq98asl.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.asamethon.bluma",
+                "app_store_id": "6749180146"
+              }
             }
           ]
         }
@@ -36,4 +44,4 @@
     }
   ],
   "configuration_version": "1"
-} 
+}

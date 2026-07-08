@@ -1,9 +1,14 @@
 import { authActions } from '@/store/authStore';
 import { storyActions } from '@/store/storyStore';
+import { readingProgressActions } from '@/features/story/services/readingProgress';
 import { store } from '@/store';
 import { useAppSelector } from '@/store/hooks';
+import { Image } from 'expo-image';
 import { configureGoogleSignIn } from '@/config/googleSignIn';
+import { initSentry } from '@/config/sentry';
+import * as Sentry from '@sentry/react-native';
 import { AuthGateSheet } from '@/components/AuthGateSheet';
+import { SplashAnimation } from '@/components/ui';
 import { GuestProvider } from '@/contexts/GuestContext';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
@@ -39,8 +44,9 @@ SplashScreen.preventAutoHideAsync();
 // çağrılmadan signIn() denenirse native SDK "No active configuration"
 // hatası veriyordu (Google ile giriş hiç çalışmıyordu).
 configureGoogleSignIn();
+initSentry();
 
-export default function RootLayout() {
+function RootLayout() {
   // useAppSelector kullanan iç bileşen Provider'ın altında olmalı.
   return (
     <Provider store={store}>
@@ -48,6 +54,11 @@ export default function RootLayout() {
     </Provider>
   );
 }
+
+// Sentry.wrap: navigasyon breadcrumb'ları + otomatik boot-time performans
+// izlemesi ekler. DSN yoksa initSentry() no-op kaldığından bunun da bir
+// etkisi olmaz.
+export default Sentry.wrap(RootLayout);
 
 function RootLayoutInner() {
   const colorScheme = useColorScheme();
@@ -64,8 +75,15 @@ function RootLayoutInner() {
     HankenGrotesk_800ExtraBold,
   });
   const isLoading = useAppSelector(s => s.auth.isLoading);
+  const isGuest = useAppSelector(s => s.auth.isGuest);
+  const userId = useAppSelector(s => s.auth.user?.id);
   const storiesLoaded = useAppSelector(s => s.story.storiesLoaded);
+  const continueReadingLoaded = useAppSelector(s => s.story.continueReadingLoaded);
+  const stories = useAppSelector(s => s.story.stories);
+  const continueReading = useAppSelector(s => s.story.continueReading);
   const [splashTimedOut, setSplashTimedOut] = useState(false);
+  const [imagesReady, setImagesReady] = useState(false);
+  const [introFinished, setIntroFinished] = useState(false);
   const pathname = usePathname();
 
   // Ekran görüntüleme takibi — DAU/retention oturumlardan otomatik gelir,
@@ -90,19 +108,61 @@ function RootLayoutInner() {
     return () => clearTimeout(t);
   }, []);
 
-  // Ready once fonts + auth are done AND the stories feed has loaded (or we
-  // hit the timeout fallback).
-  const ready = loaded && !isLoading && (storiesLoaded || splashTimedOut);
+  // Girişli kullanıcı için "Okumaya Devam Et" rafını da splash sırasında
+  // önden yükle — aksi halde ana sayfa açılınca bu bölüm birkaç saniye
+  // sonra "patlayarak" beliriyordu (bkz. loadContinueReadingShelf).
+  useEffect(() => {
+    if (userId && !isGuest) readingProgressActions.loadContinueReadingShelf();
+  }, [userId, isGuest]);
+  const continueReadingReady = isGuest || !userId || continueReadingLoaded;
 
-  // Hide the native splash only after the root view has laid out, so it stays
-  // up until the first frame is painted — no black flash between splash and app.
+  // İlk ekranda görünecek hikaye kapaklarını (akış + okumaya devam et rafı)
+  // splash kapanmadan önce prefetch et — aksi halde her kart kendi ağ
+  // isteğini bekleyip teker teker "patlayarak" beliriyordu.
+  useEffect(() => {
+    if (!storiesLoaded || !continueReadingReady) return;
+    const uris = Array.from(new Set([
+      ...continueReading.map(c => c.story.coverImage),
+      ...stories.slice(0, 12).map(s => s.coverImage),
+    ].filter((uri): uri is string => !!uri)));
+
+    let cancelled = false;
+    Promise.all(uris.map(uri => Image.prefetch(uri).catch(() => false)))
+      .finally(() => { if (!cancelled) setImagesReady(true); });
+    return () => { cancelled = true; };
+  }, [storiesLoaded, continueReadingReady, stories, continueReading]);
+
+  // Data ready once fonts + auth are done AND the stories feed + continue-reading
+  // shelf + their cover images have all loaded (or we hit the timeout
+  // fallback). The app only hands off from the splash animation to real
+  // screens once BOTH data is ready and our brand animation has played its
+  // minimum duration — whichever finishes last.
+  const dataReady = loaded && !isLoading &&
+    (splashTimedOut || (storiesLoaded && continueReadingReady && imagesReady));
+  const bootReady = dataReady && introFinished;
+  // appReady tek yönlü latch: cold-boot'ta bir kez true olduysa isLoading
+  // tekrar true olsa bile splash'e geri DÖNMEZ. Aksi halde signup / sign-in /
+  // onboarding-complete gibi akışlarda ekilen isLoading=true, tüm (auth)
+  // ağacını unmount edip splash'i geri getirir; akış bittiğinde Stack fresh
+  // remount olurken signup'ın <Redirect href="/(auth)/onboarding">'i
+  // navigation state resetlenmesiyle kayboluyor ve kullanıcı onboarding
+  // yerine tabs'e düşüyordu (kayıt sonrası onboarding gelmeme bug'ı).
+  const [appReady, setAppReady] = useState(false);
+  useEffect(() => {
+    if (bootReady) setAppReady(true);
+  }, [bootReady]);
+
+  // The native launch image only needs to stay up until fonts are loaded and
+  // our own JS splash animation can paint with the right typography — from
+  // that point on, the animation itself IS the splash the user sees, no
+  // matter how long data takes to arrive.
   const onLayoutRootView = useCallback(() => {
-    if (ready) {
+    if (loaded) {
       SplashScreen.hideAsync();
     }
-  }, [ready]);
+  }, [loaded]);
 
-  if (!ready) {
+  if (!loaded) {
     return null;
   }
 
@@ -114,14 +174,18 @@ function RootLayoutInner() {
       <SafeAreaProvider>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <BottomSheetModalProvider>
-            <GuestProvider>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="+not-found" />
-              </Stack>
-              <StatusBar style="auto" />
-              <AuthGateSheet />
-            </GuestProvider>
+            {appReady ? (
+              <GuestProvider>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen name="+not-found" />
+                </Stack>
+                <StatusBar style="auto" />
+                <AuthGateSheet />
+              </GuestProvider>
+            ) : (
+              <SplashAnimation onFinish={() => setIntroFinished(true)} />
+            )}
           </BottomSheetModalProvider>
         </ThemeProvider>
       </SafeAreaProvider>

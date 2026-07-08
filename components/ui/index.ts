@@ -14,5 +14,6 @@ export { SectionHeader } from "./SectionHeader";
 export { StoryCardSpine, StoryCardFeature } from "./StoryCard";
 export { StoryRow } from "./StoryRow";
 export { BloomMark, BlumaWordmark } from "./BloomMark";
+export { SplashAnimation, SPLASH_MIN_MS } from "./SplashAnimation";
 export { Screen } from "./Screen";
 export type { ScreenProps } from "./Screen";

@@ -94,6 +94,7 @@ export function BlumaWordmark({
         style={{
           fontFamily: Fonts.serif,
           fontSize: size,
+          lineHeight: size * 1.3,
           fontWeight: "700",
           letterSpacing: 0.5,
           color: color ?? colors.text,
