@@ -2,6 +2,7 @@ import {
   Screen, BloomMark } from '@/components/ui';
 import { Fonts } from '@/constants/theme';
 import { authActions } from '@/store/authStore';
+import { openPrivacyPolicy, openTermsOfService } from '@/utils/legal';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
@@ -10,7 +11,6 @@ import {
   Animated,
   Dimensions,
   Easing,
-  Pressable,
   StatusBar,
   StyleSheet,
   Text,
@@ -19,73 +19,22 @@ import {
 } from 'react-native';
 
 const { height: H } = Dimensions.get('window');
-const SPLASH_MS = 2600;
 
-type Phase = 'splash' | 'welcome';
-
-// Persist across remounts so back-navigating from signin/signup skips splash
-let _splashShown = false;
-
+// Bluma'nın marka animasyonu artık uygulama açılışında global splash olarak
+// gösteriliyor (bkz. app/_layout.tsx + components/ui/SplashAnimation.tsx),
+// bu yüzden bu ekran doğrudan "welcome" içeriğiyle başlar — aynı animasyonu
+// ikinci kez oynatmaz.
 export default function WalkthroughScreen() {
   const router = useRouter();
-  const [phase, setPhase] = React.useState<Phase>(_splashShown ? 'welcome' : 'splash');
 
-  /* ── animations ────────────────────────────────────────── */
-  const splashMark = useRef(new Animated.Value(0)).current;
-  const splashWord = useRef(new Animated.Value(0)).current;
-  const splashTag  = useRef(new Animated.Value(0)).current;
-  const dot0 = useRef(new Animated.Value(0)).current;
-  const dot1 = useRef(new Animated.Value(0)).current;
-  const dot2 = useRef(new Animated.Value(0)).current;
-  const ring1 = useRef(new Animated.Value(0)).current;
-  const ring2 = useRef(new Animated.Value(0)).current;
-
+  /* ── welcome animations ───────────────────────────────────── */
   const wmWord  = useRef(new Animated.Value(0)).current;
   const wmTag   = useRef(new Animated.Value(0)).current;
   const wmBody  = useRef(new Animated.Value(0)).current;
   const wmBtns  = useRef(new Animated.Value(0)).current;
   const wmFloat = useRef(new Animated.Value(0)).current;
 
-  /* splash animations */
   useEffect(() => {
-    if (phase !== 'splash') return;
-
-    const dotPulse = (dot: Animated.Value, delay: number) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(dot, { toValue: 1, duration: 420, delay, useNativeDriver: true, easing: Easing.inOut(Easing.ease) }),
-          Animated.timing(dot, { toValue: 0.28, duration: 420, useNativeDriver: true }),
-        ])
-      );
-
-    const ringExpand = (ring: Animated.Value, delay: number) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(ring, { toValue: 1, duration: 2600, delay, useNativeDriver: true, easing: Easing.out(Easing.ease) }),
-          Animated.timing(ring, { toValue: 0, duration: 0, useNativeDriver: true }),
-        ])
-      );
-
-    Animated.stagger(140, [
-      Animated.spring(splashMark, { toValue: 1, damping: 14, stiffness: 140, useNativeDriver: true }),
-      Animated.timing(splashWord, { toValue: 1, duration: 520, easing: Easing.out(Easing.ease), useNativeDriver: true }),
-      Animated.timing(splashTag,  { toValue: 1, duration: 520, easing: Easing.out(Easing.ease), useNativeDriver: true }),
-    ]).start();
-
-    dotPulse(dot0, 0).start();
-    dotPulse(dot1, 180).start();
-    dotPulse(dot2, 360).start();
-    ringExpand(ring1, 800).start();
-    ringExpand(ring2, 1600).start();
-
-    const t = setTimeout(() => { _splashShown = true; setPhase('welcome'); }, SPLASH_MS);
-    return () => clearTimeout(t);
-  }, [phase]);
-
-  /* welcome animations */
-  useEffect(() => {
-    if (phase !== 'welcome') return;
-
     Animated.stagger(120, [
       Animated.timing(wmWord, { toValue: 1, duration: 480, easing: Easing.out(Easing.ease), useNativeDriver: true }),
       Animated.timing(wmTag,  { toValue: 1, duration: 480, easing: Easing.out(Easing.ease), useNativeDriver: true }),
@@ -101,54 +50,12 @@ export default function WalkthroughScreen() {
     );
     float.start();
     return () => float.stop();
-  }, [phase]);
+  }, [wmWord, wmTag, wmBody, wmBtns, wmFloat]);
 
   /* ── auth redirects ────────────────────────────────────── */
   const { isAuthenticated, hasCompletedOnboarding } = useAppSelector(s => s.auth);
   if (isAuthenticated && hasCompletedOnboarding) return <Redirect href="/" />;
   if (isAuthenticated && !hasCompletedOnboarding) return <Redirect href="/(auth)/onboarding" />;
-
-  /* ── Splash ────────────────────────────────────────────── */
-  if (phase === 'splash') {
-    const markScale = splashMark.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] });
-    const wordY = splashWord.interpolate({ inputRange: [0, 1], outputRange: [14, 0] });
-    const tagY  = splashTag.interpolate({ inputRange: [0, 1], outputRange: [14, 0] });
-    const ring1Scale = ring1.interpolate({ inputRange: [0, 1], outputRange: [1, 2.1] });
-    const ring2Scale = ring2.interpolate({ inputRange: [0, 1], outputRange: [1, 2.1] });
-
-    return (
-      <Pressable style={styles.splash} onPress={() => { _splashShown = true; setPhase('welcome'); }}>
-        <StatusBar barStyle="light-content" />
-        {/* gradient blobs */}
-        <View pointerEvents="none" style={[styles.gradLayer, { backgroundColor: '#7C5CD0', opacity: 0.6, borderRadius: H * 0.5, top: -H * 0.3, left: -80, right: -80 }]} />
-        <View pointerEvents="none" style={[styles.gradLayer, { backgroundColor: '#FF5C8A', opacity: 0.35, borderRadius: H * 0.5, bottom: -H * 0.35, left: -80, right: -80 }]} />
-
-        {/* mark + expanding rings */}
-        <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 30 }}>
-          <Animated.View pointerEvents="none" style={[styles.ring, { opacity: ring1.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0.55, 0.4, 0] }), transform: [{ scale: ring1Scale }] }]} />
-          <Animated.View pointerEvents="none" style={[styles.ring, { opacity: ring2.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0.4, 0.3, 0] }), transform: [{ scale: ring2Scale }] }]} />
-          <Animated.View style={{ opacity: splashMark, transform: [{ scale: markScale }] }}>
-            <BloomMark size={132} color="#fff" coreColor="#E6B95C" />
-          </Animated.View>
-        </View>
-
-        {/* wordmark */}
-        <Animated.Text style={[styles.splashWordmark, { opacity: splashWord, transform: [{ translateY: wordY }] }]}>
-          bluma
-        </Animated.Text>
-        <Animated.Text style={[styles.splashTagline, { opacity: splashTag, transform: [{ translateY: tagY }] }]}>
-          her hikâye bir tohum
-        </Animated.Text>
-
-        {/* loading dots */}
-        <View style={styles.dotsWrap}>
-          {[dot0, dot1, dot2].map((d, i) => (
-            <Animated.View key={i} style={[styles.dot, { opacity: d }]} />
-          ))}
-        </View>
-      </Pressable>
-    );
-  }
 
   /* ── Welcome ───────────────────────────────────────────── */
   const fadeUp = (anim: Animated.Value) => ({
@@ -216,9 +123,9 @@ export default function WalkthroughScreen() {
 
           <Text style={styles.wTerms}>
             Devam ederek{' '}
-            <Text style={styles.wTermsLink}>Kullanım Koşulları</Text>
+            <Text style={styles.wTermsLink} onPress={openTermsOfService}>Kullanım Koşulları</Text>
             {' '}ve{' '}
-            <Text style={styles.wTermsLink}>Gizlilik Politikası</Text>
+            <Text style={styles.wTermsLink} onPress={openPrivacyPolicy}>Gizlilik Politikası</Text>
             {'\''}nı kabul edersin.
           </Text>
         </Animated.View>
@@ -228,51 +135,8 @@ export default function WalkthroughScreen() {
 }
 
 const styles = StyleSheet.create({
-  /* splash */
-  splash: {
-    flex: 1,
-    backgroundColor: '#2A1B52',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
   gradLayer: {
     position: 'absolute',
-  },
-  ring: {
-    position: 'absolute',
-    width: 132,
-    height: 132,
-    borderRadius: 66,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.5)',
-  },
-  splashWordmark: {
-    fontFamily: Fonts.serif,
-    fontSize: 54,
-    fontWeight: '700',
-    color: '#fff',
-    letterSpacing: -1.4,
-    lineHeight: 56,
-  },
-  splashTagline: {
-    fontFamily: Fonts.serif,
-    fontSize: 18,
-    fontStyle: 'italic',
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 10,
-  },
-  dotsWrap: {
-    position: 'absolute',
-    bottom: 54,
-    flexDirection: 'row',
-    gap: 9,
-  },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: 'rgba(255,255,255,0.85)',
   },
 
   /* welcome */
@@ -294,11 +158,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     letterSpacing: -1.2,
     marginTop: 24,
-    lineHeight: 52,
+    lineHeight: 62,
   },
   wTagline: {
     fontFamily: Fonts.serif,
-    fontSize: 19,
+    fontSize: 19, lineHeight: 27,
     fontStyle: 'italic',
     color: 'rgba(255,255,255,0.84)',
     marginTop: 6,
@@ -333,7 +197,7 @@ const styles = StyleSheet.create({
   },
   wBtnPrimaryText: {
     fontFamily: Fonts.sans,
-    fontSize: 16,
+    fontSize: 16, lineHeight: 21,
     fontWeight: '700',
     color: '#fff',
   },
@@ -348,7 +212,7 @@ const styles = StyleSheet.create({
   },
   wBtnSecondaryText: {
     fontFamily: Fonts.sans,
-    fontSize: 15,
+    fontSize: 15, lineHeight: 20,
     fontWeight: '700',
     color: '#fff',
   },
@@ -362,7 +226,7 @@ const styles = StyleSheet.create({
   },
   wBtnGuestText: {
     fontFamily: Fonts.sans,
-    fontSize: 14.5,
+    fontSize: 14.5, lineHeight: 19,
     fontWeight: '700',
     color: 'rgba(255,255,255,0.82)',
   },

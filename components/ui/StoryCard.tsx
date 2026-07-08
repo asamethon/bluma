@@ -96,7 +96,7 @@ export function StoryCardSpine({
           </View>
         </View>
 
-        <Text variant="bodyStrong" numberOfLines={2} style={{ marginTop: Spacing.sm, lineHeight: 18 }}>
+        <Text variant="bodyStrong" numberOfLines={2} style={{ marginTop: Spacing.sm, lineHeight: 20 }}>
           {story.title}
         </Text>
         <Text variant="caption" tone="textLight" numberOfLines={1} style={{ marginTop: 2 }}>

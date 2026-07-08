@@ -123,7 +123,7 @@ const createStyles = (colors: any) =>
       gap: 8,
     },
     text: {
-      fontSize: 14,
+      fontSize: 14, lineHeight: 18,
       fontWeight: '500',
       textAlign: 'center',
     },

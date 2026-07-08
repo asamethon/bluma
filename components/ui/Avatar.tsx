@@ -44,7 +44,7 @@ export function Avatar({
       ) : (
         <Text
           color={colors.primary}
-          style={{ fontSize: size * 0.4, lineHeight: size * 0.48, fontWeight: "700", includeFontPadding: false }}
+          style={{ fontSize: size * 0.4, lineHeight: size * 0.56, fontWeight: "700", includeFontPadding: false }}
         >
           {initials || "?"}
         </Text>

@@ -284,7 +284,7 @@ const createStyles = (colors: any) =>
       padding: 4,
     },
     headerTitle: {
-      fontSize: 20,
+      fontSize: 20, lineHeight: 26,
       fontWeight: '600',
       color: colors.text,
     },
@@ -306,7 +306,7 @@ const createStyles = (colors: any) =>
       gap: 8,
     },
     storageTitle: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       fontWeight: '600',
       color: colors.text,
     },
@@ -319,13 +319,13 @@ const createStyles = (colors: any) =>
       alignItems: 'center',
     },
     statNumber: {
-      fontSize: 18,
+      fontSize: 18, lineHeight: 23,
       fontWeight: '700',
       color: colors.primary,
       marginBottom: 2,
     },
     statLabel: {
-      fontSize: 12,
+      fontSize: 12, lineHeight: 16,
       color: colors.textSecondary,
     },
     storageBar: {
@@ -341,7 +341,7 @@ const createStyles = (colors: any) =>
       borderRadius: 3,
     },
     storagePercent: {
-      fontSize: 12,
+      fontSize: 12, lineHeight: 16,
       color: colors.textSecondary,
       textAlign: 'center',
     },
@@ -373,7 +373,7 @@ const createStyles = (colors: any) =>
       marginBottom: 4,
     },
     storyTitle: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       fontWeight: '600',
       color: colors.text,
       flex: 1,
@@ -383,7 +383,7 @@ const createStyles = (colors: any) =>
       padding: 4,
     },
     authorName: {
-      fontSize: 14,
+      fontSize: 14, lineHeight: 18,
       color: colors.textSecondary,
       marginBottom: 8,
     },
@@ -397,7 +397,7 @@ const createStyles = (colors: any) =>
       gap: 4,
     },
     metaText: {
-      fontSize: 11,
+      fontSize: 11, lineHeight: 14,
       color: colors.textSecondary,
     },
     emptyState: {
@@ -406,7 +406,7 @@ const createStyles = (colors: any) =>
       paddingHorizontal: 40,
     },
     emptyStateTitle: {
-      fontSize: 20,
+      fontSize: 20, lineHeight: 26,
       fontWeight: '600',
       color: colors.text,
       marginTop: 16,
@@ -427,7 +427,7 @@ const createStyles = (colors: any) =>
     },
     exploreButtonText: {
       color: colors.surface,
-      fontSize: 15,
+      fontSize: 15, lineHeight: 20,
       fontWeight: '600',
     },
   });

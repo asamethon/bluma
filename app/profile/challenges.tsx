@@ -351,14 +351,14 @@ const styles = StyleSheet.create({
     width: 38, height: 38,
     alignItems: 'center', justifyContent: 'center',
   },
-  headerTitle: { fontSize: 20, fontWeight: '700' },
-  headerSub: { fontSize: 12, marginTop: 1 },
+  headerTitle: { fontSize: 20, lineHeight: 26, fontWeight: '700' },
+  headerSub: { fontSize: 12, lineHeight: 16, marginTop: 1 },
   xpChip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     height: 30, paddingHorizontal: 12, borderRadius: 999,
     borderWidth: 1,
   },
-  xpChipText: { fontSize: 13, fontWeight: '700' },
+  xpChipText: { fontSize: 13, lineHeight: 17, fontWeight: '700' },
 
   rankHero: {
     margin: Spacing.screenX,
@@ -374,14 +374,14 @@ const styles = StyleSheet.create({
   },
   rankLevelLabel: {
     fontFamily: Fonts.mono,
-    fontSize: 11,
+    fontSize: 11, lineHeight: 14,
     fontWeight: '700',
     color: 'rgba(255,255,255,0.65)',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
   rankName: {
-    fontSize: 22,
+    fontSize: 22, lineHeight: 29,
     fontWeight: '700',
     color: '#fff',
     marginTop: 2,
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
     marginBottom: 7,
   },
   xpSmall: {
-    fontSize: 12,
+    fontSize: 12, lineHeight: 16,
     fontFamily: Fonts.mono,
     color: 'rgba(255,255,255,0.72)',
   },
@@ -416,10 +416,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   heroPillValue: {
-    fontSize: 17, fontWeight: '700', color: '#fff',
+    fontSize: 17, lineHeight: 22, fontWeight: '700', color: '#fff',
   },
   heroPillLabel: {
-    fontSize: 11, color: 'rgba(255,255,255,0.65)', marginTop: 1,
+    fontSize: 11, lineHeight: 14, color: 'rgba(255,255,255,0.65)', marginTop: 1,
   },
 
   weeklyCard: {
@@ -437,14 +437,14 @@ const styles = StyleSheet.create({
   },
   weeklyTitle: { fontSize: 14, fontWeight: '700', lineHeight: 19 },
   weeklyDesc: { fontSize: 12, lineHeight: 17, marginTop: 4 },
-  weeklyMeta: { fontSize: 12, fontWeight: '600' },
+  weeklyMeta: { fontSize: 12, lineHeight: 16, fontWeight: '600' },
 
   filterChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 14, paddingVertical: 8,
     borderRadius: 999, borderWidth: 1,
   },
-  filterLabel: { fontSize: 13, fontWeight: '600' },
+  filterLabel: { fontSize: 13, lineHeight: 17, fontWeight: '600' },
 
   challengeCard: {
     borderRadius: 16,
@@ -462,14 +462,14 @@ const styles = StyleSheet.create({
     fontSize: 12, lineHeight: 17, marginTop: 4,
   },
   badgeNote: {
-    fontSize: 12, fontWeight: '600',
+    fontSize: 12, lineHeight: 16, fontWeight: '600',
   },
   xpBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999,
   },
   xpBadgeText: {
-    fontSize: 12, fontWeight: '700',
+    fontSize: 12, lineHeight: 16, fontWeight: '700',
   },
   progressBg: {
     height: 5, borderRadius: 3, overflow: 'hidden',
@@ -478,16 +478,16 @@ const styles = StyleSheet.create({
     height: '100%', borderRadius: 3,
   },
   progressLabel: {
-    fontSize: 12, fontWeight: '600',
+    fontSize: 12, lineHeight: 16, fontWeight: '600',
   },
   claimBtn: {
     paddingHorizontal: 16, paddingVertical: 7,
     borderRadius: 999,
   },
   claimBtnText: {
-    fontSize: 13, fontWeight: '700', color: '#fff',
+    fontSize: 13, lineHeight: 17, fontWeight: '700', color: '#fff',
   },
   doneLabel: {
-    fontSize: 13, fontWeight: '700',
+    fontSize: 13, lineHeight: 17, fontWeight: '700',
   },
 });

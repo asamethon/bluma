@@ -53,30 +53,26 @@ export default function FollowersScreen() {
         getDocs(collection(db, 'users', id, 'following')),
       ]);
 
-      const followerList: User[] = [];
-      for (const doc of followerSnap.docs) {
-        const u = await authActions.getUserById(doc.id);
-        if (u) followerList.push(u);
-      }
-
-      const followingList: User[] = [];
-      for (const doc of followingSnap.docs) {
-        const u = await authActions.getUserById(doc.id);
-        if (u) followingList.push(u);
-      }
+      // Yazar okumaları ve takip durumu kontrolleri paralel — sıralı await
+      // her takipçi/takip edilen için ayrı bir round-trip bekletip bu
+      // ekranı gereksiz yavaşlatıyordu.
+      const [followerResults, followingResults] = await Promise.all([
+        Promise.all(followerSnap.docs.map(doc => authActions.getUserById(doc.id))),
+        Promise.all(followingSnap.docs.map(doc => authActions.getUserById(doc.id))),
+      ]);
+      const followerList = followerResults.filter((u): u is User => !!u);
+      const followingList = followingResults.filter((u): u is User => !!u);
 
       setFollowers(followerList);
       setFollowing(followingList);
 
       // Load follow status for current user
       if (currentUser?.id) {
-        const allUsers = [...new Set([...followerList.map(u => u.id), ...followingList.map(u => u.id)])];
+        const allUsers = [...new Set([...followerList.map(u => u.id), ...followingList.map(u => u.id)])]
+          .filter(uid => uid !== currentUser.id);
+        const statuses = await Promise.all(allUsers.map(uid => authActions.isFollowingUser(uid)));
         const statusMap: Record<string, boolean> = {};
-        for (const uid of allUsers) {
-          if (uid !== currentUser.id) {
-            statusMap[uid] = await authActions.isFollowingUser(uid);
-          }
-        }
+        allUsers.forEach((uid, i) => { statusMap[uid] = statuses[i]; });
         setFollowingStatus(statusMap);
       }
     } catch {}
@@ -272,7 +268,9 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 14,
+    lineHeight: 20,
     fontWeight: '500',
+    paddingVertical: 0,
   },
   userRow: {
     flexDirection: 'row',

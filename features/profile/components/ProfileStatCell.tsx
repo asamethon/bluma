@@ -20,7 +20,7 @@ export function ProfileStatCell({ icon, value, label, color, onPress }: ProfileS
   return (
     <TouchableOpacity onPress={onPress} disabled={!onPress} style={{ flex: 1, alignItems: 'center', gap: 3 }}>
       <Ionicons name={icon} size={16} color={color} />
-      <Text variant="heading" style={{ fontSize: 20, lineHeight: 24, fontWeight: '700' }}>{fmt(value)}</Text>
+      <Text variant="heading" style={{ fontSize: 20, lineHeight: 26, fontWeight: '700' }}>{fmt(value)}</Text>
       <Text variant="caption" tone="textLight">{label}</Text>
     </TouchableOpacity>
   );

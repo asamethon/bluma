@@ -9,6 +9,7 @@ import {
 } from '@/components/ui';
 import { CategoryMeta, Radius, Spacing, categoryColor, useTheme } from '@/constants/theme';
 import { FollowButton } from '@/features/social/components/FollowButton';
+import { useResponsiveGrid } from '@/hooks/useResponsive';
 import { authActions, User } from '@/store/authStore';
 import { useAppSelector } from '@/store/hooks';
 import { moderationActions } from '@/store/moderationStore';
@@ -47,6 +48,7 @@ export default function SearchScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const currentUserId = useAppSelector(s => s.auth.user?.id);
+  const { numColumns, columnWidth } = useResponsiveGrid();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
@@ -89,7 +91,7 @@ export default function SearchScreen() {
   // turu ve yapay 200ms gecikmeyi ortadan kaldırır.
   const filteredStories = useMemo(() => {
     // Engellenen yazarları ve (tercih kapalıysa) 18+ içeriği gizle
-    let filtered = preferencesActions.filterMature(moderationActions.filterBlocked(allStories));
+    let filtered = preferencesActions.filterMature(moderationActions.filterHidden(moderationActions.filterBlocked(allStories)));
     if (selectedGenre) filtered = filtered.filter(s => s.category === selectedGenre);
     if (searchQuery.trim()) {
       const t = searchQuery.toLowerCase();
@@ -194,15 +196,26 @@ export default function SearchScreen() {
     <>
       {/* Header */}
       <View style={styles.headerRow}>
-        <Text variant="title" style={{ fontSize: 26, fontWeight: '700' }}>Keşfet</Text>
+        <Text variant="title" style={{ fontSize: 26, fontWeight: "700" }}>
+          Keşfet
+        </Text>
       </View>
 
       {/* Search input */}
-      <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Ionicons name="search-outline" size={18} color={colors.textSecondary} />
+      <View
+        style={[
+          styles.searchBar,
+          { backgroundColor: colors.surface, borderColor: colors.border },
+        ]}
+      >
+        <Ionicons
+          name="search-outline"
+          size={18}
+          color={colors.textSecondary}
+        />
         <TextInput
           style={[styles.searchInput, { color: colors.text }]}
-          placeholder="Hikâye, yazar ya da etiket ara"
+          placeholder="Hikaye, yazar ya da etiket ara"
           placeholderTextColor={colors.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -210,8 +223,12 @@ export default function SearchScreen() {
           onSubmitEditing={() => saveSearchToHistory(searchQuery)}
         />
         {searchQuery.length > 0 && (
-          <Pressable onPress={() => setSearchQuery('')}>
-            <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
+          <Pressable onPress={() => setSearchQuery("")}>
+            <Ionicons
+              name="close-circle"
+              size={18}
+              color={colors.textSecondary}
+            />
           </Pressable>
         )}
       </View>
@@ -219,18 +236,33 @@ export default function SearchScreen() {
       {/* Trend Aramalar — gerçek kataloğdan, sadece idle modda göster */}
       {showIdle && trendingSearches.length > 0 && (
         <View style={styles.section}>
-          <Text variant="overline" tone="textLight" style={styles.overlineLabel}>
+          <Text
+            variant="overline"
+            tone="textLight"
+            style={styles.overlineLabel}
+          >
             TREND ARAMALAR
           </Text>
           <View style={styles.trendingRow}>
-            {trendingSearches.map(title => (
+            {trendingSearches.map((title) => (
               <Pressable
                 key={title}
-                onPress={() => { setSearchQuery(title); saveSearchToHistory(title); }}
-                style={[styles.trendPill, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}
+                onPress={() => {
+                  setSearchQuery(title);
+                  saveSearchToHistory(title);
+                }}
+                style={[
+                  styles.trendPill,
+                  {
+                    backgroundColor: colors.surfaceVariant,
+                    borderColor: colors.border,
+                  },
+                ]}
               >
                 <Ionicons name="trending-up" size={13} color={colors.bloom} />
-                <Text variant="label" style={{ color: colors.text }}>{title}</Text>
+                <Text variant="label" style={{ color: colors.text }}>
+                  {title}
+                </Text>
               </Pressable>
             ))}
           </View>
@@ -241,7 +273,7 @@ export default function SearchScreen() {
       <View style={styles.sectionSpacing}>
         <SectionHeader title="Türler" accent={colors.primary} />
         <View style={styles.genreGrid}>
-          {GENRE_KEYS.map(g => (
+          {GENRE_KEYS.map((g) => (
             <CategoryChip
               key={g}
               category={g}
@@ -256,9 +288,13 @@ export default function SearchScreen() {
       {showIdle && recentSearches.length > 0 && (
         <View style={styles.section}>
           <View style={styles.rowBetween}>
-            <Text variant="subheading" style={{ fontWeight: '700' }}>Son Aramalar</Text>
+            <Text variant="subheading" style={{ fontWeight: "700" }}>
+              Son Aramalar
+            </Text>
             <Pressable onPress={clearSearchHistory}>
-              <Text variant="caption" tone="primary">Temizle</Text>
+              <Text variant="caption" tone="primary">
+                Temizle
+              </Text>
             </Pressable>
           </View>
           {recentSearches.map((item, idx) => (
@@ -266,19 +302,49 @@ export default function SearchScreen() {
               <Pressable
                 style={styles.recentRow}
                 onPress={() => {
-                  if (item.type === 'query') setSearchQuery(item.query || '');
-                  else if (item.type === 'story' && item.id) router.push(`/story/${item.id}/preview`);
-                  else if (item.type === 'user' && item.id) router.push(`/user/${item.id}` as any);
+                  if (item.type === "query") setSearchQuery(item.query || "");
+                  else if (item.type === "story" && item.id)
+                    router.push(`/story/${item.id}/preview`);
+                  else if (item.type === "user" && item.id)
+                    router.push(`/user/${item.id}` as any);
                 }}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
-                  {item.type === 'query' && <Ionicons name="time-outline" size={18} color={colors.textSecondary} />}
-                  {item.type === 'story' && <View style={[styles.recentThumb, { backgroundColor: colors.surfaceVariant }]} />}
-                  {item.type === 'user' && <Avatar size={36} name={item.name} />}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 12,
+                    flex: 1,
+                  }}
+                >
+                  {item.type === "query" && (
+                    <Ionicons
+                      name="time-outline"
+                      size={18}
+                      color={colors.textSecondary}
+                    />
+                  )}
+                  {item.type === "story" && (
+                    <View
+                      style={[
+                        styles.recentThumb,
+                        { backgroundColor: colors.surfaceVariant },
+                      ]}
+                    />
+                  )}
+                  {item.type === "user" && (
+                    <Avatar size={36} name={item.name} />
+                  )}
                   <View>
-                    <Text variant="body">{item.type === 'query' ? item.query : (item.title || item.name)}</Text>
-                    {item.type !== 'query' && (
-                      <Text variant="caption" tone="textSecondary">{item.type === 'story' ? 'Hikaye' : `@${item.username}`}</Text>
+                    <Text variant="body">
+                      {item.type === "query"
+                        ? item.query
+                        : item.title || item.name}
+                    </Text>
+                    {item.type !== "query" && (
+                      <Text variant="caption" tone="textSecondary">
+                        {item.type === "story" ? "Hikaye" : `@${item.username}`}
+                      </Text>
                     )}
                   </View>
                 </View>
@@ -287,7 +353,12 @@ export default function SearchScreen() {
                 </Pressable>
               </Pressable>
               {idx < recentSearches.length - 1 && (
-                <View style={[styles.divider, { backgroundColor: colors.border, marginLeft: 46 }]} />
+                <View
+                  style={[
+                    styles.divider,
+                    { backgroundColor: colors.border, marginLeft: 46 },
+                  ]}
+                />
               )}
             </View>
           ))}
@@ -298,35 +369,53 @@ export default function SearchScreen() {
       {(!showIdle || selectedGenre !== null) && (
         <View style={styles.sectionSpacing}>
           <View style={styles.rowBetween}>
-            <Text variant="heading" style={{ fontSize: 18, fontWeight: '700' }}>
-              {selectedGenre ? (CategoryMeta[selectedGenre]?.label ?? selectedGenre) : searchQuery ? `"${searchQuery}"` : 'Tüm Sonuçlar'}
+            <Text variant="heading" style={{ fontSize: 18, fontWeight: "700" }}>
+              {selectedGenre
+                ? (CategoryMeta[selectedGenre]?.label ?? selectedGenre)
+                : searchQuery
+                  ? `"${searchQuery}"`
+                  : "Tüm Sonuçlar"}
             </Text>
-            <Badge
-              label={`${filteredStories.length} hikâye`}
-              tone="neutral"
-            />
+            <Badge label={`${filteredStories.length} hikâye`} tone="neutral" />
           </View>
         </View>
       )}
 
       {/* Users — searchUsers zaten authStore.searchUsers içinde .slice(0, 20) ile sınırlı */}
       {searchUsers.length > 0 && (
-        <View style={[styles.section, { gap: 0 }]}>
+        <View
+          style={[
+            { gap: 0, marginBottom: Spacing.lg },
+          ]}
+        >
           {searchUsers.map((user, idx) => (
             <View key={user.id}>
               <Pressable
                 style={styles.userRow}
                 onPress={() => router.push(`/user/${user.id}` as any)}
               >
-                <Avatar uri={user.profileImage} name={user.displayName} size={50} />
+                <Avatar
+                  uri={user.profileImage}
+                  name={user.displayName}
+                  size={50}
+                />
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text variant="subheading" numberOfLines={1}>{user.displayName}</Text>
-                  <Text variant="caption" tone="primary">@{user.username || 'user'}</Text>
+                  <Text variant="subheading" numberOfLines={1}>
+                    {user.displayName}
+                  </Text>
+                  <Text variant="caption" tone="primary">
+                    @{user.username || "user"}
+                  </Text>
                 </View>
                 <FollowButton userId={user.id} />
               </Pressable>
               {idx < searchUsers.length - 1 && (
-                <View style={[styles.divider, { backgroundColor: colors.border, marginLeft: 62 }]} />
+                <View
+                  style={[
+                    styles.divider,
+                    { backgroundColor: colors.border, marginLeft: 62 },
+                  ]}
+                />
               )}
             </View>
           ))}
@@ -334,7 +423,10 @@ export default function SearchScreen() {
       )}
 
       {busy && (
-        <ActivityIndicator color={colors.primary} style={{ marginVertical: 32 }} />
+        <ActivityIndicator
+          color={colors.primary}
+          style={{ marginVertical: 32 }}
+        />
       )}
     </>
   );
@@ -342,8 +434,11 @@ export default function SearchScreen() {
   return (
     <Screen style={{ flex: 1, backgroundColor: colors.background }}>
       <FlatList
+        key={`grid-${numColumns}`}
         data={busy ? [] : filteredStories}
         keyExtractor={(story) => story.id}
+        numColumns={numColumns}
+        columnWrapperStyle={numColumns > 1 ? { gap: Spacing.gutter, paddingHorizontal: Spacing.screenX } : undefined}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 }}
         keyboardShouldPersistTaps="handled"
@@ -359,7 +454,13 @@ export default function SearchScreen() {
           ) : null
         }
         renderItem={({ item: story }) => (
-          <View style={{ paddingHorizontal: Spacing.screenX, marginBottom: Spacing.md }}>
+          <View
+            style={
+              numColumns > 1
+                ? { width: columnWidth, marginBottom: Spacing.md }
+                : { paddingHorizontal: Spacing.screenX, marginBottom: Spacing.md }
+            }
+          >
             <StoryRow
               story={story}
               status={story.isCompleted ? 'Tamamlandı' : null}
@@ -392,7 +493,9 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 15,
+    lineHeight: 20,
     fontWeight: '500',
+    paddingVertical: 0,
   },
   section: {
     paddingHorizontal: Spacing.screenX,
@@ -403,7 +506,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   overlineLabel: {
-    fontSize: 11,
+    fontSize: 11, lineHeight: 14,
     letterSpacing: 0.8,
     fontWeight: '700',
     marginBottom: 8,

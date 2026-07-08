@@ -87,14 +87,14 @@ export function AuthGateSheet() {
             </TouchableOpacity>
 
             <View style={styles.loginRow}>
-              <Text style={{ color: colors.textSecondary, fontSize: 14 }}>Zaten hesabın var mı? </Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 18}}>Zaten hesabın var mı? </Text>
               <TouchableOpacity onPress={() => startAuth('login')}>
-                <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 14 }}>Giriş yap</Text>
+                <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 14, lineHeight: 18}}>Giriş yap</Text>
               </TouchableOpacity>
             </View>
 
             <TouchableOpacity onPress={closeGate} style={styles.skipBtn}>
-              <Text style={{ color: colors.textLight, fontSize: 13, fontWeight: '600' }}>Şimdilik gerek yok</Text>
+              <Text style={{ color: colors.textLight, fontSize: 13, lineHeight: 17, fontWeight: '600' }}>Şimdilik gerek yok</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   title: {
-    fontSize: 24, lineHeight: 30, fontWeight: '700', letterSpacing: -0.3,
+    fontSize: 24, lineHeight: 32, fontWeight: '700', letterSpacing: -0.3,
     textAlign: 'center', marginBottom: 8,
   },
   sub: {
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
   },
   benefitLabel: {
-    fontSize: 11, fontWeight: '600', textAlign: 'center', lineHeight: 14,
+    fontSize: 11, fontWeight: '600', textAlign: 'center', lineHeight: 15,
   },
   primaryBtn: {
     width: '100%', height: 54, borderRadius: Radius.pill,
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.42, shadowRadius: 18, elevation: 7,
   },
   primaryBtnText: {
-    color: '#fff', fontWeight: '700', fontSize: 16,
+    color: '#fff', fontWeight: '700', fontSize: 16, lineHeight: 21,
   },
   loginRow: {
     flexDirection: 'row', alignItems: 'center', marginTop: 16,

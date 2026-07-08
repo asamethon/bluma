@@ -4,7 +4,7 @@ import { useGuestGate } from "@/contexts/GuestContext";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -82,16 +82,20 @@ function WriteFab({ focused, onPress }: { focused: boolean; onPress: () => void 
   );
 }
 
+const TAB_BAR_MAX_WIDTH = 480;
+
 export default function CustomTabBar({ state, navigation }: { state: any; navigation: any }) {
   const { colors, scheme, shadows } = useTheme();
   const { bottom } = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const { isGuest } = useAppSelector(s => s.auth);
   const { requireAuth } = useGuestGate();
   const router = useRouter();
+  const capped = width > TAB_BAR_MAX_WIDTH;
 
   return (
     <View style={[styles.host, { paddingBottom: Math.max(bottom, 10) }]} pointerEvents="box-none">
-      <View style={[styles.barWrap, shadows.lg]}>
+      <View style={[styles.barWrap, shadows.lg, capped && { width: TAB_BAR_MAX_WIDTH, alignSelf: "center" }]}>
         {/* clipped blurred background (kept separate so the FAB can overflow) */}
         <View style={styles.blurClip}>
           <BlurView
@@ -178,7 +182,7 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     borderWidth: 1,
   },
-  label: { fontSize: 10, fontFamily: Fonts.sansBold, letterSpacing: 0.2 },
+  label: { fontSize: 10, lineHeight: 13, fontFamily: Fonts.sansBold, letterSpacing: 0.2 },
   badge: {
     position: "absolute",
     top: -7,
@@ -191,7 +195,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 3,
   },
-  badgeText: { color: "#fff", fontSize: 9, fontWeight: "800" },
+  badgeText: { color: "#fff", fontSize: 9, lineHeight: 12, fontWeight: "800" },
   fabSlot: {
     flex: 1,
     alignItems: "center",

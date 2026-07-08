@@ -1,26 +1,46 @@
-import { useTheme } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import React from 'react';
-import {
-    Dimensions,
-    Modal,
-    Pressable,
-    StyleSheet,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+import { Dimensions, Modal, Pressable, StyleSheet } from 'react-native';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 interface ImageModalProps {
   visible: boolean;
   imageUri: string;
   onClose: () => void;
+  /** 'circle' avatar görüntüleme içindir (300x300 daire); varsayılan 'rect'
+      mesaj/yorum fotoğrafları gibi serbest oranlı görseller içindir. */
+  shape?: 'rect' | 'circle';
 }
 
-  const { width: screenWidth, height: screenHeight } = Dimensions.get("screen");
+const { width: screenWidth, height: screenHeight } = Dimensions.get('screen');
 
-export default function ImageModal({ visible, imageUri, onClose }: ImageModalProps) {
-  const { colors } = useTheme();
+// Tam ekran görsel görüntüleyici: iki parmakla yakınlaştır/uzaklaştır,
+// görselin dışına dokununca kapanır (ayrı kapatma butonu yok).
+export default function ImageModal({ visible, imageUri, onClose, shape = 'rect' }: ImageModalProps) {
+  const scale = useSharedValue(1);
+  const savedScale = useSharedValue(1);
+
+  // Her açılışta zoom sıfırlanır (effect yerine Modal onShow — shared value
+  // mutasyonlarını effect'e sokmamak için).
+  const resetZoom = () => {
+    scale.value = 1;
+    savedScale.value = 1;
+  };
+
+  const pinch = Gesture.Pinch()
+    .onUpdate(e => {
+      scale.value = Math.min(4, Math.max(0.8, savedScale.value * e.scale));
+    })
+    .onEnd(() => {
+      // 1'in altında bırakıldıysa yumuşakça geri otur.
+      if (scale.value < 1) scale.value = withTiming(1);
+      savedScale.value = Math.max(1, scale.value);
+    });
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   return (
     <Modal
@@ -28,29 +48,29 @@ export default function ImageModal({ visible, imageUri, onClose }: ImageModalPro
       transparent={true}
       animationType="fade"
       statusBarTranslucent={true}
+      onShow={resetZoom}
       onRequestClose={onClose}
     >
-      <Pressable style={styles.backdrop} onPress={onClose}>
-          <View style={styles.content}>
-            {/* Close Button */}
-            <TouchableOpacity 
-              style={[styles.closeButton, { backgroundColor: colors.surface }]} 
-              onPress={onClose}
-            >
-              <Ionicons name="close" size={24} color={colors.text} />
-            </TouchableOpacity>
-
-            {/* Image */}
-            <Pressable onPress={(e) => e.stopPropagation()}>
-              <Image
-                source={{ uri: imageUri }}
-                style={styles.image}
-                contentFit="contain"
-                transition={200}
-              />
-            </Pressable>
-          </View>
-      </Pressable>
+      {/* Modal kendi native penceresini açar; içindeki jestler için ayrı bir
+          GestureHandlerRootView şart (özellikle Android). */}
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <Pressable style={styles.backdrop} onPress={onClose}>
+          <GestureDetector gesture={pinch}>
+            <Animated.View style={animStyle}>
+              {/* Görsele dokunma backdrop'a düşmesin — yalnızca dışarı
+                  dokununca kapanır. */}
+              <Pressable onPress={() => {}}>
+                <Image
+                  source={{ uri: imageUri }}
+                  style={shape === 'circle' ? styles.circleImage : styles.rectImage}
+                  contentFit={shape === 'circle' ? 'cover' : 'contain'}
+                  transition={200}
+                />
+              </Pressable>
+            </Animated.View>
+          </GestureDetector>
+        </Pressable>
+      </GestureHandlerRootView>
     </Modal>
   );
 }
@@ -58,47 +78,18 @@ export default function ImageModal({ visible, imageUri, onClose }: ImageModalPro
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "#000000",
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
-    height: "100%",
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  content: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
-  },
-  closeButton: {
-    position: "absolute",
-    top: 60,
-    right: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  image: {
+  rectImage: {
     width: screenWidth - 40,
     height: screenHeight - 200,
     borderRadius: 12,
+  },
+  circleImage: {
+    width: 300,
+    height: 300,
+    borderRadius: 150,
   },
 });

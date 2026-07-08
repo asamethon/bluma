@@ -362,7 +362,7 @@ const s = StyleSheet.create({
     fontWeight: '600', minWidth: 32, textAlign: 'right',
   },
   stepTitle: {
-    fontSize: 26, fontWeight: '700', letterSpacing: -0.5, lineHeight: 32,
+    fontSize: 26, fontWeight: '700', letterSpacing: -0.5, lineHeight: 36,
   },
 
   /* intent */
@@ -378,7 +378,7 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   intentTitle: {
-    fontSize: 18, fontWeight: '700',
+    fontSize: 18, lineHeight: 23, fontWeight: '700',
   },
   intentCheck: {
     width: 24, height: 24, borderRadius: 12,
@@ -417,7 +417,7 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   avatarInitial: {
-    fontSize: 36, fontWeight: '700',
+    fontSize: 36, lineHeight: 47, fontWeight: '700',
   },
   cameraBadge: {
     position: 'absolute', right: -2, bottom: -2,
@@ -432,8 +432,8 @@ const s = StyleSheet.create({
     borderRadius: Radius.lg, borderWidth: 2,
     paddingHorizontal: 16, paddingVertical: 16,
   },
-  atPrefix: { fontSize: 18, fontWeight: '600', marginRight: 4 },
-  textInput: { flex: 1, fontSize: 18, fontWeight: '500' },
+  atPrefix: { fontSize: 18, lineHeight: 23, fontWeight: '600', marginRight: 4 },
+  textInput: { flex: 1, fontSize: 18, lineHeight: 23, fontWeight: '500' },
   usernameStatus: {
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', gap: 8, marginTop: 10,
@@ -445,7 +445,7 @@ const s = StyleSheet.create({
   },
   completionHeading: {
     fontSize: 30, fontWeight: '700', letterSpacing: -0.5,
-    marginTop: 28,
+    marginTop: 28, lineHeight: 38, textAlign: 'center',
   },
   genrePills: {
     flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center',

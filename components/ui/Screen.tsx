@@ -1,5 +1,5 @@
 import React from "react";
-import { View, type ViewProps } from "react-native";
+import { View, useWindowDimensions, type ViewProps } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Edge = "top" | "bottom";
@@ -7,6 +7,8 @@ type Edge = "top" | "bottom";
 export interface ScreenProps extends ViewProps {
   /** Which safe-area edges to pad. Defaults to top + bottom. */
   edges?: Edge[];
+  /** Caps content width and centers it on wide (tablet) screens. Omit for full-bleed screens. */
+  maxContentWidth?: number;
 }
 
 /**
@@ -17,8 +19,10 @@ export interface ScreenProps extends ViewProps {
  * them as padding, so status-bar / nav-bar spacing is correct on every
  * platform. Requires a `SafeAreaProvider` at the app root.
  */
-export function Screen({ edges = ["top", "bottom"], style, ...rest }: ScreenProps) {
+export function Screen({ edges = ["top", "bottom"], maxContentWidth, style, children, ...rest }: ScreenProps) {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const capped = maxContentWidth != null && width > maxContentWidth;
   return (
     <View
       style={[
@@ -27,6 +31,12 @@ export function Screen({ edges = ["top", "bottom"], style, ...rest }: ScreenProp
         style,
       ]}
       {...rest}
-    />
+    >
+      {capped ? (
+        <View style={{ flex: 1, width: maxContentWidth, alignSelf: "center" }}>{children}</View>
+      ) : (
+        children
+      )}
+    </View>
   );
 }

@@ -81,7 +81,7 @@ export function IconButton({
               justifyContent: "center",
             }}
           >
-            <Text style={{ color: "#fff", fontSize: 9, fontWeight: "800" }}>
+            <Text style={{ color: "#fff", fontSize: 9, lineHeight: 12, fontWeight: "800" }}>
               {badge > 99 ? "99+" : badge}
             </Text>
           </View>

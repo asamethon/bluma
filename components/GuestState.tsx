@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
     textAlign: 'center',
     marginBottom: 10,
-    lineHeight: 30,
+    lineHeight: 34,
   },
   sub: {
     fontSize: 14.5,
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   rowLabel: {
-    fontSize: 14,
+    fontSize: 14, lineHeight: 18,
     fontWeight: '600',
   },
   actions: {
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     color: '#fff',
     fontWeight: '700',
-    fontSize: 16,
+    fontSize: 16, lineHeight: 21,
   },
   loginRow: {
     flexDirection: 'row',
@@ -206,10 +206,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   loginText: {
-    fontSize: 14,
+    fontSize: 14, lineHeight: 18,
   },
   loginLink: {
-    fontSize: 14,
+    fontSize: 14, lineHeight: 18,
     fontWeight: '700',
   },
 });

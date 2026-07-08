@@ -10,6 +10,7 @@ import {
 } from '@/components/ui';
 import { CategoryMeta, Radius, Spacing, useTheme } from '@/constants/theme';
 import { useFollow } from '@/features/social/hooks/useFollow';
+import { useGuestGate } from '@/contexts/GuestContext';
 import { ProfileConversationCard } from '@/features/profile/components/ProfileConversationCard';
 import { ProfileGradientHero } from '@/features/profile/components/ProfileGradientHero';
 import { ProfileStatCell } from '@/features/profile/components/ProfileStatCell';
@@ -35,6 +36,8 @@ export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
   const currentUser = useAppSelector(s => s.auth.user);
+  const isGuest = useAppSelector(s => s.auth.isGuest);
+  const { startAuth } = useGuestGate();
 
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -120,15 +123,15 @@ export default function UserProfileScreen() {
       const db = getFirestore();
       const q = query(collection(db, 'conversations'), where('authorId', '==', userId), orderBy('createdAt', 'desc'));
       const unsub = onSnapshot(q, async snap => {
-        const list: Conversation[] = [];
-        for (const doc of snap.docs) {
+        // Bu sorgudaki tüm konuşmalar aynı yazara ait (authorId === userId) —
+        // yazarı her doküman için ayrı ayrı sıralı çekmek yerine bir kez alıp
+        // hepsine paylaştırıyoruz.
+        const author = await authActions.getUserById(userId);
+        const list: Conversation[] = snap.docs.map(doc => {
           const data = { id: doc.id, ...doc.data() } as Conversation;
-          if (data.authorId) {
-            const a = await authActions.getUserById(data.authorId);
-            if (a) data.author = a;
-          }
-          list.push(data);
-        }
+          if (data.authorId && author) data.author = author;
+          return data;
+        });
         setUserConversations(list);
         setConversationsLoading(false);
       }, () => setConversationsLoading(false));
@@ -286,6 +289,10 @@ export default function UserProfileScreen() {
                 variant="secondary"
                 size="md"
                 icon="mail-outline"
+                onPress={() => {
+                  if (isGuest) { startAuth('signup'); return; }
+                  if (user) router.push(`/messages/${user.id}` as any);
+                }}
               />
             </View>
           )}

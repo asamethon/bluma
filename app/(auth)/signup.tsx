@@ -7,10 +7,10 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import { Redirect, router, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { useAppSelector } from '@/store/hooks';
+import { openPrivacyPolicy, openTermsOfService } from '@/utils/legal';
 import {
   Alert,
   KeyboardAvoidingView,
-  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -134,7 +134,6 @@ export default function SignUpScreen() {
     }
   };
 
-  const openLink = (url: string) => Linking.openURL(url).catch(() => {});
 
   const pwStr = pwStrength(formData.password);
   const showApple = Platform.OS === 'ios';
@@ -242,7 +241,7 @@ export default function SignUpScreen() {
                 <Text
                   variant="caption"
                   style={{ fontWeight: '700', color: colors.text }}
-                  onPress={() => openLink('https://sites.google.com/view/bluma-terms-and-conditions')}
+                  onPress={openTermsOfService}
                 >
                   Kullanım Koşulları
                 </Text>
@@ -250,7 +249,7 @@ export default function SignUpScreen() {
                 <Text
                   variant="caption"
                   style={{ fontWeight: '700', color: colors.text }}
-                  onPress={() => openLink('https://sites.google.com/view/bluma-privacy-policy')}
+                  onPress={openPrivacyPolicy}
                 >
                   Gizlilik Politikası
                 </Text>
@@ -329,11 +328,11 @@ const s = StyleSheet.create({
   heading: {
     fontSize: 30, fontWeight: '700',
     letterSpacing: -0.6,
-    marginTop: 20, lineHeight: 34,
+    marginTop: 20, lineHeight: 40,
   },
   form: { marginTop: 26, gap: 16 },
   fieldLabel: {
-    fontSize: 12,
+    fontSize: 12, lineHeight: 16,
     fontWeight: '600',
     marginBottom: 7,
   },
@@ -342,7 +341,7 @@ const s = StyleSheet.create({
     borderRadius: Radius.md, paddingHorizontal: 16, height: 56,
     borderWidth: 1.5,
   },
-  textInput: { flex: 1, fontSize: 16 },
+  textInput: { flex: 1, fontSize: 16, lineHeight: 22, paddingVertical: 0 },
   strengthRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     marginTop: 10, paddingHorizontal: 4,

@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   title: {
-    fontSize: 24,
+    fontSize: 24, lineHeight: 31,
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 16,
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   errorDetails: {
-    fontSize: 12,
+    fontSize: 12, lineHeight: 16,
     color: '#666',
     textAlign: 'center',
     marginBottom: 24,
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 16, lineHeight: 21,
     fontWeight: '600',
   },
 });

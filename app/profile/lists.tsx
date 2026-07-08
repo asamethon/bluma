@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   },
   headerBtn: { padding: 6, width: 40, alignItems: 'center' },
   createRow: { flexDirection: 'row', gap: 8, paddingHorizontal: Spacing.screenX, paddingTop: 12 },
-  input: { flex: 1, borderWidth: 1, borderRadius: Radius.md, paddingHorizontal: 12, paddingVertical: 11, fontSize: 15 },
+  input: { flex: 1, borderWidth: 1, borderRadius: Radius.md, paddingHorizontal: 12, paddingVertical: 11, fontSize: 15, lineHeight: 20},
   createBtn: { width: 46, borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center' },
   listCard: {
     flexDirection: 'row',

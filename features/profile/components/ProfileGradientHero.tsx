@@ -1,7 +1,8 @@
+import ImageModal from '@/components/ImageModal';
 import { Avatar, BloomMark } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 interface ProfileGradientHeroProps {
   avatarUri?: string;
@@ -26,6 +27,9 @@ export function ProfileGradientHero({
   watermarkSize = 132,
   avatarTop = 56,
 }: ProfileGradientHeroProps) {
+  // Avatar resmi varsa basılı tutunca büyütülmüş halini ortada göster.
+  const [viewerVisible, setViewerVisible] = useState(false);
+
   return (
     <View>
       <View style={[styles.hero, { height }]}>
@@ -41,8 +45,20 @@ export function ProfileGradientHero({
       </View>
       {/* Avatar dışarıda — hero overflow'dan etkilenmiyor */}
       <View style={[styles.heroAvatarWrap, { top: avatarTop }]}>
-        <Avatar uri={avatarUri} name={avatarName} size={88} ring />
+        <Pressable
+          onLongPress={() => avatarUri && setViewerVisible(true)}
+          style={({ pressed }) => pressed && avatarUri ? { opacity: 0.85 } : undefined}
+        >
+          <Avatar uri={avatarUri} name={avatarName} size={88} ring />
+        </Pressable>
       </View>
+
+      <ImageModal
+        visible={viewerVisible}
+        imageUri={avatarUri || ''}
+        onClose={() => setViewerVisible(false)}
+        shape="circle"
+      />
     </View>
   );
 }
