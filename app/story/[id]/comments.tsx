@@ -23,16 +23,22 @@ import { useTheme } from '@/constants/theme';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 export default function CommentsScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, chapter } = useLocalSearchParams<{ id: string; chapter?: string }>();
   const router = useRouter();
   const { colors } = useTheme();
   const { user: currentUser } = useAppSelector(s => s.auth);
   const { storyComments = [] } = useAppSelector(s => s.story);
-  
+  const currentChapterIndex = chapter !== undefined ? parseInt(chapter, 10) || 0 : undefined;
+
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reportTarget, setReportTarget] = useState<{ targetId: string; reportedUserId?: string } | null>(null);
+  // Bölüm filtresi (bkz. YAPILACAKLAR 2.3) — hikâye tek bölümlüyse anlamsız.
+  const [filterChapter, setFilterChapter] = useState(currentChapterIndex !== undefined);
+  const visibleComments = filterChapter && currentChapterIndex !== undefined
+    ? storyComments.filter(c => c.chapterIndex === currentChapterIndex)
+    : storyComments;
 
   // Keyboard animation
   const keyboardHeight = useSharedValue(0);
@@ -157,7 +163,7 @@ export default function CommentsScreen() {
 
     try {
       setIsSubmitting(true);
-      const result = await storyActions.addComment(id, newComment, replyingTo || undefined);
+      const result = await storyActions.addComment(id, newComment, replyingTo || undefined, currentChapterIndex);
       
       if (result.success) {
         setNewComment('');
@@ -314,9 +320,29 @@ export default function CommentsScreen() {
         <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Yorumlar ({storyComments?.length || 0})</Text>
+        <Text style={styles.headerTitle}>Yorumlar ({visibleComments?.length || 0})</Text>
         <View style={styles.headerButton} />
       </View>
+
+      {/* Bölüm filtresi — yalnızca bir bölümden açıldıysa gösterilir */}
+      {currentChapterIndex !== undefined && (
+        <View style={styles.chapterFilterRow}>
+          <TouchableOpacity
+            style={[styles.chapterFilterChip, !filterChapter && { backgroundColor: colors.primary }]}
+            onPress={() => setFilterChapter(false)}
+          >
+            <Text style={[styles.chapterFilterText, !filterChapter && { color: '#fff' }]}>Tümü</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.chapterFilterChip, filterChapter && { backgroundColor: colors.primary }]}
+            onPress={() => setFilterChapter(true)}
+          >
+            <Text style={[styles.chapterFilterText, filterChapter && { color: '#fff' }]}>
+              Bu Bölüm (Bölüm {currentChapterIndex + 1})
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Comments List */}
       <ScrollView
@@ -324,7 +350,7 @@ export default function CommentsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={scrollContentStyle}
       >
-        {!storyComments || storyComments.length === 0 ? (
+        {!visibleComments || visibleComments.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="chatbubble-outline" size={48} color={colors.textSecondary} />
             <Text style={styles.emptyStateTitle}>Henüz yorum yok</Text>
@@ -333,7 +359,7 @@ export default function CommentsScreen() {
             </Text>
           </View>
         ) : (
-          (storyComments || []).map(comment => renderComment(comment))
+          visibleComments.map(comment => renderComment(comment))
         )}
       </ScrollView>
 
@@ -419,9 +445,26 @@ const createStyles = (colors: any) =>
       width: 40,
     },
     headerTitle: {
-      fontSize: 18,
+      fontSize: 18, lineHeight: 23,
       fontWeight: '600',
       color: colors.text,
+    },
+    chapterFilterRow: {
+      flexDirection: 'row',
+      gap: 8,
+      paddingHorizontal: 20,
+      paddingBottom: 12,
+    },
+    chapterFilterChip: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 999,
+      backgroundColor: colors.surfaceVariant,
+    },
+    chapterFilterText: {
+      fontSize: 12, lineHeight: 16,
+      fontWeight: '600',
+      color: colors.textSecondary,
     },
     commentsList: {
       flex: 1,
@@ -434,7 +477,7 @@ const createStyles = (colors: any) =>
       paddingVertical: 60,
     },
     emptyStateTitle: {
-      fontSize: 18,
+      fontSize: 18, lineHeight: 23,
       fontWeight: '600',
       color: colors.text,
       marginTop: 16,
@@ -479,7 +522,7 @@ const createStyles = (colors: any) =>
       gap: 4,
     },
     userName: {
-      fontSize: 14,
+      fontSize: 14, lineHeight: 18,
       fontWeight: '600',
       color: colors.text,
     },
@@ -488,11 +531,11 @@ const createStyles = (colors: any) =>
       height: 14,
     },
     userHandle: {
-      fontSize: 12,
+      fontSize: 12, lineHeight: 16,
       color: colors.primary,
     },
     commentTime: {
-      fontSize: 12,
+      fontSize: 12, lineHeight: 16,
       color: colors.textSecondary,
     },
     commentContent: {
@@ -511,7 +554,7 @@ const createStyles = (colors: any) =>
       gap: 4,
     },
     actionText: {
-      fontSize: 12,
+      fontSize: 12, lineHeight: 16,
       color: colors.textSecondary,
       fontWeight: '500',
     },
@@ -550,7 +593,7 @@ const createStyles = (colors: any) =>
       marginBottom: 12,
     },
     replyingToText: {
-      fontSize: 12,
+      fontSize: 12, lineHeight: 16,
       color: colors.primary,
       fontWeight: '500',
     },
@@ -578,7 +621,7 @@ const createStyles = (colors: any) =>
       borderRadius: 20,
       paddingHorizontal: 16,
       paddingVertical: 12,
-      fontSize: 14,
+      fontSize: 14, lineHeight: 18,
       color: colors.text,
       maxHeight: 100,
       borderWidth: 1,

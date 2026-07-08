@@ -1,6 +1,8 @@
-import { booksActions } from '@/features/story/services/books';
+import { chaptersActions } from '@/features/story/services/chapters';
+import { chapterLikesActions } from '@/features/story/services/chapterLikes';
 import { commentsActions } from '@/features/story/services/comments';
 import { discoverActions } from '@/features/story/services/discover';
+import { feedPaginationActions } from '@/features/story/services/feedPagination';
 import { likesActions } from '@/features/story/services/likes';
 import { listenersActions } from '@/features/story/services/listeners';
 import { offlineActions } from '@/features/story/services/offline';
@@ -21,8 +23,10 @@ export const storyActions = {
   ...savesActions,
   ...commentsActions,
   ...listenersActions,
-  ...booksActions,
+  ...chaptersActions,
+  ...chapterLikesActions,
   ...discoverActions,
+  ...feedPaginationActions,
   ...viewsActions,
   ...offlineActions,
 };

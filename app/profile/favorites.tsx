@@ -286,7 +286,7 @@ const createStyles = (colors: any) =>
       width: 40,
     },
     headerTitle: {
-      fontSize: 18,
+      fontSize: 18, lineHeight: 23,
       fontWeight: '600',
       color: colors.text,
     },
@@ -295,7 +295,7 @@ const createStyles = (colors: any) =>
       alignItems: 'center',
     },
     loadingText: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       color: colors.textSecondary,
     },
     emptyState: {
@@ -306,7 +306,7 @@ const createStyles = (colors: any) =>
       paddingHorizontal: 40,
     },
     emptyStateTitle: {
-      fontSize: 18,
+      fontSize: 18, lineHeight: 23,
       fontWeight: '600',
       color: colors.text,
       marginTop: 16,
@@ -326,7 +326,7 @@ const createStyles = (colors: any) =>
       borderRadius: 8,
     },
     exploreButtonText: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       fontWeight: '600',
       color: colors.white,
     },
@@ -377,7 +377,7 @@ const createStyles = (colors: any) =>
       flex: 1,
     },
     authorName: {
-      fontSize: 14,
+      fontSize: 14, lineHeight: 18,
       fontWeight: '600',
       color: colors.text,
     },
@@ -391,15 +391,15 @@ const createStyles = (colors: any) =>
       height: 12,
     },
     authorUsername: {
-      fontSize: 12,
+      fontSize: 12, lineHeight: 16,
       color: colors.textSecondary,
     },
     storyTime: {
-      fontSize: 12,
+      fontSize: 12, lineHeight: 16,
       color: colors.textSecondary,
     },
     storyTitle: {
-      fontSize: 18,
+      fontSize: 18, lineHeight: 23,
       fontWeight: '600',
       color: colors.text,
       marginBottom: 8,
@@ -421,7 +421,7 @@ const createStyles = (colors: any) =>
       gap: 4,
     },
     storyStatText: {
-      fontSize: 12,
+      fontSize: 12, lineHeight: 16,
       color: colors.textSecondary,
     },
     tagsContainer: {
@@ -436,7 +436,7 @@ const createStyles = (colors: any) =>
       borderRadius: 12,
     },
     tagText: {
-      fontSize: 12,
+      fontSize: 12, lineHeight: 16,
       color: colors.primary,
       fontWeight: '500',
     },

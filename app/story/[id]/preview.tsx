@@ -1,5 +1,6 @@
 import { store } from '@/store';
 import { useTheme } from '@/constants/theme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { storyActions } from '@/store/storyStore';
 import { Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,7 +9,6 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   ScrollView,
   StyleSheet,
   Text,
@@ -18,9 +18,6 @@ import {
 import { Screen } from '@/components/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const { width: screenWidth } = Dimensions.get('window');
-const CARD_WIDTH = Math.min(280, screenWidth * 0.7);
-const CARD_HEIGHT = CARD_WIDTH * (16 / 9);
 const H_GAP = 16;
 
 export default function StoryPreviewScreen() {
@@ -28,8 +25,15 @@ export default function StoryPreviewScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const { bottom } = useSafeAreaInsets();
+  const { width: screenWidth, isTablet } = useResponsive();
 
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  // Telefonda eski oranlar birebir korunur (280 tavan, 0.7 oran); tablette
+  // kart daha geniş bir tavana kadar büyüyebilir — artık 280'e sabit kalıp
+  // geniş ekranda devasa boş kenar bırakmıyor.
+  const CARD_WIDTH = Math.min(isTablet ? 420 : 280, screenWidth * (isTablet ? 0.6 : 0.7));
+  const CARD_HEIGHT = CARD_WIDTH * (16 / 9);
+
+  const styles = useMemo(() => createStyles(colors, CARD_WIDTH, CARD_HEIGHT), [colors, CARD_WIDTH, CARD_HEIGHT]);
   const sidePadding = Math.max(16, (screenWidth - CARD_WIDTH) / 2);
   const bodyUplift = Math.min(28, Math.round(CARD_HEIGHT * 0.1));
   const CTA_SPACE = 88;
@@ -305,7 +309,7 @@ export default function StoryPreviewScreen() {
   );
 }
 
-const createStyles = (colors: any) =>
+const createStyles = (colors: any, CARD_WIDTH: number, CARD_HEIGHT: number) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     headerRow: {
@@ -317,7 +321,7 @@ const createStyles = (colors: any) =>
       gap: 8,
     },
     back: { padding: 6 },
-    headerTitle: { flex: 1, textAlign: 'left', fontSize: 22, fontWeight: '800', color: colors.text },
+    headerTitle: { flex: 1, textAlign: 'left', fontSize: 22, lineHeight: 29, fontWeight: '800', color: colors.text },
     carousel: { paddingHorizontal: 20, paddingVertical: 12, gap: H_GAP },
     card: {
       width: CARD_WIDTH,
@@ -351,7 +355,7 @@ const createStyles = (colors: any) =>
       elevation: 5,
     },
     titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-    title: { fontSize: 26, fontWeight: '800', color: colors.text, marginBottom: 2 },
+    title: { fontSize: 26, lineHeight: 34, fontWeight: '800', color: colors.text, marginBottom: 2 },
     username: { color: colors.primary, fontWeight: '700' },
     saveIcon: { padding: 8 },
     statsRow: { flexDirection: 'row', gap: 18, alignItems: 'center', marginBottom: 10 },
@@ -397,7 +401,7 @@ const createStyles = (colors: any) =>
       gap: 16,
     },
     loadingText: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       color: colors.textSecondary,
       fontWeight: '500',
     },
@@ -409,7 +413,7 @@ const createStyles = (colors: any) =>
       paddingVertical: 60,
     },
     emptyText: {
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       color: colors.textSecondary,
       fontWeight: '500',
     },

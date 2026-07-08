@@ -1,35 +1,41 @@
 import { Story } from '@/types';
 import {
-    addDoc,
-    collection,
     doc,
+    getDoc,
     getDocs,
+    collection,
     getFirestore,
     increment,
-    query,
     serverTimestamp,
+    setDoc,
     updateDoc,
-    where,
 } from '@react-native-firebase/firestore';
 import { store } from '@/store';
 import { patchStory } from '@/store/slices/storySlice';
 
+// Aynı hikâye için eşzamanlı çağrıları (ör. React StrictMode'un effect'i iki
+// kez çalıştırması) atlar — art arda gelen çağrılar sunucudaki sayacı aynı
+// anda okuyup üçünün de limit altında sanıp yazmaya çalışması, biri
+// tamamlandıktan sonra diğerinin ±1 kuralına takılıp permission-denied
+// atmasına yol açıyordu.
+const inFlightViewIncrements = new Set<string>();
+
 // Hikaye görüntülenme sayısını artır (kullanıcı bazlı limit ile)
+// Deterministik doküman ID'si (views/{userId}) — sorgu yerine tek doküman
+// okuması; koleksiyon taraması eski maliyet bombasıydı (bkz. YAPILACAKLAR 0.5).
 export async function incrementStoryViews(storyId: string) {
+  const { user } = store.getState().auth;
+  if (!user?.id) return;
+  const dedupeKey = `${storyId}_${user.id}`;
+  if (inFlightViewIncrements.has(dedupeKey)) return;
+  inFlightViewIncrements.add(dedupeKey);
+
   try {
-    const { user } = store.getState().auth;
-    if (!user?.id) return;
-
     const firestore = getFirestore();
+    const viewRef = doc(firestore, 'stories', storyId, 'views', user.id);
 
-    // Kullanıcının bu hikayeyi kaç kez görüntülediğini kontrol et
-    const userViewsQuery = query(
-      collection(firestore, 'stories', storyId, 'views'),
-      where('userId', '==', user.id)
-    );
-
-    const userViewsSnapshot = await getDocs(userViewsQuery);
-    const currentViewCount = userViewsSnapshot.size;
+    const viewDoc = await getDoc(viewRef);
+    const currentViewCount = viewDoc.exists() ? (viewDoc.data()?.count || 0) : 0;
 
     // Maksimum 3 görüntülenme limiti
     if (currentViewCount >= 3) {
@@ -37,11 +43,10 @@ export async function incrementStoryViews(storyId: string) {
       return;
     }
 
-    // Yeni görüntülenme kaydı ekle
-    await addDoc(collection(firestore, 'stories', storyId, 'views'), {
-      userId: user.id,
-      viewedAt: serverTimestamp(),
-    });
+    await setDoc(viewRef, {
+      count: increment(1),
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
 
     // Toplam sayacı atomik artır — eski kod her görüntülemede TÜM views
     // koleksiyonunu okuyordu (popüler hikâyede görüntüleme başına yüzlerce
@@ -64,27 +69,28 @@ export async function incrementStoryViews(storyId: string) {
       store.dispatch(patchStory({ currentStory: { ...cur, viewsCount: (cur.viewsCount || 0) + 1 } }));
     }
 
-  } catch (error) {
-    console.error('Increment story views error:', error);
+  } catch (error: any) {
+    // permission-denied burada beklenen bir yarış durumu (eşzamanlı çağrılar
+    // arasında biri limiti aşmış olabilir) — sessiz kalsın, gerçek hataları
+    // (ağ, vb.) yine de logla.
+    if (error?.code === 'firestore/permission-denied') {
+      console.log('Increment story views skipped (rate/race, non-critical):', error.message);
+    } else {
+      console.error('Increment story views error:', error);
+    }
+  } finally {
+    inFlightViewIncrements.delete(dedupeKey);
   }
 }
 
 // Hikayenin benzersiz okuyucu sayısını getir
+// Doküman ID'si == kullanıcı ID'si olduğundan, doküman sayısı zaten benzersiz
+// okuyucu sayısıdır — ayrıca Set ile tekilleştirmeye gerek yok.
 export async function getUniqueReadersCount(storyId: string): Promise<number> {
   try {
     const firestore = getFirestore();
     const viewsSnapshot = await getDocs(collection(firestore, 'stories', storyId, 'views'));
-
-    // Benzersiz kullanıcı ID'lerini al
-    const uniqueUserIds = new Set();
-    viewsSnapshot.forEach((doc: any) => {
-      const data = doc.data();
-      if (data.userId) {
-        uniqueUserIds.add(data.userId);
-      }
-    });
-
-    return uniqueUserIds.size;
+    return viewsSnapshot.size;
   } catch (error) {
     console.error('Get unique readers count error:', error);
     return 0;

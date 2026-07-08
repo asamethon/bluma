@@ -2,19 +2,22 @@ import AddToListSheet from '@/components/AddToListSheet';
 import ReportSheet from '@/components/ReportSheet';
 import {
   Avatar, BloomMark, Button, GenreTag, IconButton, Text } from '@/components/ui';
-import { Spacing, categoryColor, useTheme } from '@/constants/theme';
+import { ContentMaxWidth, Spacing, categoryColor, useTheme } from '@/constants/theme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { buildStoryShareUrl } from '@/utils/deepLinks';
 import { useGuestGate } from '@/contexts/GuestContext';
 import { useFollow } from '@/features/social/hooks/useFollow';
 import { StoryImage } from '@/features/story/components/StoryImage';
 import { parseImageToken, stripImageTokens } from '@/features/story/utils/imageToken';
+import { renderInlineFormatting } from '@/features/story/utils/richText';
 import { challengeActions } from '@/store/challengeStore';
 import { moderationActions } from '@/store/moderationStore';
 import { storyActions } from '@/store/storyStore';
+import { readingProgressActions } from '@/features/story/services/readingProgress';
+import { preferencesActions, getReadingPalette, READING_LINE_HEIGHT_MULTIPLIER } from '@/store/preferencesStore';
 import { useAppSelector } from '@/store/hooks';
 import { Ionicons } from '@expo/vector-icons';
 import { getAnalytics, logEvent } from '@react-native-firebase/analytics';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -56,10 +59,19 @@ export default function ReaderScreen() {
   const { id, chapter } = useLocalSearchParams<{ id: string; chapter?: string }>();
   const router = useRouter();
   const { colors, fonts, scheme } = useTheme();
+  const { width: windowWidth } = useResponsive();
   const insets = useSafeAreaInsets();
   const { user: currentUser, isGuest } = useAppSelector(s => s.auth);
   const { requireAuth, startAuth } = useGuestGate();
   const { currentStory, likedStories, savedStories } = useAppSelector(s => s.story);
+  const { readingTheme, readingFont, readingLineSpacing } = useAppSelector(s => s.preferences);
+
+  // Okuma teması, uygulamanın genel (sistem) temasından bağımsız bir tercih —
+  // 'light' seçiliyken `null` döner ve normal `colors` kullanılmaya devam eder.
+  const readingPalette = getReadingPalette(readingTheme);
+  const rc = readingPalette || colors;
+  const readingFontFamily = readingFont === 'sans' ? fonts.sansRegular : fonts.serif;
+  const lineHeightMultiplier = READING_LINE_HEIGHT_MULTIPLIER[readingLineSpacing];
 
   const [story, setStory] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,6 +90,21 @@ export default function ReaderScreen() {
   const bodyTopAnim = useRef(new Animated.Value(0)).current;
   const [chromeVisible, setChromeVisible] = useState(true);
   const scrollRef = useRef<any>(null);
+  const lastScrollSaveRef = useRef(0);
+  const pendingScrollRatioRef = useRef<number | null>(null);
+
+  // Bölüm içi scroll konumunu oran olarak kaydet (throttled — her scroll
+  // frame'inde değil, en fazla 2 saniyede bir).
+  const handleScroll = (e: any) => {
+    if (isGuest || !id) return;
+    const now = Date.now();
+    if (now - lastScrollSaveRef.current < 2000) return;
+    lastScrollSaveRef.current = now;
+    const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+    const scrollable = contentSize.height - layoutMeasurement.height;
+    const ratio = scrollable > 0 ? Math.max(0, Math.min(1, contentOffset.y / scrollable)) : 0;
+    readingProgressActions.saveReadingProgress(String(id), currentChapterIndex, ratio);
+  };
 
   const toggleChrome = () => {
     const next = !chromeVisible;
@@ -107,14 +134,81 @@ export default function ReaderScreen() {
     }
   }, [id]);
 
+  // Bölüm bazlı okuma olayı — retention funnel'ı için (bkz. YAPILACAKLAR 3.2).
+  useEffect(() => {
+    if (!id) return;
+    logEvent(getAnalytics(), 'chapter_read', {
+      story_id: String(id),
+      chapter_index: currentChapterIndex,
+    }).catch(() => {});
+  }, [id, currentChapterIndex]);
+
+  // Bölüm-bazlı depolamaya geçmiş hikâyelerde (bkz. YAPILACAKLAR 2.2) her
+  // bölüm tek doküman okumasıyla çekilir — komşu bölümler arka planda
+  // prefetch edilir ki "sonraki bölüm"e geçişte bekleme olmasın.
+  const chapterCacheRef = useRef<Map<number, string>>(new Map());
+  const [chapterBody, setChapterBody] = useState<string | null>(null);
+  useEffect(() => { chapterCacheRef.current.clear(); }, [id]);
+  useEffect(() => {
+    if (!story?.chaptersInSubcollection || !id) return;
+    let alive = true;
+    const cached = chapterCacheRef.current.get(currentChapterIndex);
+    if (cached != null) {
+      setChapterBody(cached);
+    } else {
+      setChapterBody(null);
+      storyActions.getChapter(String(id), currentChapterIndex).then((ch: any) => {
+        if (!alive) return;
+        const body = ch?.content || '';
+        chapterCacheRef.current.set(currentChapterIndex, body);
+        setChapterBody(body);
+      });
+    }
+    [currentChapterIndex - 1, currentChapterIndex + 1].forEach(i => {
+      if (i < 0 || chapterCacheRef.current.has(i)) return;
+      storyActions.getChapter(String(id), i).then((ch: any) => {
+        if (ch) chapterCacheRef.current.set(i, ch.content || '');
+      });
+    });
+    return () => { alive = false; };
+  }, [id, story?.chaptersInSubcollection, currentChapterIndex]);
+
+  // Bölüm-bazlı beğeni (bkz. YAPILACAKLAR 2.3) — hikâye toplamından ayrı,
+  // "Bölüm sonu" ayracında gösterilir. Yalnızca yeni veri modeline geçmiş
+  // (chaptersInSubcollection) hikâyelerde ve oturum açmış kullanıcıda anlamlı.
+  const [chapterLikeState, setChapterLikeState] = useState<{ liked: boolean; count: number } | null>(null);
+  useEffect(() => {
+    if (!story?.chaptersInSubcollection || !id || isGuest) { setChapterLikeState(null); return; }
+    let alive = true;
+    Promise.all([
+      storyActions.getChapter(String(id), currentChapterIndex),
+      storyActions.isChapterLiked(String(id), currentChapterIndex),
+    ]).then(([ch, liked]: any) => {
+      if (!alive) return;
+      setChapterLikeState({ liked, count: ch?.likesCount || 0 });
+    });
+    return () => { alive = false; };
+  }, [id, story?.chaptersInSubcollection, currentChapterIndex, isGuest]);
+
+  const handleToggleChapterLike = () => {
+    if (!requireAuth('like') || !chapterLikeState || !id) return;
+    const wasLiked = chapterLikeState.liked;
+    // Optimistic
+    setChapterLikeState({ liked: !wasLiked, count: Math.max(0, chapterLikeState.count + (wasLiked ? -1 : 1)) });
+    storyActions.toggleChapterLike(String(id), currentChapterIndex, wasLiked).then((r: any) => {
+      if (!r.success) {
+        // Geri al
+        setChapterLikeState({ liked: wasLiked, count: chapterLikeState.count });
+      }
+    });
+  };
+
   // Save reading progress whenever chapter changes. updatedAt, ana sayfadaki
-  // "Okumaya devam et" rafının sıralaması için kullanılır.
+  // "Okumaya devam et" rafının sıralaması için ve ikinci cihazda kaldığın
+  // yerden devam edebilmek için kullanılır (bkz. YAPILACAKLAR 2.1).
   useEffect(() => {
     if (!id || isGuest) return;
-    AsyncStorage.setItem(
-      `readingProgress_${id}`,
-      JSON.stringify({ chapterIndex: currentChapterIndex, updatedAt: Date.now() })
-    ).catch(() => {});
+    readingProgressActions.saveReadingProgress(String(id), currentChapterIndex, 0);
   }, [currentChapterIndex, id, isGuest]);
 
   // Resume from saved progress — only when the caller didn't request a specific
@@ -124,14 +218,15 @@ export default function ReaderScreen() {
     if (resumedRef.current) return;
     if (chapter || isGuest || !id || !story) return;
     resumedRef.current = true;
-    AsyncStorage.getItem(`readingProgress_${id}`)
-      .then(raw => {
-        if (!raw) return;
-        const saved = JSON.parse(raw);
+    readingProgressActions.getReadingProgress(String(id))
+      .then(saved => {
         const idx = saved?.chapterIndex;
         if (typeof idx === 'number' && idx > 0) {
           const max = (story.chapterTitles?.length || story.chaptersCount || 1) - 1;
           setCurrentChapterIndex(Math.max(0, Math.min(idx, max)));
+        }
+        if (saved?.scrollRatio) {
+          pendingScrollRatioRef.current = saved.scrollRatio;
         }
       })
       .catch(() => {});
@@ -245,7 +340,8 @@ export default function ReaderScreen() {
   const goNext = () => {
     // Misafir bir sonraki bölüme geçemez — auth kapısını aç.
     if (isGuest) { requireAuth('read'); return; }
-    if (currentChapterIndex < chapters.length - 1) {
+    const chapterCount = story?.chapterTitles?.length || story?.chaptersCount || 1;
+    if (currentChapterIndex < chapterCount - 1) {
       setCurrentChapterIndex(i => i + 1);
       scrollRef.current?.scrollTo({ y: 0, animated: false });
       if (currentUser?.id) challengeActions.trackAction(currentUser.id, 'chaptersRead');
@@ -288,12 +384,34 @@ export default function ReaderScreen() {
     );
   }
 
+  // Şikâyet üzerine admin tarafından gizlenmiş içerik — yazarı dışında
+  // kimse göremez (bkz. YAPILACAKLAR 2.7).
+  if (story.isHidden && story.authorId !== currentUser?.id) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', paddingTop: insets.top, paddingHorizontal: 32 }}>
+        <Ionicons name="eye-off-outline" size={40} color={colors.textSecondary} />
+        <Text variant="body" tone="textSecondary" style={{ marginTop: 12, textAlign: 'center' }}>
+          Bu hikâye moderasyon nedeniyle kaldırıldı.
+        </Text>
+        <Button label="Geri Dön" variant="ghost" size="sm" onPress={() => router.back()} style={{ marginTop: 12 }} />
+      </View>
+    );
+  }
+
+  // Bölüm-bazlı depolamaya geçmiş hikâyelerde (chaptersInSubcollection) içerik
+  // yukarıdaki effect'in çektiği `chapterBody`'den gelir — tek doküman okuması,
+  // sorgu değil. Eski hikâyelerde legacy `content` alanı burada yerinde bölünür.
   // Bölüm sayısı için en güvenilir kaynak chapterTitles uzunluğudur; yoksa
-  // chaptersCount'a düşülür. Bu, eski (ayıraçsız) içeriğin başlık sayısıyla
-  // tutarlı bölünmesini sağlar.
-  const chapters = splitChapters(story.content || '', story.chapterTitles?.length || story.chaptersCount);
-  const totalChapters = chapters.length || 1;
-  const currentContent = chapters[currentChapterIndex] || story.content || '';
+  // chaptersCount'a düşülür.
+  const legacyChapters = story.chaptersInSubcollection
+    ? []
+    : splitChapters(story.content || '', story.chapterTitles?.length || story.chaptersCount);
+  const totalChapters = story.chaptersInSubcollection
+    ? (story.chapterTitles?.length || story.chaptersCount || 1)
+    : (legacyChapters.length || 1);
+  const currentContent = story.chaptersInSubcollection
+    ? (chapterBody ?? '')
+    : (legacyChapters[currentChapterIndex] || story.content || '');
   const chapterTitle = story.chapterTitles?.[currentChapterIndex]
     ? `Bölüm ${currentChapterIndex + 1} — ${story.chapterTitles[currentChapterIndex]}`
     : `Bölüm ${currentChapterIndex + 1}`;
@@ -309,9 +427,13 @@ export default function ReaderScreen() {
   // paragraf bir [[img:URL]] belirteciyse resim olarak render edilir.
   const firstTextIndex = currentParas.findIndex((p: string) => !parseImageToken(p));
 
+  const isDarkReadingBg = readingTheme === 'dark' || readingTheme === 'black' || (readingTheme === 'light' && scheme === 'dark');
+
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <StatusBar barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'} />
+    <View style={{ flex: 1, backgroundColor: rc.background }}>
+      <StatusBar
+        barStyle={isDarkReadingBg ? "light-content" : "dark-content"}
+      />
 
       {/* ── Top chrome ──────────────────────────────────────────── */}
       <Animated.View
@@ -319,42 +441,220 @@ export default function ReaderScreen() {
           styles.topChrome,
           {
             paddingTop: insets.top,
-            backgroundColor: colors.background + 'E0',
-            borderBottomColor: colors.border,
+            backgroundColor: rc.background + "E0",
+            borderBottomColor: rc.border,
             opacity: chromeAnim,
-            transform: [{ translateY: chromeAnim.interpolate({ inputRange: [0, 1], outputRange: [-chromeHeight, 0] }) }],
+            transform: [
+              {
+                translateY: chromeAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-chromeHeight, 0],
+                }),
+              },
+            ],
           },
         ]}
-        pointerEvents={chromeVisible ? 'auto' : 'none'}
+        pointerEvents={chromeVisible ? "auto" : "none"}
       >
-        <IconButton icon="chevron-back" size={40} onPress={() => router.back()} />
+        <IconButton
+          icon="chevron-back"
+          size={40}
+          color={rc.text}
+          onPress={() => router.back()}
+        />
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text variant="subheading" numberOfLines={1} style={{ fontWeight: '700', fontSize: 15 }}>{story.title}</Text>
-          <Text variant="caption" tone="textLight">{gated ? 'Önizleme · Bölüm 1' : `${chapterTitle} · ${readingTime} dk`}</Text>
+          <Text
+            variant="subheading"
+            numberOfLines={1}
+            style={{ fontWeight: "700", fontSize: 15, color: rc.text }}
+          >
+            {story.title}
+          </Text>
+          <Text variant="caption" color={rc.textSecondary}>
+            {gated
+              ? "Önizleme · Bölüm 1"
+              : `${chapterTitle} · ${readingTime} dk`}
+          </Text>
         </View>
-        <TouchableOpacity onPress={() => setShowSettings(s => !s)} style={styles.chromeBtn}>
-          <Ionicons name="text" size={20} color={colors.text} />
+        <TouchableOpacity
+          onPress={() => setShowSettings((s) => !s)}
+          style={styles.chromeBtn}
+        >
+          <Ionicons name="text" size={20} color={rc.text} />
         </TouchableOpacity>
         <TouchableOpacity onPress={handleSave} style={styles.chromeBtn}>
-          <Ionicons name={isSaved() ? 'bookmark' : 'bookmark-outline'} size={20} color={isSaved() ? colors.secondary : colors.text} />
+          <Ionicons
+            name={isSaved() ? "bookmark" : "bookmark-outline"}
+            size={20}
+            color={isSaved() ? colors.secondary : rc.text}
+          />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setShowMenu(true)} style={styles.chromeBtn}>
-          <Ionicons name="ellipsis-horizontal" size={20} color={colors.text} />
+        <TouchableOpacity
+          onPress={() => setShowMenu(true)}
+          style={styles.chromeBtn}
+        >
+          <Ionicons name="ellipsis-horizontal" size={20} color={rc.text} />
         </TouchableOpacity>
       </Animated.View>
 
-      {/* Font settings panel */}
+      {/* Reading settings panel — tema/font/aralık, useTheme'den bağımsız
+          okuyucuya özel tercihler (preferencesSlice'da kalıcı). */}
       {showSettings && (
-        <View style={[styles.settingsPanel, { top: chromeHeight + 4, backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text variant="caption" tone="textSecondary">Yazı Boyutu</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <TouchableOpacity onPress={() => setFontSize(f => Math.max(14, f - 2))}>
-              <Ionicons name="remove-circle-outline" size={24} color={colors.primary} />
-            </TouchableOpacity>
-            <Text variant="label" style={{ minWidth: 24, textAlign: 'center' }}>{fontSize}</Text>
-            <TouchableOpacity onPress={() => setFontSize(f => Math.min(24, f + 2))}>
-              <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
-            </TouchableOpacity>
+        <View
+          style={[
+            styles.settingsPanel,
+            {
+              top: chromeHeight + 4,
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          <View style={styles.settingsRow}>
+            <Text variant="caption" tone="textSecondary" style={{ width: 78 }}>
+              Yazı Boyutu
+            </Text>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
+            >
+              <TouchableOpacity
+                onPress={() => setFontSize((f) => Math.max(14, f - 2))}
+              >
+                <Ionicons
+                  name="remove-circle-outline"
+                  size={22}
+                  color={colors.primary}
+                />
+              </TouchableOpacity>
+              <Text
+                variant="label"
+                style={{ minWidth: 22, textAlign: "center" }}
+              >
+                {fontSize}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setFontSize((f) => Math.min(24, f + 2))}
+              >
+                <Ionicons
+                  name="add-circle-outline"
+                  size={22}
+                  color={colors.primary}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.settingsRow}>
+            <Text variant="caption" tone="textSecondary" style={{ width: 78 }}>
+              Tema
+            </Text>
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              {(
+                [
+                  { key: "light", swatch: colors.background },
+                  { key: "sepia", swatch: "#F4ECD8" },
+                  { key: "dark", swatch: "#1C1C1E" },
+                  { key: "black", swatch: "#000000" },
+                ] as const
+              ).map((t) => (
+                <TouchableOpacity
+                  key={t.key}
+                  onPress={() => preferencesActions.setReadingTheme(t.key)}
+                  style={[
+                    styles.themeSwatch,
+                    {
+                      backgroundColor: t.swatch,
+                      borderColor:
+                        readingTheme === t.key ? colors.primary : colors.border,
+                      borderWidth: readingTheme === t.key ? 2 : 1,
+                    },
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.settingsRow}>
+            <Text variant="caption" tone="textSecondary" style={{ width: 78 }}>
+              Yazı Tipi
+            </Text>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              {(
+                [
+                  { key: "serif", label: "Serif" },
+                  { key: "sans", label: "Sans" },
+                ] as const
+              ).map((f) => (
+                <TouchableOpacity
+                  key={f.key}
+                  onPress={() => preferencesActions.setReadingFont(f.key)}
+                  style={[
+                    styles.chipBtn,
+                    {
+                      backgroundColor:
+                        readingFont === f.key
+                          ? colors.primarySoft
+                          : "transparent",
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Text
+                    variant="label"
+                    color={
+                      readingFont === f.key
+                        ? colors.primary
+                        : colors.textSecondary
+                    }
+                  >
+                    {f.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.settingsRow}>
+            <Text variant="caption" tone="textSecondary" style={{ width: 78 }}>
+              Satır Aralığı
+            </Text>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              {(
+                [
+                  { key: "compact", label: "Sık" },
+                  { key: "normal", label: "Normal" },
+                  { key: "relaxed", label: "Geniş" },
+                ] as const
+              ).map((l) => (
+                <TouchableOpacity
+                  key={l.key}
+                  onPress={() =>
+                    preferencesActions.setReadingLineSpacing(l.key)
+                  }
+                  style={[
+                    styles.chipBtn,
+                    {
+                      backgroundColor:
+                        readingLineSpacing === l.key
+                          ? colors.primarySoft
+                          : "transparent",
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Text
+                    variant="label"
+                    color={
+                      readingLineSpacing === l.key
+                        ? colors.primary
+                        : colors.textSecondary
+                    }
+                  >
+                    {l.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         </View>
       )}
@@ -364,175 +664,403 @@ export default function ReaderScreen() {
         ref={scrollRef}
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.body}
+        contentContainerStyle={
+          windowWidth > ContentMaxWidth.content
+            ? [styles.body, { maxWidth: ContentMaxWidth.content, alignSelf: 'center', width: '100%' }]
+            : styles.body
+        }
+        onScroll={handleScroll}
+        scrollEventThrottle={500}
+        onContentSizeChange={(_w, h) => {
+          const ratio = pendingScrollRatioRef.current;
+          if (ratio == null) return;
+          pendingScrollRatioRef.current = null;
+          requestAnimationFrame(() => {
+            scrollRef.current?.scrollTo({ y: h * ratio, animated: false });
+          });
+        }}
       >
         <Animated.View style={{ paddingTop: interpolatedBodyTop }}>
-        <Pressable onPress={toggleChrome}>
-          {/* Genre tag + olgun içerik rozeti */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <GenreTag category={story.category} />
-            {story.targetAudience === 'adult' && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: colors.error + '1A', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 }}>
-                <Ionicons name="warning" size={11} color={colors.error} />
-                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.error }}>18+</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Title */}
-          <Text
-            variant="title"
-            style={{ fontSize: 30, lineHeight: 36, fontWeight: '700', letterSpacing: -0.3, marginTop: 12, marginBottom: 14 }}
-          >
-            {story.title}
-          </Text>
-
-          {/* Author row */}
-          <View style={[styles.authorRow, { borderBottomColor: colors.border }]}>
-            <Avatar
-              uri={story.author?.profileImage}
-              name={story.author?.displayName || story.author?.email}
-              size={40}
-            />
-            <View style={{ flex: 1 }}>
-              <Text variant="subheading" style={{ fontWeight: '700' }}>{story.author?.displayName || 'Yazar'}</Text>
-              <Text variant="caption" tone="textSecondary">@{story.author?.username || story.author?.email?.split('@')[0] || 'yazar'}</Text>
-            </View>
-            {!follow.isSelf && (
-              <Button
-                label={follow.isFollowing ? 'Takip Ediliyor' : 'Takip Et'}
-                variant={follow.isFollowing ? 'ghost' : 'outline'}
-                size="sm"
-                onPress={handleToggleFollow}
-              />
-            )}
-          </View>
-
-          {/* Chapter nav pill (çok bölümlü) */}
-          {totalChapters > 1 && (
-            <View style={[styles.chapterPill, { backgroundColor: colors.surfaceVariant }]}>
-              <TouchableOpacity onPress={goPrev} disabled={currentChapterIndex === 0} style={{ opacity: currentChapterIndex === 0 ? 0.3 : 1 }}>
-                <Ionicons name="chevron-back" size={18} color={colors.text} />
-              </TouchableOpacity>
-              <Text variant="label" style={{ fontWeight: '700' }}>{chapterTitle}</Text>
-              <TouchableOpacity onPress={goNext} disabled={currentChapterIndex === totalChapters - 1} style={{ opacity: currentChapterIndex === totalChapters - 1 ? 0.3 : 1 }}>
-                <Ionicons name="chevron-forward" size={18} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* Content — first text paragraph with drop cap, inline images rendered as images */}
-          {currentContent ? (
-            <View style={{ marginTop: 8 }}>
-              {currentParas.map((para: string, i: number) => {
-                const imageUrl = parseImageToken(para);
-                if (imageUrl) {
-                  return <StoryImage key={i} uri={imageUrl} />;
-                }
-                if (i === firstTextIndex) {
-                  return (
-                    <View key={i} style={styles.dropCapRow}>
-                      <Text style={[styles.dropCap, { color: accentColor, fontFamily: fonts.serif }]}>
-                        {para.charAt(0)}
-                      </Text>
-                      <Text style={[styles.bodyText, { fontSize, lineHeight: fontSize * 1.7, flex: 1, color: colors.text, fontFamily: fonts.serif }]}>
-                        {para.slice(1)}
-                      </Text>
-                    </View>
-                  );
-                }
-                return (
-                  <Text key={i} style={[styles.bodyText, { fontSize, lineHeight: fontSize * 1.7, marginTop: fontSize, color: colors.text, fontFamily: fonts.serif }]}>
-                    {para}
-                  </Text>
-                );
-              })}
-            </View>
-          ) : (
-            <Text style={[styles.bodyText, { fontSize, lineHeight: fontSize * 1.7, color: colors.textSecondary, fontStyle: 'italic' }]}>
-              Bu bölümde henüz içerik yok.
-            </Text>
-          )}
-
-          {gated ? (
-            /* ── Reading gate ─────────────────────────────────── */
-            <View>
-              {/* Fade overlay — simulated gradient */}
-              <View pointerEvents="none" style={{ height: 80, marginTop: -80, overflow: 'hidden' }}>
-                {[0.12, 0.25, 0.42, 0.60, 0.78, 0.92].map((opacity, i) => (
-                  <View
-                    key={i}
+          <Pressable onPress={toggleChrome}>
+            {/* Genre tag + olgun içerik rozeti */}
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
+              <GenreTag category={story.category} />
+              {story.targetAudience === "adult" && (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 3,
+                    backgroundColor: colors.error + "1A",
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                    borderRadius: 999,
+                  }}
+                >
+                  <Ionicons name="warning" size={11} color={colors.error} />
+                  <Text
                     style={{
-                      position: 'absolute', left: 0, right: 0,
-                      top: Math.floor((i / 6) * 80),
-                      height: Math.ceil(80 / 6) + 1,
-                      backgroundColor: colors.background,
-                      opacity,
+                      fontSize: 11, lineHeight: 14,
+                      fontWeight: "700",
+                      color: colors.error,
                     }}
-                  />
-                ))}
+                  >
+                    18+
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Title */}
+            <Text
+              variant="title"
+              style={{
+                fontSize: 30,
+                lineHeight: 40,
+                fontWeight: "700",
+                letterSpacing: -0.3,
+                marginTop: 12,
+                marginBottom: 14,
+                color: rc.text,
+              }}
+            >
+              {story.title}
+            </Text>
+
+            {/* Author row */}
+            <View style={[styles.authorRow, { borderBottomColor: rc.border }]}>
+              <Avatar
+                uri={story.author?.profileImage}
+                name={story.author?.displayName || story.author?.email}
+                size={40}
+              />
+              <View style={{ flex: 1 }}>
+                <Text
+                  variant="subheading"
+                  style={{ fontWeight: "700", color: rc.text }}
+                >
+                  {story.author?.displayName || "Yazar"}
+                </Text>
+                <Text variant="caption" color={rc.textSecondary}>
+                  @
+                  {story.author?.username ||
+                    story.author?.email?.split("@")[0] ||
+                    "yazar"}
+                </Text>
               </View>
+              {!follow.isSelf && (
+                <Button
+                  label={follow.isFollowing ? "Takip Ediliyor" : "Takip Et"}
+                  variant={follow.isFollowing ? "ghost" : "outline"}
+                  size="sm"
+                  onPress={handleToggleFollow}
+                />
+              )}
+            </View>
 
-              {/* Gate card */}
-              <View style={[styles.gateCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <View style={[styles.gateKicker, { backgroundColor: colors.primarySoft }]}>
-                  <Ionicons name="lock-closed" size={11} color={colors.primary} />
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>Önizleme · Bölüm 1</Text>
-                </View>
-
-                <View style={{ marginVertical: 12 }}>
-                  <BloomMark size={44} />
-                </View>
-
-                <Text style={[styles.gateTitle, { fontFamily: fonts.serif, color: colors.text }]}>
-                  Gerisi seni bekliyor
+            {/* Chapter nav pill (çok bölümlü) */}
+            {totalChapters > 1 && (
+              <View
+                style={[styles.chapterPill, { backgroundColor: rc.surface }]}
+              >
+                <TouchableOpacity
+                  onPress={goPrev}
+                  disabled={currentChapterIndex === 0}
+                  style={{ opacity: currentChapterIndex === 0 ? 0.3 : 1 }}
+                >
+                  <Ionicons name="chevron-back" size={18} color={rc.text} />
+                </TouchableOpacity>
+                <Text
+                  variant="label"
+                  style={{ fontWeight: "700", color: rc.text }}
+                >
+                  {chapterTitle}
                 </Text>
-                <Text style={[styles.gateSub, { color: colors.textSecondary }]}>
-                  Bu bölümün kalanını ve {totalChapters > 1 ? `${totalChapters} bölümün tamamını` : 'tüm hikâyeyi'} okumak için ücretsiz bir hesap oluştur.
-                </Text>
+                <TouchableOpacity
+                  onPress={goNext}
+                  disabled={currentChapterIndex === totalChapters - 1}
+                  style={{
+                    opacity:
+                      currentChapterIndex === totalChapters - 1 ? 0.3 : 1,
+                  }}
+                >
+                  <Ionicons name="chevron-forward" size={18} color={rc.text} />
+                </TouchableOpacity>
+              </View>
+            )}
 
-                {/* Benefit chips */}
-                <View style={styles.gateChips}>
-                  {[
-                    { icon: 'infinite-outline', label: 'Sınırsız okuma' },
-                    { icon: 'bookmark-outline', label: 'Kaldığın yerden devam' },
-                    { icon: 'cloud-offline-outline', label: 'Çevrimdışı' },
-                  ].map(c => (
-                    <View key={c.label} style={[styles.gateChip, { backgroundColor: colors.primarySoft }]}>
-                      <Ionicons name={c.icon as any} size={13} color={colors.primary} />
-                      <Text style={{ fontSize: 12, fontWeight: '600', color: colors.primary }}>{c.label}</Text>
-                    </View>
+            {/* Content — first text paragraph with drop cap, inline images rendered as images */}
+            {currentContent ? (
+              <View style={{ marginTop: 8 }}>
+                {currentParas.map((para: string, i: number) => {
+                  const imageUrl = parseImageToken(para);
+                  if (imageUrl) {
+                    return <StoryImage key={i} uri={imageUrl} />;
+                  }
+                  if (i === firstTextIndex) {
+                    return (
+                      <View key={i} style={styles.dropCapRow}>
+                        <Text
+                          style={[
+                            styles.dropCap,
+                            { color: accentColor, fontFamily: fonts.serif },
+                          ]}
+                        >
+                          {para.charAt(0)}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.bodyText,
+                            {
+                              fontSize,
+                              lineHeight: fontSize * lineHeightMultiplier,
+                              flex: 1,
+                              color: rc.text,
+                              fontFamily: readingFontFamily,
+                            },
+                          ]}
+                        >
+                          {renderInlineFormatting(para.slice(1), {
+                            fontFamily: fonts.serifBoldItalic,
+                          })}
+                        </Text>
+                      </View>
+                    );
+                  }
+                  return (
+                    <Text
+                      key={i}
+                      style={[
+                        styles.bodyText,
+                        {
+                          fontSize,
+                          lineHeight: fontSize * lineHeightMultiplier,
+                          marginTop: fontSize,
+                          color: rc.text,
+                          fontFamily: readingFontFamily,
+                        },
+                      ]}
+                    >
+                      {renderInlineFormatting(para, {
+                        fontFamily: fonts.serifBoldItalic,
+                      })}
+                    </Text>
+                  );
+                })}
+              </View>
+            ) : (
+              <Text
+                style={[
+                  styles.bodyText,
+                  {
+                    fontSize,
+                    lineHeight: fontSize * lineHeightMultiplier,
+                    color: rc.textSecondary,
+                    fontStyle: "italic",
+                  },
+                ]}
+              >
+                Bu bölümde henüz içerik yok.
+              </Text>
+            )}
+
+            {gated ? (
+              /* ── Reading gate ─────────────────────────────────── */
+              <View>
+                {/* Fade overlay — simulated gradient */}
+                <View
+                  pointerEvents="none"
+                  style={{ height: 80, marginTop: -80, overflow: "hidden" }}
+                >
+                  {[0.12, 0.25, 0.42, 0.6, 0.78, 0.92].map((opacity, i) => (
+                    <View
+                      key={i}
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        right: 0,
+                        top: Math.floor((i / 6) * 80),
+                        height: Math.ceil(80 / 6) + 1,
+                        backgroundColor: rc.background,
+                        opacity,
+                      }}
+                    />
                   ))}
                 </View>
 
-                <TouchableOpacity
-                  style={styles.gatePrimaryBtn}
-                  onPress={() => startAuth('signup')}
-                  activeOpacity={0.88}
+                {/* Gate card */}
+                <View
+                  style={[
+                    styles.gateCard,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Ücretsiz Hesap Oluştur</Text>
-                  <Ionicons name="arrow-forward" size={17} color="#fff" />
-                </TouchableOpacity>
+                  <View
+                    style={[
+                      styles.gateKicker,
+                      { backgroundColor: colors.primarySoft },
+                    ]}
+                  >
+                    <Ionicons
+                      name="lock-closed"
+                      size={11}
+                      color={colors.primary}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 11, lineHeight: 14,
+                        fontWeight: "700",
+                        color: colors.primary,
+                      }}
+                    >
+                      Önizleme · Bölüm 1
+                    </Text>
+                  </View>
 
-                <View style={{ flexDirection: 'row', marginTop: 12, alignItems: 'center' }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 13 }}>Zaten üye misin? </Text>
-                  <TouchableOpacity onPress={() => startAuth('login')}>
-                    <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>Giriş yap</Text>
+                  <View style={{ marginVertical: 12 }}>
+                    <BloomMark size={44} />
+                  </View>
+
+                  <Text
+                    style={[
+                      styles.gateTitle,
+                      { fontFamily: fonts.serif, color: colors.text },
+                    ]}
+                  >
+                    Gerisi seni bekliyor
+                  </Text>
+                  <Text
+                    style={[styles.gateSub, { color: colors.textSecondary }]}
+                  >
+                    Bu bölümün kalanını ve{" "}
+                    {totalChapters > 1
+                      ? `${totalChapters} bölümün tamamını`
+                      : "tüm hikâyeyi"}{" "}
+                    okumak için ücretsiz bir hesap oluştur.
+                  </Text>
+
+                  {/* Benefit chips */}
+                  <View style={styles.gateChips}>
+                    {[
+                      { icon: "infinite-outline", label: "Sınırsız okuma" },
+                      {
+                        icon: "bookmark-outline",
+                        label: "Kaldığın yerden devam",
+                      },
+                      { icon: "cloud-offline-outline", label: "Çevrimdışı" },
+                    ].map((c) => (
+                      <View
+                        key={c.label}
+                        style={[
+                          styles.gateChip,
+                          { backgroundColor: colors.primarySoft },
+                        ]}
+                      >
+                        <Ionicons
+                          name={c.icon as any}
+                          size={13}
+                          color={colors.primary}
+                        />
+                        <Text
+                          style={{
+                            fontSize: 12, lineHeight: 16,
+                            fontWeight: "600",
+                            color: colors.primary,
+                          }}
+                        >
+                          {c.label}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.gatePrimaryBtn}
+                    onPress={() => startAuth("signup")}
+                    activeOpacity={0.88}
+                  >
+                    <Text
+                      style={{ color: "#fff", fontWeight: "700", fontSize: 15, lineHeight: 20}}
+                    >
+                      Ücretsiz Hesap Oluştur
+                    </Text>
+                    <Ionicons name="arrow-forward" size={17} color="#fff" />
                   </TouchableOpacity>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      marginTop: 12,
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 17}}>
+                      Zaten üye misin?{" "}
+                    </Text>
+                    <TouchableOpacity onPress={() => startAuth("login")}>
+                      <Text
+                        style={{
+                          color: colors.primary,
+                          fontWeight: "700",
+                          fontSize: 13, lineHeight: 17,
+                        }}
+                      >
+                        Giriş yap
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
-            </View>
-          ) : (
-            /* ── Chapter end divider ──────────────────────────── */
-            <View style={styles.chapterEnd}>
-              <View style={[styles.chapterEndDot, { backgroundColor: colors.bloom }]} />
-              <Text variant="body" tone="textLight" style={{ fontStyle: 'italic', fontSize: 14 }}>Bölüm sonu</Text>
-              <View style={[styles.chapterEndDot, { backgroundColor: colors.bloom }]} />
-            </View>
-          )}
+            ) : (
+              /* ── Chapter end divider ──────────────────────────── */
+              <View style={styles.chapterEnd}>
+                <View
+                  style={[
+                    styles.chapterEndDot,
+                    { backgroundColor: colors.bloom },
+                  ]}
+                />
+                <Text
+                  variant="body"
+                  color={rc.textSecondary}
+                  style={{ fontStyle: "italic", fontSize: 14 }}
+                >
+                  Bölüm sonu
+                </Text>
+                <View
+                  style={[
+                    styles.chapterEndDot,
+                    { backgroundColor: colors.bloom },
+                  ]}
+                />
+              </View>
+            )}
 
-          <View style={{ height: 120 }} />
-        </Pressable>
+            {/* Bölüm-bazlı beğeni (bkz. YAPILACAKLAR 2.3) — yalnızca yeni
+                veri modeline geçmiş hikâyelerde, misafirlere gösterilmez. */}
+            {!gated && chapterLikeState && (
+              <TouchableOpacity
+                onPress={handleToggleChapterLike}
+                style={styles.chapterLikeRow}
+              >
+                <Ionicons
+                  name={chapterLikeState.liked ? 'heart' : 'heart-outline'}
+                  size={20}
+                  color={chapterLikeState.liked ? colors.bloom : rc.textSecondary}
+                />
+                <Text variant="label" color={chapterLikeState.liked ? colors.bloom : rc.textSecondary}>
+                  Bu bölümü beğen{chapterLikeState.count > 0 ? ` · ${chapterLikeState.count}` : ''}
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            <View style={{ height: 120 }} />
+          </Pressable>
         </Animated.View>
       </ScrollView>
 
@@ -542,21 +1070,31 @@ export default function ReaderScreen() {
           styles.bottomChrome,
           {
             paddingBottom: insets.bottom + 10,
-            backgroundColor: colors.surface + 'EB',
-            borderTopColor: colors.border,
+            backgroundColor: rc.surface + "EB",
+            borderTopColor: rc.border,
             opacity: chromeAnim,
-            transform: [{ translateY: chromeAnim.interpolate({ inputRange: [0, 1], outputRange: [72 + insets.bottom, 0] }) }],
+            transform: [
+              {
+                translateY: chromeAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [72 + insets.bottom, 0],
+                }),
+              },
+            ],
           },
         ]}
-        pointerEvents={chromeVisible ? 'auto' : 'none'}
+        pointerEvents={chromeVisible ? "auto" : "none"}
       >
         <TouchableOpacity onPress={handleLike} style={styles.chromeStat}>
           <Ionicons
-            name={isLiked() ? 'heart' : 'heart-outline'}
+            name={isLiked() ? "heart" : "heart-outline"}
             size={22}
-            color={isLiked() ? colors.bloom : colors.textSecondary}
+            color={isLiked() ? colors.bloom : rc.textSecondary}
           />
-          <Text variant="label" color={isLiked() ? colors.bloom : colors.textSecondary}>
+          <Text
+            variant="label"
+            color={isLiked() ? colors.bloom : rc.textSecondary}
+          >
             {fmt(story.likesCount)}
           </Text>
         </TouchableOpacity>
@@ -564,15 +1102,29 @@ export default function ReaderScreen() {
         <TouchableOpacity
           style={[styles.chromeStat, { marginLeft: 14 }]}
           onPress={() => {
-            if (!requireAuth('comment')) return;
-            router.push(`/story/${id}/comments`);
+            if (!requireAuth("comment")) return;
+            router.push(`/story/${id}/comments?chapter=${currentChapterIndex}` as any);
           }}
         >
-          <Ionicons name="chatbubble-outline" size={20} color={colors.textSecondary} />
-          <Text variant="label" tone="textSecondary">{fmt(story.commentsCount)}</Text>
+          <Ionicons
+            name="chatbubble-outline"
+            size={20}
+            color={rc.textSecondary}
+          />
+          <Text variant="label" color={rc.textSecondary}>
+            {fmt(story.commentsCount)}
+          </Text>
         </TouchableOpacity>
-
-        <IconButton icon="share-social-outline" variant="plain" size={40} onPress={handleShare} style={{ marginLeft: 4 }} />
+        <TouchableOpacity
+          onPress={handleShare}
+          style={[styles.chromeStat, { marginLeft: 14 }]}
+        >
+          <Ionicons
+            name="share-social-outline"
+            size={20}
+            color={rc.textSecondary}
+          />
+        </TouchableOpacity>
 
         <View style={{ flex: 1 }} />
 
@@ -583,7 +1135,7 @@ export default function ReaderScreen() {
             size="sm"
             icon="lock-closed-outline"
             iconRight="arrow-forward"
-            onPress={() => requireAuth('read')}
+            onPress={() => requireAuth("read")}
           />
         ) : currentChapterIndex < totalChapters - 1 ? (
           <Button
@@ -600,8 +1152,8 @@ export default function ReaderScreen() {
             size="sm"
             icon="chatbubble-outline"
             onPress={() => {
-              if (!requireAuth('comment')) return;
-              router.push(`/story/${id}/comments`);
+              if (!requireAuth("comment")) return;
+              router.push(`/story/${id}/comments?chapter=${currentChapterIndex}` as any);
             }}
           />
         )}
@@ -609,17 +1161,33 @@ export default function ReaderScreen() {
 
       {/* Overflow menu */}
       {showMenu && (
-        <Pressable style={styles.menuBackdrop} onPress={() => setShowMenu(false)}>
-          <View style={[styles.menuCard, { top: insets.top + 52, backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <Pressable
+          style={styles.menuBackdrop}
+          onPress={() => setShowMenu(false)}
+        >
+          <View
+            style={[
+              styles.menuCard,
+              {
+                top: insets.top + 52,
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}
+          >
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
                 setShowMenu(false);
-                if (!requireAuth('save')) return;
+                if (!requireAuth("save")) return;
                 setListSheetVisible(true);
               }}
             >
-              <Ionicons name="bookmarks-outline" size={18} color={colors.text} />
+              <Ionicons
+                name="bookmarks-outline"
+                size={18}
+                color={colors.text}
+              />
               <Text variant="body">Listeye ekle</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.menuItem} onPress={handleReport}>
@@ -627,9 +1195,18 @@ export default function ReaderScreen() {
               <Text variant="body">Hikâyeyi bildir</Text>
             </TouchableOpacity>
             {currentUser?.id !== story.authorId && (
-              <TouchableOpacity style={styles.menuItem} onPress={handleBlockAuthor}>
-                <Ionicons name="person-remove-outline" size={18} color={colors.error} />
-                <Text variant="body" color={colors.error}>Yazarı engelle</Text>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={handleBlockAuthor}
+              >
+                <Ionicons
+                  name="person-remove-outline"
+                  size={18}
+                  color={colors.error}
+                />
+                <Text variant="body" color={colors.error}>
+                  Yazarı engelle
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -639,7 +1216,11 @@ export default function ReaderScreen() {
       <ReportSheet
         visible={reportVisible}
         onClose={() => setReportVisible(false)}
-        target={{ type: 'story', targetId: String(id), reportedUserId: story.authorId }}
+        target={{
+          type: "story",
+          targetId: String(id),
+          reportedUserId: story.authorId,
+        }}
       />
 
       <AddToListSheet
@@ -676,18 +1257,34 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: Spacing.screenX,
     zIndex: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
+    flexDirection: 'column',
+    gap: 14,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 14,
     borderRadius: 14,
     borderWidth: 1,
+    minWidth: 260,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
     elevation: 6,
+  },
+  settingsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  themeSwatch: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+  },
+  chipBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
   },
   body: {
     paddingHorizontal: Spacing.screenX,
@@ -717,7 +1314,7 @@ const styles = StyleSheet.create({
   },
   dropCap: {
     fontSize: 52,
-    lineHeight: 58,
+    lineHeight: 68,
     fontWeight: '700',
     paddingLeft: 2,
     paddingRight: 12,
@@ -738,6 +1335,13 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
+  },
+  chapterLikeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 16,
   },
   bottomChrome: {
     position: 'absolute',
@@ -792,6 +1396,7 @@ const styles = StyleSheet.create({
     marginTop: 8, marginHorizontal: 0,
     borderRadius: 24, borderWidth: 1,
     padding: 24, alignItems: 'center',
+    width: '100%', maxWidth: 420, alignSelf: 'center',
   },
   gateKicker: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
@@ -800,7 +1405,7 @@ const styles = StyleSheet.create({
   },
   gateTitle: {
     fontSize: 22, fontWeight: '700', letterSpacing: -0.3,
-    textAlign: 'center', marginBottom: 8,
+    textAlign: 'center', marginBottom: 8, lineHeight: 30,
   },
   gateSub: {
     fontSize: 14, lineHeight: 21, textAlign: 'center',

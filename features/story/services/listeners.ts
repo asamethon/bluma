@@ -83,24 +83,24 @@ export function setupPublishedUserStoriesListener(userId: string) {
     );
 
     publishedUserStoriesUnsubscribe = onSnapshot(userStoriesQuery, async (snapshot) => {
-      const publishedStoriesList: Story[] = [];
-
-      for (const storyDoc of snapshot.docs) {
-        const storyData = storyDoc.data() as Story;
-        const author = await getUserById(storyData.authorId);
-
-        publishedStoriesList.push({
-          ...storyData,
-          id: storyDoc.id,
-          author: author || {
-            id: storyData.authorId,
-            email: '',
-            displayName: 'Anonim',
-            username: 'user',
-            authProvider: 'email' as const,
-          },
-        });
-      }
+      // Paralel — bkz. setupStoriesListener'daki aynı düzeltme.
+      const publishedStoriesList: Story[] = await Promise.all(
+        snapshot.docs.map(async (storyDoc) => {
+          const storyData = storyDoc.data() as Story;
+          const author = await getUserById(storyData.authorId);
+          return {
+            ...storyData,
+            id: storyDoc.id,
+            author: author || {
+              id: storyData.authorId,
+              email: '',
+              displayName: 'Anonim',
+              username: 'user',
+              authProvider: 'email' as const,
+            },
+          };
+        })
+      );
 
       store.dispatch(patchStory({ publishedUserStories: publishedStoriesList }));
       console.log('Published user stories updated:', publishedStoriesList.length);
@@ -185,18 +185,20 @@ export function setupStoriesListener() {
     );
 
     storiesUnsubscribe = onSnapshot(storiesQuery, async (snapshot) => {
-      const storiesList: Story[] = [];
-
-      for (const storyDoc of snapshot.docs) {
-        const storyData = storyDoc.data() as Story;
-        const author = await getUserById(storyData.authorId);
-
-        storiesList.push({
-          ...storyData,
-          id: storyDoc.id,
-          author: author || { id: '', email: '', displayName: '', authProvider: 'email' },
-        });
-      }
+      // Yazar okumaları paralel — sırayla await edilince (örn. 50 hikâyede
+      // 20-30 farklı yazar) her biri kendi network round-trip'ini bekletip
+      // ana sayfayı 5-10sn boş ekranda tutuyordu.
+      const storiesList: Story[] = await Promise.all(
+        snapshot.docs.map(async (storyDoc) => {
+          const storyData = storyDoc.data() as Story;
+          const author = await getUserById(storyData.authorId);
+          return {
+            ...storyData,
+            id: storyDoc.id,
+            author: author || { id: '', email: '', displayName: '', authProvider: 'email' },
+          };
+        })
+      );
 
       store.dispatch(patchStory({ stories: storiesList }));
       store.dispatch(patchStory({ storiesLoaded: true }));

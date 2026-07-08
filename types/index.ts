@@ -75,6 +75,9 @@ export interface Story {
   targetAudience?: 'all' | 'teen' | 'adult';
   contentWarnings?: string[];
   chapterTitles?: string[]; // Bölüm başlıkları
+  isHidden?: boolean; // Admin tarafından şikayet üzerine gizlenmiş (bkz. YAPILACAKLAR 2.7)
+  chaptersInSubcollection?: boolean; // true ise içerik stories/{id}/chapters alt koleksiyonunda (bkz. YAPILACAKLAR 2.2)
+  chapterWordCounts?: number[]; // Stüdyo kartında içeriği indirmeden kelime sayısı göstermek için
 }
 
 export interface Chapter {
@@ -101,6 +104,7 @@ export interface Comment {
   createdAt: Date;
   parentId?: string; // for replies
   replies?: Comment[];
+  chapterIndex?: number; // Hangi bölüme yazıldığı (bkz. YAPILACAKLAR 2.3)
 }
 
 export interface ReadingList {
@@ -117,7 +121,8 @@ export interface ReadingList {
 export interface Notification {
   id: string;
   userId: string; // Bildirimin alıcısı
-  type: 'follow' | 'like' | 'comment' | 'mention' | 'story_published' | 'new_chapter' | 'welcome';
+  senderId: string; // Bildirimi tetikleyen kullanıcı (spoof'u önlemek için kural bununla eşleşir)
+  type: 'follow' | 'like' | 'comment' | 'mention' | 'story_published' | 'new_chapter' | 'welcome' | 'conversation_announcement';
   title: string;
   message: string;
   data?: {
@@ -130,6 +135,9 @@ export interface Notification {
     followerProfileImage?: string;
     likerProfileImage?: string;
     commenterProfileImage?: string;
+    chapterIndex?: string; // Bölüm-bazlı beğeni bildirimi (bkz. YAPILACAKLAR 2.3)
+    authorId?: string; // announceConversationToFollowers
+    authorName?: string;
   };
   isRead: boolean;
   createdAt: any;
@@ -196,6 +204,28 @@ export type NotificationType =
   | 'story_liked'
   | 'story_commented'
   | 'mention';
+
+// ── Direct messaging (DM) ─────────────────────────────────────────────────
+// Bire bir sohbet. Thread doküman ID'si iki katılımcı ID'sinden deterministik
+// üretilir (`sortedA_sortedB`) — böylece aynı iki kişi hep aynı thread'e düşer.
+export interface DirectMessage {
+  id: string;
+  senderId: string;
+  text: string;
+  image?: string;
+  createdAt: any; // Firestore Timestamp
+}
+
+export interface MessageThread {
+  id: string;
+  participants: string[];
+  lastMessage?: { text: string; senderId: string; createdAt: any } | null;
+  updatedAt?: any;
+  // Karşı taraf (mevcut kullanıcı olmayan katılımcı) — listener tarafından çözülür.
+  otherUser?: User | null;
+  // Mevcut kullanıcının okunmamış mesaj sayısı.
+  unread: number;
+}
 
 export interface TabBarIconProps {
   focused: boolean;

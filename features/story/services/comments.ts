@@ -1,4 +1,3 @@
-import { pushNotificationService } from '@/services/pushNotificationService';
 import { Comment } from '@/types';
 import {
     addDoc,
@@ -24,7 +23,7 @@ import { patchStory } from '@/store/slices/storySlice';
 import { store } from '@/store';
 
 // Comment operations
-export async function addComment(storyId: string, content: string, parentId?: string) {
+export async function addComment(storyId: string, content: string, parentId?: string, chapterIndex?: number) {
   try {
     const { user } = store.getState().auth;
     if (!user?.id) {
@@ -35,7 +34,7 @@ export async function addComment(storyId: string, content: string, parentId?: st
     const commentsRef = collection(firestore, 'stories', storyId, 'comments');
     const storyRef = doc(firestore, 'stories', storyId);
 
-    const newComment = {
+    const newComment: Record<string, unknown> = {
       storyId,
       userId: user.id,
       content,
@@ -45,6 +44,10 @@ export async function addComment(storyId: string, content: string, parentId?: st
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
+    // Bölüm filtresi için (bkz. YAPILACAKLAR 2.3) — yalnızca belirtilmişse yaz.
+    if (typeof chapterIndex === 'number') {
+      newComment.chapterIndex = chapterIndex;
+    }
 
     const docRef = await addDoc(commentsRef, newComment);
 
@@ -53,60 +56,33 @@ export async function addComment(storyId: string, content: string, parentId?: st
       commentsCount: increment(1),
     });
 
-    // Send notification to story author (only for top-level comments)
+    // Bildirim yaz — push gönderimi VPS'teki push-worker'ın işi (bkz.
+    // YAPILACAKLAR 3.1). Yalnızca üst seviye yorumda hikâye yazarına gider.
     if (!parentId) {
       const storyData = await getStoryById(storyId);
       if (storyData && storyData.authorId !== user.id) {
-        // Bildirim işlemlerini paralel yap
-        Promise.all([
-          notificationActions.createCommentNotification(
-            user.id,
-            storyData.authorId,
-            user.displayName || user.username || "Bir kullanıcı",
-            storyData.title,
-            storyId,
-            content
-          ),
-          // Push notification gönder
-          pushNotificationService.sendNotificationToUser(
-            storyData.authorId,
-            "Yeni Yorum!",
-            `${
-              user.displayName || user.username || "Bir kullanıcı"
-            } hikayene yorum yaptı: ${content}`,
-            { type: "story", storyId }
-          ),
-        ]).catch((error) => {
-          console.error("Comment notification error:", error);
-          // Push notification hatası ana işlemi engellemesin
-        });
+        notificationActions.createCommentNotification(
+          user.id,
+          storyData.authorId,
+          user.displayName || user.username || "Bir kullanıcı",
+          storyData.title,
+          storyId,
+          content
+        ).catch((error) => console.error("Comment notification error:", error));
       }
     } else {
       // Yanıt ise, yanıtlanan yorumun sahibine bildirim gönder
       const parentComment = await getCommentById(storyId, parentId);
       const storyData = await getStoryById(storyId);
       if (parentComment && parentComment.userId !== user.id) {
-        Promise.all([
-          notificationActions.createCommentNotification(
-            user.id,
-            parentComment.userId,
-            user.displayName || user.username || "Bir kullanıcı",
-            storyData?.title || "Bir hikaye",
-            storyId,
-            content
-          ),
-          // Push notification gönder
-          pushNotificationService.sendNotificationToUser(
-            parentComment.userId,
-            "Yeni Yanıt!",
-            `${
-              user.displayName || user.username || "Bir kullanıcı"
-            } yorumuna yanıt verdi: ${content}`,
-            { type: "story", storyId }
-          ),
-        ]).catch((error) =>
-          console.error("Reply notification error:", error)
-        );
+        notificationActions.createCommentNotification(
+          user.id,
+          parentComment.userId,
+          user.displayName || user.username || "Bir kullanıcı",
+          storyData?.title || "Bir hikaye",
+          storyId,
+          content
+        ).catch((error) => console.error("Reply notification error:", error));
       }
     }
 

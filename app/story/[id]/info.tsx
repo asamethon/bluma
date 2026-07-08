@@ -249,13 +249,13 @@ const createStyles = (colors: any) =>
     },
     heroMeta: { flex: 1 },
     title: {
-      fontSize: 22,
+      fontSize: 22, lineHeight: 29,
       fontWeight: '800',
       color: colors.text,
       marginBottom: 6,
     },
     author: {
-      fontSize: 14,
+      fontSize: 14, lineHeight: 18,
       color: colors.primary,
       fontWeight: '600',
     },
@@ -309,12 +309,12 @@ const createStyles = (colors: any) =>
       alignItems: 'center',
     },
     sectionTitle: {
-      fontSize: 18,
+      fontSize: 18, lineHeight: 23,
       fontWeight: '800',
       color: colors.text,
     },
     sectionSub: {
-      fontSize: 12,
+      fontSize: 12, lineHeight: 16,
       color: colors.textSecondary,
       fontWeight: '600',
     },
@@ -346,7 +346,7 @@ const createStyles = (colors: any) =>
     chDate: { color: colors.textSecondary, fontWeight: '600' },
     chapterTitle: {
       color: colors.text,
-      fontSize: 14,
+      fontSize: 14, lineHeight: 18,
       fontWeight: '600',
     },
     readButton: {

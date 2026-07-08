@@ -1,4 +1,3 @@
-import { pushNotificationService } from '@/services/pushNotificationService';
 import { Story } from '@/types';
 import {
     addDoc,
@@ -134,26 +133,16 @@ export async function sendLikeNotification(storyId: string, userId: string) {
 
     const storyData = await getStoryById(storyId);
     if (storyData && storyData.authorId !== userId) {
-      // Bildirim işlemlerini paralel yap
-      Promise.all([
-        notificationActions.createLikeNotification(
-          userId,
-          storyData.authorId,
-          user.displayName || user.username || 'Bir kullanıcı',
-          storyData.title,
-          storyId,
-          false // isConversation flag
-        ),
-        // Push notification gönder
-        pushNotificationService.sendNotificationToUser(
-          storyData.authorId,
-          'Hikayen Beğenildi!',
-          `${user.displayName || user.username || 'Bir kullanıcı'} hikayeni beğendi.`,
-          { type: 'story', storyId }
-        )
-      ]).catch(error => {
+      // Push gönderimi VPS'teki push-worker'ın işi (bkz. YAPILACAKLAR 3.1).
+      notificationActions.createLikeNotification(
+        userId,
+        storyData.authorId,
+        user.displayName || user.username || 'Bir kullanıcı',
+        storyData.title,
+        storyId,
+        false // isConversation flag
+      ).catch(error => {
         console.error('Story like notification error:', error);
-        // Push notification hatası ana işlemi engellemesin
       });
     }
   } catch (error) {

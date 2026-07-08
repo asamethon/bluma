@@ -48,16 +48,16 @@ export const Typography: Record<
     textTransform?: "uppercase" | "none";
   }
 > = {
-  display:    { fontFamily: Fonts.serif,        fontSize: 40, lineHeight: 44, letterSpacing: -0.8 },
-  title:      { fontFamily: Fonts.serif,        fontSize: 28, lineHeight: 34, letterSpacing: -0.28 },
-  heading:    { fontFamily: Fonts.serif,        fontSize: 21, lineHeight: 27 },
+  display:    { fontFamily: Fonts.serif,        fontSize: 40, lineHeight: 52, letterSpacing: -0.8 },
+  title:      { fontFamily: Fonts.serif,        fontSize: 28, lineHeight: 38, letterSpacing: -0.28 },
+  heading:    { fontFamily: Fonts.serif,        fontSize: 21, lineHeight: 29 },
   subheading: { fontFamily: Fonts.sansBold,     fontSize: 16, lineHeight: 22 },
   body:       { fontFamily: Fonts.sansRegular,  fontSize: 15, lineHeight: 22 },
   bodyStrong: { fontFamily: Fonts.sansSemiBold, fontSize: 15, lineHeight: 22 },
   reading:    { fontFamily: Fonts.serifRegular, fontSize: 19, lineHeight: 32 },
   label:      { fontFamily: Fonts.sansSemiBold, fontSize: 13, lineHeight: 18 },
   caption:    { fontFamily: Fonts.sansMedium,   fontSize: 12, lineHeight: 16 },
-  overline:   { fontFamily: Fonts.sansBold,     fontSize: 11, lineHeight: 14, letterSpacing: 1.54, textTransform: "uppercase" },
+  overline:   { fontFamily: Fonts.sansBold,     fontSize: 11, lineHeight: 15, letterSpacing: 1.54, textTransform: "uppercase" },
 };
 
 // ── Spacing (4pt grid) ────────────────────────────────────────────────────────
@@ -74,6 +74,21 @@ export const Spacing = {
   // app-level rhythm
   screenX: 20, // default horizontal screen padding
   gutter: 12,
+} as const;
+
+// ── Breakpoints — width-based size classes (device-class agnostic, so this
+// also correctly degrades iPad Split View / Slide Over back to phone layout) ──
+export const Breakpoints = {
+  compact: 0,     // phone portrait
+  medium: 700,    // iPad mini portrait and up / wide Split View
+  expanded: 1024, // iPad standard/Pro portrait and up
+} as const;
+
+// ── Content width caps — keeps single-column reading/forms and grids from
+// stretching edge-to-edge on tablet ────────────────────────────────────────────
+export const ContentMaxWidth = {
+  content: 720, // reading column, forms, single-column detail screens
+  grid: 1100,   // grid screens (feed, search, studio hub)
 } as const;
 
 // ── Radius — soft, petal-like corners ─────────────────────────────────────────

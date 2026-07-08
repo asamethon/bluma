@@ -13,6 +13,7 @@ import {
     updateDoc,
     where,
     query,
+    writeBatch,
 } from '@react-native-firebase/firestore';
 import { notificationActions } from '../../../store/notificationStore';
 import { getUserById } from './userCache';
@@ -158,20 +159,40 @@ export async function deleteStory(storyId: string) {
     const wasPublished = (storyDoc.data() as Story).isPublished;
 
     // Alt koleksiyonları hikâye dokümanından ÖNCE temizle — güvenlik
-    // kuralları yazar kontrolü için hikâye dokümanına bakar.
+    // kuralları yazar kontrolü için hikâye dokümanına bakar. Tüm silinecek
+    // referanslar önce toplanır, sonra 500'lük writeBatch parçalarıyla
+    // gönderilir — yarıda kesilme (network kopması vb.) tutarsızlığını azaltır.
+    const refsToDelete: any[] = [];
+
     const likesSnapshot = await getDocs(collection(firestore, 'stories', storyId, 'likes'));
-    await Promise.all(likesSnapshot.docs.map((d: any) => deleteDoc(d.ref)));
+    refsToDelete.push(...likesSnapshot.docs.map((d: any) => d.ref));
 
     const viewsSnapshot = await getDocs(collection(firestore, 'stories', storyId, 'views'));
-    await Promise.all(viewsSnapshot.docs.map((d: any) => deleteDoc(d.ref)));
+    refsToDelete.push(...viewsSnapshot.docs.map((d: any) => d.ref));
+
+    // Bölüm-bazlı depolamaya geçmiş hikâyelerin chapters alt koleksiyonu (2.2)
+    // + her bölümün beğeni alt koleksiyonu (2.3)
+    const chaptersSnapshot = await getDocs(collection(firestore, 'stories', storyId, 'chapters'));
+    for (const chapterDoc of chaptersSnapshot.docs) {
+      const chapterLikes = await getDocs(collection(firestore, 'stories', storyId, 'chapters', chapterDoc.id, 'likes'));
+      refsToDelete.push(...chapterLikes.docs.map((d: any) => d.ref));
+      refsToDelete.push(chapterDoc.ref);
+    }
 
     // Yorumlar + her yorumun beğeni alt koleksiyonu
     const commentsSnapshot = await getDocs(collection(firestore, 'stories', storyId, 'comments'));
-    await Promise.all(commentsSnapshot.docs.map(async (commentDoc: any) => {
+    for (const commentDoc of commentsSnapshot.docs) {
       const commentLikes = await getDocs(collection(firestore, 'stories', storyId, 'comments', commentDoc.id, 'likes'));
-      await Promise.all(commentLikes.docs.map((d: any) => deleteDoc(d.ref)));
-      await deleteDoc(commentDoc.ref);
-    }));
+      refsToDelete.push(...commentLikes.docs.map((d: any) => d.ref));
+      refsToDelete.push(commentDoc.ref);
+    }
+
+    // 500'lük parçalar hâlinde atomik sil
+    for (let i = 0; i < refsToDelete.length; i += 500) {
+      const batch = writeBatch(firestore);
+      refsToDelete.slice(i, i + 500).forEach((ref) => batch.delete(ref));
+      await batch.commit();
+    }
 
     // En son hikâyenin kendisini sil
     await deleteDoc(storyRef);
@@ -208,8 +229,15 @@ export async function getStoryById(storyId: string): Promise<Story | null> {
     }
 
     return null;
-  } catch (error) {
-    console.error('Get story error:', error);
+  } catch (error: any) {
+    // permission-denied artık beklenen bir durum: hikâye taslağa dönmüş ya da
+    // silinmiş olabilir (ör. beğenilen/kaydedilen bir hikâye sonradan
+    // yayından kaldırılmış) — çağıranlar zaten null'ı filtreliyor, sessiz geç.
+    if (error?.code === 'firestore/permission-denied') {
+      console.log('Get story skipped (no longer accessible, non-critical):', storyId);
+    } else {
+      console.error('Get story error:', error);
+    }
     return null;
   }
 }

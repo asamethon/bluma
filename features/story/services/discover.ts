@@ -18,10 +18,9 @@ export async function loadDiscoverStories() {
     store.dispatch(patchStory({ isLoading: true }));
     const firestore = getFirestore();
 
-    // Son 30 gün içindeki yayınlanan hikayeleri getir
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
+    // NOT: burada zaman filtresi YOK (bkz. YAPILACAKLAR 2.5) — tüm zamanların
+    // popülerlik skoruna göre sıralanır; "yeni hikâyeler" avantajı zaten
+    // calculatePopularityScore'daki timeWeight ile sağlanıyor.
     const storiesQuery = query(
       collection(firestore, 'stories'),
       where('isPublished', '==', true),
@@ -30,26 +29,23 @@ export async function loadDiscoverStories() {
     );
 
     const snapshot = await getDocs(storiesQuery);
-    const storiesWithScores: (Story & { popularityScore: number })[] = [];
 
-    for (const storyDoc of snapshot.docs) {
-      const storyData = storyDoc.data() as Story;
-      const author = await getUserById(storyData.authorId);
+    // Yazar okumaları paralel — sıralı await 100 hikâyede çok sayıda round-trip
+    // biriktirip Keşfet/ana sayfayı gereksiz yere geciktiriyordu.
+    const storiesWithScores: (Story & { popularityScore: number })[] = await Promise.all(
+      snapshot.docs.map(async (storyDoc) => {
+        const storyData = storyDoc.data() as Story;
+        const author = await getUserById(storyData.authorId);
 
-      const story = {
-        ...storyData,
-        id: storyDoc.id,
-        author: author || { id: '', email: '', displayName: '', authProvider: 'email' },
-      };
+        const story = {
+          ...storyData,
+          id: storyDoc.id,
+          author: author || { id: '', email: '', displayName: '', authProvider: 'email' },
+        };
 
-      // Popülerlik skoru hesapla
-      const popularityScore = calculatePopularityScore(story);
-
-      storiesWithScores.push({
-        ...story,
-        popularityScore,
-      });
-    }
+        return { ...story, popularityScore: calculatePopularityScore(story) };
+      })
+    );
 
     // Popülerlik skoruna göre sırala
     storiesWithScores.sort((a, b) => b.popularityScore - a.popularityScore);
@@ -124,32 +120,36 @@ export async function loadFollowingStories() {
       return;
     }
 
-    // Chunk'lara böl (Firestore 'in' operatörü max 10 değer alır)
+    // Chunk'lara böl (Firestore 'in' operatörü max 10 değer alır) — hem
+    // chunk sorguları hem yazar okumaları paralel, sıralı await yığını
+    // takip akışını da aynı şekilde geciktiriyordu.
     const chunks = chunkArray(followingUserIds, 10);
-    const allStories: Story[] = [];
+    const chunkResults = await Promise.all(
+      chunks.map(async (chunk) => {
+        const storiesQuery = query(
+          collection(firestore, 'stories'),
+          where('authorId', 'in', chunk),
+          where('isPublished', '==', true),
+          orderBy('createdAt', 'desc'),
+          limit(20)
+        );
 
-    for (const chunk of chunks) {
-      const storiesQuery = query(
-        collection(firestore, 'stories'),
-        where('authorId', 'in', chunk),
-        where('isPublished', '==', true),
-        orderBy('createdAt', 'desc'),
-        limit(20)
-      );
+        const snapshot = await getDocs(storiesQuery);
 
-      const snapshot = await getDocs(storiesQuery);
-
-      for (const storyDoc of snapshot.docs) {
-        const storyData = storyDoc.data() as Story;
-        const author = await getUserById(storyData.authorId);
-
-        allStories.push({
-          ...storyData,
-          id: storyDoc.id,
-          author: author || { id: '', email: '', displayName: '', authProvider: 'email' },
-        });
-      }
-    }
+        return Promise.all(
+          snapshot.docs.map(async (storyDoc) => {
+            const storyData = storyDoc.data() as Story;
+            const author = await getUserById(storyData.authorId);
+            return {
+              ...storyData,
+              id: storyDoc.id,
+              author: author || { id: '', email: '', displayName: '', authProvider: 'email' },
+            };
+          })
+        );
+      })
+    );
+    const allStories: Story[] = chunkResults.flat();
 
     // Tarihe göre sırala (en yeni önce)
     allStories.sort((a, b) => {

@@ -90,14 +90,14 @@ const createStyles = () =>
     },
     modalTitle: {
       fontFamily: Fonts.serif,
-      fontSize: 20,
+      fontSize: 20, lineHeight: 28,
       fontWeight: '700',
       textAlign: 'center',
       marginBottom: 6,
     },
     modalSub: {
       fontFamily: Fonts.sans,
-      fontSize: 14,
+      fontSize: 14, lineHeight: 18,
       textAlign: 'center',
       marginBottom: 22,
     },
@@ -119,12 +119,12 @@ const createStyles = () =>
     },
     modalBtnText: {
       fontFamily: Fonts.sans,
-      fontSize: 15,
+      fontSize: 15, lineHeight: 20,
       fontWeight: '600',
     },
     modalBtnSub: {
       fontFamily: Fonts.sans,
-      fontSize: 12,
+      fontSize: 12, lineHeight: 16,
       marginTop: 2,
     },
     cancelBtn: {
@@ -133,7 +133,7 @@ const createStyles = () =>
     },
     cancelText: {
       fontFamily: Fonts.sans,
-      fontSize: 16,
+      fontSize: 16, lineHeight: 21,
       fontWeight: '600',
     },
   });

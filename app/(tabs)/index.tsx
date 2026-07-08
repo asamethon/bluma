@@ -14,15 +14,19 @@ import {
 import { CategoryMeta, Radius, Spacing, categoryColor, useTheme } from "@/constants/theme";
 import { useGuestGate } from "@/contexts/GuestContext";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import { useResponsiveGrid } from "@/hooks/useResponsive";
 import { useAppSelector } from "@/store/hooks";
+import { messagingActions } from "@/store/messagingStore";
 import { moderationActions } from "@/store/moderationStore";
 import { preferencesActions } from "@/store/preferencesStore";
 import { storyActions } from "@/store/storyStore";
+import { readingProgressActions } from "@/features/story/services/readingProgress";
 import { Story } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Pressable,
   RefreshControl,
@@ -51,7 +55,11 @@ export default function HomeScreen() {
   const currentUser = useAppSelector(s => s.auth.user);
   const isGuest = useAppSelector(s => s.auth.isGuest);
   const unreadCount = useAppSelector(s => s.notification.unreadCount);
+  const dmUnread = useAppSelector(s =>
+    s.messaging.threads.reduce((n, t) => n + (t.unread || 0), 0)
+  );
   const { startAuth } = useGuestGate();
+  const { numColumns, columnWidth } = useResponsiveGrid();
 
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -62,9 +70,7 @@ export default function HomeScreen() {
 
   const styles = createStyles(colors);
   const [editorsPicksState, setEditorsPicksState] = useState<Story[]>([]);
-  const [readingProgress, setReadingProgress] = useState<
-    { storyId: string; chapterIndex: number; updatedAt: number }[]
-  >([]);
+  const continueReading = useAppSelector(s => s.story.continueReading);
 
 
   useEffect(() => { preferencesActions.load(); }, []);
@@ -73,6 +79,9 @@ export default function HomeScreen() {
     if (currentUser?.id) {
       storyActions.initializeRealTimeListeners();
       moderationActions.loadBlockedUsers();
+      // DM sohbet listesi dinleyicisi — ana ekrandaki okunmamış rozeti +
+      // Mesajlar kutusu aynı slice'ı okur.
+      messagingActions.startThreadsListener(currentUser.id);
     } else if (isGuest) {
       // Guests can see public stories — start the public-safe listeners
       storyActions.setupStoriesListener();
@@ -88,36 +97,10 @@ export default function HomeScreen() {
       if (currentUser?.id) {
         storyActions.refreshLikedStoriesState();
         loadOfflineModeInfo();
-        loadReadingProgress();
+        readingProgressActions.loadContinueReadingShelf();
       }
     }, [currentUser?.id])
   );
-
-  // "Okumaya devam et" — yerel ilerleme kayıtlarını topla (en son okunan önce)
-  const loadReadingProgress = async () => {
-    try {
-      const keys = await AsyncStorage.getAllKeys();
-      const progressKeys = keys.filter((k) => k.startsWith("readingProgress_"));
-      if (progressKeys.length === 0) { setReadingProgress([]); return; }
-      const entries = await AsyncStorage.multiGet(progressKeys);
-      const parsed = entries
-        .map(([key, raw]) => {
-          try {
-            const data = JSON.parse(raw || "{}");
-            return {
-              storyId: key.replace("readingProgress_", ""),
-              chapterIndex: typeof data.chapterIndex === "number" ? data.chapterIndex : 0,
-              updatedAt: typeof data.updatedAt === "number" ? data.updatedAt : 0,
-            };
-          } catch { return null; }
-        })
-        .filter((p): p is { storyId: string; chapterIndex: number; updatedAt: number } => !!p)
-        .sort((a, b) => b.updatedAt - a.updatedAt);
-      setReadingProgress(parsed);
-    } catch {
-      setReadingProgress([]);
-    }
-  };
 
   const loadOfflineModeInfo = async () => {
     const info = await storyActions.getOfflineModeInfo();
@@ -145,7 +128,7 @@ export default function HomeScreen() {
   // referansı döndürüyordu, bu da aşağıdaki editorsPicks effect'inin
   // (dep: [allStories]) her render'da tetiklenmesine yol açıyordu.
   const allStories = useMemo(
-    () => preferencesActions.filterMature(moderationActions.filterBlocked(rawStories)),
+    () => preferencesActions.filterMature(moderationActions.filterHidden(moderationActions.filterBlocked(rawStories))),
     [rawStories, blockedIds, matureOn]
   );
   const newest = [...allStories]
@@ -160,20 +143,29 @@ export default function HomeScreen() {
     .slice(0, 12);
   const byCategory = (cat: string) =>
     allStories.filter((s) => s.category === (cat as any)).slice(0, 12);
-  // Kategori çipi seçiliyken ana akış yalnızca o kategoriyi gösterir
+  // Kategori çipi seçiliyken ana akış yalnızca o kategoriyi gösterir — en
+  // çok okunan önce (bkz. YAPILACAKLAR 2.5).
   const categoryStories = selectedCategory
-    ? allStories.filter((s) => s.category === (selectedCategory as any))
+    ? allStories
+        .filter((s) => s.category === (selectedCategory as any))
+        .sort((a, b) => (b.viewsCount || 0) - (a.viewsCount || 0))
     : null;
 
-  // "Okumaya devam et" — ilerleme kaydı olan ve katalogda bulunan hikâyeler.
-  // 1. bölümde kalanlar da dahil: kullanıcı okumaya başlamış demektir.
-  const continueReading = readingProgress
-    .map((p) => {
-      const story = allStories.find((s) => s.id === p.storyId);
-      return story ? { story, chapterIndex: p.chapterIndex } : null;
-    })
-    .filter((x): x is { story: Story; chapterIndex: number } => !!x)
-    .slice(0, 5);
+  // Ana akış canlı dinleyicisi ilk 50 hikâyeyi tutar (bkz. setupStoriesListener);
+  // kategori listesi bunun ötesine kaydırılınca sayfalı sorguyla eklenir
+  // (bkz. YAPILACAKLAR 2.5).
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMoreStories, setHasMoreStories] = useState(true);
+  const handleLoadMoreStories = async () => {
+    if (!categoryStories || loadingMore || !hasMoreStories) return;
+    setLoadingMore(true);
+    try {
+      const hasMore = await storyActions.loadMoreStories();
+      setHasMoreStories(hasMore);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
     const computeEditorsPicks = async () => {
@@ -242,14 +234,22 @@ export default function HomeScreen() {
     return (
       <View style={styles.section} key={title}>
         <SectionHeader title={title} accent={accent} />
-        <View style={{ paddingHorizontal: Spacing.screenX, gap: Spacing.md }}>
+        <View
+          style={{
+            paddingHorizontal: Spacing.screenX,
+            flexDirection: numColumns > 1 ? "row" : "column",
+            flexWrap: numColumns > 1 ? "wrap" : "nowrap",
+            gap: Spacing.md,
+          }}
+        >
           {list.slice(0, 6).map((story) => (
-            <StoryRow
-              key={story.id}
-              story={story}
-              status={story.isCompleted ? "Tamamlandı" : "Devam ediyor"}
-              onPress={() => handleStoryPress(story.id)}
-            />
+            <View key={story.id} style={numColumns > 1 ? { width: columnWidth } : undefined}>
+              <StoryRow
+                story={story}
+                status={story.isCompleted ? "Tamamlandı" : "Devam ediyor"}
+                onPress={() => handleStoryPress(story.id)}
+              />
+            </View>
           ))}
         </View>
       </View>
@@ -303,7 +303,7 @@ export default function HomeScreen() {
               style={[styles.guestLoginPill, { backgroundColor: colors.primary }]}
               onPress={() => startAuth('signup')}
             >
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Giriş Yap</Text>
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13, lineHeight: 17}}>Giriş Yap</Text>
             </TouchableOpacity>
           ) : (
             <>
@@ -314,6 +314,13 @@ export default function HomeScreen() {
                   color={colors.primary}
                 />
               )}
+              <IconButton
+                icon="mail-outline"
+                onPress={() => router.push("/messages" as any)}
+                variant="sunk"
+                size={42}
+                badge={dmUnread}
+              />
               <View style={{ position: 'relative' }}>
                 <IconButton
                   icon="notifications-outline"
@@ -445,14 +452,24 @@ export default function HomeScreen() {
       <OfflineIndicator showWhenOnline={true} />
 
       <FlatList
+        key={`grid-${numColumns}`}
         data={categoryStories ?? []}
         keyExtractor={(story) => story.id}
+        numColumns={numColumns}
+        columnWrapperStyle={numColumns > 1 ? { gap: Spacing.gutter, paddingHorizontal: Spacing.screenX } : undefined}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 140 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.bloom} />
         }
         ListHeaderComponent={listHeader}
+        onEndReached={handleLoadMoreStories}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={
+          loadingMore ? (
+            <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
+          ) : null
+        }
         ListEmptyComponent={
           categoryStories ? (
             <View style={styles.empty}>
@@ -464,7 +481,13 @@ export default function HomeScreen() {
           ) : null
         }
         renderItem={({ item: story }) => (
-          <View style={{ paddingHorizontal: Spacing.screenX, marginBottom: Spacing.md }}>
+          <View
+            style={
+              numColumns > 1
+                ? { width: columnWidth, marginBottom: Spacing.md }
+                : { paddingHorizontal: Spacing.screenX, marginBottom: Spacing.md }
+            }
+          >
             <StoryRow
               story={story}
               status={story.isCompleted ? "Tamamlandı" : "Devam ediyor"}
@@ -529,5 +552,5 @@ const createStyles = (colors: any) =>
       alignItems: "center", justifyContent: "center",
       paddingHorizontal: 3,
     },
-    notifBadgeText: { color: "#fff", fontSize: 9, fontWeight: "800" },
+    notifBadgeText: { color: "#fff", fontSize: 9, lineHeight: 12, fontWeight: "800" },
   });

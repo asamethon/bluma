@@ -16,6 +16,10 @@ export interface StoryState {
   /** Genel hikâye akışı ilk sonucunu ürettiğinde true olur (splash ekranını
    *  tutmak için — ekranlar boş durum flash'ı görmesin). */
   storiesLoaded: boolean;
+  /** Ana sayfadaki "Okumaya Devam Et" rafı — misafir/hikaye geçmişi olmayan
+   *  kullanıcılarda boş kalır ama yine de true'ya döner (bkz. splash gate). */
+  continueReading: { story: Story; chapterIndex: number }[];
+  continueReadingLoaded: boolean;
   isDownloading: { [storyId: string]: number }; // progress 0-100
   error: string | null;
 }
@@ -33,6 +37,8 @@ const initialState: StoryState = {
   storyComments: [],
   isLoading: false,
   storiesLoaded: false,
+  continueReading: [],
+  continueReadingLoaded: false,
   isDownloading: {},
   error: null,
 };

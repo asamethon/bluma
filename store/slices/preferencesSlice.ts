@@ -1,13 +1,23 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+export type ReadingTheme = 'light' | 'sepia' | 'dark' | 'black';
+export type ReadingFont = 'serif' | 'sans';
+export type ReadingLineSpacing = 'compact' | 'normal' | 'relaxed';
+
 export interface PreferencesState {
   showMatureContent: boolean;
   loaded: boolean;
+  readingTheme: ReadingTheme;
+  readingFont: ReadingFont;
+  readingLineSpacing: ReadingLineSpacing;
 }
 
 const initialState: PreferencesState = {
   showMatureContent: false,
   loaded: false,
+  readingTheme: 'light',
+  readingFont: 'serif',
+  readingLineSpacing: 'normal',
 };
 
 const preferencesSlice = createSlice({
