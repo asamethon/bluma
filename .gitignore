@@ -39,10 +39,18 @@ yarn-error.*
 app-example
 
 ios/
+android/
 # env dosyaları (Sentry token vb. gizli bilgiler)
 .env
 .env.*
 !.env.example
+
+# Firebase Admin SDK servis hesabı anahtarı — ASLA commit'lenmez (gizli private_key)
+firebase/
+*-firebase-adminsdk-*.json
+
+# Proje yarn kullanıyor; npm lockfile'ı yanlışlıkla oluşmasın
+package-lock.json
 
 # Bluma görsel servisi — yerel veri ve bağımlılıklar
 server/data/
