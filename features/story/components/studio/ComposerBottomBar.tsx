@@ -1,14 +1,14 @@
 import { Button, IconButton, Text } from '@/components/ui';
 import { Spacing, useTheme } from '@/constants/theme';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { useComposer } from '../../hooks/useComposer';
 
-const nf = (n: number) => n.toLocaleString('tr-TR');
-
-// İstatistikler + biçim araç çubuğu + Önizle/Yayınla.
 export function ComposerBottomBar({ c, bottomInset }: { c: ReturnType<typeof useComposer>; bottomInset: number }) {
   const { colors, shadows } = useTheme();
+  const { t, i18n } = useTranslation();
+  const nf = (n: number) => n.toLocaleString(i18n.language);
 
   return (
     <View
@@ -20,25 +20,21 @@ export function ComposerBottomBar({ c, bottomInset }: { c: ReturnType<typeof use
     >
       <View style={styles.stats}>
         <Text variant="heading" style={{ fontSize: 20 }}>{nf(c.words)}</Text>
-        <Text variant="caption" tone="textSecondary">kelime</Text>
+        <Text variant="caption" tone="textSecondary">{t('studio.wordsLabel')}</Text>
         <View style={{ flex: 1 }} />
         <Text variant="caption" tone="textLight">
-          {nf(c.chars)} karakter · ~{c.readMin} dk okuma
+          {t('studio.charsAndReadTime', { chars: nf(c.chars), minutes: c.readMin })}
         </Text>
       </View>
 
       {!c.focus && (
         <View style={styles.tools}>
-          {/* Madde modu — aktifken her enter yeni madde açar; boş maddede
-              enter (iki enter üst üste) modu kapatır. */}
           <IconButton
             icon="list-outline"
             variant={c.bulletMode ? 'soft' : 'sunk'}
             size={38}
             onPress={c.toggleBullet}
           />
-          {/* İtalik modu — aktifken yazılanlar italik; seçimle basılırsa
-              yalnızca seçimi italik yapar/kaldırır. */}
           <Pressable
             onPress={c.toggleItalic}
             style={[styles.italicBtn, { backgroundColor: c.italicMode ? colors.primarySoft : colors.surfaceVariant }]}
@@ -58,11 +54,11 @@ export function ComposerBottomBar({ c, bottomInset }: { c: ReturnType<typeof use
       )}
 
       <View style={styles.actions}>
-        <Button label="Önizle" variant="secondary" icon="eye-outline" onPress={() => c.setPreview(true)} style={{ flex: 1 }} />
+        <Button label={t('studio.preview')} variant="secondary" icon="eye-outline" onPress={() => c.setPreview(true)} style={{ flex: 1 }} />
         {c.isPublished ? (
-          <Button label="Yayında" variant="secondary" icon="checkmark-circle" disabled style={{ flex: 1.4 }} />
+          <Button label={t('storyStatus.published')} variant="secondary" icon="checkmark-circle" disabled style={{ flex: 1.4 }} />
         ) : (
-          <Button label="Yayınla" variant="primary" iconRight="arrow-forward" loading={c.publishing} onPress={c.publish} style={{ flex: 1.4 }} />
+          <Button label={t('studio.publishAction')} variant="primary" iconRight="arrow-forward" loading={c.publishing} onPress={c.publish} style={{ flex: 1.4 }} />
         )}
       </View>
     </View>

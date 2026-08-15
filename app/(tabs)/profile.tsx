@@ -30,7 +30,8 @@ import { buildProfileShareUrl } from "@/utils/deepLinks";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
@@ -42,9 +43,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { FlashList } from '@shopify/flash-list';
+import { logger } from '@/utils/logger';
 
 export default function ProfileScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const currentUser = useAppSelector((s) => s.auth.user);
   const isGuest = useAppSelector((s) => s.auth.isGuest);
@@ -95,32 +99,6 @@ export default function ProfileScreen() {
     }, [currentUser?.id]),
   );
 
-  // Dinleyicinin kendi dispatch'i her seferinde yeni bir userConversations
-  // referansı üretiyor (map() her zaman yeni array döner) — efekt doğrudan
-  // o referansa bağımlı olursa, dinleyici kur → güncelleme gelsin → yeni
-  // referans → efekt yeniden çalışsın → dinleyiciyi yeniden kur diye sonsuz
-  // döngüye giriyordu (takipçiler ekranı da aynı JS thread'i paylaştığı için
-  // bu döngü yüzünden hiç yüklenemiyordu). Efekt yalnızca konuşma ID
-  // KÜMESİ değiştiğinde (primitive string) yeniden çalışmalı.
-  const conversationIds = useMemo(
-    () => (userConversations ?? []).map((c) => c.id).join(","),
-    [userConversations],
-  );
-
-  useEffect(() => {
-    if (!conversationIds) return;
-    const ids = conversationIds.split(",");
-    const unsubscribers: (() => void)[] = [];
-    ids.forEach((id) => {
-      conversationActions
-        .getConversationRealTimeUpdates(id)
-        .then((unsubscribe) => {
-          if (unsubscribe) unsubscribers.push(unsubscribe);
-        });
-    });
-    return () => unsubscribers.forEach((u) => u());
-  }, [conversationIds]);
-
   const handleOpenImageModal = (imageUri: string) => {
     setSelectedModalImage(imageUri);
     setImageModalVisible(true);
@@ -139,21 +117,21 @@ export default function ProfileScreen() {
       if (imageUri) setMessageImage(imageUri);
     } catch (error) {
       Alert.alert(
-        "Hata",
+        t("common.error"),
         error instanceof Error
           ? error.message
-          : "Resim seçilirken bir hata oluştu.",
+          : t("imageUpload.pickError"),
       );
     }
   };
 
   const handlePostMessage = async () => {
     if (!messageContent.trim()) {
-      Alert.alert("Uyarı", "Lütfen bir mesaj yazın.");
+      Alert.alert(t('profileScreen.warning'), t('profileScreen.writeMessageFirst'));
       return;
     }
     if (!currentUser?.id) {
-      Alert.alert("Hata", "Giriş yapmanız gerekiyor.");
+      Alert.alert(t('common.error'), t('errors.loginRequired'));
       return;
     }
     try {
@@ -193,16 +171,16 @@ export default function ProfileScreen() {
             );
           } catch {}
         }
-        Alert.alert("Başarılı", "Mesajınız paylaşıldı!");
+        Alert.alert(t('common.success'), t('profileScreen.messageShared'));
         handleCloseMessageModal();
       } else {
         Alert.alert(
-          "Hata",
-          result.error || "Mesaj paylaşılırken bir hata oluştu.",
+          t("common.error"),
+          result.error || t("profileScreen.messageShareFailed"),
         );
       }
     } catch {
-      Alert.alert("Hata", "Mesaj paylaşılırken bir hata oluştu.");
+      Alert.alert(t('common.error'), t('profileScreen.messageShareFailed'));
     } finally {
       setIsPosting(false);
     }
@@ -214,15 +192,12 @@ export default function ProfileScreen() {
       const url = buildProfileShareUrl(currentUser.id);
       const name =
         currentUser.displayName || `@${currentUser.username || "bluma"}`;
-      // Pass ONLY `message` (with the link inside). Passing `url` *as well* makes
-      // iOS append a serialized "bplist00…" blob to the shared text in some
-      // targets, so we keep the URL in the message string only.
       await Share.share({
-        title: `${name} • Bluma`, // Android-only dialog title
-        message: `${name} adlı yazarı Bluma'da keşfet:\n${url}`,
+        title: `${name} • Bluma`,
+        message: t('profileScreen.shareProfileMessage', { name, url }),
       });
     } catch (e) {
-      console.error("Share profile error", e);
+      logger.error("Share profile error", e);
     }
   };
 
@@ -231,22 +206,22 @@ export default function ProfileScreen() {
   };
 
   const handleStoryMenu = (story: Story) => {
-    Alert.alert("Hikaye Seçenekleri", "Ne yapmak istiyorsunuz?", [
-      { text: "İptal", style: "cancel" },
+    Alert.alert(t('profileScreen.storyOptionsTitle'), t('profileScreen.storyOptionsMessage'), [
+      { text: t('common.cancel'), style: "cancel" },
       {
-        text: "Düzenle",
+        text: t('common.edit'),
         onPress: () => router.push(`/story/compose/${story.id}?ch=0` as any),
       },
       {
-        text: "Taslağa Geri Al",
+        text: t('profileScreen.revertToDraft'),
         onPress: async () => {
           Alert.alert(
-            "Taslağa Geri Al",
-            `"${story.title}" hikayesini taslağa geri almak istediğinizden emin misiniz?`,
+            t('profileScreen.revertToDraft'),
+            t('profileScreen.revertToDraftConfirm', { title: story.title }),
             [
-              { text: "İptal", style: "cancel" },
+              { text: t('common.cancel'), style: "cancel" },
               {
-                text: "Taslağa Geri Al",
+                text: t('profileScreen.revertToDraft'),
                 onPress: async () => {
                   try {
                     await storyActions.updateStory(story.id, {
@@ -254,8 +229,8 @@ export default function ProfileScreen() {
                     });
                   } catch {
                     Alert.alert(
-                      "Hata",
-                      "Hikaye taslağa geri alınırken bir hata oluştu.",
+                      t("common.error"),
+                      t("profileScreen.revertToDraftFailed"),
                     );
                   }
                 },
@@ -265,16 +240,16 @@ export default function ProfileScreen() {
         },
       },
       {
-        text: "Sil",
+        text: t('common.delete'),
         style: "destructive",
         onPress: () => {
           Alert.alert(
-            "Hikayeyi Sil",
-            `"${story.title}" hikayesini silmek istediğinizden emin misiniz?`,
+            t('studio.deleteStoryTitle'),
+            t('profileScreen.deleteStoryConfirm', { title: story.title }),
             [
-              { text: "İptal", style: "cancel" },
+              { text: t('common.cancel'), style: "cancel" },
               {
-                text: "Sil",
+                text: t('common.delete'),
                 style: "destructive",
                 onPress: async () => {
                   try {
@@ -291,12 +266,12 @@ export default function ProfileScreen() {
 
   const handleDeleteConversation = (conversation: Conversation) => {
     Alert.alert(
-      "Konuşmayı Sil",
-      "Bu konuşmayı silmek istediğinizden emin misiniz?",
+      t('profileScreen.deleteConversationTitle'),
+      t('profileScreen.deleteConversationConfirm'),
       [
-        { text: "İptal", style: "cancel" },
+        { text: t('common.cancel'), style: "cancel" },
         {
-          text: "Sil",
+          text: t('common.delete'),
           style: "destructive",
           onPress: async () => {
             try {
@@ -309,10 +284,10 @@ export default function ProfileScreen() {
   };
 
   const handleSignOut = () => {
-    Alert.alert("Çıkış Yap", "Hesabından çıkış yapmak istediğine emin misin?", [
-      { text: "İptal", style: "cancel" },
+    Alert.alert(t('profileScreen.signOut'), t('profileScreen.signOutConfirm'), [
+      { text: t('common.cancel'), style: "cancel" },
       {
-        text: "Çıkış Yap",
+        text: t('profileScreen.signOut'),
         style: "destructive",
         onPress: () => {
           authActions.signOut();
@@ -323,52 +298,22 @@ export default function ProfileScreen() {
   };
 
   const getStoryStatus = (story: Story) => {
-    if (!story.isPublished) return "Taslak";
-    if (story.isCompleted) return "Tamamlandı";
-    return "Devam ediyor";
+    if (!story.isPublished) return "draft";
+    if (story.isCompleted) return "completed";
+    return "ongoing";
   };
 
   const menuItems = [
     {
-      icon: "document-outline",
-      title: "Yazı Stüdyosu",
-      subtitle: "Hikâyelerin ve taslakların",
-      route: "/(tabs)/write",
-    },
-    {
-      icon: "bookmarks-outline",
-      title: "Okuma Listelerim",
-      subtitle: "Oluşturduğun koleksiyonlar",
-      route: "/profile/lists",
-    },
-    {
-      icon: "bookmark-outline",
-      title: "Kaydedilenler",
-      subtitle: "Kaydettiğin hikayeler",
-      route: "/profile/saved",
-    },
-    {
-      icon: "heart-outline",
-      title: "Favorilerim",
-      subtitle: "Beğendiğin hikayeler",
-      route: "/profile/favorites",
-    },
-    {
       icon: "cloud-download-outline",
-      title: "Offline Kütüphane",
-      subtitle: "İndirilen hikayeler",
+      title: t('profileScreen.offlineLibrary'),
+      subtitle: t('profileScreen.offlineLibrarySub'),
       route: "/profile/offline",
     },
     {
-      icon: "settings-outline",
-      title: "Ayarlar",
-      subtitle: "Hesap ve uygulama ayarları",
-      route: "/profile/settings",
-    },
-    {
       icon: "help-circle-outline",
-      title: "Yardım",
-      subtitle: "SSS ve destek",
+      title: t('profileScreen.help'),
+      subtitle: t('profileScreen.helpSub'),
       route: "/help",
     },
   ];
@@ -383,7 +328,35 @@ export default function ProfileScreen() {
     ),
   };
 
-  // Guest check MUST come before currentUser check (guest has no currentUser)
+  const renderTabItem = useCallback(
+    ({ item }: { item: any }) => (
+      <View style={styles.tabRow}>
+        {activeTab === "stories" ? (
+          <StoryRow
+            story={item as Story}
+            status={getStoryStatus(item as Story)}
+            onPress={() => handleStoryPress(item.id)}
+            onMenu={() => handleStoryMenu(item as Story)}
+          />
+        ) : (
+          <ProfileConversationCard
+            conversation={item as Conversation}
+            onPress={() => router.push(`/conversation/${item.id}` as any)}
+            onImagePress={handleOpenImageModal}
+            onDelete={() => handleDeleteConversation(item as Conversation)}
+          />
+        )}
+      </View>
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeTab, router],
+  );
+
+  const itemSeparator = useCallback(
+    () => <View style={{ height: Spacing.md }} />,
+    [],
+  );
+
   if (isGuest) {
     return (
       <Screen style={{ flex: 1, backgroundColor: colors.background }} maxContentWidth={ContentMaxWidth.content}>
@@ -403,7 +376,7 @@ export default function ProfileScreen() {
         }}
       >
         <Text variant="body" tone="textSecondary">
-          Kullanıcı bilgileri yükleniyor...
+          {t('profileScreen.loadingUser')}
         </Text>
       </Screen>
     );
@@ -412,24 +385,19 @@ export default function ProfileScreen() {
   const tabOptions = [
     {
       value: "stories",
-      label: "Hikayelerim",
+      label: t('profileScreen.myStories'),
       icon: "library-outline" as const,
     },
     {
       value: "conversations",
-      label: "Konuşmalarım",
+      label: t('profileScreen.myConversations'),
       icon: "chatbubble-ellipses-outline" as const,
     },
   ];
 
-  return (
-    <Screen style={{ flex: 1, backgroundColor: colors.background }} maxContentWidth={ContentMaxWidth.content}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 120 }}
-      >
-        {/* ── Gradient hero ─────────────────────────────────────── */}
-        <ProfileGradientHero
+  const listHeader = (
+    <>
+      <ProfileGradientHero
           avatarUri={currentUser.profileImage}
           avatarName={currentUser.displayName}
           actions={
@@ -457,14 +425,13 @@ export default function ProfileScreen() {
           }
         />
 
-        {/* ── Identity ──────────────────────────────────────────── */}
         <View style={styles.identity}>
           <View style={styles.nameRow}>
             <Text variant="title" style={{ fontWeight: "700" }}>
               {currentUser.displayName}
             </Text>
             <Badge
-              label="Filizlenen Yazar"
+              label={t('profileScreen.buddingAuthor')}
               tone="bloom"
               icon="ribbon"
               style={{ marginLeft: 8 }}
@@ -484,10 +451,9 @@ export default function ProfileScreen() {
             </Text>
           )}
 
-          {/* Action buttons */}
           <View style={styles.actionRow}>
             <Button
-              label="Profili Düzenle"
+              label={t('profileScreen.editProfile')}
               variant="primary"
               size="md"
               icon="create-outline"
@@ -495,7 +461,7 @@ export default function ProfileScreen() {
               style={{ flex: 1 }}
             />
             <Button
-              label="Paylaş"
+              label={t('messages.share')}
               variant="secondary"
               size="md"
               icon="share-social-outline"
@@ -503,25 +469,23 @@ export default function ProfileScreen() {
             />
           </View>
 
-          {/* Rank / XP progression — opens Görevler */}
           <RankProgressCard
             onPress={() => router.push("/profile/challenges" as any)}
             style={{ marginTop: 16 }}
           />
 
-          {/* Stats bar */}
           <View style={styles.statsBar}>
             <ProfileStatCell
               icon="book"
               value={userStats.stories}
-              label="Hikâye"
+              label={t('common.story')}
               color={colors.primary}
             />
             <View style={styles.statsDivider} />
             <ProfileStatCell
               icon="people"
               value={userStats.followers}
-              label="Takipçi"
+              label={t('profileScreen.followers')}
               color="#4C6FE0"
               onPress={() =>
                 router.push(`/profile/followers/${currentUser.id}` as any)
@@ -531,7 +495,7 @@ export default function ProfileScreen() {
             <ProfileStatCell
               icon="leaf"
               value={userStats.following}
-              label="Takip"
+              label={t('profileScreen.followingShort')}
               color={colors.primary}
               onPress={() =>
                 router.push(`/profile/following/${currentUser.id}` as any)
@@ -541,21 +505,19 @@ export default function ProfileScreen() {
             <ProfileStatCell
               icon="heart"
               value={userStats.likes}
-              label="Beğeni"
+              label={t('profileScreen.likes')}
               color={colors.bloom}
             />
           </View>
         </View>
 
-        {/* ── Bahçem — published stories shelf ─────────────────── */}
         <ProfileStoryShelf
-          title="Bahçem"
+          title={t('profileScreen.myGarden')}
           count={publishedUserStories.length}
           stories={publishedUserStories}
           onStoryPress={(story) => handleStoryPress(story.id)}
         />
 
-        {/* ── Tabs ──────────────────────────────────────────────── */}
         <View style={styles.tabsWrap}>
           <SegmentedControl
             options={tabOptions}
@@ -564,107 +526,62 @@ export default function ProfileScreen() {
           />
         </View>
 
-        {/* ── Tab content ───────────────────────────────────────── */}
-        <View style={styles.tabContent}>
-          {activeTab === "stories" ? (
-            isLoading ? (
-              <ActivityIndicator
-                color={colors.primary}
-                style={{ marginVertical: 32 }}
+        {activeTab === "conversations" && (
+          <View style={styles.tabContent}>
+            <TouchableOpacity
+              style={[
+                styles.composeBtn,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ]}
+              onPress={() => setShowMessageModal(true)}
+            >
+              <Text variant="body" tone="textSecondary" style={{ flex: 1 }}>
+                {t('profileScreen.writeAMessage')}
+              </Text>
+              <Ionicons
+                name="camera-outline"
+                size={20}
+                color={colors.textSecondary}
               />
-            ) : publishedUserStories.length === 0 ? (
-              <View style={styles.empty}>
-                <Ionicons
-                  name="document-outline"
-                  size={32}
-                  color={colors.textSecondary}
-                />
-                <Text
-                  variant="body"
-                  tone="textSecondary"
-                  style={{ marginTop: 8 }}
-                >
-                  Henüz yayınlanan hikaye yok
-                </Text>
-                <Button
-                  label="İlk Hikayeni Yaz"
-                  variant="primary"
-                  size="sm"
-                  onPress={() => router.push("/(tabs)/write")}
-                  style={{ marginTop: 12 }}
-                />
-              </View>
-            ) : (
-              <View style={{ gap: Spacing.md }}>
-                {publishedUserStories.map((story: Story) => (
-                  <StoryRow
-                    key={story.id}
-                    story={story}
-                    status={getStoryStatus(story)}
-                    onPress={() => handleStoryPress(story.id)}
-                    onMenu={() => handleStoryMenu(story)}
-                  />
-                ))}
-              </View>
-            )
-          ) : (
-            <>
-              {/* Message composer button */}
-              <TouchableOpacity
-                style={[
-                  styles.composeBtn,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
-                onPress={() => setShowMessageModal(true)}
-              >
-                <Text variant="body" tone="textSecondary" style={{ flex: 1 }}>
-                  Bir mesaj yaz...
-                </Text>
-                <Ionicons
-                  name="camera-outline"
-                  size={20}
-                  color={colors.textSecondary}
-                />
-              </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
+        )}
+      </>
+    );
 
-              {userConversations.length === 0 ? (
-                <View style={styles.empty}>
-                  <Ionicons
-                    name="chatbubble-ellipses-outline"
-                    size={32}
-                    color={colors.textSecondary}
-                  />
-                  <Text
-                    variant="body"
-                    tone="textSecondary"
-                    style={{ marginTop: 8 }}
-                  >
-                    Henüz mesaj paylaşmadın
-                  </Text>
-                </View>
-              ) : (
-                <View style={{ gap: Spacing.md }}>
-                  {userConversations.map((conversation: Conversation) => (
-                    <ProfileConversationCard
-                      key={conversation.id}
-                      conversation={conversation}
-                      onPress={() =>
-                        router.push(`/conversation/${conversation.id}` as any)
-                      }
-                      onImagePress={handleOpenImageModal}
-                      onDelete={() => handleDeleteConversation(conversation)}
-                    />
-                  ))}
-                </View>
-              )}
-            </>
-          )}
+  const listEmpty =
+    activeTab === "stories" ? (
+      isLoading ? (
+        <ActivityIndicator color={colors.primary} style={{ marginVertical: 32 }} />
+      ) : (
+        <View style={styles.empty}>
+          <Ionicons name="document-outline" size={32} color={colors.textSecondary} />
+          <Text variant="body" tone="textSecondary" style={{ marginTop: 8 }}>
+            {t('profileScreen.noPublishedStories')}
+          </Text>
+          <Button
+            label={t('profileScreen.writeFirstStory')}
+            variant="primary"
+            size="sm"
+            onPress={() => router.push("/(tabs)/write")}
+            style={{ marginTop: 12 }}
+          />
         </View>
+      )
+    ) : (
+      <View style={styles.empty}>
+        <Ionicons name="chatbubble-ellipses-outline" size={32} color={colors.textSecondary} />
+        <Text variant="body" tone="textSecondary" style={{ marginTop: 8 }}>
+          {t('profileScreen.noMessagesShared')}
+        </Text>
+      </View>
+    );
 
-        {/* ── Menu items ────────────────────────────────────────── */}
+  const listFooter = (
+    <>
         <View style={styles.menuSection}>
           {menuItems.map((item, index) => (
             <TouchableOpacity
@@ -703,9 +620,24 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           ))}
         </View>
-      </ScrollView>
+    </>
+  );
 
-      {/* Image Modal */}
+  return (
+    <Screen style={{ flex: 1, backgroundColor: colors.background }} maxContentWidth={ContentMaxWidth.content}>
+      <FlashList
+        data={activeTab === "stories" ? publishedUserStories : userConversations}
+        keyExtractor={(item: any) => item.id}
+        renderItem={renderTabItem}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
+        ListFooterComponent={listFooter}
+        ItemSeparatorComponent={itemSeparator}
+        key={activeTab}
+      />
+
       <ImageModal
         visible={imageModalVisible}
         imageUri={selectedModalImage || ""}
@@ -715,7 +647,6 @@ export default function ProfileScreen() {
         }}
       />
 
-      {/* Message Modal */}
       <Modal
         visible={showMessageModal}
         animationType="slide"
@@ -726,10 +657,10 @@ export default function ProfileScreen() {
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={handleCloseMessageModal}>
               <Text variant="body" tone="textSecondary">
-                İptal
+                {t('common.cancel')}
               </Text>
             </TouchableOpacity>
-            <Text variant="subheading">Mesaj Paylaş</Text>
+            <Text variant="subheading">{t('profileScreen.shareMessage')}</Text>
             <TouchableOpacity
               style={[
                 styles.shareBtn,
@@ -745,7 +676,7 @@ export default function ProfileScreen() {
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <Text variant="label" color="#fff">
-                  Paylaş
+                  {t('messages.share')}
                 </Text>
               )}
             </TouchableOpacity>
@@ -756,7 +687,7 @@ export default function ProfileScreen() {
                 styles.msgInput,
                 { color: colors.text, borderBottomColor: colors.border },
               ]}
-              placeholder="Mesaj yaz..."
+              placeholder={t('profileScreen.messagePlaceholder')}
               placeholderTextColor={colors.textSecondary}
               value={messageContent}
               onChangeText={setMessageContent}
@@ -797,7 +728,7 @@ export default function ProfileScreen() {
                 color={colors.primary}
               />
               <Text variant="label" tone="primary">
-                Fotoğraf Ekle
+                {t('profileScreen.addPhoto')}
               </Text>
             </TouchableOpacity>
             <View
@@ -805,10 +736,10 @@ export default function ProfileScreen() {
             >
               <View style={{ flex: 1 }}>
                 <Text variant="label" style={{ fontWeight: "600" }}>
-                  Takipçilere Duyur
+                  {t('profileScreen.announceToFollowers')}
                 </Text>
                 <Text variant="caption" tone="textSecondary">
-                  Takipçilerin bu mesajı bildirim olarak alsın
+                  {t('profileScreen.announceToFollowersSub')}
                 </Text>
               </View>
               <TouchableOpacity
@@ -845,16 +776,17 @@ function RankProgressCard({
   style?: any;
 }) {
   const { colors } = useTheme();
-  const { xp, streak, challengeProgress, claimedChallenges } = useAppSelector(
-    (s) => s.challenge,
-  );
+  const { t } = useTranslation();
+  const xp = useAppSelector((s) => s.challenge.xp);
+  const streak = useAppSelector((s) => s.challenge.streak);
+  const claimedChallenges = useAppSelector((s) => s.challenge.claimedChallenges);
   const rankIndex = getRankIndex(xp);
   const rank = RANKS[rankIndex];
   const nextRank = RANKS[rankIndex + 1];
   const floor = rank.min;
   const ceil = nextRank ? nextRank.min : rank.min;
   const xpPct = nextRank ? Math.min((xp - floor) / (ceil - floor), 1) : 1;
-  const fmt = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}b` : `${n}`);
+  const fmt = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}${t('common.thousandSuffix')}` : `${n}`);
   const totalChallenges = CHALLENGE_DEFS.length;
   const doneChallenges = claimedChallenges.length;
 
@@ -901,7 +833,7 @@ function RankProgressCard({
               color: colors.textLight,
             }}
           >
-            Seviye {rankIndex + 1}
+            {t('challengesScreen.level', { level: rankIndex + 1 })}
           </Text>
           <Text
             variant="heading"
@@ -913,7 +845,7 @@ function RankProgressCard({
               lineHeight: 24,
             }}
           >
-            {rank.name}
+            {t(rank.name)}
           </Text>
         </View>
         <View
@@ -976,7 +908,7 @@ function RankProgressCard({
               tone="textSecondary"
               style={{ fontWeight: "600" }}
             >
-              {streak} gün seri
+              {t('challengesScreen.streakDays', { count: streak })}
             </Text>
           </View>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
@@ -990,7 +922,7 @@ function RankProgressCard({
               tone="textSecondary"
               style={{ fontWeight: "600" }}
             >
-              {doneChallenges}/{totalChallenges} görev
+              {t('challengesScreen.challengesDone', { done: doneChallenges, total: totalChallenges })}
             </Text>
           </View>
         </View>
@@ -999,7 +931,7 @@ function RankProgressCard({
             variant="caption"
             style={{ fontWeight: "700", color: colors.primary }}
           >
-            Görevler
+            {t('challengesScreen.title')}
           </Text>
           <Ionicons name="chevron-forward" size={13} color={colors.primary} />
         </View>
@@ -1048,6 +980,9 @@ const styles = StyleSheet.create({
   tabContent: {
     paddingHorizontal: Spacing.screenX,
     paddingBottom: 8,
+  },
+  tabRow: {
+    paddingHorizontal: Spacing.screenX,
   },
   composeBtn: {
     flexDirection: "row",

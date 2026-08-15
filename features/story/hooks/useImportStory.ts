@@ -1,5 +1,8 @@
+import i18n from '@/i18n';
 import { useAppSelector } from '@/store/hooks';
 import { storyActions } from '@/store/storyStore';
+import { challengeActions } from '@/store/challengeStore';
+import { reviewPromptActions } from '@/features/review/services/reviewPrompt';
 import { StoryCategory } from '@/types';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -7,9 +10,6 @@ import { Alert } from 'react-native';
 import { autoSplitPastedText, StudioChapter } from '../utils/chapterContent';
 import { readingMinutes, wordCount } from '../utils/textStats';
 
-// "Hikâyeni Taşı" — Wattpad'den (ya da başka bir kaynaktan) çok bölümlü bir
-// metni tek seferde yapıştır, otomatik bölümlere ayrılsın, önizle, yayınla.
-// Bkz. YAPILACAKLAR 2.6.
 export function useImportStory() {
   const router = useRouter();
   const uid = useAppSelector(s => s.auth.user?.id);
@@ -31,19 +31,19 @@ export function useImportStory() {
 
   const publish = async () => {
     if (!uid) {
-      Alert.alert('Giriş gerekli', 'Devam etmek için giriş yapmalısın.');
+      Alert.alert(i18n.t('studio.loginRequiredTitle'), i18n.t('studio.loginRequiredMessage'));
       return;
     }
     if (title.trim().length < 3) {
-      Alert.alert('Başlık eksik', 'Hikâye başlığı en az 3 karakter olmalı.');
+      Alert.alert(i18n.t('studio.titleMissingTitle'), i18n.t('studio.titleMissingMessage'));
       return;
     }
     if (category === 'other') {
-      Alert.alert('Tür seç', 'Yayınlamadan önce bir tür seçmelisin.');
+      Alert.alert(i18n.t('studio.pickGenreTitle'), i18n.t('studio.pickGenreShortMessage'));
       return;
     }
     if (chapters.length === 0) {
-      Alert.alert('İçerik eksik', 'Yapıştırdığın metinden bölüm çıkarılamadı.');
+      Alert.alert(i18n.t('studio.contentMissingTitle'), i18n.t('studio.contentMissingMessage'));
       return;
     }
 
@@ -66,7 +66,7 @@ export function useImportStory() {
       } as any);
 
       if (!result.success || !result.storyId) {
-        Alert.alert('Hata', result.error || 'Hikâye oluşturulamadı.');
+        Alert.alert(i18n.t('common.error'), result.error || i18n.t('story.createFailed'));
         return;
       }
 
@@ -76,7 +76,20 @@ export function useImportStory() {
         chapterWordCounts: chapters.map(c => wordCount(c.content)),
       });
 
-      Alert.alert('Harika!', `"${title.trim()}" ${chapters.length} bölümle yayınlandı.`);
+      if (uid) challengeActions.trackAction(uid, 'storiesPublished').catch(() => {});
+
+      // Değerlendirme, kendi uyarımız kapandıktan SONRA istenir ki iki diyalog
+      // üst üste binmesin.
+      Alert.alert(
+        i18n.t('studio.publishedTitle'),
+        i18n.t('studio.importPublished', { title: title.trim(), count: chapters.length }),
+        [{
+          text: i18n.t('common.ok'),
+          onPress: () => {
+            if (uid) reviewPromptActions.recordMoment('storyPublished').catch(() => {});
+          },
+        }]
+      );
       router.replace(`/story/${result.storyId}` as any);
     } finally {
       setPublishing(false);

@@ -1,93 +1,89 @@
-import { offlineStorageService } from '@/services/offlineStorageService';
+import { offlineStorageService, OfflineChapter } from '@/services/offlineStorageService';
+import i18n from '@/i18n';
 import { Story } from '@/types';
 import NetInfo from '@react-native-community/netinfo';
 import { store } from '@/store';
 import { clearDownloadProgress, patchStory, setDownloadProgress } from '@/store/slices/storySlice';
+import { getChapter, loadAllChapters } from './chapters';
 import { getStoryById } from './storyApi';
+import { logger } from '@/utils/logger';
 
-// ===== OFFLINE STORY MANAGEMENT =====
-
-// Offline hikayeleri yükle
 export async function loadOfflineStories() {
   try {
     const offlineStories = await offlineStorageService.getOfflineStories();
     store.dispatch(patchStory({ offlineStories: offlineStories }));
   } catch (error) {
-    console.error('Load offline stories error:', error);
+    logger.error('Load offline stories error:', error);
   }
 }
 
-// Hikayeyi offline indir
 export async function downloadStoryOffline(story: Story): Promise<{ success: boolean; error?: string }> {
+  store.dispatch(setDownloadProgress({ storyId: story.id, progress: 0 }));
+
+  const progressInterval = setInterval(async () => {
+    const progress = await offlineStorageService.getDownloadProgress(story.id);
+    if (progress) {
+      store.dispatch(setDownloadProgress({ storyId: story.id, progress: progress.progress }));
+    }
+  }, 250);
+
   try {
-    // İndirme durumunu başlat
-    store.dispatch(setDownloadProgress({ storyId: story.id, progress: 0 }));
-
-    // Progress listener'ı kur
-    const progressInterval = setInterval(async () => {
-      const progress = await offlineStorageService.getDownloadProgress(story.id);
-      if (progress) {
-        store.dispatch(setDownloadProgress({ storyId: story.id, progress: progress.progress }));
-
-        if (progress.status === 'completed' || progress.status === 'failed') {
-          clearInterval(progressInterval);
-          // İndirme durumunu temizle
-          store.dispatch(clearDownloadProgress(story.id));
-        }
+    let chapters: OfflineChapter[] | undefined;
+    if (story.chaptersInSubcollection) {
+      const all = await loadAllChapters(story.id);
+      chapters = all.map((c) => ({ title: c.title, content: c.content }));
+      if (chapters.length === 0) {
+        return { success: false, error: i18n.t('offline.chaptersDownloadFailed') };
       }
-    }, 100);
+    }
 
-    // Hikayeyi indir
-    const result = await offlineStorageService.downloadStory(story);
+    const result = await offlineStorageService.downloadStory(story, chapters);
 
     if (result.success) {
-      // Offline hikayeleri yenile
       await loadOfflineStories();
     }
 
     return result;
   } catch (error) {
-    console.error('Download story offline error:', error);
-    return { success: false, error: 'İndirme sırasında hata oluştu' };
+    logger.error('Download story offline error:', error);
+    return { success: false, error: i18n.t('offline.downloadError') };
+  } finally {
+    clearInterval(progressInterval);
+    store.dispatch(clearDownloadProgress(story.id));
   }
 }
 
-// Offline hikayeyi sil
 export async function deleteOfflineStory(storyId: string): Promise<boolean> {
   try {
     const success = await offlineStorageService.deleteOfflineStory(storyId);
     if (success) {
-      // State'i güncelle
       store.dispatch(patchStory({ offlineStories: store.getState().story.offlineStories.filter(story => story.id !== storyId) }));
     }
     return success;
   } catch (error) {
-    console.error('Delete offline story error:', error);
+    logger.error('Delete offline story error:', error);
     return false;
   }
 }
 
-// Hikayenin offline olup olmadığını kontrol et
 export async function isStoryOffline(storyId: string): Promise<boolean> {
   try {
     return await offlineStorageService.isStoryOffline(storyId);
   } catch (error) {
-    console.error('Check story offline error:', error);
+    logger.error('Check story offline error:', error);
     return false;
   }
 }
 
-// Offline hikayeyi getir (internet olmadan)
 export async function getOfflineStory(storyId: string): Promise<Story | null> {
   try {
     return await offlineStorageService.getOfflineStory(storyId);
   } catch (error) {
-    console.error('Get offline story error:', error);
+    logger.error('Get offline story error:', error);
     return null;
   }
 }
 
-// Offline storage bilgilerini getir
 export async function getOfflineStorageInfo(): Promise<{ used: number; total: number; count: number }> {
   try {
     const sizeInfo = await offlineStorageService.getTotalStorageSize();
@@ -99,12 +95,11 @@ export async function getOfflineStorageInfo(): Promise<{ used: number; total: nu
       count: offlineStories.length,
     };
   } catch (error) {
-    console.error('Get offline storage info error:', error);
+    logger.error('Get offline storage info error:', error);
     return { used: 0, total: 500 * 1024, count: 0 };
   }
 }
 
-// Tüm offline verileri temizle
 export async function clearAllOfflineData(): Promise<boolean> {
   try {
     const success = await offlineStorageService.clearAllOfflineData();
@@ -113,80 +108,78 @@ export async function clearAllOfflineData(): Promise<boolean> {
     }
     return success;
   } catch (error) {
-    console.error('Clear all offline data error:', error);
+    logger.error('Clear all offline data error:', error);
     return false;
   }
 }
 
-// Eski offline hikayeleri temizle
 export async function cleanupOldOfflineStories(): Promise<number> {
   try {
     const removedCount = await offlineStorageService.cleanupOldStories();
     if (removedCount > 0) {
-      // State'i güncelle
       await loadOfflineStories();
     }
     return removedCount;
   } catch (error) {
-    console.error('Cleanup old offline stories error:', error);
+    logger.error('Cleanup old offline stories error:', error);
     return 0;
   }
 }
 
-// İndirme progress'ini getir
 export function getDownloadProgress(storyId: string): number {
   return store.getState().story.isDownloading[storyId] || 0;
 }
 
-// Hikayenin indirilip indirilmediğini kontrol et
 export function isStoryDownloading(storyId: string): boolean {
   return storyId in store.getState().story.isDownloading;
 }
 
-// ===== OFFLINE-AWARE STORY FETCHING =====
-
-// Hikayeyi getir (offline fallback ile)
 export async function getStoryWithOfflineFallback(storyId: string): Promise<Story | null> {
   try {
-    // Önce internet bağlantısını kontrol et
     const netInfo = await NetInfo.fetch();
     const isOnline = netInfo.isConnected && netInfo.isInternetReachable;
 
     if (isOnline) {
-      // Online ise Firebase'den getir
       const onlineStory = await getStoryById(storyId);
       if (onlineStory) {
         return onlineStory;
       }
     }
 
-    // Offline ise veya online'da bulunamazsa offline'dan getir
-    console.log('Fetching story from offline storage:', storyId);
+    logger.debug('Fetching story from offline storage:', storyId);
     const offlineStory = await getOfflineStory(storyId);
     return offlineStory;
   } catch (error) {
-    console.error('Get story with offline fallback error:', error);
-    // Hata durumunda offline'dan getir
+    logger.error('Get story with offline fallback error:', error);
     return await getOfflineStory(storyId);
   }
 }
 
-// Hikayeleri listele (offline aware)
+export async function getChapterWithOfflineFallback(
+  storyId: string,
+  index: number
+): Promise<{ title?: string; content: string } | null> {
+  try {
+    const ch = await getChapter(storyId, index);
+    if (ch) return ch;
+  } catch (e) {
+    logger.error('Get chapter with offline fallback error (Firestore):', e);
+  }
+  return await offlineStorageService.getOfflineChapter(storyId, index);
+}
+
 export async function getStoriesWithOfflineFallback(): Promise<{
   stories: Story[];
   isFromCache: boolean;
   offlineCount: number;
 }> {
   try {
-    // Önce internet bağlantısını kontrol et
     const netInfo = await NetInfo.fetch();
     const isOnline = netInfo.isConnected && netInfo.isInternetReachable;
 
-    // Offline hikayeleri her zaman yükle
     const offlineStories = await offlineStorageService.getOfflineStories();
 
     if (isOnline) {
-      // Online ise normal hikayeleri getir
       const currentStories = store.getState().story.stories;
       return {
         stories: currentStories,
@@ -194,7 +187,6 @@ export async function getStoriesWithOfflineFallback(): Promise<{
         offlineCount: offlineStories.length,
       };
     } else {
-      // Offline ise sadece offline hikayeleri göster
       return {
         stories: offlineStories,
         isFromCache: true,
@@ -202,8 +194,7 @@ export async function getStoriesWithOfflineFallback(): Promise<{
       };
     }
   } catch (error) {
-    console.error('Get stories with offline fallback error:', error);
-    // Hata durumunda offline hikayeleri döndür
+    logger.error('Get stories with offline fallback error:', error);
     const offlineStories = await offlineStorageService.getOfflineStories();
     return {
       stories: offlineStories,
@@ -213,18 +204,16 @@ export async function getStoriesWithOfflineFallback(): Promise<{
   }
 }
 
-// Internet bağlantısını kontrol et
 export async function checkInternetConnection(): Promise<boolean> {
   try {
     const netInfo = await NetInfo.fetch();
     return Boolean(netInfo.isConnected && netInfo.isInternetReachable);
   } catch (error) {
-    console.error('Check internet connection error:', error);
+    logger.error('Check internet connection error:', error);
     return false;
   }
 }
 
-// Offline mode banner için bilgi
 export async function getOfflineModeInfo(): Promise<{
   isOffline: boolean;
   offlineStoriesCount: number;
@@ -242,7 +231,7 @@ export async function getOfflineModeInfo(): Promise<{
         : undefined,
     };
   } catch (error) {
-    console.error('Get offline mode info error:', error);
+    logger.error('Get offline mode info error:', error);
     return {
       isOffline: true,
       offlineStoriesCount: 0,
@@ -263,6 +252,7 @@ export const offlineActions = {
   isStoryDownloading,
   getStoryWithOfflineFallback,
   getStoriesWithOfflineFallback,
+  getChapterWithOfflineFallback,
   checkInternetConnection,
   getOfflineModeInfo,
 };

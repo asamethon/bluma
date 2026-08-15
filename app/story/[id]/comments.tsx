@@ -1,65 +1,75 @@
-import ReportSheet from '@/components/ReportSheet';
-import { storyActions } from '@/store/storyStore';
-import { useAppSelector } from '@/store/hooks';
-import { Comment } from '@/types';
-import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import ReportSheet from "@/components/ReportSheet";
+import { storyActions } from "@/store/storyStore";
+import { useAppSelector } from "@/store/hooks";
+import { Comment } from "@/types";
+import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
+import { formatRelativeTime } from "@/features/story/utils/time";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
-  Dimensions,
   Keyboard,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-} from 'react-native';
-import { Screen } from '@/components/ui';
-import { useTheme } from '@/constants/theme';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+} from "react-native";
+import { FlashList } from '@shopify/flash-list';
+import { Screen } from "@/components/ui";
+import { useTheme } from "@/constants/theme";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
+import { logger } from '@/utils/logger';
 
 export default function CommentsScreen() {
-  const { id, chapter } = useLocalSearchParams<{ id: string; chapter?: string }>();
+  const { id, chapter } = useLocalSearchParams<{
+    id: string;
+    chapter?: string;
+  }>();
   const router = useRouter();
   const { colors } = useTheme();
-  const { user: currentUser } = useAppSelector(s => s.auth);
-  const { storyComments = [] } = useAppSelector(s => s.story);
-  const currentChapterIndex = chapter !== undefined ? parseInt(chapter, 10) || 0 : undefined;
+  const { t } = useTranslation();
+  const currentUser = useAppSelector((s) => s.auth.user);
+  const storyComments = useAppSelector((s) => s.story.storyComments) ?? [];
+  const hasMoreComments = useAppSelector((s) => s.story.storyCommentsHasMore);
+  const currentChapterIndex =
+    chapter !== undefined ? parseInt(chapter, 10) || 0 : undefined;
 
-  const [newComment, setNewComment] = useState('');
+  const [newComment, setNewComment] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [reportTarget, setReportTarget] = useState<{ targetId: string; reportedUserId?: string } | null>(null);
-  // Bölüm filtresi (bkz. YAPILACAKLAR 2.3) — hikâye tek bölümlüyse anlamsız.
-  const [filterChapter, setFilterChapter] = useState(currentChapterIndex !== undefined);
-  const visibleComments = filterChapter && currentChapterIndex !== undefined
-    ? storyComments.filter(c => c.chapterIndex === currentChapterIndex)
-    : storyComments;
+  const [reportTarget, setReportTarget] = useState<{
+    targetId: string;
+    reportedUserId?: string;
+  } | null>(null);
+  const [filterChapter, setFilterChapter] = useState(
+    currentChapterIndex !== undefined,
+  );
+  const visibleComments =
+    filterChapter && currentChapterIndex !== undefined
+      ? storyComments.filter((c) => c.chapterIndex === currentChapterIndex)
+      : storyComments;
 
-  // Keyboard animation
   const keyboardHeight = useSharedValue(0);
-  const screenHeight = Dimensions.get('window').height;
 
-  const styles = createStyles(colors);
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
-  // Load comments when component mounts
   useEffect(() => {
     if (id) {
-      // Real-time comments listener'ı başlat
       storyActions.setupCommentsListener(id);
     }
-
-    // Cleanup on unmount
     return () => {
-      // Comments listener cleanup is handled in storyStore
+      storyActions.cleanupCommentsListener();
     };
   }, [id]);
 
-  // Keyboard listeners
   useEffect(() => {
     let showTimeout: any;
     let hideTimeout: any;
@@ -87,8 +97,10 @@ export default function CommentsScreen() {
       }, 50);
     };
 
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
 
     const showSubscription = Keyboard.addListener(showEvent, keyboardWillShow);
     const hideSubscription = Keyboard.addListener(hideEvent, keyboardWillHide);
@@ -109,7 +121,6 @@ export default function CommentsScreen() {
     }
   };
 
-  // Animated style for input container
   const animatedInputStyle = useAnimatedStyle(() => {
     return {
       transform: [
@@ -123,7 +134,6 @@ export default function CommentsScreen() {
     };
   });
 
-  // Animated style for input container padding
   const animatedInputContainerStyle = useAnimatedStyle(() => {
     return {
       paddingBottom: withSpring(keyboardHeight.value > 0 ? 40 : 40, {
@@ -133,48 +143,58 @@ export default function CommentsScreen() {
     };
   });
 
-  // Static scroll view padding
   const scrollContentStyle = {
     paddingBottom: 180,
   };
 
   const handleLikeComment = async (commentId: string) => {
     if (!currentUser?.id) {
-      Alert.alert('Giriş Gerekli', 'Bu işlemi yapmak için giriş yapmalısınız.');
+      Alert.alert(
+        t("studio.loginRequiredTitle"),
+        t("commentsScreen.actionLoginRequired"),
+      );
       return;
     }
 
     try {
-      // Tam liste reload'u YOK — ekrandaki real-time listener sayaç
-      // değişikliğini kendisi getirir; reload tüm listeyi titretiyordu.
       await storyActions.likeComment(id, commentId);
     } catch (error) {
-      console.error('Like comment error:', error);
+      logger.error("Like comment error:", error);
     }
   };
 
   const handleSubmitComment = async () => {
     if (!newComment.trim()) return;
-    
+
     if (!currentUser?.id) {
-      Alert.alert('Giriş Gerekli', 'Yorum yapmak için giriş yapmalısınız.');
+      Alert.alert(
+        t("studio.loginRequiredTitle"),
+        t("commentsScreen.commentLoginRequired"),
+      );
       return;
     }
 
     try {
       setIsSubmitting(true);
-      const result = await storyActions.addComment(id, newComment, replyingTo || undefined, currentChapterIndex);
-      
+      const result = await storyActions.addComment(
+        id,
+        newComment,
+        replyingTo || undefined,
+        currentChapterIndex,
+      );
+
       if (result.success) {
-        setNewComment('');
+        setNewComment("");
         setReplyingTo(null);
-        // Real-time listener otomatik olarak yeni yorumu gösterecek
       } else {
-        Alert.alert('Hata', result.error || 'Yorum eklenirken bir hata oluştu.');
+        Alert.alert(
+          t("common.error"),
+          result.error || t("conversations.commentFailed"),
+        );
       }
     } catch (error) {
-      console.error('Submit comment error:', error);
-      Alert.alert('Hata', 'Yorum eklenirken bir hata oluştu.');
+      logger.error("Submit comment error:", error);
+      Alert.alert(t("common.error"), t("conversations.commentFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -182,43 +202,23 @@ export default function CommentsScreen() {
 
   const handleDeleteComment = async (commentId: string) => {
     Alert.alert(
-      'Yorumu Sil',
-      'Bu yorumu silmek istediğinizden emin misiniz?',
+      t("commentsScreen.deleteTitle"),
+      t("commentsScreen.deleteConfirm"),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: 'Sil',
-          style: 'destructive',
+          text: t("common.delete"),
+          style: "destructive",
           onPress: async () => {
             try {
-              // Reload gereksiz — real-time listener silinen yorumu düşürür.
               await storyActions.deleteComment(id, commentId);
             } catch (error) {
-              console.error('Delete comment error:', error);
+              logger.error("Delete comment error:", error);
             }
           },
         },
-      ]
+      ],
     );
-  };
-
-  const formatTimeAgo = (timestamp: any) => {
-    if (!timestamp) return 'Şimdi';
-    
-    const now = new Date();
-    const commentDate = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    const diffInMinutes = Math.floor((now.getTime() - commentDate.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'Şimdi';
-    if (diffInMinutes < 60) return `${diffInMinutes} dk önce`;
-    
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours} saat önce`;
-    
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays} gün önce`;
-    
-    return commentDate.toLocaleDateString('tr-TR');
   };
 
   const renderComment = (comment: Comment, level: number = 0) => (
@@ -249,7 +249,7 @@ export default function CommentsScreen() {
           </Text>
         </View>
         <Text style={styles.commentTime}>
-          {formatTimeAgo(comment.createdAt)}
+          {formatRelativeTime(comment.createdAt)}
         </Text>
       </View>
 
@@ -277,10 +277,9 @@ export default function CommentsScreen() {
             size={16}
             color={colors.textSecondary}
           />
-          <Text style={styles.actionText}>Yanıtla</Text>
+          <Text style={styles.actionText}>{t("commentsScreen.reply")}</Text>
         </TouchableOpacity>
 
-        {/* Show delete button only for comment author */}
         {currentUser?.id === comment.user.id ? (
           <TouchableOpacity
             style={styles.commentAction}
@@ -291,20 +290,28 @@ export default function CommentsScreen() {
               size={16}
               color={colors.textSecondary}
             />
-            <Text style={styles.actionText}>Sil</Text>
+            <Text style={styles.actionText}>{t("common.delete")}</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={styles.commentAction}
-            onPress={() => setReportTarget({ targetId: comment.id, reportedUserId: comment.user.id })}
+            onPress={() =>
+              setReportTarget({
+                targetId: comment.id,
+                reportedUserId: comment.user.id,
+              })
+            }
           >
-            <Ionicons name="flag-outline" size={16} color={colors.textSecondary} />
-            <Text style={styles.actionText}>Bildir</Text>
+            <Ionicons
+              name="flag-outline"
+              size={16}
+              color={colors.textSecondary}
+            />
+            <Text style={styles.actionText}>{t("report.report")}</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Render replies */}
       {comment.replies && comment.replies.length > 0 && (
         <View style={styles.repliesContainer}>
           {comment.replies.map((reply) => renderComment(reply, level + 1))}
@@ -315,61 +322,102 @@ export default function CommentsScreen() {
 
   return (
     <Screen style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Yorumlar ({visibleComments?.length || 0})</Text>
+        <Text style={styles.headerTitle}>
+          {t("commentsScreen.title", { count: visibleComments?.length || 0 })}
+        </Text>
         <View style={styles.headerButton} />
       </View>
 
-      {/* Bölüm filtresi — yalnızca bir bölümden açıldıysa gösterilir */}
       {currentChapterIndex !== undefined && (
         <View style={styles.chapterFilterRow}>
           <TouchableOpacity
-            style={[styles.chapterFilterChip, !filterChapter && { backgroundColor: colors.primary }]}
+            style={[
+              styles.chapterFilterChip,
+              !filterChapter && { backgroundColor: colors.primary },
+            ]}
             onPress={() => setFilterChapter(false)}
           >
-            <Text style={[styles.chapterFilterText, !filterChapter && { color: '#fff' }]}>Tümü</Text>
+            <Text
+              style={[
+                styles.chapterFilterText,
+                !filterChapter && { color: "#fff" },
+              ]}
+            >
+              {t("challengesScreen.filterAll")}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.chapterFilterChip, filterChapter && { backgroundColor: colors.primary }]}
+            style={[
+              styles.chapterFilterChip,
+              filterChapter && { backgroundColor: colors.primary },
+            ]}
             onPress={() => setFilterChapter(true)}
           >
-            <Text style={[styles.chapterFilterText, filterChapter && { color: '#fff' }]}>
-              Bu Bölüm (Bölüm {currentChapterIndex + 1})
+            <Text
+              style={[
+                styles.chapterFilterText,
+                filterChapter && { color: "#fff" },
+              ]}
+            >
+              {t("commentsScreen.thisChapter", {
+                chapter: currentChapterIndex + 1,
+              })}
             </Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Comments List */}
-      <ScrollView
+      <FlashList
+        data={visibleComments}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => renderComment(item)}
         style={styles.commentsList}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={scrollContentStyle}
-      >
-        {!visibleComments || visibleComments.length === 0 ? (
+        ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Ionicons name="chatbubble-outline" size={48} color={colors.textSecondary} />
-            <Text style={styles.emptyStateTitle}>Henüz yorum yok</Text>
+            <Ionicons
+              name="chatbubble-outline"
+              size={48}
+              color={colors.textSecondary}
+            />
+            <Text style={styles.emptyStateTitle}>
+              {t("comments.emptyTitle")}
+            </Text>
             <Text style={styles.emptyStateMessage}>
-              İlk yorumu sen yap ve tartışmayı başlat!
+              {t("commentsScreen.emptyMessage")}
             </Text>
           </View>
-        ) : (
-          visibleComments.map(comment => renderComment(comment))
-        )}
-      </ScrollView>
+        }
+        ListFooterComponent={
+          hasMoreComments ? (
+            <TouchableOpacity
+              style={styles.loadMoreButton}
+              onPress={() => storyActions.loadMoreComments()}
+            >
+              <Text style={styles.loadMoreText}>
+                {t("commentsScreen.loadMore")}
+              </Text>
+            </TouchableOpacity>
+          ) : null
+        }
+      />
 
-      {/* Comment Input - Animated with keyboard */}
       <Animated.View style={[styles.keyboardAvoidingView, animatedInputStyle]}>
-        <Animated.View style={[styles.commentInputContainer, animatedInputContainerStyle]}>
+        <Animated.View
+          style={[styles.commentInputContainer, animatedInputContainerStyle]}
+        >
           {replyingTo && (
             <View style={styles.replyingToContainer}>
               <Text style={styles.replyingToText}>
-                Yanıtlıyorsun: {(storyComments || []).find(c => c.id === replyingTo)?.user.displayName}
+                {t("commentsScreen.replyingTo", {
+                  name: (storyComments || []).find((c) => c.id === replyingTo)
+                    ?.user.displayName,
+                })}
               </Text>
               <TouchableOpacity onPress={() => setReplyingTo(null)}>
                 <Ionicons name="close" size={16} color={colors.textSecondary} />
@@ -390,7 +438,11 @@ export default function CommentsScreen() {
             </View>
             <TextInput
               style={styles.commentInput}
-              placeholder={replyingTo ? "Yanıtını yaz..." : "Yorumunu yaz..."}
+              placeholder={
+                replyingTo
+                  ? t("commentsScreen.replyPlaceholder")
+                  : t("commentsScreen.commentPlaceholder")
+              }
               placeholderTextColor={colors.textSecondary}
               value={newComment}
               onChangeText={setNewComment}
@@ -400,8 +452,9 @@ export default function CommentsScreen() {
             />
             <TouchableOpacity
               style={[
-                styles.sendButton, 
-                (!newComment.trim() || isSubmitting) && styles.sendButtonDisabled
+                styles.sendButton,
+                (!newComment.trim() || isSubmitting) &&
+                  styles.sendButtonDisabled,
               ]}
               onPress={handleSubmitComment}
               disabled={!newComment.trim() || isSubmitting}
@@ -409,7 +462,11 @@ export default function CommentsScreen() {
               <Ionicons
                 name="send"
                 size={18}
-                color={newComment.trim() && !isSubmitting ? colors.white : colors.textLight}
+                color={
+                  newComment.trim() && !isSubmitting
+                    ? colors.white
+                    : colors.textLight
+                }
               />
             </TouchableOpacity>
           </View>
@@ -419,7 +476,16 @@ export default function CommentsScreen() {
       <ReportSheet
         visible={!!reportTarget}
         onClose={() => setReportTarget(null)}
-        target={reportTarget ? { type: 'comment', targetId: reportTarget.targetId, reportedUserId: reportTarget.reportedUserId, contextId: String(id) } : null}
+        target={
+          reportTarget
+            ? {
+                type: "comment",
+                targetId: reportTarget.targetId,
+                reportedUserId: reportTarget.reportedUserId,
+                contextId: String(id),
+              }
+            : null
+        }
       />
     </Screen>
   );
@@ -432,9 +498,9 @@ const createStyles = (colors: any) =>
       backgroundColor: colors.background,
     },
     header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
       paddingHorizontal: 20,
       paddingVertical: 16,
       borderBottomWidth: 1,
@@ -445,12 +511,13 @@ const createStyles = (colors: any) =>
       width: 40,
     },
     headerTitle: {
-      fontSize: 18, lineHeight: 23,
-      fontWeight: '600',
+      fontSize: 18,
+      lineHeight: 23,
+      fontWeight: "600",
       color: colors.text,
     },
     chapterFilterRow: {
-      flexDirection: 'row',
+      flexDirection: "row",
       gap: 8,
       paddingHorizontal: 20,
       paddingBottom: 12,
@@ -462,23 +529,37 @@ const createStyles = (colors: any) =>
       backgroundColor: colors.surfaceVariant,
     },
     chapterFilterText: {
-      fontSize: 12, lineHeight: 16,
-      fontWeight: '600',
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: "600",
       color: colors.textSecondary,
     },
     commentsList: {
       flex: 1,
       paddingHorizontal: 20,
     },
+    loadMoreButton: {
+      alignSelf: "center",
+      paddingVertical: 12,
+      paddingHorizontal: 20,
+      marginTop: 8,
+    },
+    loadMoreText: {
+      fontSize: 14,
+      lineHeight: 19,
+      fontWeight: "600",
+      color: colors.primary,
+    },
     emptyState: {
       flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent: "center",
+      alignItems: "center",
       paddingVertical: 60,
     },
     emptyStateTitle: {
-      fontSize: 18, lineHeight: 23,
-      fontWeight: '600',
+      fontSize: 18,
+      lineHeight: 23,
+      fontWeight: "600",
       color: colors.text,
       marginTop: 16,
       marginBottom: 8,
@@ -486,7 +567,7 @@ const createStyles = (colors: any) =>
     emptyStateMessage: {
       fontSize: 14,
       color: colors.textSecondary,
-      textAlign: 'center',
+      textAlign: "center",
       lineHeight: 20,
     },
     commentItem: {
@@ -495,8 +576,8 @@ const createStyles = (colors: any) =>
       borderBottomColor: colors.border,
     },
     commentHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       marginBottom: 8,
     },
     userAvatar: {
@@ -504,8 +585,8 @@ const createStyles = (colors: any) =>
       height: 32,
       borderRadius: 16,
       backgroundColor: colors.primaryLight,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
       marginRight: 12,
     },
     userAvatarImage: {
@@ -517,13 +598,14 @@ const createStyles = (colors: any) =>
       flex: 1,
     },
     userNameContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 4,
     },
     userName: {
-      fontSize: 14, lineHeight: 18,
-      fontWeight: '600',
+      fontSize: 14,
+      lineHeight: 18,
+      fontWeight: "600",
       color: colors.text,
     },
     verifiedBadge: {
@@ -531,11 +613,13 @@ const createStyles = (colors: any) =>
       height: 14,
     },
     userHandle: {
-      fontSize: 12, lineHeight: 16,
+      fontSize: 12,
+      lineHeight: 16,
       color: colors.primary,
     },
     commentTime: {
-      fontSize: 12, lineHeight: 16,
+      fontSize: 12,
+      lineHeight: 16,
       color: colors.textSecondary,
     },
     commentContent: {
@@ -545,18 +629,19 @@ const createStyles = (colors: any) =>
       marginBottom: 12,
     },
     commentActions: {
-      flexDirection: 'row',
+      flexDirection: "row",
       gap: 20,
     },
     commentAction: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 4,
     },
     actionText: {
-      fontSize: 12, lineHeight: 16,
+      fontSize: 12,
+      lineHeight: 16,
       color: colors.textSecondary,
-      fontWeight: '500',
+      fontWeight: "500",
     },
     repliesContainer: {
       marginTop: 8,
@@ -565,7 +650,7 @@ const createStyles = (colors: any) =>
       paddingLeft: 12,
     },
     keyboardAvoidingView: {
-      position: 'absolute',
+      position: "absolute",
       bottom: 0,
       left: 0,
       right: 0,
@@ -583,23 +668,24 @@ const createStyles = (colors: any) =>
       elevation: 4,
     },
     replyingToContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      backgroundColor: colors.primaryLight + '30',
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      backgroundColor: colors.primaryLight + "30",
       borderRadius: 8,
       paddingHorizontal: 12,
       paddingVertical: 8,
       marginBottom: 12,
     },
     replyingToText: {
-      fontSize: 12, lineHeight: 16,
+      fontSize: 12,
+      lineHeight: 16,
       color: colors.primary,
-      fontWeight: '500',
+      fontWeight: "500",
     },
     inputRow: {
-      flexDirection: 'row',
-      alignItems: 'flex-end',
+      flexDirection: "row",
+      alignItems: "flex-end",
       gap: 12,
     },
     inputAvatar: {
@@ -607,8 +693,8 @@ const createStyles = (colors: any) =>
       height: 32,
       borderRadius: 16,
       backgroundColor: colors.primaryLight,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
     },
     inputAvatarImage: {
       width: 32,
@@ -621,7 +707,8 @@ const createStyles = (colors: any) =>
       borderRadius: 20,
       paddingHorizontal: 16,
       paddingVertical: 12,
-      fontSize: 14, lineHeight: 18,
+      fontSize: 14,
+      lineHeight: 18,
       color: colors.text,
       maxHeight: 100,
       borderWidth: 1,
@@ -632,8 +719,8 @@ const createStyles = (colors: any) =>
       height: 36,
       borderRadius: 18,
       backgroundColor: colors.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
     },
     sendButtonDisabled: {
       backgroundColor: colors.textLight,

@@ -3,6 +3,7 @@ import { useAppSelector } from '@/store/hooks';
 import { readingListActions } from '@/store/readingListStore';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Modal,
@@ -24,6 +25,7 @@ interface Props {
 
 export default function AddToListSheet({ visible, onClose, storyId }: Props) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const lists = useAppSelector(s => s.readingList.lists);
   const [creating, setCreating] = useState(false);
@@ -51,7 +53,7 @@ export default function AddToListSheet({ visible, onClose, storyId }: Props) {
       setCreating(false);
       if (storyId && r.listId) readingListActions.addStory(r.listId, storyId);
     } else {
-      Alert.alert('Hata', r.error || 'Liste oluşturulamadı.');
+      Alert.alert(t('common.error'), r.error || t('lists.createFailed'));
     }
   };
 
@@ -61,12 +63,12 @@ export default function AddToListSheet({ visible, onClose, storyId }: Props) {
         <Pressable style={styles.backdrop} onPress={onClose} />
         <View style={[styles.sheet, { backgroundColor: colors.surface, paddingBottom: bottom + 16 }]}>
           <View style={[styles.handle, { backgroundColor: colors.border }]} />
-          <Text style={[styles.title, { color: colors.text }]}>Listeye ekle</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('lists.addToList')}</Text>
 
           <ScrollView style={{ maxHeight: 320 }} showsVerticalScrollIndicator={false}>
             {lists.length === 0 && (
               <Text style={[styles.empty, { color: colors.textSecondary }]}>
-                Henüz bir okuma listen yok. Aşağıdan ilkini oluştur.
+                {t('lists.emptyHint')}
               </Text>
             )}
             {lists.map(list => {
@@ -78,7 +80,7 @@ export default function AddToListSheet({ visible, onClose, storyId }: Props) {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.listName, { color: colors.text }]} numberOfLines={1}>{list.name}</Text>
-                    <Text style={[styles.listCount, { color: colors.textSecondary }]}>{list.storyIds.length} hikâye</Text>
+                    <Text style={[styles.listCount, { color: colors.textSecondary }]}>{t('lists.storyCount', { count: list.storyIds.length })}</Text>
                   </View>
                   <Ionicons
                     name={inList ? 'checkmark-circle' : 'add-circle-outline'}
@@ -96,7 +98,7 @@ export default function AddToListSheet({ visible, onClose, storyId }: Props) {
                 style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
                 value={newName}
                 onChangeText={setNewName}
-                placeholder="Yeni liste adı"
+                placeholder={t('lists.newListPlaceholder')}
                 placeholderTextColor={colors.textLight}
                 autoFocus
                 maxLength={60}
@@ -110,12 +112,12 @@ export default function AddToListSheet({ visible, onClose, storyId }: Props) {
           ) : (
             <TouchableOpacity style={[styles.newListBtn, { borderColor: colors.border }]} onPress={() => setCreating(true)}>
               <Ionicons name="add" size={20} color={colors.primary} />
-              <Text style={[styles.newListText, { color: colors.primary }]}>Yeni liste oluştur</Text>
+              <Text style={[styles.newListText, { color: colors.primary }]}>{t('lists.createNew')}</Text>
             </TouchableOpacity>
           )}
 
           <TouchableOpacity style={styles.done} onPress={onClose}>
-            <Text style={[styles.doneText, { color: colors.textSecondary }]}>Bitti</Text>
+            <Text style={[styles.doneText, { color: colors.textSecondary }]}>{t('common.done')}</Text>
           </TouchableOpacity>
         </View>
       </View>

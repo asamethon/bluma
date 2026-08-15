@@ -1,23 +1,30 @@
-import { listenThreads, markThreadRead, sendMessage } from '@/features/messaging/services/messagingService';
+import {
+  hideThreadForUser,
+  listenThreads,
+  markThreadRead,
+  sendMessage,
+} from '@/features/messaging/services/messagingService';
 import { getUserById } from '@/features/story/services/userCache';
-import { MessageThread } from '@/types';
+import { MessageThread, SharedStory } from '@/types';
 import { store } from './index';
 import { patchMessaging } from './slices/messagingSlice';
 
 export type { MessagingState } from './slices/messagingSlice';
 
-// Kullanıcının sohbet listesi için global real-time dinleyici. Ana ekrandaki
-// okunmamış rozeti + Mesajlar kutusu aynı slice'ı okur. Dinleyici idempotent:
-// yeniden başlatınca öncekini kapatır.
 let threadsUnsub: (() => void) | null = null;
 let threadsUserId: string | null = null;
 
-// Firestore Timestamp | Date | null → ms (sıralama için).
 const toMs = (ts: any): number =>
   ts?.toMillis ? ts.toMillis() : ts?.toDate ? ts.toDate().getTime() : 0;
 
 export const messagingActions = {
-  // Katılımcı listesindeki karşı tarafı çözüp thread'i UI için zenginleştir.
+  // Kullanıcının "benim için sil" dediği sohbetler, o andan sonra yeni bir
+  // mesaj gelmediği sürece listede görünmez.
+  _isHidden(userId: string, data: any): boolean {
+    const hiddenAt = toMs(data?.deletedFor?.[userId]);
+    return hiddenAt > 0 && toMs(data?.updatedAt) <= hiddenAt;
+  },
+
   async _mapThreads(
     userId: string,
     docs: { id: string; data: any }[]
@@ -39,7 +46,6 @@ export const messagingActions = {
     );
   },
 
-  // Global thread dinleyicisini başlat (aynı kullanıcı için no-op).
   startThreadsListener(userId: string) {
     if (!userId) return;
     if (threadsUnsub && threadsUserId === userId) return;
@@ -47,8 +53,8 @@ export const messagingActions = {
     threadsUserId = userId;
 
     threadsUnsub = listenThreads(userId, async (docs) => {
-      const threads = await messagingActions._mapThreads(userId, docs);
-      // En yeni sohbet önde. (Composite index gerekmesin diye sıralama burada.)
+      const visible = docs.filter((d) => !messagingActions._isHidden(userId, d.data));
+      const threads = await messagingActions._mapThreads(userId, visible);
       threads.sort((a, b) => toMs(b.updatedAt) - toMs(a.updatedAt));
       store.dispatch(patchMessaging({ threads, threadsLoaded: true }));
     });
@@ -61,14 +67,22 @@ export const messagingActions = {
     store.dispatch(patchMessaging({ threads: [], threadsLoaded: false }));
   },
 
-  // Mesaj gönder (optimistic akış hook tarafında; burası arka plan yazımı).
-  // Push bildirimi VPS'teki push-worker'ın işi — messages alt koleksiyonunu
-  // dinler (bkz. YAPILACAKLAR 3.1, server/push-worker/).
-  async send(senderId: string, recipientId: string, text: string, image?: string) {
-    await sendMessage({ senderId, recipientId, text, image });
+  async send(senderId: string, recipientId: string, text: string, image?: string, clientId?: string) {
+    await sendMessage({ senderId, recipientId, text, image, clientId });
+  },
+
+  async sendStory(senderId: string, recipientId: string, story: SharedStory) {
+    await sendMessage({ senderId, recipientId, text: '', story });
   },
 
   async markRead(threadId: string, userId: string) {
     return markThreadRead(threadId, userId);
+  },
+
+  // İyimser: sohbet önce listeden düşer, yazma başarısız olursa dinleyici geri getirir.
+  async hideThread(threadId: string, userId: string) {
+    const { threads } = store.getState().messaging;
+    store.dispatch(patchMessaging({ threads: threads.filter((t) => t.id !== threadId) }));
+    return hideThreadForUser(threadId, userId);
   },
 };

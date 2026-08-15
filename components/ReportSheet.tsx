@@ -7,6 +7,7 @@ import {
 } from '@/store/moderationStore';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Alert,
@@ -36,14 +37,15 @@ interface Props {
 }
 
 const TARGET_LABEL: Record<ReportTargetType, string> = {
-  story: 'Hikâyeyi bildir',
-  comment: 'Yorumu bildir',
-  user: 'Kullanıcıyı bildir',
-  conversation: 'Gönderiyi bildir',
+  story: 'report.targetStory',
+  comment: 'report.targetComment',
+  user: 'report.targetUser',
+  conversation: 'report.targetConversation',
 };
 
 export default function ReportSheet({ visible, onClose, target, onReported }: Props) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const { bottom } = useSafeAreaInsets();
   const [reason, setReason] = useState<ReportReason | null>(null);
   const [details, setDetails] = useState('');
@@ -67,9 +69,9 @@ export default function ReportSheet({ visible, onClose, target, onReported }: Pr
     if (r.success) {
       close();
       onReported?.();
-      Alert.alert('Teşekkürler', 'Bildirimin alındı. Ekibimiz en kısa sürede inceleyecek.');
+      Alert.alert(t('report.thanksTitle'), t('report.thanksMessage'));
     } else {
-      Alert.alert('Hata', r.error || 'Bildirim gönderilemedi.');
+      Alert.alert(t('common.error'), r.error || t('report.submitFailed'));
     }
   };
 
@@ -80,10 +82,10 @@ export default function ReportSheet({ visible, onClose, target, onReported }: Pr
         <View style={[styles.sheet, { backgroundColor: colors.surface, paddingBottom: bottom + 16 }]}>
           <View style={[styles.handle, { backgroundColor: colors.border }]} />
           <Text style={[styles.title, { color: colors.text }]}>
-            {target ? TARGET_LABEL[target.type] : 'Bildir'}
+            {target ? t(TARGET_LABEL[target.type]) : t('report.report')}
           </Text>
           <Text style={[styles.sub, { color: colors.textSecondary }]}>
-            Bir neden seç. Bildirimin gizli tutulur.
+            {t('report.pickReason')}
           </Text>
 
           <ScrollView style={{ maxHeight: 320 }} showsVerticalScrollIndicator={false}>
@@ -98,7 +100,7 @@ export default function ReportSheet({ visible, onClose, target, onReported }: Pr
                   ]}
                   onPress={() => setReason(r.value)}
                 >
-                  <Text style={[styles.reasonText, { color: active ? colors.primary : colors.text }]}>{r.label}</Text>
+                  <Text style={[styles.reasonText, { color: active ? colors.primary : colors.text }]}>{t(r.label)}</Text>
                   <Ionicons
                     name={active ? 'radio-button-on' : 'radio-button-off'}
                     size={20}
@@ -112,7 +114,7 @@ export default function ReportSheet({ visible, onClose, target, onReported }: Pr
               style={[styles.details, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
               value={details}
               onChangeText={setDetails}
-              placeholder="İstersen ek bilgi ekle (opsiyonel)"
+              placeholder={t('report.detailsPlaceholder')}
               placeholderTextColor={colors.textLight}
               multiline
               maxLength={500}
@@ -127,10 +129,10 @@ export default function ReportSheet({ visible, onClose, target, onReported }: Pr
           >
             {submitting
               ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.submitText}>Bildir</Text>}
+              : <Text style={styles.submitText}>{t('report.report')}</Text>}
           </TouchableOpacity>
           <TouchableOpacity style={styles.cancel} onPress={close}>
-            <Text style={[styles.cancelText, { color: colors.textSecondary }]}>Vazgeç</Text>
+            <Text style={[styles.cancelText, { color: colors.textSecondary }]}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </View>
       </View>

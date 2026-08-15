@@ -2,12 +2,11 @@ import { Badge, Text } from '@/components/ui';
 import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { StudioChapter } from '../../utils/chapterContent';
 import { wordCount } from '../../utils/textStats';
 
-// Bölüm satırı — numara rozeti, başlık, kelime sayısı. Hub kartında ve
-// composer bölüm seçici sayfasında ortak kullanılır.
 export function ChapterRow({
   chapter,
   num,
@@ -21,11 +20,10 @@ export function ChapterRow({
   active?: boolean;
   showStatusBadge?: boolean;
   onPress: () => void;
-  // İçeriği indirmeden (bölüm-bazlı depolamada) kelime sayısını göstermek için —
-  // bkz. YAPILACAKLAR 2.2, story.chapterWordCounts.
   wordCountOverride?: number;
 }) {
   const { colors } = useTheme();
+  const { t, i18n } = useTranslation();
   const words = wordCountOverride ?? wordCount(chapter.content);
 
   return (
@@ -45,14 +43,14 @@ export function ChapterRow({
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text variant="bodyStrong" numberOfLines={1}>
-          {chapter.title || `Bölüm ${num}`}
+          {chapter.title || t('story.chapterN', { number: num })}
         </Text>
         <Text variant="caption" tone="textLight">
-          {words.toLocaleString('tr-TR')} kelime
+          {t('studio.wordCount', { count: words, formatted: words.toLocaleString(i18n.language) })}
         </Text>
       </View>
       {showStatusBadge ? (
-        <Badge label={words > 0 ? 'Yazıldı' : 'Boş'} tone={words > 0 ? 'success' : 'neutral'} />
+        <Badge label={words > 0 ? t('studio.written') : t('studio.empty')} tone={words > 0 ? 'success' : 'neutral'} />
       ) : (
         <Ionicons name="chevron-forward" size={16} color={colors.textLight} />
       )}

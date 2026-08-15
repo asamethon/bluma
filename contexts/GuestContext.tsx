@@ -21,13 +21,13 @@ const GuestContext = createContext<GuestContextValue>({
 export const useGuestGate = () => useContext(GuestContext);
 
 export const GATE_REASONS: Record<GateReason, { icon: string; title: string; sub: string }> = {
-  follow:  { icon: 'person-add',          title: 'Yazarları takip et',  sub: 'Beğendiğin yazarları takip etmek ve yeni bölümlerinden haberdar olmak için ücretsiz bir hesap aç.' },
-  like:    { icon: 'heart',               title: 'Beğenini kaydet',     sub: 'Beğendiğin hikâyeleri sakla; sana benzerlerini önerelim. Saniyeler sürer.' },
-  save:    { icon: 'bookmark',            title: 'Kütüphanene ekle',    sub: 'Hikâyeleri kaydet, kaldığın yerden devam et. Hepsi tek bir rafta seni bekler.' },
-  comment: { icon: 'chatbubble-ellipses', title: 'Sohbete katıl',       sub: 'Yazarlara yorum bırakmak ve okurlarla konuşmak için hesabını oluştur.' },
-  write:   { icon: 'create',              title: 'İlk hikâyeni yaz',    sub: 'Kendi hikâyeni yazmaya başlamak için bir hesaba ihtiyacın var. Bahçen seni bekliyor.' },
-  read:    { icon: 'book',               title: 'Okumaya devam et',    sub: 'Bu bölümün kalanını ve tüm hikâyeyi okumak için ücretsiz bir hesap aç.' },
-  default: { icon: 'leaf',               title: "Bluma'ya katıl",      sub: 'Bunu yapmak için ücretsiz bir hesaba ihtiyacın var.' },
+  follow:  { icon: 'person-add',          title: 'authGate.follow.title',  sub: 'authGate.follow.sub' },
+  like:    { icon: 'heart',               title: 'authGate.like.title',    sub: 'authGate.like.sub' },
+  save:    { icon: 'bookmark',            title: 'authGate.save.title',    sub: 'authGate.save.sub' },
+  comment: { icon: 'chatbubble-ellipses', title: 'authGate.comment.title', sub: 'authGate.comment.sub' },
+  write:   { icon: 'create',              title: 'authGate.write.title',   sub: 'authGate.write.sub' },
+  read:    { icon: 'book',               title: 'authGate.read.title',    sub: 'authGate.read.sub' },
+  default: { icon: 'leaf',               title: 'authGate.default.title', sub: 'authGate.default.sub' },
 };
 
 export const GuestProvider = function GuestProvider({ children }: { children: React.ReactNode }) {

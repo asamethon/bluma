@@ -1,291 +1,198 @@
-import { signOutFromGoogle } from '@/config/googleSignIn';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getAuth, onAuthStateChanged, signOut as firebaseSignOut, getIdToken } from '@react-native-firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp } from '@react-native-firebase/firestore';
+import {
+  getAuth,
+  onAuthStateChanged,
+  getIdToken,
+  type FirebaseAuthTypes,
+} from '@react-native-firebase/auth';
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from '@react-native-firebase/firestore';
+import { AppState } from 'react-native';
 import { patchAuth, User } from '@/store/slices/authSlice';
 import { store } from '@/store';
+import i18n from '@/i18n';
+import { logger } from '@/utils/logger';
+import { primeCachedUser } from './userCache';
+import { buildSignupContext, trackSignupContext } from './signupContext';
+import { cleanupUserListener, endSession, isOnboarded, setupUserListener } from './sessionState';
+import { continueAsGuest, signOut } from './signOutFlow';
+import {
+  isTerminalAuthError,
+  readCachedSession,
+  restoreFirebaseUser,
+  writeCachedSession,
+} from './sessionStorage';
 
-// User real-time listener için unsubscribe fonksiyonu
-let userUnsubscribe: (() => void) | null = null;
+let authStateUnsubscribe: (() => void) | null = null;
+let appStateSubscription: { remove: () => void } | null = null;
 
-// Initialize auth state from AsyncStorage
+function providerOf(firebaseUser: FirebaseAuthTypes.User): User['authProvider'] {
+  const providerId = firebaseUser.providerData[0]?.providerId ?? '';
+  if (providerId.includes('apple')) return 'apple';
+  if (providerId.includes('google')) return 'google';
+  return 'email';
+}
+
+/**
+ * Oturumu Redux'a yazar. Kritik nokta: oturumun varlığı ID token'a DEĞİL,
+ * Firebase kullanıcısının varlığına bağlıdır — token yenilemek ağ ister ve
+ * başarısız olması "çıkış yapıldı" anlamına gelmez.
+ */
+async function hydrateSession(firebaseUser: FirebaseAuthTypes.User) {
+  const cached = await readCachedSession();
+
+  store.dispatch(patchAuth({ isAuthenticated: true, isGuest: false }));
+  if (cached && cached.user.id === firebaseUser.uid) {
+    store.dispatch(patchAuth({
+      user: cached.user,
+      hasCompletedOnboarding: cached.hasCompletedOnboarding,
+    }));
+  }
+
+  // Token arka planda tazelenir; açılış akışını bloklamaz.
+  refreshIdToken(firebaseUser);
+
+  try {
+    const userDocRef = doc(getFirestore(), 'users', firebaseUser.uid);
+    const userDoc = await getDoc(userDocRef);
+    let userData: User;
+
+    if (userDoc.exists()) {
+      userData = { id: userDoc.id, ...userDoc.data() } as User;
+    } else {
+      logger.debug('Firestore profili yok, oluşturuluyor');
+      const signupContext = buildSignupContext();
+      userData = {
+        id: firebaseUser.uid,
+        email: firebaseUser.email || '',
+        displayName: firebaseUser.displayName || i18n.t('common.user'),
+        authProvider: providerOf(firebaseUser),
+        ...signupContext,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+      await setDoc(userDocRef, userData);
+      trackSignupContext(signupContext);
+    }
+
+    const onboarded = isOnboarded(userData);
+    store.dispatch(patchAuth({ user: userData, hasCompletedOnboarding: onboarded }));
+    primeCachedUser(userData);
+    await writeCachedSession(userData, onboarded);
+  } catch (firestoreError) {
+    // Çevrimdışı / geçici Firestore hatası: önbellekteki profille devam edilir,
+    // oturum ASLA düşürülmez.
+    logger.debug('Profil okunamadı, önbellek kullanılıyor:', firestoreError);
+  }
+
+  // Gizlilik tercihleri + takip listesi (akış filtreleri) ve son görülme damgası.
+  const { privacyActions } = await import('@/features/privacy/services/privacyService');
+  const { presenceActions } = await import('@/features/privacy/services/presenceService');
+  privacyActions.load().catch(() => {});
+  presenceActions.start();
+
+  try {
+    const { pushNotificationService } = await import('@/services/pushNotificationService');
+    await pushNotificationService.saveUserPushToken(firebaseUser.uid);
+  } catch (pushError) {
+    logger.debug('Push token kaydedilirken hata (non-critical):', pushError);
+  }
+}
+
+async function refreshIdToken(firebaseUser: FirebaseAuthTypes.User) {
+  try {
+    const token = await getIdToken(firebaseUser);
+    store.dispatch(patchAuth({ token }));
+    await AsyncStorage.setItem('userToken', token);
+  } catch (error: any) {
+    if (isTerminalAuthError(error)) {
+      logger.debug('Oturum gerçekten geçersiz, temizleniyor:', error.code);
+      await endSession({ asGuest: false });
+    } else {
+      logger.debug('Token yenilenemedi, oturum korunuyor:', error?.code ?? error);
+    }
+  }
+}
+
 async function initializeAuth() {
   try {
-    console.log('Starting auth initialization...');
-
-    store.dispatch(patchAuth({ isLoading: true }));
-    store.dispatch(patchAuth({ isAuthenticated: false }));
-    store.dispatch(patchAuth({ hasCompletedOnboarding: false }));
-    store.dispatch(patchAuth({ user: null }));
-    store.dispatch(patchAuth({ token: null }));
-
-    try {
-      // Wait for Firebase to restore auth state from persistence
-      const currentUser = await new Promise<any>((resolve) => {
-        const unsubscribe = onAuthStateChanged(getAuth(), (user) => {
-          unsubscribe();
-          resolve(user);
-        });
-      });
-      console.log('Firebase auth restored:', currentUser ? currentUser.uid : 'none');
-
-      if (currentUser) {
-        try {
-          // User is signed in to Firebase
-          const token = await getIdToken(currentUser);
-          console.log('Got Firebase token');
-
-          // Update state
-          store.dispatch(patchAuth({ token: token }));
-          store.dispatch(patchAuth({ isAuthenticated: true }));
-          store.dispatch(patchAuth({ isGuest: false }));
-
-          // Try to get user data from Firestore (optional)
-          try {
-            const userDocRef = doc(getFirestore(), 'users', currentUser.uid);
-            const userDoc = await getDoc(userDocRef);
-
-            if (userDoc.exists()) {
-              const userData = userDoc.data() as User;
-              store.dispatch(patchAuth({ user: userData }));
-
-              if (userData.username && userData.interests) {
-                store.dispatch(patchAuth({ hasCompletedOnboarding: true }));
-              }
-            } else {
-              // User exists in Firebase but not in Firestore - create user document
-              console.log('User exists in Firebase but not in Firestore, creating user document');
-              try {
-                const newUser: User = {
-                  id: currentUser.uid,
-                  email: currentUser.email || '',
-                  displayName: currentUser.displayName || 'Kullanıcı',
-                  authProvider: 'google',
-                  createdAt: serverTimestamp(),
-                  updatedAt: serverTimestamp(),
-                };
-
-                await setDoc(userDocRef, newUser);
-                store.dispatch(patchAuth({ user: newUser }));
-                console.log('User document created successfully');
-              } catch (createError) {
-                console.log('Error creating user document:', createError);
-                // Don't fail auth if we can't create user document
-              }
-            }
-
-            // Save push token
-            try {
-              const { pushNotificationService } = await import('@/services/pushNotificationService');
-              await pushNotificationService.saveUserPushToken(currentUser.uid);
-            } catch (pushError) {
-              console.log('Push token kaydedilirken hata (non-critical):', pushError);
-            }
-          } catch (firestoreError) {
-            console.log('Firestore error (non-critical):', firestoreError);
-            // Don't fail auth if Firestore is not accessible
-          }
-
-          console.log('Firebase auth initialization successful');
-        } catch (firebaseError: any) {
-          // 'no-current-user': onAuthStateChanged bazen native oturum
-          // temizlendikten hemen sonra hâlâ eski (stale) bir user objesiyle
-          // tetiklenebiliyor — getIdToken() o anda "oturum yok" hatası verir.
-          // Bu gerçek bir hata değil, kullanıcı zaten çıkış yapmış demektir,
-          // bu yüzden bu iki bilinen kod için console.error yerine console.log.
-          const isBenign = firebaseError.code === 'auth/user-not-found' || firebaseError.code === 'auth/no-current-user';
-          if (isBenign) console.log('Firebase user not found / no current user:', firebaseError.code);
-          else console.error('Error with Firebase user:', firebaseError);
-
-          if (isBenign) {
-            console.log('Clearing local data');
-            // Clear any stale local data and sign out
-            try {
-              await firebaseSignOut(getAuth());
-              await AsyncStorage.multiRemove([
-                'userToken',
-                'userData',
-                'authProvider',
-                'hasCompletedOnboarding',
-              ]);
-            } catch (clearError) {
-              console.log('Error clearing local data:', clearError);
-            }
-
-            // Reset state to ensure clean slate
-            store.dispatch(patchAuth({
-              isLoading: false,
-              isAuthenticated: false,
-              hasCompletedOnboarding: false,
-              isGuest: false,
-              user: null,
-              token: null,
-            }));
-            return;
-          }
-
-          // Don't crash, just continue without Firebase
-        }
-      } else {
-        // No Firebase user, clear any stale local data
-        console.log('No Firebase user, clearing local data');
-        try {
-          await AsyncStorage.multiRemove([
-            'userToken',
-            'userData',
-            'authProvider',
-            'hasCompletedOnboarding',
-          ]);
-        } catch (clearError) {
-          console.log('Error clearing local data:', clearError);
-        }
-      }
-    } catch (firebaseError) {
-      console.log('Firebase not available, continuing without it:', firebaseError);
-      // Clear any stale local data when Firebase is not available
-      try {
-        await AsyncStorage.multiRemove([
-          'userToken',
-          'userData',
-          'authProvider',
-          'hasCompletedOnboarding',
-        ]);
-      } catch (clearError) {
-        console.log('Error clearing local data:', clearError);
-      }
-    }
-
-    // Don't try to restore from AsyncStorage if Firebase is not working
-    // This prevents the onboarding loop issue
-
-  } catch (error) {
-    console.error('Critical error initializing auth:', error);
-    // Already set safe defaults above
-  } finally {
-    console.log('Auth initialization completed');
-    store.dispatch(patchAuth({ isLoading: false }));
-  }
-}
-
-// Sign out
-async function signOut() {
-  try {
-    // Set loading to true during sign out
+    logger.debug('Auth başlatılıyor...');
     store.dispatch(patchAuth({ isLoading: true }));
 
-    // Bir sonraki kullanıcı bu cihazda önceki kullanıcının okuma ilerlemesini
-    // görmesin diye çıkıştan önce temizle (uid hâlâ state'te iken).
-    const signingOutUserId = store.getState().auth.user?.id;
-    if (signingOutUserId) {
-      const { readingProgressActions } = await import('@/features/story/services/readingProgress');
-      await readingProgressActions.clearReadingProgressCache(signingOutUserId);
-    }
+    const firebaseUser = await restoreFirebaseUser();
 
-    // Kullanıcı doküman dinleyicisini kapat — profil ekranında kurulmuş
-    // olabilir; açık kalırsa yerel cache'den gelecek bir sonraki snapshot
-    // user'ı geri doldurup misafir moduna geçişi bozar.
-    cleanupUserListener();
-
-    // Sign out from Firebase
-    await firebaseSignOut(getAuth());
-
-    // Sign out from Google if user was signed in with Google
-    const authProvider = await AsyncStorage.getItem('authProvider');
-    if (authProvider === 'google') {
-      await signOutFromGoogle();
-    }
-
-    // Clear AsyncStorage
-    await AsyncStorage.multiRemove([
-      'userToken',
-      'authProvider',
-      'userData',
-      'hasCompletedOnboarding',
-    ]);
-
-    // Reset state — çıkış sonrası misafir moduna düşer (app genelinde
-    // "oturum yok" tek karşılığı isGuest:true; false bırakılırsa profil/ana
-    // sayfa/kütüphane gibi isGuest'e bakan ekranlar ne "misafir" ne "giriş
-    // yapılmış" durumunu karşılamadığından bozuk/asılı kalıyordu).
-    store.dispatch(patchAuth({ isAuthenticated: false }));
-    store.dispatch(patchAuth({ hasCompletedOnboarding: false }));
-    store.dispatch(patchAuth({ isGuest: true }));
-    store.dispatch(patchAuth({ user: null }));
-    store.dispatch(patchAuth({ token: null }));
-    store.dispatch(patchAuth({ isLoading: false }));
-
-    console.log('Sign out successful');
-  } catch (error) {
-    console.error('Sign out error:', error);
-    // Ensure loading is set to false even on error
-    store.dispatch(patchAuth({ isLoading: false }));
-  }
-}
-
-function continueAsGuest() {
-  store.dispatch(patchAuth({ isGuest: true }));
-  store.dispatch(patchAuth({ isAuthenticated: false }));
-  store.dispatch(patchAuth({ hasCompletedOnboarding: false }));
-  store.dispatch(patchAuth({ isLoading: false }));
-}
-
-// Check if user is fully authenticated (signed in + onboarded)
-function isFullyAuthenticated(): boolean {
-  const state = store.getState().auth;
-  return state.isAuthenticated && state.hasCompletedOnboarding;
-}
-
-// User real-time listener
-function setupUserListener(userId: string) {
-  try {
-    if (!userId || typeof userId !== 'string') {
-      console.log('Invalid userId for user listener');
+    if (firebaseUser === undefined) {
+      // Native katman zamanında cevap vermedi: son bilinen oturumla devam edilir,
+      // gerçek durumu kalıcı dinleyici birazdan bildirir.
+      const cached = await readCachedSession();
+      logger.debug('Auth geri yükleme zaman aşımı, önbellek:', cached ? cached.user.id : 'yok');
+      if (cached) {
+        store.dispatch(patchAuth({
+          isAuthenticated: true,
+          isGuest: false,
+          user: cached.user,
+          hasCompletedOnboarding: cached.hasCompletedOnboarding,
+        }));
+      }
       return;
     }
 
-    // Idempotent olmalı: profil ekranı her focus'ta bunu yeniden çağırıyor
-    // (useFocusEffect). Önceki dinleyici kapatılmadan üzerine yazılırsa
-    // eskisi arka planda sızdırılmış olarak yaşamaya devam ediyor; sign
-    // out sonrası bu sızmış dinleyici, Firestore'un yerel cache'inden
-    // gelen eski (silinmemiş) kullanıcı verisiyle tetiklenip user'ı
-    // patchAuth ile geri dolduruyor ve misafir moduna geçişi bozuyordu.
-    cleanupUserListener();
+    if (!firebaseUser) {
+      logger.debug('Firebase oturumu yok');
+      await endSession({ asGuest: false });
+      return;
+    }
 
-    const db = getFirestore();
-    const userDocRef = doc(db, 'users', userId);
-
-    const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const userData = docSnap.data() as User;
-        store.dispatch(patchAuth({ user: userData }));
-        console.log('User data updated in real-time');
-      }
-    }, (error: any) => {
-      console.error('User listener error:', error);
-
-      // If Firestore permission denied, don't crash the app
-      if (error.code === 'firestore/permission-denied') {
-        console.log('User listener: Firestore permission denied, continuing without real-time updates');
-      }
-    });
-
-    // Store unsubscribe function for cleanup
-    userUnsubscribe = unsubscribe;
+    logger.debug('Firebase oturumu geri yüklendi:', firebaseUser.uid);
+    await hydrateSession(firebaseUser);
   } catch (error) {
-    console.error('Error setting up user listener:', error);
+    logger.error('Auth başlatılırken kritik hata:', error);
+  } finally {
+    store.dispatch(patchAuth({ isLoading: false }));
+    watchAuthState();
+    watchAppState();
   }
 }
 
-// Cleanup user listener
-function cleanupUserListener() {
-  try {
-    if (userUnsubscribe) {
-      userUnsubscribe();
-      userUnsubscribe = null;
+/** Firebase oturum durumunu sürekli izler (idempotent). */
+function watchAuthState() {
+  if (authStateUnsubscribe) return;
+
+  authStateUnsubscribe = onAuthStateChanged(getAuth(), user => {
+    const state = store.getState().auth;
+
+    if (user) {
+      if (!state.isAuthenticated || state.user?.id !== user.uid) hydrateSession(user);
+      return;
     }
-  } catch (error) {
-    console.error('Error cleaning up user listener:', error);
-  }
+
+    if (state.isAuthenticated) {
+      logger.debug('Firebase oturumu kapandı, yerel durum temizleniyor');
+      endSession({ asGuest: state.isGuest });
+    }
+  });
+}
+
+/**
+ * Uygulama öne geldiğinde kurtarma: ilk açılışta ağ yoksa oturum kurulamamış
+ * olabilir. Firebase'de kullanıcı varken Redux "çıkış yapılmış" görünüyorsa düzeltir.
+ */
+function watchAppState() {
+  if (appStateSubscription) return;
+
+  appStateSubscription = AppState.addEventListener('change', nextState => {
+    if (nextState !== 'active') return;
+    const currentUser = getAuth().currentUser;
+    const { isAuthenticated, user } = store.getState().auth;
+    if (currentUser && (!isAuthenticated || user?.id !== currentUser.uid)) {
+      logger.debug('Öne gelindi, oturum yeniden kuruluyor');
+      hydrateSession(currentUser);
+    }
+  });
+}
+
+function isFullyAuthenticated(): boolean {
+  const state = store.getState().auth;
+  return state.isAuthenticated && state.hasCompletedOnboarding;
 }
 
 export const sessionActions = {

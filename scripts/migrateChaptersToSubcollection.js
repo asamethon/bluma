@@ -1,18 +1,3 @@
-// FAZ 2.2 migrasyonu — mevcut `stories` dokümanlarındaki tek `content` alanını
-// `stories/{id}/chapters/{n}` alt koleksiyonuna böler. Bkz. docs/YAPILACAKLAR.md.
-//
-// Güvenli / tekrar çalıştırılabilir (idempotent): `chaptersInSubcollection`
-// zaten true olan dokümanlar atlanır. Eski `content` alanı SİLİNMEZ — rollback
-// için doğrudan doğrulama yapılana kadar dokunulmaz.
-//
-// Kullanım:
-//   GOOGLE_APPLICATION_CREDENTIALS=/path/to/serviceAccountKey.json node scripts/migrateChaptersToSubcollection.js --dry-run
-//   GOOGLE_APPLICATION_CREDENTIALS=/path/to/serviceAccountKey.json node scripts/migrateChaptersToSubcollection.js
-//
-// Gerekli paket: `npm install --save-dev firebase-admin` (henüz yoksa).
-
-// firebase-admin v14+ eski admin.credential.X() / admin.firestore() namespace
-// API'sini kaldırdı — modüler alt-yol import'ları gerekiyor.
 const { initializeApp, applicationDefault } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 
@@ -35,7 +20,6 @@ function stripHtml(raw) {
     .trim();
 }
 
-// app/story/[id].tsx ve features/story/utils/chapterContent.ts ile aynı mantık.
 function splitChapters(content, expectedCount) {
   const clean = stripHtml(content);
   if (!clean) return [];

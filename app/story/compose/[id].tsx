@@ -11,7 +11,6 @@ import React from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// "Yaz" — tek bölümlü composer. İş mantığı useComposer içinde.
 export default function ComposeScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();

@@ -2,15 +2,16 @@ import { Text } from '@/components/ui';
 import { Fonts, Spacing, useTheme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { useComposer } from '../../hooks/useComposer';
 import { parseImageToken } from '../../utils/imageToken';
 import { renderInlineFormatting } from '../../utils/richText';
 import { StoryImage } from '../StoryImage';
 
-// Okur önizlemesi — geçerli bölümün yayınlandığında nasıl görüneceği.
 export function ComposerPreview({ c, topInset }: { c: ReturnType<typeof useComposer>; topInset: number }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const chapter = c.cur;
   const paras = (chapter?.content || '').split('\n\n').filter(p => p.trim());
 
@@ -18,17 +19,17 @@ export function ComposerPreview({ c, topInset }: { c: ReturnType<typeof useCompo
     <Modal visible={c.preview} animationType="slide" statusBarTranslucent onRequestClose={() => c.setPreview(false)}>
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <View style={[styles.header, { paddingTop: topInset + 12, borderBottomColor: colors.border }]}>
-          <Text variant="overline" tone="textLight">Okur Önizlemesi</Text>
+          <Text variant="overline" tone="textLight">{t('studio.readerPreview')}</Text>
           <Pressable onPress={() => c.setPreview(false)} hitSlop={8} style={[styles.close, { backgroundColor: colors.surfaceVariant }]}>
             <Ionicons name="close" size={17} color={colors.text} />
           </Pressable>
         </View>
         <ScrollView contentContainerStyle={{ padding: Spacing.screenX, paddingBottom: 48 }}>
           <Text variant="overline" color={colors.primary} style={{ marginBottom: Spacing.sm }}>
-            {(c.story?.title || 'Başlıksız')} · Bölüm {c.index + 1}
+            {(c.story?.title || t('studio.untitled'))} · {t('story.chapterN', { number: c.index + 1 })}
           </Text>
           <Text variant="title" style={{ marginBottom: Spacing.lg }}>
-            {chapter?.title || `Bölüm ${c.index + 1}`}
+            {chapter?.title || t('story.chapterN', { number: c.index + 1 })}
           </Text>
           {paras.length > 0 ? (
             paras.map((p, i) => {
@@ -38,7 +39,7 @@ export function ComposerPreview({ c, topInset }: { c: ReturnType<typeof useCompo
             })
           ) : (
             <Text variant="reading" tone="textLight" style={{ fontStyle: 'italic' }}>
-              Bu bölüm henüz boş — yazmaya başladığında burada görünecek.
+              {t('studio.emptyChapterPreview')}
             </Text>
           )}
         </ScrollView>

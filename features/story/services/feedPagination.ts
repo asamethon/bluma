@@ -15,10 +15,6 @@ import { store } from '@/store';
 
 const PAGE_SIZE = 30;
 
-// Ana akış canlı dinleyicisi (`setupStoriesListener`) ilk 50 hikâyeyi anlık
-// tutar; bunun ötesi (kategori listesi kaydırılınca) tek seferlik sayfalı
-// sorgularla `story.stories`e eklenir — bkz. YAPILACAKLAR 2.5.
-// Döndürülen değer: daha fazla sayfa olup olmadığı.
 export async function loadMoreStories(): Promise<boolean> {
   const current = store.getState().story.stories;
   if (current.length === 0) return false;

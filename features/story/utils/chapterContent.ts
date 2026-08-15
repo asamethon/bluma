@@ -1,22 +1,17 @@
-// Bölüm içeriği yardımcıları — tek bir Story dokümanı, bölümleri benzersiz
-// `\n§§\n` ayracıyla birleştirilmiş tek `content` string'inde tutar. Okuyucu
-// (app/story/[id].tsx) ve Yazı Stüdyosu bu aynı mantığı paylaşır; daha önce
-// split/join dört ayrı yerde kopyalanmıştı.
+import i18n from '@/i18n';
 
 export type StudioChapter = { id: string; title: string; content: string };
 
+export const defaultChapterTitle = (number: number) => i18n.t('story.chapterN', { number });
+
 export const CHAPTER_SEP = '\n§§\n';
 
-// Story.content + chapterTitles → düzenlenebilir bölüm dizisi.
-// Yeni format ayraçla bölünür; eski (ayraçsız) içerikte paragraflar bölüm
-// sayısına eşit dağıtılır — naif \n\n bölmesi her paragrafı ayrı bölüm sanardı.
 export function splitChapters(content?: string, chapterTitles?: string[]): StudioChapter[] {
   const raw = content ?? '';
   const titles = chapterTitles && chapterTitles.length > 0 ? chapterTitles : [];
 
-  // Tek bölümlü / hızlı yazım
   if (titles.length <= 1 && !raw.includes(CHAPTER_SEP)) {
-    return [{ id: '1', title: titles[0] || 'Bölüm 1', content: raw }];
+    return [{ id: '1', title: titles[0] || defaultChapterTitle(1), content: raw }];
   }
 
   const count = Math.max(titles.length, 1);
@@ -34,22 +29,15 @@ export function splitChapters(content?: string, chapterTitles?: string[]): Studi
   const n = Math.max(count, bodies.length);
   return Array.from({ length: n }, (_, i) => ({
     id: (i + 1).toString(),
-    title: titles[i] || `Bölüm ${i + 1}`,
+    title: titles[i] || defaultChapterTitle(i + 1),
     content: bodies[i] || '',
   }));
 }
 
-// Bölüm dizisi → tek `content` string'i.
 export function joinChapters(chapters: StudioChapter[]): string {
   return chapters.map(c => c.content).join(CHAPTER_SEP);
 }
 
-// Wattpad'den (veya başka bir kaynaktan) yapıştırılan tek bir metin bloğunu
-// otomatik olarak bölümlere ayırır — "Hikâyeni Taşı" akışı (bkz.
-// YAPILACAKLAR 2.6). Sezgi sırası:
-//  1) Zaten `§§` ayracı varsa onunla böl.
-//  2) "Bölüm 1", "1. Bölüm", "Chapter 1" gibi başlık satırlarını tanı.
-//  3) Hiçbiri yoksa tüm metni tek bölüm say.
 const CHAPTER_HEADING_RE = /^(bölüm|chapter)\s*\d+\b.*$|^\d+[\.\)]\s*.+$/im;
 
 export function autoSplitPastedText(raw: string): StudioChapter[] {
@@ -61,7 +49,7 @@ export function autoSplitPastedText(raw: string): StudioChapter[] {
       .split(CHAPTER_SEP)
       .map(c => c.trim())
       .filter(c => c.length > 0)
-      .map((content, i) => ({ id: (i + 1).toString(), title: `Bölüm ${i + 1}`, content }));
+      .map((content, i) => ({ id: (i + 1).toString(), title: defaultChapterTitle(i + 1), content }));
   }
 
   const lines = clean.split('\n');
@@ -72,15 +60,13 @@ export function autoSplitPastedText(raw: string): StudioChapter[] {
     }
   });
 
-  // En az 2 başlık bulunmadıysa (ör. metnin ortasında rastgele bir sayı
-  // satırı) güvenilir sayılmaz — tek bölüm olarak bırak.
   if (headingIndexes.length < 2) {
-    return [{ id: '1', title: 'Bölüm 1', content: clean }];
+    return [{ id: '1', title: defaultChapterTitle(1), content: clean }];
   }
 
   return headingIndexes.map((startIdx, i) => {
     const endIdx = i + 1 < headingIndexes.length ? headingIndexes[i + 1] : lines.length;
-    const title = lines[startIdx].trim().replace(/^\d+[\.\)]\s*/, '') || `Bölüm ${i + 1}`;
+    const title = lines[startIdx].trim().replace(/^\d+[\.\)]\s*/, '') || defaultChapterTitle(i + 1);
     const content = lines.slice(startIdx + 1, endIdx).join('\n').trim();
     return { id: (i + 1).toString(), title, content };
   }).filter(c => c.content.length > 0);

@@ -16,43 +16,65 @@ import {
   where,
   writeBatch
 } from '@react-native-firebase/firestore';
+import i18n from '@/i18n';
 import { store } from './index';
 import { patchNotification } from './slices/notificationSlice';
+import { logger } from '@/utils/logger';
 
 export type { NotificationState } from './slices/notificationSlice';
 
-// Notification actions
+let notificationsUnsub: (() => void) | null = null;
+let notificationsUserId: string | null = null;
+// Zenginleştirme asenkron: eski bir snapshot'ın sonucu yenisini ezmesin.
+let notificationsRevision = 0;
+
+/**
+ * Gönderen bilgisini (ad + avatar) dokümanda saklamak yerine okurken çözer:
+ * avatarın güncel kalmasını sağlar ve tarifi olmayan ESKİ bildirimlerin
+ * metnini okuyanın dilinde yeniden kurabilmek için ad bilgisini verir.
+ */
+async function withSenderInfo(notifications: Notification[]): Promise<Notification[]> {
+  const { getUserById } = await import('@/features/auth/services/userCache');
+  const senderIds = Array.from(new Set(notifications.map(n => n.senderId).filter(Boolean)));
+  const entries = await Promise.all(
+    senderIds.map(async id => [id, await getUserById(id).catch(() => null)] as const)
+  );
+  const senders = new Map(entries);
+
+  return notifications.map(n => {
+    const sender = senders.get(n.senderId);
+    if (!sender) return n;
+    return {
+      ...n,
+      senderName: sender.displayName || sender.username,
+      senderAvatar: sender.profileImage,
+    };
+  });
+}
+
 export const notificationActions = {
-  // Initialize notifications for a user
   async initializeNotifications(userId: string) {
     try {
-      console.log('Initializing notifications for userId:', userId);
+      if (notificationsUnsub && notificationsUserId === userId) return notificationsUnsub;
+      if (notificationsUnsub) notificationsUnsub();
+      notificationsUserId = userId;
+
       store.dispatch(patchNotification({ isLoading: true }));
-      
+
       const db = getFirestore();
       const notificationsRef = collection(db, 'notifications');
-      
-      // Get user's notifications
+
       const q = firestoreQuery(
         notificationsRef,
         where('userId', '==', userId),
         orderBy('createdAt', 'desc'),
         limit(50)
       );
-      
-      console.log('Firestore query created for notifications');
-      
-      // Listen for real-time updates
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        console.log('Notifications snapshot received:', {
-          empty: snapshot.empty,
-          size: snapshot.size,
-          docs: snapshot.docs.length,
-        });
-        
+
+      notificationsUnsub = onSnapshot(q, (snapshot) => {
         const notifications: Notification[] = [];
         let unreadCount = 0;
-        
+
         if (snapshot && !snapshot.empty) {
           snapshot.forEach((doc: any) => {
             const notification = { id: doc.id, ...doc.data() } as Notification;
@@ -62,33 +84,37 @@ export const notificationActions = {
             }
           });
         }
-        
-        console.log('Processed notifications:', {
-          total: notifications.length,
-          unread: unreadCount,
-        });
-        
-        store.dispatch(patchNotification({ notifications, unreadCount }));
-        
-        // Badge count update removed - using local notifications only
-      }, (error) => {
-        console.error('Firestore snapshot error:', error);
-      });
-      
-      // Load notification settings
-      await notificationActions.loadNotificationSettings(userId);
-      
-      store.dispatch(patchNotification({ isLoading: false }));
-      console.log('Notifications initialization completed');
 
-      return unsubscribe; // Return unsubscribe function
+        // Önce ham liste (anında çizim), ardından gönderen bilgisiyle tazelenir.
+        const revision = ++notificationsRevision;
+        store.dispatch(patchNotification({ notifications, unreadCount }));
+        withSenderInfo(notifications)
+          .then(enriched => {
+            if (revision !== notificationsRevision) return;
+            store.dispatch(patchNotification({ notifications: enriched }));
+          })
+          .catch(() => {});
+      }, (error) => {
+        logger.error('Firestore snapshot error:', error);
+      });
+
+      await notificationActions.loadNotificationSettings(userId);
+
+      store.dispatch(patchNotification({ isLoading: false }));
+
+      return notificationsUnsub;
     } catch (error) {
-      console.error('Initialize notifications error:', error);
+      logger.error('Initialize notifications error:', error);
       store.dispatch(patchNotification({ isLoading: false }));
     }
   },
 
-  // Load notification settings
+  cleanupNotificationsListener() {
+    if (notificationsUnsub) notificationsUnsub();
+    notificationsUnsub = null;
+    notificationsUserId = null;
+  },
+
   async loadNotificationSettings(userId: string) {
     try {
       const db = getFirestore();
@@ -98,7 +124,6 @@ export const notificationActions = {
       if (settingsDoc.exists()) {
         store.dispatch(patchNotification({ settings: settingsDoc.data() as NotificationSettings }));
       } else {
-        // Create default settings
         const defaultSettings: NotificationSettings = {
           userId,
           followNotifications: true,
@@ -115,11 +140,10 @@ export const notificationActions = {
         store.dispatch(patchNotification({ settings: defaultSettings }));
       }
     } catch (error) {
-      console.error('Load notification settings error:', error);
+      logger.error('Load notification settings error:', error);
     }
   },
 
-  // Mark notification as read
   async markAsRead(notificationId: string) {
     try {
       const db = getFirestore();
@@ -130,11 +154,10 @@ export const notificationActions = {
         updatedAt: serverTimestamp(),
       });
     } catch (error) {
-      console.error('Mark as read error:', error);
+      logger.error('Mark as read error:', error);
     }
   },
 
-  // Mark all notifications as read
   async markAllAsRead(userId: string) {
     try {
       const db = getFirestore();
@@ -157,28 +180,25 @@ export const notificationActions = {
       
       await batch.commit();
     } catch (error) {
-      console.error('Mark all as read error:', error);
+      logger.error('Mark all as read error:', error);
     }
   },
 
-  // Delete notification
   async deleteNotification(notificationId: string) {
     try {
       const db = getFirestore();
       const notificationRef = doc(db, 'notifications', notificationId);
       await deleteDoc(notificationRef);
     } catch (error) {
-      console.error('Delete notification error:', error);
+      logger.error('Delete notification error:', error);
     }
   },
 
-  // Create notification
   async createNotification(notification: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'>) {
     try {
       const db = getFirestore();
       const notificationsRef = collection(db, 'notifications');
       
-      // Undefined, null, empty string ve empty array değerlerini filtrele
       const cleanNotification = Object.fromEntries(
         Object.entries(notification).filter(([key, value]) => {
           if (value === undefined || value === null || value === '') {
@@ -199,13 +219,10 @@ export const notificationActions = {
       
       await setDoc(doc(notificationsRef), newNotification);
     } catch (error) {
-      console.error('Create notification error:', error);
+      logger.error('Create notification error:', error);
     }
   },
 
-  // Yazarın takipçilerine "yeni hikâye" / "yeni bölüm" duyurusu (in-app + push).
-  // Yayınlama ve bölüm ekleme olaylarında storyStore'dan arka planda çağrılır;
-  // hata olursa yayınlama akışını etkilemez.
   async announceStoryToFollowers(
     authorId: string,
     authorName: string,
@@ -219,11 +236,22 @@ export const notificationActions = {
       const followersSnapshot = await getDocs(collection(db, 'users', authorId, 'followers'));
       if (followersSnapshot.empty) return;
 
-      const title = kind === 'new_story' ? 'Yeni Hikâye' : 'Yeni Bölüm';
-      const message =
-        kind === 'new_story'
-          ? `${authorName} yeni bir hikâye yayınladı: "${storyTitle}"`
-          : `${authorName}, "${storyTitle}" hikâyesine yeni bir bölüm ekledi${chapterNumber ? ` (Bölüm ${chapterNumber})` : ''}`;
+      // Metin alıcının cihazında üretilsin diye tarif de dokümana yazılır.
+      const titleKey = kind === 'new_story'
+        ? 'notifications.newStoryTitle'
+        : 'notifications.newChapterTitle';
+      const messageKey = kind === 'new_story'
+        ? 'notifications.newStoryMessage'
+        : chapterNumber
+          ? 'notifications.newChapterMessageNumbered'
+          : 'notifications.newChapterMessage';
+      const params = {
+        author: authorName,
+        story: storyTitle,
+        ...(chapterNumber ? { chapter: chapterNumber } : {}),
+      };
+      const title = i18n.t(titleKey);
+      const message = i18n.t(messageKey, params);
 
       await Promise.all(
         followersSnapshot.docs.map(async (followerDoc: any) => {
@@ -240,23 +268,81 @@ export const notificationActions = {
                 storyId,
                 storyTitle,
                 ...(chapterNumber ? { chapterNumber } : {}),
+                i18n: { titleKey, messageKey, params },
               } as any,
               isRead: false,
             });
           } catch (error) {
-            console.error('Announce to follower error:', followerId, error);
+            logger.error('Announce to follower error:', followerId, error);
           }
         })
       );
     } catch (error) {
-      console.error('Announce story to followers error:', error);
+      logger.error('Announce story to followers error:', error);
     }
   },
 
-  // Create follow notification
+  // Gizli hesaba takip isteği: hedef kullanıcı onay/ret için bilgilendirilir.
+  async createFollowRequestNotification(requesterId: string, targetUserId: string, requesterName: string) {
+    return notificationActions.createFollowStyleNotification({
+      senderId: requesterId,
+      recipientId: targetUserId,
+      type: 'follow_request',
+      titleKey: 'notifications.followRequestTitle',
+      messageKey: 'notifications.followRequestMessage',
+      params: { name: requesterName },
+    });
+  },
+
+  // İstek onaylandığında isteği gönderene geri bildirim.
+  async createFollowAcceptedNotification(ownerId: string, requesterId: string, ownerName: string) {
+    return notificationActions.createFollowStyleNotification({
+      senderId: ownerId,
+      recipientId: requesterId,
+      type: 'follow_accepted',
+      titleKey: 'notifications.followAcceptedTitle',
+      messageKey: 'notifications.followAcceptedMessage',
+      params: { name: ownerName },
+    });
+  },
+
+  async createFollowStyleNotification(input: {
+    senderId: string;
+    recipientId: string;
+    type: 'follow_request' | 'follow_accepted';
+    titleKey: string;
+    messageKey: string;
+    params: Record<string, string | number>;
+  }) {
+    try {
+      let senderProfileImage = null;
+      try {
+        const senderDoc = await getDoc(doc(getFirestore(), 'users', input.senderId));
+        if (senderDoc.exists()) senderProfileImage = senderDoc.data()?.profileImage;
+      } catch (error) {
+        logger.debug('Error getting sender profile image:', error);
+      }
+
+      await notificationActions.createNotification({
+        userId: input.recipientId,
+        senderId: input.senderId,
+        type: input.type,
+        title: i18n.t(input.titleKey),
+        message: i18n.t(input.messageKey, input.params),
+        data: {
+          followerId: input.senderId,
+          ...(senderProfileImage ? { followerProfileImage: senderProfileImage } : {}),
+          i18n: { titleKey: input.titleKey, messageKey: input.messageKey, params: input.params },
+        },
+        isRead: false,
+      });
+    } catch (error) {
+      logger.error('Create follow-style notification error:', error);
+    }
+  },
+
   async createFollowNotification(followerId: string, followedUserId: string, followerName: string) {
     try {
-      // Get follower's profile image
       let followerProfileImage = null;
       try {
         const followerDoc = await getDoc(doc(getFirestore(), 'users', followerId));
@@ -264,14 +350,18 @@ export const notificationActions = {
           followerProfileImage = followerDoc.data()?.profileImage;
         }
       } catch (error) {
-        console.log('Error getting follower profile image:', error);
+        logger.debug('Error getting follower profile image:', error);
       }
 
       const notificationData: any = {
         followerId,
+        i18n: {
+          titleKey: 'notifications.newFollowerTitle',
+          messageKey: 'notifications.newFollowerMessage',
+          params: { name: followerName },
+        },
       };
-      
-      // Sadece profile image varsa ekle
+
       if (followerProfileImage) {
         notificationData.followerProfileImage = followerProfileImage;
       }
@@ -280,23 +370,20 @@ export const notificationActions = {
         userId: followedUserId,
         senderId: followerId,
         type: 'follow',
-        title: 'Yeni Takipçi',
-        message: `${followerName} seni takip etmeye başladı`,
+        title: i18n.t('notifications.newFollowerTitle'),
+        message: i18n.t('notifications.newFollowerMessage', { name: followerName }),
         data: notificationData,
         isRead: false,
       };
       
       await notificationActions.createNotification(notification);
-      // Push gönderimi VPS'teki push-worker'ın işi (bkz. YAPILACAKLAR 3.1).
     } catch (error) {
-      console.error('Create follow notification error:', error);
+      logger.error('Create follow notification error:', error);
     }
   },
 
-  // Create like notification
   async createLikeNotification(likerId: string, storyOwnerId: string, likerName: string, storyTitle: string, storyId: string, isConversation: boolean = false) {
     try {
-      // Get liker's profile image
       let likerProfileImage = null;
       try {
         const likerDoc = await getDoc(doc(getFirestore(), 'users', likerId));
@@ -304,15 +391,23 @@ export const notificationActions = {
           likerProfileImage = likerDoc.data()?.profileImage;
         }
       } catch (error) {
-        console.log('Error getting liker profile image:', error);
+        logger.debug('Error getting liker profile image:', error);
       }
 
       const notificationData: any = {
         storyId,
         storyTitle,
+        i18n: {
+          titleKey: 'notifications.newLikeTitle',
+          messageKey: isConversation
+            ? 'notifications.conversationLikedMessage'
+            : 'notifications.storyLikedMessage',
+          params: isConversation
+            ? { name: likerName, conversation: storyTitle }
+            : { name: likerName, story: storyTitle },
+        },
       };
-      
-      // Sadece profile image varsa ekle
+
       if (likerProfileImage) {
         notificationData.likerProfileImage = likerProfileImage;
       }
@@ -321,22 +416,20 @@ export const notificationActions = {
         userId: storyOwnerId,
         senderId: likerId,
         type: 'like',
-        title: 'Yeni Beğeni',
-        message: `${likerName} "${storyTitle}" hikayeni beğendi`,
+        title: i18n.t('notifications.newLikeTitle'),
+        message: String(i18n.t(notificationData.i18n.messageKey, notificationData.i18n.params)),
         data: notificationData,
         isRead: false,
       };
       
       await notificationActions.createNotification(notification);
     } catch (error) {
-      console.error('Create like notification error:', error);
+      logger.error('Create like notification error:', error);
     }
   },
 
-  // Create comment notification
   async createCommentNotification(commenterId: string, storyOwnerId: string, commenterName: string, storyTitle: string, storyId: string, commentText: string) {
     try {
-      // Get commenter's profile image
       let commenterProfileImage = null;
       try {
         const commenterDoc = await getDoc(doc(getFirestore(), 'users', commenterId));
@@ -344,16 +437,20 @@ export const notificationActions = {
           commenterProfileImage = commenterDoc.data()?.profileImage;
         }
       } catch (error) {
-        console.log('Error getting commenter profile image:', error);
+        logger.debug('Error getting commenter profile image:', error);
       }
 
       const notificationData: any = {
         storyId,
         storyTitle,
         commentText,
+        i18n: {
+          titleKey: 'notifications.newCommentTitle',
+          messageKey: 'notifications.storyCommentMessage',
+          params: { name: commenterName, story: storyTitle },
+        },
       };
-      
-      // Sadece profile image varsa ekle
+
       if (commenterProfileImage) {
         notificationData.commenterProfileImage = commenterProfileImage;
       }
@@ -362,60 +459,68 @@ export const notificationActions = {
         userId: storyOwnerId,
         senderId: commenterId,
         type: 'comment',
-        title: 'Yeni Yorum',
-        message: `${commenterName} "${storyTitle}" hikayene yorum yaptı`,
+        title: i18n.t('notifications.newCommentTitle'),
+        message: i18n.t('notifications.storyCommentMessage', { name: commenterName, story: storyTitle }),
         data: notificationData,
         isRead: false,
       };
       
       await notificationActions.createNotification(notification);
     } catch (error) {
-      console.error('Create comment notification error:', error);
+      logger.error('Create comment notification error:', error);
     }
   },
 
-  // Create mention notification
   async createMentionNotification(mentionerId: string, mentionedUserId: string, mentionerName: string, storyTitle: string, storyId: string) {
     try {
       const notification: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'> = {
         userId: mentionedUserId,
         senderId: mentionerId,
         type: 'mention',
-        title: 'Seni Etiketledi',
-        message: `${mentionerName} "${storyTitle}" hikayesinde seni etiketledi`,
+        title: i18n.t('notifications.mentionTitle'),
+        message: i18n.t('notifications.mentionMessage', { name: mentionerName, story: storyTitle }),
         data: {
           storyId,
           storyTitle,
+          i18n: {
+            titleKey: 'notifications.mentionTitle',
+            messageKey: 'notifications.mentionMessage',
+            params: { name: mentionerName, story: storyTitle },
+          },
         },
         isRead: false,
       };
       
       await notificationActions.createNotification(notification);
     } catch (error) {
-      console.error('Create mention notification error:', error);
+      logger.error('Create mention notification error:', error);
     }
   },
 
-  // Create welcome notification
   async createWelcomeNotification(userId: string, userName: string) {
     try {
       const notification: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'> = {
         userId,
         senderId: userId,
         type: 'welcome',
-        title: 'Bluma\'ya Hoş Geldin!',
-        message: `Merhaba ${userName}! Hikayelerini paylaşmaya başlayabilirsin.`,
+        title: i18n.t('notifications.welcomeTitle'),
+        message: i18n.t('notifications.welcomeMessage', { name: userName }),
+        data: {
+          i18n: {
+            titleKey: 'notifications.welcomeTitle',
+            messageKey: 'notifications.welcomeMessage',
+            params: { name: userName },
+          },
+        },
         isRead: false,
       };
       
       await notificationActions.createNotification(notification);
     } catch (error) {
-      console.error('Create welcome notification error:', error);
+      logger.error('Create welcome notification error:', error);
     }
   },
 
-  // Bildirim tercihini güncelle — optimistic: UI anında güncellenir, Firestore
-  // yazımı arka planda; hata olursa önceki değere geri alınır.
   async updateNotificationSettings(userId: string, settings: Partial<NotificationSettings>) {
     const previous = store.getState().notification.settings;
     if (previous) {
@@ -429,17 +534,15 @@ export const notificationActions = {
         updatedAt: serverTimestamp(),
       });
     } catch (error) {
-      console.error('Update notification settings error:', error);
+      logger.error('Update notification settings error:', error);
       if (previous) store.dispatch(patchNotification({ settings: previous }));
     }
   },
 
-  // Get unread count
   getUnreadCount(): number {
     return store.getState().notification.unreadCount;
   },
 
-  // Check if user has unread notifications
   hasUnreadNotifications(): boolean {
     return store.getState().notification.unreadCount > 0;
   },

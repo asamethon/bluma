@@ -3,6 +3,7 @@ import { useTheme } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   Linking,
@@ -17,29 +18,22 @@ import {
 import { Screen } from '@/components/ui';
 import { useAppSelector } from '@/store/hooks';
 import { openPrivacyPolicy, openTermsOfService } from '@/utils/legal';
+import { logger } from '@/utils/logger';
 
 type Faq = { q: string; a: string };
 
 const FAQS: Faq[] = [
-  {
-    q: "Bluma nedir?",
-    a: "Bluma; yazılarını paylaşabileceğin, kitapları keşfedebileceğin ve okurlar ile etkileşime geçebileceğin bir okuma-yazma topluluğudur.",
-  },
-  {
-    q: "Hikaye nasıl yayınlanır?",
-    a: "Profil > Yaz sekmesi üzerinden yeni bir hikaye oluşturabilir, bölümler ekleyip yayınlayabilirsin. Taslak olarak kaydedip sonra düzenlemen de mümkün.",
-  },
-  {
-    q: "Hesabımı nasıl silebilirim?",
-    a: "Yardım > Hesap Yönetimi bölümünden “Hesabı Sil” butonuna tıklayarak hesabını silebilirsin.",
-  },
+  { q: 'help.faq1q', a: 'help.faq1a' },
+  { q: 'help.faq2q', a: 'help.faq2a' },
+  { q: 'help.faq3q', a: 'help.faq3a' },
 ];
 
 export default function HelpScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
-  const { user: currentUser } = useAppSelector(s => s.auth);
+  const currentUser = useAppSelector(s => s.auth.user);
 
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -48,7 +42,7 @@ export default function HelpScreen() {
 
   const openMail = async () => {
     const email = "asamethon@gmail.com";
-    const subject = encodeURIComponent("Bluma Destek");
+    const subject = encodeURIComponent(t('help.supportSubject'));
     const url = `mailto:${email}?subject=${subject}`;
     const supported = await Linking.canOpenURL(url);
     if (supported) Linking.openURL(url);
@@ -57,22 +51,20 @@ export default function HelpScreen() {
 
   const handleDeleteAccount = () => {
     if (!currentUser) {
-      Alert.alert('Hata', 'Kullanıcı bilgileri bulunamadı.');
+      Alert.alert(t('common.error'), t('errors.userNotFound'));
       return;
     }
 
     if (currentUser.authProvider === 'email') {
-      // Email kullanıcıları için şifre girişi modal'ı göster
       setShowDeleteModal(true);
     } else {
-      // Google/Apple kullanıcıları için direkt onay
       Alert.alert(
-        'Hesabı Sil',
-        'Hesabını silmek istediğinden emin misin? Bu işlem geri alınamaz ve tüm verilerin kalıcı olarak silinecek.',
+        t('help.deleteAccount'),
+        t('help.deleteAccountConfirm'),
         [
-          { text: 'İptal', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
           { 
-            text: 'Hesabı Sil', 
+            text: t('help.deleteAccount'), 
             style: 'destructive',
             onPress: () => performDeleteAccount(),
           },
@@ -88,18 +80,17 @@ export default function HelpScreen() {
       
       if (result.success) {
         Alert.alert(
-          'Hesap Silindi',
-          'Hesabın başarıyla silindi. Uygulamadan çıkış yapılıyor...',
-          [{ text: 'Tamam' }]
+          t('help.accountDeletedTitle'),
+          t('help.accountDeletedMessage'),
+          [{ text: t('common.ok') }]
         );
         setShowDeleteModal(false);
-        // Router push'e gerek yok, layout otomatik olarak auth stack'e yönlendirecek
       } else {
-        Alert.alert('Hata', result.error || 'Hesap silinirken bir hata oluştu.');
+        Alert.alert(t('common.error'), result.error || t('account.deleteFailed'));
       }
     } catch (error) {
-      console.error('Delete account error:', error);
-      Alert.alert('Hata', 'Hesap silinirken bir hata oluştu.');
+      logger.error('Delete account error:', error);
+      Alert.alert(t('common.error'), t('account.deleteFailed'));
     } finally {
       setIsDeleting(false);
     }
@@ -107,7 +98,7 @@ export default function HelpScreen() {
 
   const handleDeleteModalSubmit = () => {
     if (!deletePassword.trim()) {
-      Alert.alert('Hata', 'Lütfen şifreni girin.');
+      Alert.alert(t('common.error'), t('help.enterPassword'));
       return;
     }
     performDeleteAccount(deletePassword.trim());
@@ -123,7 +114,7 @@ export default function HelpScreen() {
         >
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Yardım & Destek</Text>
+        <Text style={styles.headerTitle}>{t('help.title')}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -131,9 +122,8 @@ export default function HelpScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 32 }}
       >
-        {/* FAQ */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Sık Sorulan Sorular</Text>
+          <Text style={styles.sectionTitle}>{t('help.faqSection')}</Text>
           <View style={styles.card}>
             {FAQS.map((item, idx) => (
               <View
@@ -159,7 +149,7 @@ export default function HelpScreen() {
                       size={20}
                       color={colors.primary}
                     />
-                    <Text style={styles.rowTitle}>{item.q}</Text>
+                    <Text style={styles.rowTitle}>{t(item.q)}</Text>
                   </View>
 
                   <Ionicons
@@ -170,16 +160,15 @@ export default function HelpScreen() {
                 </TouchableOpacity>
 
                 {openIndex === idx && (
-                  <Text style={styles.faqAnswer}>{item.a}</Text>
+                  <Text style={styles.faqAnswer}>{t(item.a)}</Text>
                 )}
               </View>
             ))}
           </View>
         </View>
 
-        {/* Contact */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>İletişim</Text>
+          <Text style={styles.sectionTitle}>{t('help.contactSection')}</Text>
           <View style={styles.card}>
             <TouchableOpacity
               style={[styles.row, styles.rowNoBorder]}
@@ -191,7 +180,7 @@ export default function HelpScreen() {
                   size={20}
                   color={colors.primary}
                 />
-                <Text style={styles.rowTitle}>E-posta ile destek</Text>
+                <Text style={styles.rowTitle}>{t('help.emailSupport')}</Text>
               </View>
               <Ionicons
                 name="chevron-forward"
@@ -202,9 +191,8 @@ export default function HelpScreen() {
           </View>
         </View>
 
-        {/* Policies */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Yasal</Text>
+          <Text style={styles.sectionTitle}>{t('help.legalSection')}</Text>
           <View style={styles.card}>
             <TouchableOpacity
               style={styles.row}
@@ -216,7 +204,7 @@ export default function HelpScreen() {
                   size={20}
                   color={colors.primary}
                 />
-                <Text style={styles.rowTitle}>Gizlilik Politikası</Text>
+                <Text style={styles.rowTitle}>{t('legal.privacyPolicy')}</Text>
               </View>
               <Ionicons
                 name="chevron-forward"
@@ -234,7 +222,7 @@ export default function HelpScreen() {
                   size={20}
                   color={colors.primary}
                 />
-                <Text style={styles.rowTitle}>Kullanım Koşulları</Text>
+                <Text style={styles.rowTitle}>{t('legal.terms')}</Text>
               </View>
               <Ionicons
                 name="chevron-forward"
@@ -245,10 +233,9 @@ export default function HelpScreen() {
           </View>
         </View>
 
-        {/* Account Management */}
         {currentUser && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Hesap Yönetimi</Text>
+            <Text style={styles.sectionTitle}>{t('help.accountSection')}</Text>
             <View style={styles.card}>
               <TouchableOpacity
                 style={[styles.row, styles.rowNoBorder, styles.dangerRow]}
@@ -260,7 +247,7 @@ export default function HelpScreen() {
                     size={20}
                     color={colors.error}
                   />
-                  <Text style={[styles.rowTitle, styles.dangerText]}>Hesabı Sil</Text>
+                  <Text style={[styles.rowTitle, styles.dangerText]}>{t('help.deleteAccount')}</Text>
                 </View>
                 <Ionicons
                   name="chevron-forward"
@@ -273,7 +260,6 @@ export default function HelpScreen() {
         )}
       </ScrollView>
 
-      {/* Delete Account Modal */}
       <Modal
         visible={showDeleteModal}
         animationType="slide"
@@ -286,26 +272,26 @@ export default function HelpScreen() {
               style={styles.modalCancelButton}
               onPress={() => setShowDeleteModal(false)}
             >
-              <Text style={styles.modalCancelText}>İptal</Text>
+              <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Hesabı Sil</Text>
+            <Text style={styles.modalTitle}>{t('help.deleteAccount')}</Text>
             <View style={{ width: 50 }} />
           </View>
 
           <View style={styles.modalContent}>
             <View style={styles.warningContainer}>
               <Ionicons name="warning" size={48} color={colors.warning} />
-              <Text style={styles.warningTitle}>Dikkat!</Text>
+              <Text style={styles.warningTitle}>{t('help.warningTitle')}</Text>
               <Text style={styles.warningText}>
-                Bu işlem geri alınamaz. Hesabın ve tüm verilerin kalıcı olarak silinecek.
+                {t('help.warningText')}
               </Text>
             </View>
 
             <View style={styles.passwordContainer}>
-              <Text style={styles.passwordLabel}>Şifreni Gir</Text>
+              <Text style={styles.passwordLabel}>{t('help.enterPasswordLabel')}</Text>
               <TextInput
                 style={styles.passwordInput}
-                placeholder="Şifreni girin"
+                placeholder={t('help.passwordPlaceholder')}
                 placeholderTextColor={colors.textSecondary}
                 value={deletePassword}
                 onChangeText={setDeletePassword}
@@ -320,9 +306,9 @@ export default function HelpScreen() {
               disabled={isDeleting || !deletePassword.trim()}
             >
               {isDeleting ? (
-                <Text style={styles.deleteButtonText}>Siliniyor...</Text>
+                <Text style={styles.deleteButtonText}>{t('help.deleting')}</Text>
               ) : (
-                <Text style={styles.deleteButtonText}>Hesabı Kalıcı Olarak Sil</Text>
+                <Text style={styles.deleteButtonText}>{t('help.deletePermanently')}</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -395,7 +381,6 @@ const createStyles = (colors: any) =>
     dangerText: {
       color: colors.error,
     },
-    // Modal styles
     modalContainer: {
       flex: 1,
       backgroundColor: colors.background,

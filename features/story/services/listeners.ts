@@ -16,15 +16,14 @@ import { getStoryById } from './storyApi';
 import { getUserById } from './userCache';
 import { patchStory } from '@/store/slices/storySlice';
 import { store } from '@/store';
+import { logger } from '@/utils/logger';
 
-// Real-time listener'lar için unsubscribe fonksiyonları
 let storiesUnsubscribe: (() => void) | null = null;
 let likedStoriesUnsubscribe: (() => void) | null = null;
 let savedStoriesUnsubscribe: (() => void) | null = null;
 let commentsUnsubscribe: (() => void) | null = null;
 let publishedUserStoriesUnsubscribe: (() => void) | null = null;
 
-// Real-time listeners'ları başlat
 export function initializeRealTimeListeners() {
   setupStoriesListener();
   setupLikedStoriesListener();
@@ -34,7 +33,6 @@ export function initializeRealTimeListeners() {
   loadOfflineStories();
 }
 
-// Real-time listeners'ları temizle
 export function cleanupRealTimeListeners() {
   if (storiesUnsubscribe) {
     storiesUnsubscribe();
@@ -58,23 +56,19 @@ export function cleanupRealTimeListeners() {
   }
 }
 
-// Published user stories real-time listener
 export function setupPublishedUserStoriesListener(userId: string) {
   try {
     if (!userId || typeof userId !== 'string') {
-      console.log('Invalid userId for published user stories listener');
+      logger.debug('Invalid userId for published user stories listener');
       return;
     }
 
-    // Farklı bir kullanıcı için yeniden kurulabilir; öncekini kapat ki
-    // listener birikmesin.
     if (publishedUserStoriesUnsubscribe) {
       publishedUserStoriesUnsubscribe();
       publishedUserStoriesUnsubscribe = null;
     }
 
     const firestore = getFirestore();
-    // Server-side filtering kullan (index hazır olduğunda)
     const userStoriesQuery = query(
       collection(firestore, 'stories'),
       where('authorId', '==', userId),
@@ -83,7 +77,6 @@ export function setupPublishedUserStoriesListener(userId: string) {
     );
 
     publishedUserStoriesUnsubscribe = onSnapshot(userStoriesQuery, async (snapshot) => {
-      // Paralel — bkz. setupStoriesListener'daki aynı düzeltme.
       const publishedStoriesList: Story[] = await Promise.all(
         snapshot.docs.map(async (storyDoc) => {
           const storyData = storyDoc.data() as Story;
@@ -103,31 +96,28 @@ export function setupPublishedUserStoriesListener(userId: string) {
       );
 
       store.dispatch(patchStory({ publishedUserStories: publishedStoriesList }));
-      console.log('Published user stories updated:', publishedStoriesList.length);
+      logger.debug('Published user stories updated:', publishedStoriesList.length);
     }, (error) => {
-      console.error('Published user stories listener error:', error);
-      // Index henüz hazır değilse client-side filtering kullan
+      logger.error('Published user stories listener error:', error);
       if (error.message.includes('failed-precondition')) {
-        console.log('Index not ready, using client-side filtering');
+        logger.debug('Index not ready, using client-side filtering');
         setupPublishedUserStoriesListenerWithClientFiltering(userId);
       }
     });
 
   } catch (error) {
-    console.error('Error setting up published user stories listener:', error);
+    logger.error('Error setting up published user stories listener:', error);
   }
 }
 
-// Client-side filtering fallback
 export function setupPublishedUserStoriesListenerWithClientFiltering(userId: string) {
   try {
     if (!userId || typeof userId !== 'string') {
-      console.log('Invalid userId for published user stories listener');
+      logger.debug('Invalid userId for published user stories listener');
       return;
     }
 
     const firestore = getFirestore();
-    // Sadece authorId ile filtrele, client-side'da isPublished kontrolü yap
     const userStoriesQuery = query(
       collection(firestore, 'stories'),
       where('authorId', '==', userId),
@@ -135,45 +125,31 @@ export function setupPublishedUserStoriesListenerWithClientFiltering(userId: str
     );
 
     publishedUserStoriesUnsubscribe = onSnapshot(userStoriesQuery, async (snapshot) => {
-      const publishedStoriesList: Story[] = [];
+      const author = await getUserById(userId);
+      const fallbackAuthor = {
+        id: userId,
+        email: '',
+        displayName: 'Anonim',
+        username: 'user',
+        authProvider: 'email' as const,
+      };
 
-      for (const storyDoc of snapshot.docs) {
-        const storyData = storyDoc.data() as Story;
-
-        // Client-side filtering: sadece yayınlanan hikayeleri al
-        if (storyData.isPublished) {
-          const author = await getUserById(storyData.authorId);
-
-          publishedStoriesList.push({
-            ...storyData,
-            id: storyDoc.id,
-            author: author || {
-              id: storyData.authorId,
-              email: '',
-              displayName: 'Anonim',
-              username: 'user',
-              authProvider: 'email' as const,
-            },
-          });
-        }
-      }
+      const publishedStoriesList: Story[] = snapshot.docs
+        .map(storyDoc => ({ ...(storyDoc.data() as Story), id: storyDoc.id }))
+        .filter(storyData => storyData.isPublished)
+        .map(storyData => ({ ...storyData, author: author || fallbackAuthor }));
 
       store.dispatch(patchStory({ publishedUserStories: publishedStoriesList }));
-      console.log('Published user stories updated (client-side filtering):', publishedStoriesList.length);
     }, (error) => {
-      console.error('Published user stories listener error (client-side):', error);
+      logger.error('Published user stories listener error (client-side):', error);
     });
 
   } catch (error) {
-    console.error('Error setting up published user stories listener (client-side):', error);
+    logger.error('Error setting up published user stories listener (client-side):', error);
   }
 }
 
-// Stories real-time listener
 export function setupStoriesListener() {
-  // Idempotent: a single shared listener feeds story.stories. Calling
-  // this again (e.g. from a screen mount) while one is active is a no-op, so
-  // the splash prefetch and screen listeners never duplicate.
   if (storiesUnsubscribe) return;
   try {
     const firestore = getFirestore();
@@ -185,9 +161,6 @@ export function setupStoriesListener() {
     );
 
     storiesUnsubscribe = onSnapshot(storiesQuery, async (snapshot) => {
-      // Yazar okumaları paralel — sırayla await edilince (örn. 50 hikâyede
-      // 20-30 farklı yazar) her biri kendi network round-trip'ini bekletip
-      // ana sayfayı 5-10sn boş ekranda tutuyordu.
       const storiesList: Story[] = await Promise.all(
         snapshot.docs.map(async (storyDoc) => {
           const storyData = storyDoc.data() as Story;
@@ -203,19 +176,15 @@ export function setupStoriesListener() {
       store.dispatch(patchStory({ stories: storiesList }));
       store.dispatch(patchStory({ storiesLoaded: true }));
     }, (error) => {
-      console.error('Stories listener error:', error);
-      // Don't hold the splash forever if the feed errors out.
+      logger.error('Stories listener error:', error);
       store.dispatch(patchStory({ storiesLoaded: true }));
     });
   } catch (error) {
-    console.error('Setup stories listener error:', error);
+    logger.error('Setup stories listener error:', error);
   }
 }
 
-// Liked stories real-time listener
 export function setupLikedStoriesListener() {
-  // Idempotent: aktif bir dinleyici varken tekrar çağrılmak no-op olmalı —
-  // aksi hâlde her ekran odaklanışında üstüne yeni listener kuruluyordu.
   if (likedStoriesUnsubscribe) return;
   try {
     const { user } = store.getState().auth;
@@ -228,28 +197,23 @@ export function setupLikedStoriesListener() {
     );
 
     likedStoriesUnsubscribe = onSnapshot(likesQuery, async (snapshot) => {
-      // Paralel fetch — getStoryById zaten author'ı (cache'li) ekler,
-      // ayrı bir getUserById çağrısına gerek yok.
       const fetched = await Promise.all(
         snapshot.docs.map(likeDoc => getStoryById(likeDoc.data().storyId))
       );
       store.dispatch(patchStory({ likedStories: fetched.filter((s): s is Story => !!s) }));
     }, (error: any) => {
-      console.error('Liked stories listener error:', error);
+      logger.error('Liked stories listener error:', error);
 
-      // If Firestore permission denied, don't crash the app
       if (error.code === 'firestore/permission-denied') {
-        console.log('Liked stories listener: Firestore permission denied, continuing without real-time updates');
+        logger.debug('Liked stories listener: Firestore permission denied, continuing without real-time updates');
       }
     });
   } catch (error) {
-    console.error('Setup liked stories listener error:', error);
+    logger.error('Setup liked stories listener error:', error);
   }
 }
 
-// Saved stories real-time listener
 export function setupSavedStoriesListener() {
-  // Idempotent (bkz. setupLikedStoriesListener)
   if (savedStoriesUnsubscribe) return;
   try {
     const { user } = store.getState().auth;
@@ -267,109 +231,110 @@ export function setupSavedStoriesListener() {
       );
       store.dispatch(patchStory({ savedStories: fetched.filter((s): s is Story => !!s) }));
     }, (error: any) => {
-      console.error('Saved stories listener error:', error);
+      logger.error('Saved stories listener error:', error);
 
-      // If Firestore permission denied, don't crash the app
       if (error.code === 'firestore/permission-denied') {
-        console.log('Saved stories listener: Firestore permission denied, continuing without real-time updates');
+        logger.debug('Saved stories listener: Firestore permission denied, continuing without real-time updates');
       }
     });
   } catch (error) {
-    console.error('Setup saved stories listener error:', error);
+    logger.error('Setup saved stories listener error:', error);
   }
 }
 
-// Comments real-time listener
-export function setupCommentsListener(storyId: string) {
+export const COMMENTS_PAGE_SIZE = 50;
+
+let commentsStoryId: string | null = null;
+let commentsPageSize = COMMENTS_PAGE_SIZE;
+
+export function setupCommentsListener(storyId: string, pageSize: number = COMMENTS_PAGE_SIZE) {
   try {
-    // Hikâye değişince öncekini kapat — listener birikmesini önler.
+    if (commentsUnsubscribe && commentsStoryId === storyId && commentsPageSize === pageSize) {
+      return;
+    }
     if (commentsUnsubscribe) {
       commentsUnsubscribe();
       commentsUnsubscribe = null;
     }
+    commentsStoryId = storyId;
+    commentsPageSize = pageSize;
+
     const firestore = getFirestore();
     const commentsQuery = query(
       collection(firestore, 'stories', storyId, 'comments'),
-      orderBy('createdAt', 'desc')
+      orderBy('createdAt', 'desc'),
+      limit(pageSize + 1)
     );
 
     commentsUnsubscribe = onSnapshot(commentsQuery, async (snapshot) => {
-      const allComments: Comment[] = [];
-      const commentsMap = new Map<string, Comment>();
+      const hasMore = snapshot.docs.length > pageSize;
+      const docs = hasMore ? snapshot.docs.slice(0, pageSize) : snapshot.docs;
 
-      // Önce tüm yorumları yükle
-      for (const commentDoc of snapshot.docs) {
-        const commentData = commentDoc.data() as Comment;
-
-        // Check if userId exists before calling getUserById
-        if (commentData.userId) {
-          const user = await getUserById(commentData.userId);
-
-          const comment: Comment = {
+      const EMPTY_USER = { id: '', email: '', displayName: '', authProvider: 'email' as const };
+      const allComments: Comment[] = await Promise.all(
+        docs.map(async (commentDoc) => {
+          const commentData = commentDoc.data() as Comment;
+          const user = commentData.userId ? await getUserById(commentData.userId) : null;
+          return {
             ...commentData,
             id: commentDoc.id,
-            user: user || { id: '', email: '', displayName: '', authProvider: 'email' },
+            user: user || EMPTY_USER,
             replies: [],
-          };
+          } as Comment;
+        })
+      );
 
-          allComments.push(comment);
-          commentsMap.set(comment.id, comment);
-        } else {
-          console.warn('Comment without userId found:', commentDoc.id);
-          const comment: Comment = {
-            ...commentData,
-            id: commentDoc.id,
-            user: { id: '', email: '', displayName: '', authProvider: 'email' },
-            replies: [],
-          };
+      const commentsMap = new Map<string, Comment>(allComments.map(c => [c.id, c]));
 
-          allComments.push(comment);
-          commentsMap.set(comment.id, comment);
-        }
-      }
-
-      // Yanıtları parent yorumlara ekle
       const topLevelComments: Comment[] = [];
 
       for (const comment of allComments) {
-        if (comment.parentId) {
-          // Bu bir yanıt, parent yoruma ekle
-          const parentComment = commentsMap.get(comment.parentId);
-          if (parentComment) {
-            parentComment.replies = parentComment.replies || [];
-            parentComment.replies.push(comment);
-          }
+        const parentComment = comment.parentId ? commentsMap.get(comment.parentId) : undefined;
+        if (parentComment) {
+          parentComment.replies = parentComment.replies || [];
+          parentComment.replies.push(comment);
         } else {
-          // Bu bir üst seviye yorum
           topLevelComments.push(comment);
         }
       }
 
-      // Yanıtları tarihe göre sırala (en son gönderilen altta)
       for (const comment of topLevelComments) {
         if (comment.replies && comment.replies.length > 0) {
           comment.replies.sort((a, b) => {
             const dateA = (a.createdAt as any)?.toDate ? (a.createdAt as any).toDate() : new Date(a.createdAt);
             const dateB = (b.createdAt as any)?.toDate ? (b.createdAt as any).toDate() : new Date(b.createdAt);
-            return dateA.getTime() - dateB.getTime(); // Eskiden yeniye (en son altta)
+            return dateA.getTime() - dateB.getTime();
           });
         }
       }
 
-      // Engellenen kullanıcıların yorum ve yanıtlarını gizle
       const visibleComments = moderationActions
         .filterBlocked(topLevelComments)
         .map(c => ({ ...c, replies: c.replies ? moderationActions.filterBlocked(c.replies) : c.replies }));
-      store.dispatch(patchStory({ storyComments: visibleComments }));
+      store.dispatch(patchStory({ storyComments: visibleComments, storyCommentsHasMore: hasMore }));
     }, (error) => {
-      console.error('Comments listener error:', error);
+      logger.error('Comments listener error:', error);
     });
   } catch (error) {
-    console.error('Setup comments listener error:', error);
+    logger.error('Setup comments listener error:', error);
   }
 }
 
-// Story detail real-time listener
+export function loadMoreComments() {
+  if (!commentsStoryId) return;
+  setupCommentsListener(commentsStoryId, commentsPageSize + COMMENTS_PAGE_SIZE);
+}
+
+export function cleanupCommentsListener() {
+  if (commentsUnsubscribe) {
+    commentsUnsubscribe();
+    commentsUnsubscribe = null;
+  }
+  commentsStoryId = null;
+  commentsPageSize = COMMENTS_PAGE_SIZE;
+  store.dispatch(patchStory({ storyComments: [], storyCommentsHasMore: false }));
+}
+
 export function setupStoryDetailListener(storyId: string) {
   try {
     const firestore = getFirestore();
@@ -389,13 +354,12 @@ export function setupStoryDetailListener(storyId: string) {
         store.dispatch(patchStory({ currentStory: story }));
       }
     }, (error) => {
-      console.error('Story detail listener error:', error);
+      logger.error('Story detail listener error:', error);
     });
 
-    // Store unsubscribe function
     return unsubscribe;
   } catch (error) {
-    console.error('Setup story detail listener error:', error);
+    logger.error('Setup story detail listener error:', error);
   }
 }
 
@@ -408,5 +372,7 @@ export const listenersActions = {
   setupLikedStoriesListener,
   setupSavedStoriesListener,
   setupCommentsListener,
+  loadMoreComments,
+  cleanupCommentsListener,
   setupStoryDetailListener,
 };

@@ -12,27 +12,9 @@ import { BloomMark } from "./BloomMark";
 
 const { height: H } = Dimensions.get("window");
 
-// Minimum time the animation plays before onFinish fires — keeps the intro
-// from feeling like a flash even when the app is ready almost instantly.
 export const SPLASH_MIN_MS = 2600;
 
-/**
- * SplashAnimation — Bluma's brand intro (bloom mark + wordmark + tagline).
- *
- * Shown as the app's actual splash screen (app/_layout.tsx renders this
- * while fonts/auth/the stories feed load) so users see this animation
- * instead of the native static launch image. The native launch image still
- * has to render for an instant while the JS bundle boots — that's an OS
- * requirement on both iOS and Android — but it uses the exact same purple
- * background + centered mark as this animation's resting frame, so the
- * handoff reads as one continuous piece instead of two screens.
- */
 export function SplashAnimation({ onFinish }: { onFinish?: () => void }) {
-  // Kasıtlı olarak animasyonsuz: native açılış ekranı zaten aynı mark'ı tam
-  // boyut/opaklıkta bırakıyor. Mark'ı da 0'dan büyüterek başlatırsak, devir
-  // anında logo görünüp sonra küçülüp yeniden büyüyormuş gibi bir "atlama"
-  // oluyor — sanki iki ayrı ekranmış hissi veriyordu. Sadece etrafındaki
-  // (native ekranda hiç olmayan) metin/halka/nokta öğeleri beliriyor.
   const word = useRef(new Animated.Value(0)).current;
   const tag = useRef(new Animated.Value(0)).current;
   const dot0 = useRef(new Animated.Value(0)).current;
@@ -73,8 +55,7 @@ export function SplashAnimation({ onFinish }: { onFinish?: () => void }) {
       clearTimeout(t);
       [...dotAnims, ...ringAnims].forEach(a => a.stop());
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [dot0, dot1, dot2, onFinish, ring1, ring2, tag, word]);
 
   const wordY = word.interpolate({ inputRange: [0, 1], outputRange: [14, 0] });
   const tagY = tag.interpolate({ inputRange: [0, 1], outputRange: [14, 0] });

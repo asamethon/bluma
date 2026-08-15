@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+ 
 /**
  * Custom Expo config plugin: keeps the launch window purple instead of
  * flashing black on Android.

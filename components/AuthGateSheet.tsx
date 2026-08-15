@@ -3,6 +3,7 @@ import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { GATE_REASONS, useGuestGate } from '@/contexts/GuestContext';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Modal,
   Pressable,
@@ -14,16 +15,15 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const BENEFITS = [
-  { icon: 'infinite-outline', label: 'Sınırsız okuma' },
-  { icon: 'bookmark-outline', label: 'Kütüphanem' },
-  { icon: 'people-outline',   label: 'Yazarları takip et' },
+  { icon: 'infinite-outline', label: 'authGate.benefitUnlimited' },
+  { icon: 'bookmark-outline', label: 'authGate.benefitLibrary' },
+  { icon: 'people-outline',   label: 'authGate.benefitFollow' },
 ];
 
-// Built on react-native's Modal (not @gorhom/bottom-sheet) so the gate works
-// reliably on the New Architecture / Reanimated 4 across iOS and Android.
 export function AuthGateSheet() {
   const { gate, closeGate, startAuth } = useGuestGate();
   const { colors, fonts } = useTheme();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   const reason = gate ? GATE_REASONS[gate.reason] : GATE_REASONS.default;
@@ -50,7 +50,6 @@ export function AuthGateSheet() {
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
-            {/* Logo + reason badge */}
             <View style={styles.logoWrap}>
               <View style={[styles.logoBox, { backgroundColor: colors.primarySoft }]}>
                 <BloomMark size={40} />
@@ -61,18 +60,17 @@ export function AuthGateSheet() {
             </View>
 
             <Text style={[styles.title, { fontFamily: fonts.serif, color: colors.text }]}>
-              {reason.title}
+              {t(reason.title)}
             </Text>
             <Text style={[styles.sub, { color: colors.textSecondary }]}>
-              {reason.sub}
+              {t(reason.sub)}
             </Text>
 
-            {/* 3-up benefit boxes */}
             <View style={styles.benefits}>
               {BENEFITS.map(b => (
                 <View key={b.label} style={[styles.benefitBox, { backgroundColor: colors.surfaceVariant }]}>
                   <Ionicons name={b.icon as any} size={20} color={colors.primary} />
-                  <Text style={[styles.benefitLabel, { color: colors.textSecondary }]}>{b.label}</Text>
+                  <Text style={[styles.benefitLabel, { color: colors.textSecondary }]}>{t(b.label)}</Text>
                 </View>
               ))}
             </View>
@@ -82,19 +80,19 @@ export function AuthGateSheet() {
               onPress={() => startAuth('signup')}
               activeOpacity={0.88}
             >
-              <Text style={styles.primaryBtnText}>Ücretsiz Hesap Oluştur</Text>
+              <Text style={styles.primaryBtnText}>{t('guest.createAccount')}</Text>
               <Ionicons name="arrow-forward" size={18} color="#fff" />
             </TouchableOpacity>
 
             <View style={styles.loginRow}>
-              <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 18}}>Zaten hesabın var mı? </Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 18}}>{t('guest.alreadyHaveAccount')} </Text>
               <TouchableOpacity onPress={() => startAuth('login')}>
-                <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 14, lineHeight: 18}}>Giriş yap</Text>
+                <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 14, lineHeight: 18}}>{t('guest.signIn')}</Text>
               </TouchableOpacity>
             </View>
 
             <TouchableOpacity onPress={closeGate} style={styles.skipBtn}>
-              <Text style={{ color: colors.textLight, fontSize: 13, lineHeight: 17, fontWeight: '600' }}>Şimdilik gerek yok</Text>
+              <Text style={{ color: colors.textLight, fontSize: 13, lineHeight: 17, fontWeight: '600' }}>{t('authGate.skip')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>

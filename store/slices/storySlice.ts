@@ -12,15 +12,12 @@ export interface StoryState {
   offlineStories: Story[];
   currentStory: Story | null;
   storyComments: Comment[];
+  storyCommentsHasMore: boolean;
   isLoading: boolean;
-  /** Genel hikâye akışı ilk sonucunu ürettiğinde true olur (splash ekranını
-   *  tutmak için — ekranlar boş durum flash'ı görmesin). */
   storiesLoaded: boolean;
-  /** Ana sayfadaki "Okumaya Devam Et" rafı — misafir/hikaye geçmişi olmayan
-   *  kullanıcılarda boş kalır ama yine de true'ya döner (bkz. splash gate). */
   continueReading: { story: Story; chapterIndex: number }[];
   continueReadingLoaded: boolean;
-  isDownloading: { [storyId: string]: number }; // progress 0-100
+  isDownloading: { [storyId: string]: number };
   error: string | null;
 }
 
@@ -35,6 +32,7 @@ const initialState: StoryState = {
   offlineStories: [],
   currentStory: null,
   storyComments: [],
+  storyCommentsHasMore: false,
   isLoading: false,
   storiesLoaded: false,
   continueReading: [],

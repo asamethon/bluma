@@ -71,9 +71,26 @@ async function reconcileConversations() {
 
 async function reconcileUsers() {
   const users = await db.collection('users').get();
+  // Var olan kullanıcı ID kümesi — silinmiş kullanıcıya işaret eden hayalet
+  // takip dokümanlarını (followers/{silinen} veya following/{silinen})
+  // ayıklamak için. Bu dokümanlar silme akışı düzeltilmeden önce oluştuysa
+  // sayacı şişirmeye devam ederdi; burada budayıp sayacı canlı sayıya çekeriz.
+  const existing = new Set(users.docs.map((d) => d.id));
   let fixed = 0;
   for (const doc of users.docs) {
-    fixed += await fixIfDrifted(doc.ref, 'followersCount', await countDocs(doc.ref.collection('followers')), 'kullanıcı');
+    for (const sub of ['followers', 'following']) {
+      const snap = await doc.ref.collection(sub).get();
+      let live = 0;
+      for (const rel of snap.docs) {
+        // Doc id == karşı kullanıcının uid'i (followers/{takipçi},
+        // following/{takip edilen}).
+        if (existing.has(rel.id)) { live++; continue; }
+        console.log(`[budama] ${doc.ref.path}/${sub}/${rel.id} (silinmiş kullanıcı)`);
+        if (!DRY_RUN) await rel.ref.delete().catch(() => {});
+      }
+      const field = sub === 'followers' ? 'followersCount' : 'followingCount';
+      fixed += await fixIfDrifted(doc.ref, field, live, 'kullanıcı');
+    }
   }
   return fixed;
 }

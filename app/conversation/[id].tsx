@@ -1,16 +1,17 @@
 import ImageModal from '@/components/ImageModal';
+import { MOCK_CONVERSATION, MOCK_CONVERSATION_COMMENTS, SHOW_MOCK_DATA } from '@/constants/mockData';
 import { imageUploadService } from '@/services/imageUploadService';
 import { useAppSelector } from '@/store/hooks';
 import { conversationActions } from '@/store/conversationStore';
 import { ConversationComment } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, getDocs, getFirestore, query, where } from '@react-native-firebase/firestore';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatRelativeTime } from '@/features/story/utils/time';
 import {
   Alert,
-  FlatList,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -19,101 +20,78 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { Screen } from '@/components/ui';
 import { ContentMaxWidth, useTheme } from '@/constants/theme';
+import { logger } from '@/utils/logger';
 
 export default function ConversationDetailScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const currentUser = useAppSelector(s => s.auth.user);
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const commentsUnsubscribeRef = useRef<(() => void) | null>(null);
 
-  const { currentConversation, currentConversationComments, likedConversations } = useAppSelector(s => s.conversation);
+  const storeCurrentConversation = useAppSelector(s => s.conversation.currentConversation);
+  const storeComments = useAppSelector(s => s.conversation.currentConversationComments);
+  const likedConversationIds = useAppSelector(s => s.conversation.likedConversationIds);
+  const isMock = SHOW_MOCK_DATA && id?.startsWith('mock_');
+  const currentConversation = isMock ? MOCK_CONVERSATION : storeCurrentConversation;
+  const currentConversationComments = isMock ? MOCK_CONVERSATION_COMMENTS : storeComments;
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedModalImage, setSelectedModalImage] = useState<string | null>(null);
 
-  // Check if current conversation is liked
-  const isLiked = likedConversations.some(conversation => conversation.id === id);
-  
-  console.log('Like status check:', {
-    conversationId: id,
-    likedConversationsIds: likedConversations.map(c => c.id),
-    isLiked,
-  });
-
-  // Check like status directly from Firebase
-  const [isLikedDirect, setIsLikedDirect] = useState(false);
-  
-  useEffect(() => {
-    const checkLikeStatus = async () => {
-      if (!id || !currentUser?.id) return;
-      
-      try {
-        const db = getFirestore();
-        const likeDoc = await getDocs(query(collection(db, 'conversations', id, 'likes'), where('userId', '==', currentUser.id)));
-        const liked = !likeDoc.empty;
-        console.log('Direct like check:', { conversationId: id, userId: currentUser.id, liked });
-        setIsLikedDirect(liked);
-      } catch (error) {
-        console.error('Error checking like status:', error);
-      }
-    };
-    
-    checkLikeStatus();
-  }, [id, currentUser?.id]);
-
-
+  const isLiked = likedConversationIds.includes(id!);
 
   useEffect(() => {
+    let cancelled = false;
     if (id) {
-      console.log('Setting up real-time listeners for conversation:', id);
-      
-      // Load conversation with real-time updates
       conversationActions.getConversationById(id);
-      
-      // Set up real-time conversation listener using the store method
+
       conversationActions.getConversationRealTimeUpdates(id).then((unsubscribe) => {
-        if (unsubscribe) {
-          unsubscribeRef.current = unsubscribe;
-        }
+        if (!unsubscribe) return;
+        if (cancelled) unsubscribe();
+        else unsubscribeRef.current = unsubscribe;
       });
-      
-      // Load comments
+
       conversationActions.getConversationComments(id).then((unsubscribe) => {
-        if (unsubscribe) {
-          commentsUnsubscribeRef.current = unsubscribe;
-        }
+        if (!unsubscribe) return;
+        if (cancelled) unsubscribe();
+        else commentsUnsubscribeRef.current = unsubscribe;
       });
-      
-      // Load liked conversations for current user
+
       if (currentUser?.id) {
         conversationActions.getLikedConversations(currentUser.id);
       }
     }
 
     return () => {
+      cancelled = true;
       if (commentsUnsubscribeRef.current) {
         commentsUnsubscribeRef.current();
+        commentsUnsubscribeRef.current = null;
       }
       if (unsubscribeRef.current) {
         unsubscribeRef.current();
+        unsubscribeRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const handleAddComment = async () => {
     if (!currentUser?.id || !id) {
-      Alert.alert('Hata', 'Kullanıcı bilgileri bulunamadı.');
+      Alert.alert(t('common.error'), t('errors.userNotFound'));
       return;
     }
 
     if (!commentText.trim() && !selectedImage) {
-      Alert.alert('Hata', 'Lütfen yorum yazın veya resim ekleyin.');
+      Alert.alert(t('common.error'), t('comments.writeOrAttach'));
       return;
     }
 
@@ -128,19 +106,18 @@ export default function ConversationDetailScreen() {
       const result = await conversationActions.addComment(id, commentText.trim(), imageData);
       
       if (result.success) {
-        console.log('Comment added successfully, clearing input');
+        logger.debug('Comment added successfully, clearing input');
         setCommentText('');
         setSelectedImage(null);
-        // Force refresh comments
         if (id) {
           conversationActions.getConversationComments(id);
         }
       } else {
-        Alert.alert('Hata', result.error || 'Yorum eklenirken bir hata oluştu.');
+        Alert.alert(t('common.error'), result.error || t('conversations.commentFailed'));
       }
     } catch (error) {
-      console.error('Add comment error:', error);
-      Alert.alert('Hata', 'Yorum eklenirken bir hata oluştu.');
+      logger.error('Add comment error:', error);
+      Alert.alert(t('common.error'), t('conversations.commentFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -153,8 +130,8 @@ export default function ConversationDetailScreen() {
         setSelectedImage(imageUri);
       }
     } catch (error) {
-      console.error('Error selecting image:', error);
-      Alert.alert('Hata', 'Resim seçilirken bir hata oluştu.');
+      logger.error('Error selecting image:', error);
+      Alert.alert(t('common.error'), t('imageUpload.pickError'));
     }
   };
 
@@ -172,48 +149,9 @@ export default function ConversationDetailScreen() {
     setSelectedModalImage(null);
   };
 
-  const handleLikeConversation = async () => {
+  const handleLikeConversation = () => {
     if (!id) return;
-    
-    try {
-      console.log('Liking conversation:', id);
-      await conversationActions.likeConversation(id);
-      console.log('Conversation liked successfully');
-      
-      // Update like status directly
-      if (currentUser?.id) {
-        const db = getFirestore();
-        const likeDoc = await getDocs(query(collection(db, 'conversations', id, 'likes'), where('userId', '==', currentUser.id)));
-        const liked = !likeDoc.empty;
-        console.log('Updated like status:', { conversationId: id, liked });
-        setIsLikedDirect(liked);
-      }
-    } catch (error) {
-      console.error('Like conversation error:', error);
-    }
-  };
-
-  const formatTimeAgo = (timestamp: any) => {
-    if (!timestamp) return '';
-    
-    const now = new Date();
-    const time = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    const diffInMinutes = Math.floor((now.getTime() - time.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'Şimdi';
-    if (diffInMinutes < 60) return `${diffInMinutes} dk önce`;
-    
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours} saat önce`;
-    
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays} gün önce`;
-    
-    const diffInWeeks = Math.floor(diffInDays / 7);
-    if (diffInWeeks < 4) return `${diffInWeeks} hafta önce`;
-    
-    const diffInMonths = Math.floor(diffInDays / 30);
-    return `${diffInMonths} ay önce`;
+    conversationActions.likeConversation(id);
   };
 
   const renderComment = ({ item }: { item: ConversationComment }) => (
@@ -227,8 +165,8 @@ export default function ConversationDetailScreen() {
           </View>
         )}
         <View style={styles.commentInfo}>
-          <Text style={styles.commentAuthor}>{item.user?.displayName || 'Kullanıcı'}</Text>
-          <Text style={styles.commentTime}>{formatTimeAgo(item.createdAt)}</Text>
+          <Text style={styles.commentAuthor}>{item.user?.displayName || t('common.user')}</Text>
+          <Text style={styles.commentTime}>{formatRelativeTime(item.createdAt)}</Text>
         </View>
       </View>
       {item.content && <Text style={styles.commentContent}>{item.content}</Text>}
@@ -261,8 +199,8 @@ export default function ConversationDetailScreen() {
             </View>
           )}
           <View style={styles.authorDetails}>
-            <Text style={styles.authorName}>{currentConversation.author?.displayName || 'Kullanıcı'}</Text>
-            <Text style={styles.conversationTime}>{formatTimeAgo(currentConversation.createdAt)}</Text>
+            <Text style={styles.authorName}>{currentConversation.author?.displayName || t('common.user')}</Text>
+            <Text style={styles.conversationTime}>{formatRelativeTime(currentConversation.createdAt)}</Text>
           </View>
         </View>
         
@@ -288,11 +226,11 @@ export default function ConversationDetailScreen() {
             activeOpacity={0.7}
           >
             <Ionicons 
-              name={isLikedDirect ? "heart" : "heart-outline"} 
+              name={isLiked ? "heart" : "heart-outline"} 
               size={20} 
-              color={isLikedDirect ? colors.accent : colors.textSecondary} 
+              color={isLiked ? colors.accent : colors.textSecondary} 
             />
-            <Text style={[styles.statText, isLikedDirect && { color: colors.accent }]}>
+            <Text style={[styles.statText, isLiked && { color: colors.accent }]}>
               {currentConversation.likesCount || 0}
             </Text>
           </TouchableOpacity>
@@ -309,13 +247,13 @@ export default function ConversationDetailScreen() {
     );
   };
 
-  const styles = createStyles(colors);
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   if (!currentConversation) {
     return (
       <Screen style={styles.container} maxContentWidth={ContentMaxWidth.content}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Konuşma yükleniyor...</Text>
+          <Text style={styles.loadingText}>{t('conversations.loading')}</Text>
         </View>
       </Screen>
     );
@@ -327,19 +265,17 @@ export default function ConversationDetailScreen() {
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Konuşma</Text>
+          <Text style={styles.headerTitle}>{t('conversations.conversation')}</Text>
           <TouchableOpacity style={styles.headerButton}>
             <Ionicons name="share-outline" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
 
-        {/* Conversation and Comments */}
-        <FlatList
+        <FlashList
           data={currentConversationComments || []}
           renderItem={renderComment}
           keyExtractor={(item) => item.id}
@@ -348,15 +284,13 @@ export default function ConversationDetailScreen() {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={() => (
             <View style={styles.emptyCommentsContainer}>
-              <Text style={styles.emptyCommentsText}>Henüz yorum yok</Text>
-              <Text style={styles.emptyCommentsSubtext}>İlk yorumu sen yap!</Text>
+              <Text style={styles.emptyCommentsText}>{t('comments.emptyTitle')}</Text>
+              <Text style={styles.emptyCommentsSubtext}>{t('comments.emptySub')}</Text>
             </View>
           )}
         />
 
-        {/* Comment Input */}
         <View style={styles.commentInputSection}>
-          {/* Image Preview */}
           {selectedImage && (
             <View style={styles.imagePreviewContainer}>
               <Image 
@@ -387,7 +321,7 @@ export default function ConversationDetailScreen() {
             
             <TextInput
               style={[styles.commentInput, { color: colors.text, borderColor: colors.border }]}
-              placeholder="Yorum yazın..."
+              placeholder={t('comments.placeholder')}
               placeholderTextColor={colors.textSecondary}
               value={commentText}
               onChangeText={setCommentText}
@@ -414,7 +348,6 @@ export default function ConversationDetailScreen() {
         </View>
       </KeyboardAvoidingView>
 
-      {/* Image Modal */}
       <ImageModal
         visible={imageModalVisible}
         imageUri={selectedModalImage || ''}

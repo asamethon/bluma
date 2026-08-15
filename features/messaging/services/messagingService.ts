@@ -1,28 +1,31 @@
-import { DirectMessage } from '@/types';
+import i18n from '@/i18n';
+import { DirectMessage, SharedStory } from '@/types';
 import {
   addDoc,
   collection,
   doc,
   getFirestore,
   increment,
+  limitToLast,
   onSnapshot,
   orderBy,
   query,
-  // orderBy: mesajlar için (thread-içi). Thread listesi array-contains ile
-  // sorgulanır; composite index gerekmesin diye sıralama istemci tarafında.
   serverTimestamp,
   setDoc,
   updateDoc,
   where,
   writeBatch,
 } from '@react-native-firebase/firestore';
+import { logger } from '@/utils/logger';
+import { store } from '@/store';
+import { privacyOf } from '@/features/privacy/types';
 
-// Direct-messaging Firestore erişimi. SADECE veri katmanı: React/Redux yok.
-// Koleksiyon: messageThreads/{threadId} + messageThreads/{threadId}/messages.
-// (Forum "conversations" koleksiyonundan tamamen ayrı.)
+// "Etkinlik Durumu" kapalıyken yazıyor göstergesi ve okundu filigranı
+// karşı tarafa hiç gönderilmez.
+function activityVisible(): boolean {
+  return privacyOf(store.getState().auth.user).showActivity;
+}
 
-// İki kullanıcı için deterministik thread ID — sıralı birleştirme sayesinde
-// A→B ve B→A aynı thread'e düşer, çift sohbet oluşmaz.
 export function threadIdFor(a: string, b: string): string {
   return [a, b].sort().join('_');
 }
@@ -32,8 +35,6 @@ const threadRef = (threadId: string) =>
 const messagesRef = (threadId: string) =>
   collection(getFirestore(), 'messageThreads', threadId, 'messages');
 
-// Mevcut kullanıcının tüm sohbetlerini gerçek zamanlı dinler (en yeni önde).
-// Idempotent değildir; dönen unsubscribe çağıranca kapatılır.
 export function listenThreads(
   userId: string,
   cb: (docs: { id: string; data: any }[]) => void
@@ -52,41 +53,57 @@ export function listenThreads(
   );
 }
 
-// Tek bir thread'in mesajlarını gerçek zamanlı dinler (eskiden yeniye).
+const MESSAGE_WINDOW = 100;
+
 export function listenMessages(
   threadId: string,
   cb: (messages: DirectMessage[]) => void
 ): () => void {
-  const q = query(messagesRef(threadId), orderBy('createdAt', 'asc'));
-  return onSnapshot(
-    q,
-    (snap) => {
-      const messages = snap
-        ? snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) } as DirectMessage))
-        : [];
-      cb(messages);
-    },
-    () => cb([])
-  );
+  let cancelled = false;
+  let unsub: (() => void) | null = null;
+  let retry: ReturnType<typeof setTimeout> | null = null;
+
+  const subscribe = () => {
+    if (cancelled) return;
+    const q = query(messagesRef(threadId), orderBy('createdAt', 'asc'), limitToLast(MESSAGE_WINDOW));
+    unsub = onSnapshot(
+      q,
+      (snap) => {
+        const messages = snap
+          ? snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) } as DirectMessage))
+          : [];
+        cb(messages);
+      },
+      () => {
+        if (unsub) { unsub(); unsub = null; }
+        if (cancelled) return;
+        retry = setTimeout(subscribe, 1500);
+      }
+    );
+  };
+
+  subscribe();
+
+  return () => {
+    cancelled = true;
+    if (retry) clearTimeout(retry);
+    if (unsub) unsub();
+  };
 }
 
-// Mesaj gönder: thread'i oluştur/güncelle + mesajı ekle. Sayaçlar atomik
-// increment ile: alıcının okunmamışı +1, gönderenin okunmamışı 0'lanır.
 export async function sendMessage(params: {
   senderId: string;
   recipientId: string;
   text: string;
   image?: string;
+  story?: SharedStory;
+  clientId?: string;
 }): Promise<void> {
-  const { senderId, recipientId, text, image } = params;
+  const { senderId, recipientId, text, image, story, clientId } = params;
   const threadId = threadIdFor(senderId, recipientId);
   const db = getFirestore();
   const batch = writeBatch(db);
-  const previewText = text || (image ? '📷 Fotoğraf' : '');
-  // participants deterministik sırada tutulur (threadIdFor ile aynı) — aksi
-  // halde güncelleme kuralı (rules'ta `participants == resource.data.participants`)
-  // karşı taraf ilk yazdığında/cevapladığında sıra farkı yüzünden fail veriyor
-  // ve batch.commit() throw ediyor, mesaj hiç gönderilmemiş görünüyor.
+  const previewText = text || (story ? i18n.t('messages.sharedStoryPreview') : image ? i18n.t('messages.photoPreview') : '');
   const participants = [senderId, recipientId].sort();
 
   batch.set(
@@ -105,33 +122,53 @@ export async function sendMessage(params: {
     senderId,
     text,
     ...(image ? { image } : {}),
+    ...(story
+      ? {
+          story: {
+            id: story.id,
+            title: story.title,
+            ...(story.coverImage ? { coverImage: story.coverImage } : {}),
+            ...(story.authorName ? { authorName: story.authorName } : {}),
+          },
+        }
+      : {}),
+    ...(clientId ? { clientId } : {}),
     createdAt: serverTimestamp(),
   });
 }
 
-// Kullanıcı thread'i açtığında okunmamış sayacını sıfırla. Thread henüz yoksa
-// (hiç mesaj yoksa) sessizce geç.
 export async function markThreadRead(threadId: string, userId: string): Promise<void> {
   try {
-    await updateDoc(threadRef(threadId), { [`unread.${userId}`]: 0 });
-  } catch {
-    // doküman yok / yetki — okunmamış zaten yoktur, yut.
+    await updateDoc(threadRef(threadId), {
+      [`unread.${userId}`]: 0,
+      // Karşı tarafın mavi çift tik görebilmesi için okundu filigranı —
+      // etkinlik durumu kapalıysa yazılmaz (okunmamış sayacı yine sıfırlanır).
+      ...(activityVisible() ? { [`lastRead.${userId}`]: serverTimestamp() } : {}),
+    });
+  } catch (e) {
+    logger.error('Mark thread read error:', e);
   }
 }
 
-// Yazma durumu ("...") — thread doc'una senderId için son yazım timestamp'i
-// yazılır. Karşı taraf bu alanı dinler, 5 sn içindeyse balonlu ipucu gösterir.
-// Throttle çağrı yerinde (useChat) yapılır; burada tek yazım.
-// setDoc + merge kullanmamızın sebebi: thread henüz oluşmamışsa (ilk mesaj
-// atılmadan yazılmaya başlanırsa) doc'u create edebilmek — bu yüzden
-// participants'ı da (deterministik sırada) veriyoruz, yoksa create rule fail
-// verir.
+// Sohbeti YALNIZCA bu kullanıcı için gizler: thread iki kişilik olduğundan
+// gerçek silme karşı tarafın da geçmişini yok ederdi (kurallarda delete kapalı).
+// Filigranın altındaki mesajlar istemcide filtrelenir; yeni bir mesaj gelirse
+// updatedAt filigranı geçer ve sohbet listede kendiliğinden geri gelir.
+export async function hideThreadForUser(threadId: string, userId: string): Promise<void> {
+  await updateDoc(threadRef(threadId), {
+    [`deletedFor.${userId}`]: serverTimestamp(),
+    [`unread.${userId}`]: 0,
+  });
+}
+
 export async function setTypingStatus(params: {
   senderId: string;
   recipientId: string;
   isTyping: boolean;
 }): Promise<void> {
   const { senderId, recipientId, isTyping } = params;
+  // Yazıyor göstergesi de bir etkinlik sinyalidir.
+  if (isTyping && !activityVisible()) return;
   const threadId = threadIdFor(senderId, recipientId);
   const participants = [senderId, recipientId].sort();
   try {
@@ -143,13 +180,11 @@ export async function setTypingStatus(params: {
       },
       { merge: true }
     );
-  } catch {
-    // Ağ / yetki hatası — typing indicator kritik değil, sessiz geç.
+  } catch (e) {
+    logger.error('Set typing status error:', e);
   }
 }
 
-// Yalnızca thread doc'unu dinler (typing alanı için). Mesajlar için
-// listenMessages, thread listesi için listenThreads ayrı.
 export function listenThreadDoc(
   threadId: string,
   cb: (data: any | null) => void
@@ -161,7 +196,6 @@ export function listenThreadDoc(
   );
 }
 
-// Boş bir sohbet açıldığında thread yaratmaya gerek yok: ilk mesajla oluşur.
 export const messagingService = {
   threadIdFor,
   listenThreads,
@@ -169,5 +203,6 @@ export const messagingService = {
   listenThreadDoc,
   sendMessage,
   markThreadRead,
+  hideThreadForUser,
   setTypingStatus,
 };

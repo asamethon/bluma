@@ -2,14 +2,14 @@ import { IconButton, Text } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { useComposer } from '../../hooks/useComposer';
 import { OverflowMenu } from './OverflowMenu';
 
-// Composer üst çubuğu — geri, bölüm seçici hap, kaydetme durumu, odak modu,
-// seçenekler.
 export function ComposerHeader({ c, topInset }: { c: ReturnType<typeof useComposer>; topInset: number }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <View>
@@ -19,7 +19,7 @@ export function ComposerHeader({ c, topInset }: { c: ReturnType<typeof useCompos
           onPress={() => c.setSheet(true)}
           style={[styles.pill, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}
         >
-          <Text variant="label" numberOfLines={1}>Bölüm {c.index + 1}</Text>
+          <Text variant="label" numberOfLines={1}>{t('story.chapterN', { number: c.index + 1 })}</Text>
           <Ionicons name="chevron-down" size={13} color={colors.textLight} />
         </Pressable>
         <View style={{ flex: 1 }} />
@@ -31,7 +31,7 @@ export function ComposerHeader({ c, topInset }: { c: ReturnType<typeof useCompos
               color={c.saveState === 'saving' ? colors.textLight : colors.success}
             />
             <Text variant="caption" tone="textSecondary">
-              {c.saveState === 'saving' ? 'Kaydediliyor' : 'Kaydedildi'}
+              {c.saveState === 'saving' ? t('studio.saving') : t('studio.saved')}
             </Text>
           </View>
         )}
@@ -45,7 +45,7 @@ export function ComposerHeader({ c, topInset }: { c: ReturnType<typeof useCompos
 
       {!c.focus && (
         <Text variant="overline" tone="textLight" numberOfLines={1} style={styles.overline}>
-          {c.story?.title || 'Başlıksız'}
+          {c.story?.title || t('studio.untitled')}
         </Text>
       )}
 
@@ -54,8 +54,8 @@ export function ComposerHeader({ c, topInset }: { c: ReturnType<typeof useCompos
         onClose={() => c.setMenu(false)}
         top={topInset + 52}
         items={[
-          { icon: 'create-outline', label: 'Hikâye Bilgilerini Düzenle', onPress: c.editInfo },
-          { icon: 'trash-outline', label: 'Bölümü Sil', danger: true, onPress: c.deleteChapter },
+          { icon: 'create-outline', label: t('studio.editStoryInfo'), onPress: c.editInfo },
+          { icon: 'trash-outline', label: t('studio.deleteChapterTitle'), danger: true, onPress: c.deleteChapter },
         ]}
       />
     </View>

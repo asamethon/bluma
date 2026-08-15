@@ -4,7 +4,9 @@ import { Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatRelativeTime } from '@/features/story/utils/time';
 import {
   Alert,
   RefreshControl,
@@ -19,13 +21,14 @@ import { useAppSelector } from '@/store/hooks';
 
 export default function OfflineLibraryScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
-  const { offlineStories } = useAppSelector(s => s.story);
+  const offlineStories = useAppSelector(s => s.story.offlineStories);
 
   const [refreshing, setRefreshing] = useState(false);
   const [storageInfo, setStorageInfo] = useState({ used: 0, total: 0, count: 0 });
 
-  const styles = createStyles(colors);
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   useEffect(() => {
     loadStorageInfo();
@@ -45,25 +48,24 @@ export default function OfflineLibraryScreen() {
   };
 
   const handleStoryPress = (storyId: string) => {
-    // Offline hikayeye git
     router.push(`/story/${storyId}?offline=true`);
   };
 
   const handleDeleteStory = (storyId: string, storyTitle: string) => {
     Alert.alert(
-      'Hikayeyi Sil',
-      `"${storyTitle}" adlı hikayeyi offline kütüphanenizden silmek istediğinizden emin misiniz?`,
+      t('studio.deleteStoryTitle'),
+      t('offlineLibrary.deleteConfirm', { title: storyTitle }),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Sil',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             const success = await storyActions.deleteOfflineStory(storyId);
             if (success) {
               await loadStorageInfo();
             } else {
-              Alert.alert('Hata', 'Silme işlemi sırasında hata oluştu');
+              Alert.alert(t('common.error'), t('offlineLibrary.deleteFailed'));
             }
           }
         }
@@ -73,20 +75,20 @@ export default function OfflineLibraryScreen() {
 
   const handleClearAll = () => {
     Alert.alert(
-      'Tüm Offline Verileri Sil',
-      'Tüm offline hikayeleri silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
+      t('offlineLibrary.clearAllTitle'),
+      t('offlineLibrary.clearAllConfirm'),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Tümünü Sil',
+          text: t('offlineLibrary.deleteAll'),
           style: 'destructive',
           onPress: async () => {
             const success = await storyActions.clearAllOfflineData();
             if (success) {
-              Alert.alert('Başarılı', 'Tüm offline veriler silindi');
+              Alert.alert(t('common.success'), t('offlineLibrary.allDeleted'));
               await loadStorageInfo();
             } else {
-              Alert.alert('Hata', 'Silme işlemi sırasında hata oluştu');
+              Alert.alert(t('common.error'), t('offlineLibrary.deleteFailed'));
             }
           }
         }
@@ -100,25 +102,6 @@ export default function OfflineLibraryScreen() {
     }
     const sizeInMB = sizeInKB / 1024;
     return `${sizeInMB.toFixed(1)} MB`;
-  };
-
-  const formatTimeAgo = (timestamp: any) => {
-    if (!timestamp) return 'Bilinmiyor';
-    
-    const now = new Date();
-    const storyDate = new Date(timestamp);
-    const diffInMinutes = Math.floor((now.getTime() - storyDate.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'Şimdi';
-    if (diffInMinutes < 60) return `${diffInMinutes} dk önce`;
-    
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours} saat önce`;
-    
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays} gün önce`;
-    
-    return storyDate.toLocaleDateString('tr-TR');
   };
 
   const renderStoryCard = (story: Story & { downloadedAt?: Date; size?: number }) => {
@@ -149,13 +132,13 @@ export default function OfflineLibraryScreen() {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.authorName}>{story.author?.displayName || 'Anonim'}</Text>
+          <Text style={styles.authorName}>{story.author?.displayName || t('common.anonymous')}</Text>
           
           <View style={styles.storyMeta}>
             <View style={styles.metaItem}>
               <Ionicons name="download-outline" size={12} color={colors.textSecondary} />
               <Text style={styles.metaText}>
-                {formatTimeAgo(story.downloadedAt)}
+                {story.downloadedAt ? formatRelativeTime(story.downloadedAt) : t('offlineLibrary.unknown')}
               </Text>
             </View>
             <View style={styles.metaItem}>
@@ -166,7 +149,7 @@ export default function OfflineLibraryScreen() {
             </View>
             <View style={styles.metaItem}>
               <Ionicons name="time-outline" size={12} color={colors.textSecondary} />
-              <Text style={styles.metaText}>{story.readingTime || 5} dk</Text>
+              <Text style={styles.metaText}>{t('time.minutesShort', { count: story.readingTime || 5 })}</Text>
             </View>
           </View>
         </View>
@@ -176,7 +159,6 @@ export default function OfflineLibraryScreen() {
 
   return (
     <Screen style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
@@ -184,7 +166,7 @@ export default function OfflineLibraryScreen() {
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Offline Kütüphane</Text>
+        <Text style={styles.headerTitle}>{t('profileScreen.offlineLibrary')}</Text>
         <TouchableOpacity 
           style={styles.clearAllButton}
           onPress={handleClearAll}
@@ -198,25 +180,24 @@ export default function OfflineLibraryScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Storage Info */}
       <View style={styles.storageInfo}>
         <View style={styles.storageHeader}>
           <Ionicons name="phone-portrait-outline" size={20} color={colors.primary} />
-          <Text style={styles.storageTitle}>Depolama Bilgileri</Text>
+          <Text style={styles.storageTitle}>{t('offlineLibrary.storageInfo')}</Text>
         </View>
         
         <View style={styles.storageStats}>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{storageInfo.count}</Text>
-            <Text style={styles.statLabel}>Hikaye</Text>
+            <Text style={styles.statLabel}>{t('common.story')}</Text>
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{formatFileSize(storageInfo.used)}</Text>
-            <Text style={styles.statLabel}>Kullanılan</Text>
+            <Text style={styles.statLabel}>{t('offlineLibrary.used')}</Text>
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{formatFileSize(storageInfo.total)}</Text>
-            <Text style={styles.statLabel}>Toplam</Text>
+            <Text style={styles.statLabel}>{t('offlineLibrary.total')}</Text>
           </View>
         </View>
 
@@ -229,11 +210,10 @@ export default function OfflineLibraryScreen() {
           />
         </View>
         <Text style={styles.storagePercent}>
-          %{Math.round((storageInfo.used / storageInfo.total) * 100)} kullanıldı
+          {t('offlineLibrary.percentUsed', { percent: Math.round((storageInfo.used / storageInfo.total) * 100) })}
         </Text>
       </View>
 
-      {/* Stories List */}
       <ScrollView 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 20 }}
@@ -244,15 +224,15 @@ export default function OfflineLibraryScreen() {
         {offlineStories.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="cloud-offline-outline" size={64} color={colors.textSecondary} />
-            <Text style={styles.emptyStateTitle}>Offline hikaye yok</Text>
+            <Text style={styles.emptyStateTitle}>{t('offlineLibrary.emptyTitle')}</Text>
             <Text style={styles.emptyStateMessage}>
-              Hikayeleri indirerek internet olmadan okuyabilirsiniz
+              {t('offlineLibrary.emptyMessage')}
             </Text>
             <TouchableOpacity 
               style={styles.exploreButton}
               onPress={() => router.push('/(tabs)')}
             >
-              <Text style={styles.exploreButtonText}>Hikayeleri Keşfet</Text>
+              <Text style={styles.exploreButtonText}>{t('favorites.exploreButton')}</Text>
             </TouchableOpacity>
           </View>
         ) : (

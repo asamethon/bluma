@@ -3,6 +3,7 @@ import { Story } from '@/types';
 import { store } from './index';
 import { patchPreferences } from './slices/preferencesSlice';
 import type { ReadingFont, ReadingLineSpacing, ReadingTheme } from './slices/preferencesSlice';
+import { logger } from '@/utils/logger';
 
 export type { PreferencesState, ReadingFont, ReadingLineSpacing, ReadingTheme } from './slices/preferencesSlice';
 
@@ -11,9 +12,6 @@ const READING_THEME_KEY = 'pref_readingTheme';
 const READING_FONT_KEY = 'pref_readingFont';
 const READING_LINE_SPACING_KEY = 'pref_readingLineSpacing';
 
-// Okuma teması, uygulamanın genel (sistem) temasından bağımsız — okuyucuya
-// özgü bir tercih. 'light' varsayılanı, ekranın normal `useTheme()` renklerini
-// kullanmaya devam etmesi için `null` döner (davranış değişmez).
 export function getReadingPalette(theme: ReadingTheme) {
   switch (theme) {
     case 'sepia':
@@ -49,8 +47,8 @@ export const preferencesActions = {
         readingFont: (readingFont as ReadingFont) || 'serif',
         readingLineSpacing: (readingLineSpacing as ReadingLineSpacing) || 'normal',
       }));
-    } catch {
-      // sessizce varsayılanda kal
+    } catch (e) {
+      logger.error('Preferences load error:', e);
     } finally {
       store.dispatch(patchPreferences({ loaded: true }));
     }
@@ -84,13 +82,13 @@ export const preferencesActions = {
     } catch {}
   },
 
-  // Olgun (18+) içerik tercihi kapalıysa adult hikâyeleri akıştan çıkar.
-  // Misafirler için tercih ne olursa olsun 18+ içerik gizlenir — aksi hâlde
-  // cihazdaki tercih (AsyncStorage, hesap-bağımsız) önceki oturumdan sızabilir
-  // (bkz. YAPILACAKLAR 2.7).
-  filterMature<T extends Pick<Story, 'targetAudience'>>(items: T[]): T[] {
-    const { showMatureContent } = store.getState().preferences;
-    const { isGuest } = store.getState().auth;
+  filterMature<T extends Pick<Story, 'targetAudience'>>(
+    items: T[],
+    showMature?: boolean,
+    guest?: boolean
+  ): T[] {
+    const showMatureContent = showMature ?? store.getState().preferences.showMatureContent;
+    const isGuest = guest ?? store.getState().auth.isGuest;
     if (showMatureContent && !isGuest) return items;
     return items.filter(it => it.targetAudience !== 'adult');
   },

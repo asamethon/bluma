@@ -4,8 +4,9 @@ import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
 import { authActions } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { Redirect, router, useRouter } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '@/store/hooks';
 import { openPrivacyPolicy, openTermsOfService } from '@/utils/legal';
 import {
@@ -20,7 +21,6 @@ import {
   View,
 } from 'react-native';
 
-/* ── Labeled input — label above, border turns violet on focus ─────────── */
 function LabeledInput({
   label,
   icon,
@@ -71,17 +71,19 @@ function pwStrength(pw: string): number {
   return Math.min(s, 4);
 }
 
-// Minimum kabul edilebilir şifre: ≥8 karakter, en az bir harf ve bir rakam.
 function isStrongPassword(pw: string): boolean {
   return pw.length >= 8 && /[a-z]/i.test(pw) && /[0-9]/.test(pw);
 }
 
-const STR_LABELS = ['', 'Zayıf', 'Orta', 'İyi', 'Güçlü'];
+const STR_LABELS = ['', 'auth.pwWeak', 'auth.pwMedium', 'auth.pwGood', 'auth.pwStrong'];
 const STR_COLORS = ['transparent', '#E5604F', '#E6B95C', '#46B98A', '#2FA98A'];
 
 export default function SignUpScreen() {
   const { colors, fonts } = useTheme();
-  const { isLoading, isAuthenticated, hasCompletedOnboarding } = useAppSelector(s => s.auth);
+  const { t } = useTranslation();
+  const isLoading = useAppSelector(s => s.auth.isLoading);
+  const isAuthenticated = useAppSelector(s => s.auth.isAuthenticated);
+  const hasCompletedOnboarding = useAppSelector(s => s.auth.hasCompletedOnboarding);
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [agree, setAgree] = useState(true);
@@ -93,13 +95,13 @@ export default function SignUpScreen() {
     setFormData(prev => ({ ...prev, [field]: value }));
 
   const validateForm = () => {
-    if (!formData.name.trim()) { Alert.alert('Hata', 'Lütfen adınızı girin.'); return false; }
-    if (!formData.email.trim() || !formData.email.includes('@')) { Alert.alert('Hata', 'Lütfen geçerli bir e-posta adresi girin.'); return false; }
+    if (!formData.name.trim()) { Alert.alert(t('common.error'), t('auth.enterName')); return false; }
+    if (!formData.email.trim() || !formData.email.includes('@')) { Alert.alert(t('common.error'), t('auth.enterValidEmail')); return false; }
     if (!isStrongPassword(formData.password)) {
-      Alert.alert('Hata', 'Şifre en az 8 karakter olmalı ve en az bir harf ile bir rakam içermelidir.');
+      Alert.alert(t('common.error'), t('auth.passwordRequirements'));
       return false;
     }
-    if (!agree) { Alert.alert('Hata', 'Devam etmek için kullanım koşullarını kabul etmelisiniz.'); return false; }
+    if (!agree) { Alert.alert(t('common.error'), t('auth.mustAcceptTerms')); return false; }
     return true;
   };
 
@@ -107,16 +109,16 @@ export default function SignUpScreen() {
     if (!validateForm()) return;
     try {
       const result = await authActions.signUpWithEmail(formData.email, formData.password, formData.name);
-      if (!result.success) Alert.alert('Hata', result.error || 'Kayıt olurken bir hata oluştu.');
+      if (!result.success) Alert.alert(t('common.error'), result.error || t('authErrors.signUpFailed'));
     } catch {
-      Alert.alert('Hata', 'Kayıt olurken bir hata oluştu.');
+      Alert.alert(t('common.error'), t('authErrors.signUpFailed'));
     }
   };
 
   const handleGoogleSignUp = async () => {
     if (isLoading) return;
     const result = await authActions.signInWithGoogle();
-    if (!result.success) Alert.alert('Hata', result.error || 'Google ile kayıt olurken bir hata oluştu.');
+    if (!result.success) Alert.alert(t('common.error'), result.error || t('authErrors.googleSignInFailed'));
   };
 
   const handleAppleSignUp = async () => {
@@ -128,9 +130,9 @@ export default function SignUpScreen() {
         ],
       });
       const result = await authActions.signInWithApple(credential);
-      if (!result.success) Alert.alert('Hata', result.error || 'Apple ile kayıt olurken bir hata oluştu.');
+      if (!result.success) Alert.alert(t('common.error'), result.error || t('authErrors.appleSignInFailed'));
     } catch (error: any) {
-      if (error.code !== 'ERR_CANCELED') Alert.alert('Hata', 'Apple ile kayıt olurken bir hata oluştu.');
+      if (error.code !== 'ERR_CANCELED') Alert.alert(t('common.error'), t('authErrors.appleSignInFailed'));
     }
   };
 
@@ -147,7 +149,6 @@ export default function SignUpScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Back button — filled surface-sunk, no border */}
           <TouchableOpacity
             style={[s.backBtn, { backgroundColor: colors.surfaceVariant }]}
             onPress={() => {
@@ -158,45 +159,42 @@ export default function SignUpScreen() {
             <Ionicons name="chevron-back" size={22} color={colors.text} />
           </TouchableOpacity>
 
-          {/* Heading */}
           <Text style={[s.heading, { fontFamily: fonts.serif, color: colors.text }]}>
-            Hesabını oluştur
+            {t('auth.createAccountTitle')}
           </Text>
           <Text variant="body" tone="textSecondary" style={{ marginTop: 6, lineHeight: 22 }}>
-            Birkaç saniye sürer. İlk hikâyene birlikte başlayalım.
+            {t('auth.createAccountSub')}
           </Text>
 
-          {/* Form */}
           <View style={s.form}>
             <LabeledInput
-              label="Ad Soyad"
+              label={t('auth.fullNameLabel')}
               icon="person-outline"
               value={formData.name}
               onChangeText={v => updateField('name', v)}
-              placeholder="Adın ve soyadın"
+              placeholder={t('auth.fullNamePlaceholder')}
               autoCapitalize="words"
               autoCorrect={false}
             />
 
             <LabeledInput
-              label="E-posta"
+              label={t('auth.emailLabel')}
               icon="mail-outline"
               value={formData.email}
               onChangeText={v => updateField('email', v)}
-              placeholder="isim@örnek.com"
+              placeholder={t('auth.emailPlaceholder')}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
             />
 
-            {/* Password + strength */}
             <View>
               <LabeledInput
-                label="Şifre"
+                label={t('auth.passwordLabel')}
                 icon="lock-closed-outline"
                 value={formData.password}
                 onChangeText={v => updateField('password', v)}
-                placeholder="En az 6 karakter"
+                placeholder={t('auth.passwordPlaceholder')}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -221,13 +219,12 @@ export default function SignUpScreen() {
                     ))}
                   </View>
                   <Text variant="caption" style={{ fontWeight: '700', color: STR_COLORS[pwStr] }}>
-                    {STR_LABELS[pwStr]}
+                    {pwStr > 0 ? t(STR_LABELS[pwStr]) : ''}
                   </Text>
                 </View>
               )}
             </View>
 
-            {/* Terms checkbox */}
             <TouchableOpacity style={s.termsRow} onPress={() => setAgree(a => !a)} activeOpacity={0.7}>
               <View style={[
                 s.checkbox,
@@ -243,22 +240,22 @@ export default function SignUpScreen() {
                   style={{ fontWeight: '700', color: colors.text }}
                   onPress={openTermsOfService}
                 >
-                  Kullanım Koşulları
+                  {t('legal.terms')}
                 </Text>
-                {' '}ve{' '}
+                {' '}{t('auth.termsAnd')}{' '}
                 <Text
                   variant="caption"
                   style={{ fontWeight: '700', color: colors.text }}
                   onPress={openPrivacyPolicy}
                 >
-                  Gizlilik Politikası
+                  {t('legal.privacyPolicy')}
                 </Text>
-                {'\''}nı okudum, kabul ediyorum.
+                {t('auth.termsAccept')}
               </Text>
             </TouchableOpacity>
 
             <Button
-              label={isLoading ? 'Hesap oluşturuluyor…' : 'Devam Et'}
+              label={isLoading ? t('auth.creatingAccount') : t('common.continue')}
               variant="primary"
               size="lg"
               iconRight="arrow-forward"
@@ -267,14 +264,12 @@ export default function SignUpScreen() {
               style={{ marginTop: 4 }}
             />
 
-            {/* Divider */}
             <View style={s.dividerRow}>
               <View style={[s.dividerLine, { backgroundColor: colors.border }]} />
-              <Text variant="caption" tone="textLight" style={s.dividerLabel}>veya</Text>
+              <Text variant="caption" tone="textLight" style={s.dividerLabel}>{t('auth.or')}</Text>
               <View style={[s.dividerLine, { backgroundColor: colors.border }]} />
             </View>
 
-            {/* Social buttons */}
             <View style={s.socialRow}>
               {showApple && (
                 <TouchableOpacity
@@ -301,12 +296,11 @@ export default function SignUpScreen() {
             </View>
           </View>
 
-          {/* Spacer + Footer */}
           <View style={{ flex: 1 }} />
           <View style={s.footer}>
-            <Text variant="body" tone="textSecondary">Zaten hesabın var mı? </Text>
+            <Text variant="body" tone="textSecondary">{t('guest.alreadyHaveAccount')} </Text>
             <TouchableOpacity onPress={() => router.push('/(auth)/signin')}>
-              <Text variant="body" tone="primary" style={{ fontWeight: '700' }}>Giriş yap</Text>
+              <Text variant="body" tone="primary" style={{ fontWeight: '700' }}>{t('guest.signIn')}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

@@ -3,6 +3,7 @@ import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
 import { useGuestGate } from '@/contexts/GuestContext';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface Props {
@@ -11,27 +12,28 @@ interface Props {
 
 const CONTENT = {
   library: {
-    title: 'Kütüphanen henüz boş',
-    sub: 'Hesabını oluştur; beğendiğin hikâyeleri kaydet, kaldığın yerden devam et. Hepsi burada, tek bir rafta seni bekler.',
+    title: 'guest.library.title',
+    sub: 'guest.library.sub',
     rows: [
-      { icon: 'bookmark-outline',             label: 'Hikâyeleri kaydet' },
-      { icon: 'book-outline',                 label: 'Kaldığın yerden devam et' },
-      { icon: 'cloud-offline-outline',        label: 'Çevrimdışı oku' },
+      { icon: 'bookmark-outline',             label: 'guest.library.rowSave' },
+      { icon: 'book-outline',                 label: 'guest.library.rowContinue' },
+      { icon: 'cloud-offline-outline',        label: 'guest.library.rowOffline' },
     ],
   },
   profile: {
-    title: 'Kendi bahçeni ek',
-    sub: 'Bir hesapla kendi profilini oluştur; hikâye yaz, yazarları takip et, okuma yolculuğunu büyüt.',
+    title: 'guest.profile.title',
+    sub: 'guest.profile.sub',
     rows: [
-      { icon: 'create-outline',       label: 'Kendi hikâyeni yaz' },
-      { icon: 'people-outline',       label: 'Yazarları takip et' },
-      { icon: 'sparkles-outline',     label: 'Görevlerle seviye atla' },
+      { icon: 'create-outline',       label: 'guest.profile.rowWrite' },
+      { icon: 'people-outline',       label: 'guest.profile.rowFollow' },
+      { icon: 'sparkles-outline',     label: 'guest.profile.rowLevelUp' },
     ],
   },
 };
 
 export function GuestState({ kind }: Props) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const { startAuth } = useGuestGate();
   const c = CONTENT[kind];
 
@@ -41,9 +43,7 @@ export function GuestState({ kind }: Props) {
       contentContainerStyle={styles.wrap}
       showsVerticalScrollIndicator={false}
     >
-      {/* Icon hero — violet gradient box */}
       <View style={styles.heroWrap}>
-        {/* radial glow ring */}
         <View style={[styles.glowRing, { backgroundColor: colors.primarySoft }]} />
         <View style={[styles.iconBox, { shadowColor: '#7C5CD0' }]}>
           <BloomMark size={52} color="#fff" coreColor="#E6B95C" />
@@ -51,13 +51,12 @@ export function GuestState({ kind }: Props) {
       </View>
 
       <Text style={[styles.title, { fontFamily: Fonts.serif, color: colors.text }]}>
-        {c.title}
+        {t(c.title)}
       </Text>
       <Text style={[styles.sub, { color: colors.textSecondary }]}>
-        {c.sub}
+        {t(c.sub)}
       </Text>
 
-      {/* Feature rows */}
       <View style={styles.rows}>
         {c.rows.map(row => (
           <View
@@ -67,28 +66,27 @@ export function GuestState({ kind }: Props) {
             <View style={[styles.rowIcon, { backgroundColor: colors.primarySoft }]}>
               <Ionicons name={row.icon as any} size={19} color={colors.primary} />
             </View>
-            <Text style={[styles.rowLabel, { color: colors.text }]}>{row.label}</Text>
+            <Text style={[styles.rowLabel, { color: colors.text }]}>{t(row.label)}</Text>
           </View>
         ))}
       </View>
 
-      {/* Actions */}
       <View style={styles.actions}>
         <TouchableOpacity
           style={styles.primaryBtn}
           onPress={() => startAuth('signup')}
           activeOpacity={0.88}
         >
-          <Text style={styles.primaryBtnText}>Ücretsiz Hesap Oluştur</Text>
+          <Text style={styles.primaryBtnText}>{t('guest.createAccount')}</Text>
           <Ionicons name="arrow-forward" size={18} color="#fff" />
         </TouchableOpacity>
 
         <View style={styles.loginRow}>
           <Text style={[styles.loginText, { color: colors.textSecondary }]}>
-            Zaten hesabın var mı?{' '}
+            {t('guest.alreadyHaveAccount')}{' '}
           </Text>
           <TouchableOpacity onPress={() => startAuth('login')}>
-            <Text style={[styles.loginLink, { color: colors.primary }]}>Giriş yap</Text>
+            <Text style={[styles.loginLink, { color: colors.primary }]}>{t('guest.signIn')}</Text>
           </TouchableOpacity>
         </View>
       </View>

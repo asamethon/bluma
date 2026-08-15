@@ -3,7 +3,9 @@ import React from 'react';
 import { useAppSelector } from '@/store/hooks';
 
 export default function Index() {
-  const { isAuthenticated, hasCompletedOnboarding, isGuest } = useAppSelector(s => s.auth);
+  const isAuthenticated = useAppSelector(s => s.auth.isAuthenticated);
+  const hasCompletedOnboarding = useAppSelector(s => s.auth.hasCompletedOnboarding);
+  const isGuest = useAppSelector(s => s.auth.isGuest);
 
   if (isGuest) return <Redirect href="/(tabs)" />;
   if (!isAuthenticated) return <Redirect href="/(auth)/walkthrough" />;

@@ -6,20 +6,22 @@ import { readingListActions } from '@/store/readingListStore';
 import { Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Alert,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 
 export default function ReadingListDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
 
   const lists = useAppSelector(s => s.readingList.lists);
@@ -37,11 +39,8 @@ export default function ReadingListDetailScreen() {
   };
 
   useEffect(() => {
-    // İlk açılışta listeler henüz yüklenmemişse önce onları çek (reaktif
-    // olmayan tek seferlik okuma — effect'i lists'e bağlamamak için getState).
     if (store.getState().readingList.lists.length === 0) readingListActions.loadLists().then(load);
     else load();
-    // storyIds değişince (ekle/çıkar) yeniden yükle
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, list?.storyIds.length]);
 
@@ -51,11 +50,11 @@ export default function ReadingListDetailScreen() {
     setRefreshing(false);
   };
 
-  const removeStory = (storyId: string, title: string) => {
-    Alert.alert('Listeden çıkar', `"${title}" bu listeden çıkarılsın mı?`, [
-      { text: 'Vazgeç', style: 'cancel' },
+  const removeStory = useCallback((storyId: string, title: string) => {
+    Alert.alert(t('lists.removeTitle'), t('lists.removeConfirm', { title }), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Çıkar',
+        text: t('lists.remove'),
         style: 'destructive',
         onPress: async () => {
           await readingListActions.removeStory(id!, storyId);
@@ -63,7 +62,19 @@ export default function ReadingListDetailScreen() {
         },
       },
     ]);
-  };
+  }, [id, t]);
+
+  const renderItem = useCallback(
+    ({ item }: { item: Story }) => (
+      <StoryRow
+        story={item}
+        status={item.isCompleted ? 'completed' : null}
+        onPress={() => router.push(`/story/${item.id}/preview`)}
+        onMenu={() => removeStory(item.id, item.title)}
+      />
+    ),
+    [router, removeStory]
+  );
 
   return (
     <Screen style={{ flex: 1, backgroundColor: colors.background }}>
@@ -73,38 +84,32 @@ export default function ReadingListDetailScreen() {
         </TouchableOpacity>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text variant="subheading" numberOfLines={1} style={{ fontWeight: '700' }}>
-            {list?.name || 'Liste'}
+            {list?.name || t('lists.list')}
           </Text>
-          <Text variant="caption" tone="textSecondary">{stories.length} hikâye</Text>
+          <Text variant="caption" tone="textSecondary">{t('lists.storyCount', { count: stories.length })}</Text>
         </View>
       </View>
 
-      <ScrollView
+      <FlashList
+        data={stories}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
         contentContainerStyle={{ padding: Spacing.screenX, paddingBottom: 120, gap: Spacing.md }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
-      >
-        {loading ? (
-          <ActivityIndicator color={colors.primary} style={{ marginVertical: 40 }} />
-        ) : stories.length === 0 ? (
-          <View style={styles.empty}>
-            <Ionicons name="book-outline" size={44} color={colors.primaryLight} />
-            <Text variant="body" tone="textSecondary" style={{ marginTop: 12, textAlign: 'center' }}>
-              Bu liste henüz boş. Bir hikâyeyi okurken “Listeye ekle” ile buraya ekleyebilirsin.
-            </Text>
-          </View>
-        ) : (
-          stories.map(story => (
-            <StoryRow
-              key={story.id}
-              story={story}
-              status={story.isCompleted ? 'Tamamlandı' : null}
-              onPress={() => router.push(`/story/${story.id}/preview`)}
-              onMenu={() => removeStory(story.id, story.title)}
-            />
-          ))
-        )}
-      </ScrollView>
+        ListEmptyComponent={
+          loading ? (
+            <ActivityIndicator color={colors.primary} style={{ marginVertical: 40 }} />
+          ) : (
+            <View style={styles.empty}>
+              <Ionicons name="book-outline" size={44} color={colors.primaryLight} />
+              <Text variant="body" tone="textSecondary" style={{ marginTop: 12, textAlign: 'center' }}>
+                {t('lists.emptyListHint')}
+              </Text>
+            </View>
+          )
+        }
+      />
     </Screen>
   );
 }

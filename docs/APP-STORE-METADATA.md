@@ -2,8 +2,10 @@
 
 > Sıfırdan yazılmış, kopyala-yapıştır hazır metinler. App Store Connect → uygulaman →
 > **Distribution** sekmesindeki alanlara doğrudan girilir.
-> "Wattpad" kelimesi YALNIZCA gizli **Keywords** alanında geçer — başlık/alt başlık/
-> açıklamada marka adı olarak öne çıkarılmaz (Apple marka reddi riski).
+> **Konumlama ilkesi:** Bluma kendi başına, kendinden emin bir marka olarak sunulur —
+> hiçbir görünür metinde (başlık, alt başlık, tanıtım, açıklama) "Wattpad" veya
+> "alternatif/boşluk doldurma" iması GEÇMEZ. "Wattpad" kelimesi SADECE kullanıcının
+> hiç görmediği gizli **Keywords** alanında, salt arama görünürlüğü için bulunur.
 
 ---
 
@@ -17,9 +19,9 @@ Bluma: Hikâye Oku ve Yaz
 
 ### Alt Başlık — "Subtitle" (maks. 30 karakter)
 ```
-Türkçe roman, fanfic ve öykü
+Roman, fanfic ve öykü oku, yaz
 ```
-*(28 karakter)*
+*(30 karakter)*
 
 ### Anahtar Kelimeler — "Keywords" (maks. 100 karakter, virgülle ayır, ARAYA BOŞLUK KOYMA)
 ```
@@ -30,35 +32,52 @@ tekrarlamadım — Apple onları zaten otomatik indeksliyor, tekrar yer israfı.
 
 ### Tanıtım Metni — "Promotional Text" (maks. 170 karakter; istediğin zaman güncellersin, sıralamayı etkilemez)
 ```
-Wattpad'in bıraktığı boşluğu dolduran Türkçe hikaye topluluğu. Binlerce ücretsiz roman, fanfic ve öykü oku; kendi hikâyeni yaz; kaldığın yerden devam et.
+Hikayelerin buluşma noktası. Ücretsiz roman, fanfic ve öykü keşfet; kendi hikâyeni yaz, sevdiğin yazarlarla sohbet et. Reklamsız, jetonsuz, sınırsız.
 ```
-*(150 karakter)*
+*(~157 karakter. Wattpad iması ve "Türkçe" vurgusu yok; mesajlaşma kancası öne çıktı.)*
 
 ### Açıklama — "Description" (maks. 4000 karakter)
+> Emoji YOK — Apple açıklamada emojiyi tutarsız kabul ediyor/reddediyor; bölüm
+> başlıkları BÜYÜK HARF ile (güvenli ve tarama-dostu).
 ```
-Bluma, okumayı ve yazmayı sevenler için tasarlanmış Türkçe bir hikaye topluluğu. Binlerce ücretsiz roman, fanfic ve kısa öyküyü keşfet; istersen kendi hikâyeni yaz, bölüm bölüm yayınla ve okurlarınla buluş.
+Bluma, okumayı ve yazmayı sevenlerin buluştuğu, büyüyen bir hikaye topluluğu. Ücretsiz roman, fanfic ve kısa öyküler keşfet; istersen kendi hikâyeni yaz, bölüm bölüm yayınla ve okurlarınla buluş.
 
-NEDEN BLUMA?
+İster okumaya doyamayan biri ol, ister anlatacak bir hikayesi olan — Bluma ikisi için de tasarlandı.
 
-📚 Ücretsiz ve sınırsız okuma
-Romantik, fantastik, gizem, korku, bilim kurgu, gençlik, tarih ve daha fazlası. Binlerce hikaye tamamen ücretsiz — okuma limiti yok, ödeme duvarı yok.
+ÜCRETSİZ VE SINIRSIZ OKU
+Romantik, fantastik, gizem, korku, bilim kurgu, gençlik, tarih, şiir ve daha fazlası. Her hikaye tamamen ücretsiz — başladığın hikayeyi sonuna kadar, istediğin kadar oku.
 
-✍️ Kendi hikâyeni yaz
+BURADA OLMAYAN ŞEYLER
+Okumanı (ve yazmanı) bölen reklamlar yok; "reklamları kaldır" diye önüne konan abonelik yok. En sevdiğin bölümde çıkan "devamı için jeton al" ekranı yok. Yazdığın hikaye için günlerce onay sırası beklemezsin — yayınla dediğin an yayında. Sadece hikaye, sen ve okuma keyfi.
+
+KENDİ HİKÂYENİ YAZ VE YAYINLA
 Sessiz, dikkat dağıtmayan bir yazı stüdyosunda bölüm bölüm yaz. Taslak olarak sakla, hazır olunca tek dokunuşla yayınla. İlk okurun bir gün sonra değil, bugün gelsin.
 
-🔖 Kaldığın yerden devam et
+KEŞFETMESİ KOLAY
+Türlere göz at, öne çıkan hikayeleri gör, yeni yazarlar keşfet. Sana uygun bir sonraki hikaye her zaman bir adım ötede.
+
+KALDIĞIN YERDEN DEVAM ET
 Okuma ilerlemen hesabına kaydedilir. Telefonunu değiştirsen bile bıraktığın satırdan devam edersin; kütüphanen hep yanında.
 
-❤️ Gerçek bir okur-yazar topluluğu
+İNTERNETSİZ DE OKU
+Sevdiğin hikayeleri tek dokunuşla cihazına indir, offline kütüphanende sakla. Metroda, uçakta ya da internetin çekmediği her yerde okumaya kesintisiz devam et.
+
+GÖREVLERLE İLERLE
+Okuma ve yazma görevlerini tamamla, hedeflerine ulaş, alışkanlığını sürdür. İlerlemeni profilinde gör; her tamamlanan görev seni bir sonrakine götürür.
+
+GERÇEK BİR OKUR-YAZAR TOPLULUĞU
 Beğen, yorum yap, sevdiğin yazarları takip et. Yazarlar okurlarının tepkisini görür, okurlar sevdikleri hikayelerin bir parçası olur.
 
-🎨 Göz yormayan okuma deneyimi
-Açık, sepya, koyu ve OLED-siyah okuma temaları; yazı tipi ve satır aralığı tercihleri. Gece yarısı okuma seansları için tasarlandı.
+YAZARLARLA VE OKURLARLA SOHBET ET
+Sevdiğin bir hikayenin yazarına mesaj gönder, doğrudan sohbet et. Bluma'da okurlar ve yazarlar birbirine bir mesaj kadar yakın.
 
-🔒 Güvenli topluluk
-Şikayet edilen içerik incelenir; olgun içerik açıkça işaretlenir ve yaş uygunluğuna göre filtrelenir.
+GÖZ YORMAYAN OKUMA DENEYİMİ
+Açık, sepya, koyu ve OLED-siyah okuma temaları; yazı tipi ve satır aralığı tercihleri. Uzun okuma seansları ve gece yarısı için tasarlandı.
 
-Türkiye'de Türkçe okumak ve yazmak isteyen herkes için Bluma; ücretsiz, reklamsız ve topluluk odaklı. Bugün indir, okumaya ya da yazmaya hemen başla.
+GÜVENLİ TOPLULUK
+Şikayet edilen içerik incelenir; olgun içerik açıkça işaretlenir ve yaş uygunluğuna göre filtrelenir. Rahatsız eden kullanıcıları engelleyebilir, uygunsuz içeriği tek dokunuşla bildirebilirsin.
+
+Okumaya doymayanlar ve anlatacak bir hikayesi olanlar için Bluma seni bekliyor. Ücretsiz indir, ilk hikayeni bugün oku ya da yaz.
 ```
 
 ---
@@ -69,20 +88,20 @@ Türkiye'de Türkçe okumak ve yazmak isteyen herkes için Bluma; ücretsiz, rek
 |---|---|
 | **Birincil Kategori** | Kitaplar (Books) |
 | **İkincil Kategori** | Sosyal Ağ (Social Networking) |
-| **Yaş Derecesi** | **17+** (aşağıdaki anket cevaplarıyla) |
+| **Yaş Derecesi** | **16+** (aşağıdaki anket cevaplarıyla) |
 | **Fiyat** | Ücretsiz |
 | **Telif Hakkı** | 2026 Bluma / D4TE Company |
 | **Destek URL'si** | (zorunlu — aşağıya bak) |
 | **Gizlilik Politikası URL'si** | (zorunlu — aşağıya bak) |
 | **Pazarlama URL'si** | (isteğe bağlı) |
 
-### Yaş Derecesi anketi (17+ için) — "Age Rating"
-Kullanıcı üretimi içerik (UGC) barındırdığın ve olgun temalar olabildiği için 17+ hedefliyoruz.
-Anket sorularında:
-- **"Kısıtlanmamış Web Erişimi"** → Hayır
-- **"Kullanıcı Üretimi İçerik / Sosyal özellikler"** → **Evet** (bu tek başına 17+ getirir ve moderasyon beyanı ister)
-- **Cinsellik/Çıplaklık, Şiddet, Küfür, Olgun/Önerilmeyen Temalar** → içeriğinde 18+ etiketli hikayeler olduğundan bunları **"Sık/Yoğun"** yerine en az **"Seyrek/Hafif"** işaretle; en güvenlisi olgun temalar için "Sık/Yoğun" seçmek (düşük derece = ret riski).
-- UGC seçilince Apple **moderasyon + şikayet + engelleme + kullanıcı engelleme** mekanizması ister → uygulamada rapor/şikayet akışın olduğunu beyan et.
+### Yaş Derecesi anketi (16+ — KAYDEDİLDİ) — "Age Rating"
+Explicit içerik yasak (Yol B); olgun temalar (non-explicit romantik) olabildiği için 16+.
+Uygulanan cevaplar (yeni Apple anketi):
+- **Unrestricted Web Access** → No · **User-Generated Content** → Yes · **Messaging and Chat** → Yes
+- **Mature or Suggestive Themes** → Infrequent · **Sexual Content or Nudity** → Infrequent · **Graphic Sexual Content and Nudity** → None
+- Şiddet: Cartoon/Realistic → Infrequent, gerisi None; küfür/madde → Infrequent
+- Sonuç: **16+**. UGC seçildiği için Apple moderasyon + rapor + engelleme bekler → uygulamada mevcut (Terms'te "sıfır tolerans" maddesi + rapor/engelleme akışı).
 
 ### App Privacy — veri toplama beyanı ("App Privacy" bölümü)
 | Veri türü | Toplanıyor | Kullanıcıya bağlı | Amaç |
@@ -105,7 +124,7 @@ Anket sorularında:
   Apple bu boyutu diğer iPhone boyutlarına otomatik ölçekler; ayrıca 6.5"/5.5" isteyebilir.
 - **iPad** (supportsTablet: true olduğu için) 13" görselleri de gerekir.
 - **İlk 3 görsel en kritik** (aramada önizlemede bunlar görünür):
-  1. Okuyucu ekranı + kısa vaat metni: "Binlerce ücretsiz Türkçe hikaye"
+  1. Ana sayfa/keşfet + kısa vaat metni: "Ücretsiz hikayeler seni bekliyor"
   2. Keşfet/ana sayfa (Bloom tasarımını vitrine taşı) + "Reklamsız, sınırsız oku"
   3. Yazı stüdyosu + "Kendi hikâyeni yaz ve yayınla"
 - Metin bindirmelerini Türkçe tut.

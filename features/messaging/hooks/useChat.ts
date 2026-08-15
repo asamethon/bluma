@@ -1,3 +1,4 @@
+import { MOCK_CHAT_MESSAGES, SHOW_MOCK_DATA } from '@/constants/mockData';
 import {
   listenMessages,
   listenThreadDoc,
@@ -5,43 +6,41 @@ import {
   threadIdFor,
 } from '@/features/messaging/services/messagingService';
 import { getUserById } from '@/features/story/services/userCache';
+import { toMillis } from '@/features/messaging/utils/time';
+import { useCanMessage } from '@/features/privacy/hooks/useCanMessage';
+import { usePresence } from '@/features/privacy/hooks/usePresence';
 import { imageUploadService } from '@/services/imageUploadService';
 import { useAppSelector } from '@/store/hooks';
 import { messagingActions } from '@/store/messagingStore';
 import { DirectMessage, User } from '@/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-// Tek sohbet hook'u: karşı kullanıcı profilini yükler, mesajları gerçek zamanlı
-// dinler, açılışta + yeni mesaj geldiğinde okundu işaretler, optimistic gönderir
-// ve yazma durumunu (typing) iki yönlü yönetir.
-// Not: klavye yüksekliği burada değil, ChatScreen'de useAnimatedKeyboard ile
-// takip edilir (bkz. o dosyadaki yorum — edge-to-edge Android'de
-// Keyboard.addListener'ın resize-tabanlı ölçümü güvenilir değil).
 const TYPING_WRITE_THROTTLE_MS = 3000;
 const TYPING_FRESH_WINDOW_MS = 5000;
 
 export function useChat(otherUserId?: string) {
   const currentUserId = useAppSelector((s) => s.auth.user?.id);
+  // Karşı taraf mesajları kapattıysa besteci kilitlenir (kurallar da reddeder).
+  const { blocked: messagingBlocked } = useCanMessage(otherUserId);
+  const presence = usePresence(otherUserId);
   const [otherUser, setOtherUser] = useState<User | null>(null);
   const [serverMessages, setServerMessages] = useState<DirectMessage[]>([]);
-  // Optimistic mesajlar: send() anında eklenir, server listener aynı içeriği
-  // bildirdiğinde ya da send resolve olduğunda düşer. Bunun sebebi: Firestore
-  // orderBy(serverTimestamp) sorgusunda gönderenin kendi pending write'ını
-  // yerel snapshot'a düşürmesi güvenilir değil — mesaj karşı tarafa varıyor
-  // ama gönderen kendi ekranında göremiyordu.
   const [pending, setPending] = useState<DirectMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [otherTypingUntil, setOtherTypingUntil] = useState(0);
   const [now, setNow] = useState(() => Date.now());
+  // Thread dokümanındaki filigranlar (bkz. utils/status.ts).
+  const [deliveredUntil, setDeliveredUntil] = useState(0);
+  const [readUntil, setReadUntil] = useState(0);
+  const [hiddenBefore, setHiddenBefore] = useState(0);
 
   const threadId = useMemo(
     () => (currentUserId && otherUserId ? threadIdFor(currentUserId, otherUserId) : null),
     [currentUserId, otherUserId]
   );
 
-  // Karşı taraf profili (cache'li).
   useEffect(() => {
     let alive = true;
     if (otherUserId) getUserById(otherUserId).then((u) => alive && setOtherUser(u));
@@ -50,34 +49,27 @@ export function useChat(otherUserId?: string) {
     };
   }, [otherUserId]);
 
-  // Mesaj dinleyicisi (dış sisteme abonelik — tek effect, cleanup'lı).
-  // Server mesajları geldiğinde, aynı (senderId + text) eşleşen pending
-  // mesajları düş.
   useEffect(() => {
     if (!threadId) return;
     const unsub = listenMessages(threadId, (msgs) => {
       setServerMessages(msgs);
-      setPending((prev) =>
-        prev.filter(
-          (p) => !msgs.some((m) => m.senderId === p.senderId && m.text === p.text)
-        )
-      );
+      const arrived = new Set(msgs.map((m) => m.clientId).filter(Boolean));
+      setPending((prev) => prev.filter((p) => !arrived.has(p.clientId)));
     });
     return unsub;
   }, [threadId]);
 
-  // Thread doc dinleyicisi — karşı tarafın typing timestamp'i.
   useEffect(() => {
     if (!threadId || !otherUserId) return;
     return listenThreadDoc(threadId, (data) => {
-      const ts = data?.typing?.[otherUserId];
-      const ms = ts?.toMillis ? ts.toMillis() : ts?.toDate ? ts.toDate().getTime() : 0;
-      setOtherTypingUntil(ms ? ms + TYPING_FRESH_WINDOW_MS : 0);
+      const typingMs = toMillis(data?.typing?.[otherUserId]);
+      setOtherTypingUntil(typingMs ? typingMs + TYPING_FRESH_WINDOW_MS : 0);
+      setDeliveredUntil(toMillis(data?.lastDelivered?.[otherUserId]));
+      setReadUntil(toMillis(data?.lastRead?.[otherUserId]));
+      if (currentUserId) setHiddenBefore(toMillis(data?.deletedFor?.[currentUserId]));
     });
-  }, [threadId, otherUserId]);
+  }, [threadId, otherUserId, currentUserId]);
 
-  // "5sn içinde yazan var" tazeliği için hafif bir tick — indicator
-  // pencerenin dışına çıkınca otomatik gizlensin diye.
   useEffect(() => {
     if (!otherTypingUntil) return;
     const remaining = otherTypingUntil - Date.now();
@@ -91,14 +83,11 @@ export function useChat(otherUserId?: string) {
 
   const otherTyping = otherTypingUntil > now;
 
-  // Sohbet açık ve yeni mesaj geldiyse okundu işaretle.
   const lastId = serverMessages.length ? serverMessages[serverMessages.length - 1].id : null;
   useEffect(() => {
     if (threadId && currentUserId) messagingActions.markRead(threadId, currentUserId);
   }, [threadId, currentUserId, lastId]);
 
-  // Yazma durumu yazımı throttle'lı — her tuşta değil, en az 3sn arayla
-  // serverTimestamp yazarız. Çıkışta / gönderimde temizlenir.
   const lastTypingWriteRef = useRef(0);
   const clearOwnTyping = useCallback(() => {
     if (!currentUserId || !otherUserId) return;
@@ -123,7 +112,6 @@ export function useChat(otherUserId?: string) {
     [currentUserId, otherUserId, clearOwnTyping]
   );
 
-  // Ekran unmount olduğunda kendi typing durumumuzu temizle.
   useEffect(() => {
     return () => {
       if (currentUserId && otherUserId) {
@@ -132,11 +120,17 @@ export function useChat(otherUserId?: string) {
     };
   }, [currentUserId, otherUserId]);
 
-  // Render için server + pending birleşimi. Pending, kronolojik olarak
-  // en sonda görünür (yeni yazılanlar).
-  const messages = useMemo(() => [...serverMessages, ...pending], [serverMessages, pending]);
+  const mockPrefix = SHOW_MOCK_DATA && otherUserId?.startsWith('mock_') ? MOCK_CHAT_MESSAGES : [];
+  const messages = useMemo(() => {
+    // "Benim için sil" filigranından eskiler bu kullanıcıya gösterilmez.
+    const visible = hiddenBefore
+      ? serverMessages.filter((m) => toMillis(m.createdAt) > hiddenBefore)
+      : serverMessages;
+    return [...mockPrefix, ...visible, ...pending];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverMessages, pending, hiddenBefore, mockPrefix.length]);
 
-  const canSend = (draft.trim().length > 0 || !!selectedImage) && !isSending;
+  const canSend = (draft.trim().length > 0 || !!selectedImage) && !isSending && !messagingBlocked;
 
   const pickImage = async () => {
     const uri = await imageUploadService.pickCommentImage();
@@ -147,7 +141,7 @@ export function useChat(otherUserId?: string) {
 
   const send = async () => {
     const text = draft.trim();
-    if ((!text && !selectedImage) || !currentUserId || !otherUserId) return;
+    if ((!text && !selectedImage) || !currentUserId || !otherUserId || messagingBlocked) return;
     const imageUri = selectedImage;
     setDraft('');
     setSelectedImage(null);
@@ -165,27 +159,22 @@ export function useChat(otherUserId?: string) {
       setIsSending(false);
     }
 
-    const tempId = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const clientId = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const localMsg: DirectMessage = {
-      id: tempId,
+      id: clientId,
+      clientId,
       senderId: currentUserId,
       text,
       ...(image ? { image } : {}),
       createdAt: new Date(),
+      pending: true,
     };
     setPending((prev) => [...prev, localMsg]);
 
-    // Optimistic: UI zaten güncellendi. Yazma arka planda; hatada pending'den
-    // düşür (kullanıcı gönderilemediğini anlar — yeniden yazabilir).
     try {
-      await messagingActions.send(currentUserId, otherUserId, text, image);
-      // Server listener aynı mesajı kısa süre içinde bildirecek ve
-      // pending'den düşürecek. Gecikirse fallback olarak 800ms sonra düşür.
-      setTimeout(() => {
-        setPending((prev) => prev.filter((m) => m.id !== tempId));
-      }, 800);
+      await messagingActions.send(currentUserId, otherUserId, text, image, clientId);
     } catch {
-      setPending((prev) => prev.filter((m) => m.id !== tempId));
+      setPending((prev) => prev.filter((m) => m.clientId !== clientId));
     }
   };
 
@@ -202,5 +191,9 @@ export function useChat(otherUserId?: string) {
     removeImage,
     isSending,
     otherTyping,
+    deliveredUntil,
+    readUntil,
+    messagingBlocked,
+    presence,
   };
 }

@@ -7,7 +7,6 @@ interface StoryImageProps {
   uri: string;
 }
 
-// Hikaye içeriğine gömülü resim — okuyucu ve önizlemede ortak render.
 export function StoryImage({ uri }: StoryImageProps) {
   return (
     <Image

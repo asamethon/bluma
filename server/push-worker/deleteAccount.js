@@ -11,7 +11,37 @@
 // (altındaki followers/following/likedStories/savedStories/
 // likedConversations/readingLists/readingProgress/blocked dahil) için bunu
 // kullanıyoruz.
+import { FieldValue } from 'firebase-admin/firestore';
+
+// Silinen kullanıcının takip ilişkilerini KARŞI taraflardan da temizle.
+// recursiveDelete(users/uid) yalnızca bu kullanıcının kendi alt
+// koleksiyonlarını siler; başka kullanıcılardaki followers/following
+// dokümanları ve followersCount/followingCount sayaçları olduğu gibi kalıp
+// "hayalet takipçi/takip" oluşturuyordu (sayaç şişik kalır, liste ise
+// silinmiş profili çözemeyip gizler → tutarsızlık).
+async function cleanupFollowRelations(db, uid) {
+  // uid'in TAKİP ETTİKLERİ: her biri için followers/{uid} sil + followersCount--
+  const following = await db.collection('users').doc(uid).collection('following').get();
+  for (const d of following.docs) {
+    const followedId = d.id; // following doc id == takip edilen kullanıcının uid'i
+    await db.collection('users').doc(followedId).collection('followers').doc(uid).delete().catch(() => {});
+    await db.collection('users').doc(followedId).update({ followersCount: FieldValue.increment(-1) }).catch(() => {});
+  }
+  // uid'i TAKİP EDENLER: her biri için following/{uid} sil + followingCount--
+  const followers = await db.collection('users').doc(uid).collection('followers').get();
+  for (const d of followers.docs) {
+    const followerId = d.id; // followers doc id == takip eden kullanıcının uid'i
+    await db.collection('users').doc(followerId).collection('following').doc(uid).delete().catch(() => {});
+    await db.collection('users').doc(followerId).update({ followingCount: FieldValue.increment(-1) }).catch(() => {});
+  }
+}
+
 export async function deleteAllUserData(auth, db, uid) {
+  // Takip ilişkileri karşı taraflardan temizlenmeli — recursiveDelete(users/uid)
+  // bunları görmez. Kullanıcı dokümanını silmeden ÖNCE (following/followers alt
+  // koleksiyonları hâlâ okunabilirken) yap.
+  await cleanupFollowRelations(db, uid);
+
   const stories = await db.collection('stories').where('authorId', '==', uid).get();
   for (const doc of stories.docs) {
     await db.recursiveDelete(doc.ref);

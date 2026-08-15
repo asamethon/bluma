@@ -3,15 +3,17 @@ import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
 import { authActions } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAppSelector } from '@/store/hooks';
 
 export default function ChangePasswordScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { user } = useAppSelector(s => s.auth);
-  const styles = createStyles(colors);
+  const { t } = useTranslation();
+  const user = useAppSelector(s => s.auth.user);
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const isEmailAccount = user?.authProvider === 'email';
 
@@ -23,19 +25,19 @@ export default function ChangePasswordScreen() {
 
   const handleSave = async () => {
     if (!current || !next || !confirm) {
-      Alert.alert('Eksik Bilgi', 'Lütfen tüm alanları doldur.');
+      Alert.alert(t('changePassword.missingTitle'), t('changePassword.missingMessage'));
       return;
     }
     if (next.length < 6) {
-      Alert.alert('Zayıf Şifre', 'Yeni şifre en az 6 karakter olmalı.');
+      Alert.alert(t('changePassword.weakTitle'), t('changePassword.weakMessage'));
       return;
     }
     if (next !== confirm) {
-      Alert.alert('Şifreler Eşleşmiyor', 'Yeni şifre ile tekrarı aynı olmalı.');
+      Alert.alert(t('changePassword.mismatchTitle'), t('changePassword.mismatchMessage'));
       return;
     }
     if (next === current) {
-      Alert.alert('Aynı Şifre', 'Yeni şifre mevcut şifreden farklı olmalı.');
+      Alert.alert(t('changePassword.sameTitle'), t('changePassword.sameMessage'));
       return;
     }
 
@@ -44,9 +46,9 @@ export default function ChangePasswordScreen() {
     setSaving(false);
 
     if (res.success) {
-      Alert.alert('Başarılı', 'Şifren güncellendi.', [{ text: 'Tamam', onPress: () => router.back() }]);
+      Alert.alert(t('common.success'), t('changePassword.updated'), [{ text: t('common.ok'), onPress: () => router.back() }]);
     } else {
-      Alert.alert('Hata', res.error || 'Şifre değiştirilemedi.');
+      Alert.alert(t('common.error'), res.error || t('authErrors.changePasswordFailed'));
     }
   };
 
@@ -54,9 +56,9 @@ export default function ChangePasswordScreen() {
     if (!user?.email) return;
     const res = await authActions.resetPassword(user.email);
     if (res.success) {
-      Alert.alert('E-posta Gönderildi', `${user.email} adresine şifre sıfırlama bağlantısı gönderildi.`);
+      Alert.alert(t('changePassword.emailSentTitle'), t('changePassword.emailSentMessage', { email: user.email }));
     } else {
-      Alert.alert('Hata', res.error || 'E-posta gönderilemedi.');
+      Alert.alert(t('common.error'), res.error || t('changePassword.emailFailed'));
     }
   };
 
@@ -66,7 +68,7 @@ export default function ChangePasswordScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.headerIcon} hitSlop={8}>
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text variant="subheading">Şifre Değiştir</Text>
+        <Text variant="subheading">{t('changePassword.title')}</Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -83,23 +85,22 @@ export default function ChangePasswordScreen() {
         {!isEmailAccount ? (
           <View style={[styles.card, { padding: Spacing.lg }]}>
             <Text variant="bodyStrong" style={{ marginBottom: 6 }}>
-              Şifre yönetimi kullanılamıyor
+              {t('changePassword.unavailableTitle')}
             </Text>
             <Text variant="body" tone="textSecondary" style={{ marginBottom: Spacing.lg }}>
-              Bu hesap {user?.authProvider === 'google' ? 'Google' : 'Apple'} ile oluşturulduğundan uygulama
-              içinden şifre değiştiremezsin. Şifreni sağlayıcının üzerinden yönetebilirsin.
+              {t('changePassword.unavailableMessage', { provider: user?.authProvider === 'google' ? 'Google' : 'Apple' })}
             </Text>
           </View>
         ) : (
           <>
             <Text variant="body" tone="textSecondary" style={{ marginBottom: Spacing.lg, textAlign: 'center' }}>
-              Güvenliğin için önce mevcut şifreni doğrula, ardından yeni şifreni belirle.
+              {t('changePassword.description')}
             </Text>
 
             <View style={styles.card}>
               <PasswordField
                 colors={colors}
-                label="Mevcut Şifre"
+                label={t('changePassword.currentLabel')}
                 value={current}
                 onChangeText={setCurrent}
                 show={show}
@@ -108,20 +109,20 @@ export default function ChangePasswordScreen() {
               <Divider colors={colors} />
               <PasswordField
                 colors={colors}
-                label="Yeni Şifre"
+                label={t('changePassword.newLabel')}
                 value={next}
                 onChangeText={setNext}
                 show={show}
-                placeholder="En az 6 karakter"
+                placeholder={t('auth.passwordPlaceholder')}
               />
               <Divider colors={colors} />
               <PasswordField
                 colors={colors}
-                label="Yeni Şifre (Tekrar)"
+                label={t('changePassword.confirmLabel')}
                 value={confirm}
                 onChangeText={setConfirm}
                 show={show}
-                placeholder="Yeni şifreni tekrar gir"
+                placeholder={t('changePassword.confirmPlaceholder')}
               />
             </View>
 
@@ -131,11 +132,11 @@ export default function ChangePasswordScreen() {
               activeOpacity={0.7}
             >
               <Ionicons name={show ? 'eye-off-outline' : 'eye-outline'} size={18} color={colors.textSecondary} />
-              <Text variant="label" tone="textSecondary">{show ? 'Şifreleri gizle' : 'Şifreleri göster'}</Text>
+              <Text variant="label" tone="textSecondary">{show ? t('changePassword.hidePasswords') : t('changePassword.showPasswords')}</Text>
             </TouchableOpacity>
 
             <Button
-              label={saving ? 'Kaydediliyor...' : 'Şifreyi Güncelle'}
+              label={saving ? t('onboarding.savingProgress') : t('changePassword.updateButton')}
               variant="primary"
               size="lg"
               loading={saving}
@@ -147,7 +148,7 @@ export default function ChangePasswordScreen() {
         )}
 
         <TouchableOpacity onPress={handleResetEmail} style={{ marginTop: Spacing.xl, alignItems: 'center' }}>
-          <Text variant="label" tone="primary">Şifreni mi unuttun? Sıfırlama e-postası gönder</Text>
+          <Text variant="label" tone="primary">{t('changePassword.forgotLink')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </Screen>

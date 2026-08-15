@@ -1,7 +1,7 @@
-import { Fonts, Radius } from '@/constants/theme';
-import { useTheme } from '@/constants/theme';
+import { Fonts, Radius , useTheme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface CoverPickerSheetProps {
@@ -12,9 +12,9 @@ interface CoverPickerSheetProps {
   safeBottom: number;
 }
 
-// Kapak resmi seçim alt sayfası (bottom sheet)
 export function CoverPickerSheet({ visible, onClose, onPickGallery, onTakePhoto, safeBottom }: CoverPickerSheetProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const s = createStyles();
 
   return (
@@ -29,8 +29,8 @@ export function CoverPickerSheet({ visible, onClose, onPickGallery, onTakePhoto,
         <Pressable style={s.sheetBackdrop} onPress={onClose} />
         <View style={[s.sheetContent, { backgroundColor: colors.surface, paddingBottom: safeBottom + 16 }]}>
           <View style={[s.sheetHandle, { backgroundColor: colors.border }]} />
-          <Text style={[s.modalTitle, { color: colors.text }]}>Kapak resmi ekle</Text>
-          <Text style={[s.modalSub, { color: colors.textSecondary }]}>Hikayene görsel bir kapak seç</Text>
+          <Text style={[s.modalTitle, { color: colors.text }]}>{t('coverPicker.title')}</Text>
+          <Text style={[s.modalSub, { color: colors.textSecondary }]}>{t('coverPicker.subtitle')}</Text>
 
           <TouchableOpacity style={[s.modalBtn, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}
             onPress={() => { onClose(); onPickGallery(); }}>
@@ -38,8 +38,8 @@ export function CoverPickerSheet({ visible, onClose, onPickGallery, onTakePhoto,
               <Ionicons name="images" size={22} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[s.modalBtnText, { color: colors.text }]}>Galeriden seç</Text>
-              <Text style={[s.modalBtnSub, { color: colors.textSecondary }]}>Mevcut fotoğraflarından seç</Text>
+              <Text style={[s.modalBtnText, { color: colors.text }]}>{t('coverPicker.gallery')}</Text>
+              <Text style={[s.modalBtnSub, { color: colors.textSecondary }]}>{t('coverPicker.gallerySub')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
           </TouchableOpacity>
@@ -50,14 +50,14 @@ export function CoverPickerSheet({ visible, onClose, onPickGallery, onTakePhoto,
               <Ionicons name="camera" size={22} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[s.modalBtnText, { color: colors.text }]}>Fotoğraf çek</Text>
-              <Text style={[s.modalBtnSub, { color: colors.textSecondary }]}>Kamerayla yeni bir fotoğraf çek</Text>
+              <Text style={[s.modalBtnText, { color: colors.text }]}>{t('coverPicker.camera')}</Text>
+              <Text style={[s.modalBtnSub, { color: colors.textSecondary }]}>{t('coverPicker.cameraSub')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
           </TouchableOpacity>
 
           <TouchableOpacity style={s.cancelBtn} onPress={onClose}>
-            <Text style={[s.cancelText, { color: colors.textSecondary }]}>İptal</Text>
+            <Text style={[s.cancelText, { color: colors.textSecondary }]}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </View>
       </View>

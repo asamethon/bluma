@@ -8,21 +8,15 @@ interface ImageModalProps {
   visible: boolean;
   imageUri: string;
   onClose: () => void;
-  /** 'circle' avatar görüntüleme içindir (300x300 daire); varsayılan 'rect'
-      mesaj/yorum fotoğrafları gibi serbest oranlı görseller içindir. */
   shape?: 'rect' | 'circle';
 }
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('screen');
 
-// Tam ekran görsel görüntüleyici: iki parmakla yakınlaştır/uzaklaştır,
-// görselin dışına dokununca kapanır (ayrı kapatma butonu yok).
 export default function ImageModal({ visible, imageUri, onClose, shape = 'rect' }: ImageModalProps) {
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
 
-  // Her açılışta zoom sıfırlanır (effect yerine Modal onShow — shared value
-  // mutasyonlarını effect'e sokmamak için).
   const resetZoom = () => {
     scale.value = 1;
     savedScale.value = 1;
@@ -33,7 +27,6 @@ export default function ImageModal({ visible, imageUri, onClose, shape = 'rect' 
       scale.value = Math.min(4, Math.max(0.8, savedScale.value * e.scale));
     })
     .onEnd(() => {
-      // 1'in altında bırakıldıysa yumuşakça geri otur.
       if (scale.value < 1) scale.value = withTiming(1);
       savedScale.value = Math.max(1, scale.value);
     });
@@ -51,14 +44,10 @@ export default function ImageModal({ visible, imageUri, onClose, shape = 'rect' 
       onShow={resetZoom}
       onRequestClose={onClose}
     >
-      {/* Modal kendi native penceresini açar; içindeki jestler için ayrı bir
-          GestureHandlerRootView şart (özellikle Android). */}
       <GestureHandlerRootView style={{ flex: 1 }}>
         <Pressable style={styles.backdrop} onPress={onClose}>
           <GestureDetector gesture={pinch}>
             <Animated.View style={animStyle}>
-              {/* Görsele dokunma backdrop'a düşmesin — yalnızca dışarı
-                  dokununca kapanır. */}
               <Pressable onPress={() => {}}>
                 <Image
                   source={{ uri: imageUri }}

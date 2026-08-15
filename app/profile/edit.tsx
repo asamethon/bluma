@@ -5,7 +5,9 @@ import { authActions, User } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAppSelector } from '@/store/hooks';
 import {
   ActivityIndicator,
@@ -17,13 +19,15 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { logger } from '@/utils/logger';
 
 type UsernameStatus = 'checking' | 'available' | 'taken' | null;
 
 export default function EditProfileScreen() {
   const router = useRouter();
   const { colors, shadows } = useTheme();
-  const { user } = useAppSelector(s => s.auth);
+  const { t } = useTranslation();
+  const user = useAppSelector(s => s.auth.user);
 
   const [formData, setFormData] = useState({
     displayName: '',
@@ -37,7 +41,7 @@ export default function EditProfileScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>(null);
 
-  const styles = createStyles(colors);
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   useEffect(() => {
     if (user) {
@@ -51,18 +55,18 @@ export default function EditProfileScreen() {
       });
       setProfileImage(user.profileImage || null);
     }
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
-  // ── Image handling ───────────────────────────────────────────
   const pickImage = async () => {
     try {
       const { status } = await ImagePicker.getMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         const { status: newStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (newStatus !== 'granted') {
-          Alert.alert('İzin Gerekli', 'Fotoğraf seçmek için galeri izni gereklidir.', [
-            { text: 'İptal', style: 'cancel' },
-            { text: 'Ayarlara Git', onPress: () => Linking.openSettings() },
+          Alert.alert(t('avatarPicker.permissionRequired'), t('avatarPicker.galleryPermission'), [
+            { text: t('common.cancel'), style: 'cancel' },
+            { text: t('avatarPicker.goToSettings'), onPress: () => Linking.openSettings() },
           ]);
           return;
         }
@@ -75,8 +79,8 @@ export default function EditProfileScreen() {
       });
       if (!result.canceled && result.assets[0]) setProfileImage(result.assets[0].uri);
     } catch (error) {
-      console.error('Image picker error:', error);
-      Alert.alert('Hata', 'Fotoğraf seçilirken bir hata oluştu.');
+      logger.error('Image picker error:', error);
+      Alert.alert(t('common.error'), t('avatarPicker.pickError'));
     }
   };
 
@@ -86,9 +90,9 @@ export default function EditProfileScreen() {
       if (status !== 'granted') {
         const { status: newStatus } = await ImagePicker.requestCameraPermissionsAsync();
         if (newStatus !== 'granted') {
-          Alert.alert('İzin Gerekli', 'Fotoğraf çekmek için kamera izni gereklidir.', [
-            { text: 'İptal', style: 'cancel' },
-            { text: 'Ayarlara Git', onPress: () => Linking.openSettings() },
+          Alert.alert(t('avatarPicker.permissionRequired'), t('avatarPicker.cameraPermission'), [
+            { text: t('common.cancel'), style: 'cancel' },
+            { text: t('avatarPicker.goToSettings'), onPress: () => Linking.openSettings() },
           ]);
           return;
         }
@@ -100,23 +104,22 @@ export default function EditProfileScreen() {
       });
       if (!result.canceled && result.assets[0]) setProfileImage(result.assets[0].uri);
     } catch (error) {
-      console.error('Camera error:', error);
-      Alert.alert('Hata', 'Fotoğraf çekilirken bir hata oluştu.');
+      logger.error('Camera error:', error);
+      Alert.alert(t('common.error'), t('avatarPicker.captureError'));
     }
   };
 
   const showImagePickerOptions = () => {
-    Alert.alert('Profil Fotoğrafı', 'Fotoğraf seçme yöntemini seçin', [
-      { text: 'İptal', style: 'cancel' },
-      { text: 'Kameradan Çek', onPress: takePhoto },
-      { text: 'Galeriden Seç', onPress: pickImage },
+    Alert.alert(t('avatarPicker.title'), t('avatarPicker.subtitle'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('avatarPicker.takePhoto'), onPress: takePhoto },
+      { text: t('avatarPicker.pickFromGallery'), onPress: pickImage },
       ...(profileImage
-        ? [{ text: 'Fotoğrafı Kaldır', style: 'destructive' as const, onPress: () => setProfileImage(null) }]
+        ? [{ text: t('avatarPicker.removePhoto'), style: 'destructive' as const, onPress: () => setProfileImage(null) }]
         : []),
     ]);
   };
 
-  // ── Username availability ────────────────────────────────────
   const updateUsername = async (username: string) => {
     const cleanUsername = username.toLowerCase().replace(/[^a-z0-9_]/g, '');
     setFormData(prev => ({ ...prev, username: cleanUsername }));
@@ -143,14 +146,13 @@ export default function EditProfileScreen() {
     else setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // ── Save ─────────────────────────────────────────────────────
   const handleSave = async () => {
     if (!formData.displayName.trim() || !formData.username.trim()) {
-      Alert.alert('Hata', 'Ad ve kullanıcı adı alanları zorunludur.');
+      Alert.alert(t('common.error'), t('editProfile.nameUsernameRequired'));
       return;
     }
     if (formData.username !== user?.username && usernameStatus !== 'available') {
-      Alert.alert('Hata', 'Lütfen kullanılabilir bir kullanıcı adı seçin.');
+      Alert.alert(t('common.error'), t('editProfile.pickAvailableUsername'));
       return;
     }
 
@@ -161,7 +163,6 @@ export default function EditProfileScreen() {
         if (user?.profileImage) await imageUploadService.deleteProfileImage(user.profileImage);
         finalProfileImage = await imageUploadService.uploadProfileImage(user!.id, profileImage);
       } else if (!profileImage && user?.profileImage) {
-        // Photo removed
         await imageUploadService.deleteProfileImage(user.profileImage);
         finalProfileImage = undefined;
       }
@@ -177,12 +178,12 @@ export default function EditProfileScreen() {
       };
 
       await authActions.updateUserProfile(updatedUser);
-      Alert.alert('Başarılı', 'Profil bilgilerin güncellendi!', [
-        { text: 'Tamam', onPress: () => router.push('/(tabs)/profile') },
+      Alert.alert(t('common.success'), t('editProfile.updated'), [
+        { text: t('common.ok'), onPress: () => router.push('/(tabs)/profile') },
       ]);
     } catch (error) {
-      console.error('Profile update error:', error);
-      Alert.alert('Hata', error instanceof Error ? error.message : 'Profil güncellenirken bir hata oluştu.');
+      logger.error('Profile update error:', error);
+      Alert.alert(t('common.error'), error instanceof Error ? error.message : t('account.profileUpdateFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -202,19 +203,18 @@ export default function EditProfileScreen() {
   }
 
   const accountSettings: { icon: keyof typeof Ionicons.glyphMap; label: string; caption: string; route: string }[] = [
-    { icon: 'key-outline', label: 'Şifre Değiştir', caption: 'Hesap parolanı güncelle', route: '/profile/change-password' },
-    { icon: 'lock-closed-outline', label: 'Gizlilik', caption: 'Hesap görünürlüğü ve izinler', route: '/profile/privacy' },
-    { icon: 'notifications-outline', label: 'Bildirimler', caption: 'Hangi bildirimleri alacağını seç', route: '/profile/notification-settings' },
+    { icon: 'key-outline', label: t('changePassword.title'), caption: t('editProfile.passwordCaption'), route: '/profile/change-password' },
+    { icon: 'lock-closed-outline', label: t('privacy.title'), caption: t('editProfile.privacyCaption'), route: '/profile/privacy' },
+    { icon: 'notifications-outline', label: t('notifications.title'), caption: t('editProfile.notificationsCaption'), route: '/profile/notification-settings' },
   ];
 
   return (
     <Screen style={styles.container} edges={['top']}>
-      {/* ── Header ─────────────────────────────────────────────── */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerIcon} hitSlop={8}>
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text variant="subheading">Profili Düzenle</Text>
+        <Text variant="subheading">{t('profileScreen.editProfile')}</Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -224,7 +224,6 @@ export default function EditProfileScreen() {
         contentContainerStyle={{ paddingBottom: 140 }}
         keyboardShouldPersistTaps="handled"
       >
-        {/* ── Avatar hero ───────────────────────────────────────── */}
         <View style={styles.photoSection}>
           <TouchableOpacity activeOpacity={0.85} onPress={showImagePickerOptions} style={styles.avatarWrap}>
             <Avatar uri={profileImage || undefined} name={formData.displayName || user.displayName} size={104} ring />
@@ -234,34 +233,32 @@ export default function EditProfileScreen() {
           </TouchableOpacity>
           <TouchableOpacity onPress={showImagePickerOptions}>
             <Text variant="label" tone="primary" style={{ marginTop: 12 }}>
-              {profileImage ? 'Fotoğrafı Değiştir' : 'Fotoğraf Ekle'}
+              {profileImage ? t('editProfile.changePhoto') : t('profileScreen.addPhoto')}
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* ── Profile fields ────────────────────────────────────── */}
         <View style={styles.section}>
           <Text variant="overline" tone="textLight" style={styles.sectionLabel}>
-            Profil Bilgileri
+            {t('editProfile.profileSection')}
           </Text>
           <View style={styles.card}>
             <Field
               colors={colors}
-              label="Ad Soyad"
+              label={t('auth.fullNameLabel')}
               required
               value={formData.displayName}
               onChangeText={v => updateField('displayName', v)}
-              placeholder="Adını gir"
+              placeholder={t('editProfile.namePlaceholder')}
               maxLength={50}
               counter={`${formData.displayName.length}/50`}
             />
             <Divider colors={colors} />
 
-            {/* Username */}
             <View style={fieldStyles.field}>
               <View style={fieldStyles.fieldLabelRow}>
                 <Text variant="label" tone="textSecondary">
-                  Kullanıcı Adı <Text variant="label" style={{ color: colors.bloom }}>*</Text>
+                  {t('editProfile.usernameLabel')} <Text variant="label" style={{ color: colors.bloom }}>*</Text>
                 </Text>
                 <UsernameHint status={usernameStatus} username={formData.username} colors={colors} userUsername={user.username} />
               </View>
@@ -271,7 +268,7 @@ export default function EditProfileScreen() {
                   style={[fieldStyles.input, { color: colors.text }]}
                   value={formData.username}
                   onChangeText={v => updateField('username', v)}
-                  placeholder="kullaniciadi"
+                  placeholder={t('onboarding.usernamePlaceholder')}
                   placeholderTextColor={colors.textLight}
                   maxLength={30}
                   autoCapitalize="none"
@@ -279,15 +276,14 @@ export default function EditProfileScreen() {
                 />
               </View>
               <Text variant="caption" tone="textLight" style={{ marginTop: 6 }}>
-                Sadece harf, rakam ve alt çizgi kullanabilirsin.
+                {t('editProfile.usernameHint')}
               </Text>
             </View>
             <Divider colors={colors} />
 
-            {/* Email — read only */}
             <View style={fieldStyles.field}>
               <Text variant="label" tone="textSecondary" style={{ marginBottom: 8 }}>
-                E-posta
+                {t('auth.emailLabel')}
               </Text>
               <View style={[fieldStyles.inputBox, fieldStyles.inputDisabled, { borderColor: colors.border, backgroundColor: colors.surfaceVariant }]}>
                 <Ionicons name="mail-outline" size={18} color={colors.textLight} style={{ marginRight: 8 }} />
@@ -297,28 +293,27 @@ export default function EditProfileScreen() {
                 <Ionicons name="lock-closed" size={14} color={colors.textLight} />
               </View>
               <Text variant="caption" tone="textLight" style={{ marginTop: 6 }}>
-                E-posta adresi değiştirilemez.
+                {t('editProfile.emailReadonly')}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* ── About ─────────────────────────────────────────────── */}
         <View style={styles.section}>
           <Text variant="overline" tone="textLight" style={styles.sectionLabel}>
-            Hakkında
+            {t('editProfile.aboutSection')}
           </Text>
           <View style={styles.card}>
             <View style={fieldStyles.field}>
               <View style={fieldStyles.fieldLabelRow}>
-                <Text variant="label" tone="textSecondary">Biyografi</Text>
+                <Text variant="label" tone="textSecondary">{t('editProfile.bioLabel')}</Text>
                 <Text variant="caption" tone="textLight">{formData.bio.length}/160</Text>
               </View>
               <TextInput
                 style={[fieldStyles.bioInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surfaceVariant }]}
                 value={formData.bio}
                 onChangeText={v => updateField('bio', v)}
-                placeholder="Kendini birkaç cümleyle anlat..."
+                placeholder={t('editProfile.bioPlaceholder')}
                 placeholderTextColor={colors.textLight}
                 multiline
                 maxLength={160}
@@ -328,7 +323,7 @@ export default function EditProfileScreen() {
             <Divider colors={colors} />
             <Field
               colors={colors}
-              label="Website"
+              label={t('editProfile.websiteLabel')}
               value={formData.website}
               onChangeText={v => updateField('website', v)}
               placeholder="https://siten.com"
@@ -339,20 +334,19 @@ export default function EditProfileScreen() {
             <Divider colors={colors} />
             <Field
               colors={colors}
-              label="Konum"
+              label={t('editProfile.locationLabel')}
               value={formData.location}
               onChangeText={v => updateField('location', v)}
-              placeholder="Şehir, Ülke"
+              placeholder={t('editProfile.locationPlaceholder')}
               maxLength={50}
               icon="location-outline"
             />
           </View>
         </View>
 
-        {/* ── Account settings ──────────────────────────────────── */}
         <View style={styles.section}>
           <Text variant="overline" tone="textLight" style={styles.sectionLabel}>
-            Hesap Ayarları
+            {t('editProfile.accountSection')}
           </Text>
           <View style={styles.card}>
             {accountSettings.map((item, i) => (
@@ -378,10 +372,9 @@ export default function EditProfileScreen() {
         </View>
       </ScrollView>
 
-      {/* ── Sticky save bar ───────────────────────────────────── */}
       <View style={[styles.saveBar, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
         <Button
-          label={isLoading ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
+          label={isLoading ? t('onboarding.savingProgress') : t('editProfile.saveChanges')}
           variant="primary"
           size="lg"
           icon={isLoading ? undefined : 'checkmark'}
@@ -394,7 +387,6 @@ export default function EditProfileScreen() {
   );
 }
 
-// ── Reusable field ─────────────────────────────────────────────
 function Field({
   colors,
   label,
@@ -459,9 +451,9 @@ function UsernameHint({
 }) {
   if (username.length < 3 || username === userUsername || !status) return null;
   const map = {
-    checking: { icon: 'time-outline' as const, color: colors.textSecondary, text: 'Kontrol ediliyor' },
-    available: { icon: 'checkmark-circle' as const, color: colors.success, text: 'Uygun' },
-    taken: { icon: 'close-circle' as const, color: colors.error, text: 'Kullanılıyor' },
+    checking: { icon: 'time-outline' as const, color: colors.textSecondary, text: i18n.t('onboarding.checking') },
+    available: { icon: 'checkmark-circle' as const, color: colors.success, text: i18n.t('editProfile.available') },
+    taken: { icon: 'close-circle' as const, color: colors.error, text: i18n.t('editProfile.taken') },
   };
   const m = map[status];
   return (
@@ -476,8 +468,6 @@ function Divider({ colors }: { colors: any }) {
   return <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: Spacing.lg }} />;
 }
 
-// Field styles are colour-agnostic (colours are applied inline), so they live at
-// module level and are shared by both the screen and the <Field> helper.
 const fieldStyles = StyleSheet.create({
   field: { padding: Spacing.lg },
   fieldLabelRow: {

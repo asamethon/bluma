@@ -6,6 +6,7 @@ import { openPrivacyPolicy, openTermsOfService } from '@/utils/legal';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '@/store/hooks';
 import {
   Animated,
@@ -20,14 +21,10 @@ import {
 
 const { height: H } = Dimensions.get('window');
 
-// Bluma'nın marka animasyonu artık uygulama açılışında global splash olarak
-// gösteriliyor (bkz. app/_layout.tsx + components/ui/SplashAnimation.tsx),
-// bu yüzden bu ekran doğrudan "welcome" içeriğiyle başlar — aynı animasyonu
-// ikinci kez oynatmaz.
 export default function WalkthroughScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
 
-  /* ── welcome animations ───────────────────────────────────── */
   const wmWord  = useRef(new Animated.Value(0)).current;
   const wmTag   = useRef(new Animated.Value(0)).current;
   const wmBody  = useRef(new Animated.Value(0)).current;
@@ -52,12 +49,11 @@ export default function WalkthroughScreen() {
     return () => float.stop();
   }, [wmWord, wmTag, wmBody, wmBtns, wmFloat]);
 
-  /* ── auth redirects ────────────────────────────────────── */
-  const { isAuthenticated, hasCompletedOnboarding } = useAppSelector(s => s.auth);
+  const isAuthenticated = useAppSelector(s => s.auth.isAuthenticated);
+  const hasCompletedOnboarding = useAppSelector(s => s.auth.hasCompletedOnboarding);
   if (isAuthenticated && hasCompletedOnboarding) return <Redirect href="/" />;
   if (isAuthenticated && !hasCompletedOnboarding) return <Redirect href="/(auth)/onboarding" />;
 
-  /* ── Welcome ───────────────────────────────────────────── */
   const fadeUp = (anim: Animated.Value) => ({
     opacity: anim,
     transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
@@ -66,10 +62,8 @@ export default function WalkthroughScreen() {
   return (
     <View style={styles.welcome}>
       <StatusBar barStyle="light-content" />
-      {/* gradient blobs */}
       <View pointerEvents="none" style={[styles.gradLayer, { backgroundColor: '#7C5CD0', opacity: 0.55, borderRadius: H * 0.5, top: -H * 0.25, right: -60, width: H * 0.65, height: H * 0.65 }]} />
       <View pointerEvents="none" style={[styles.gradLayer, { backgroundColor: '#ED3F72', opacity: 0.30, borderRadius: H * 0.5, bottom: -H * 0.25, left: -60, width: H * 0.6, height: H * 0.6 }]} />
-      {/* faint ghost marks */}
       <View pointerEvents="none" style={{ position: 'absolute', top: 82, left: -26, opacity: 0.1 }}>
         <BloomMark size={150} color="#fff" coreColor="#fff" />
       </View>
@@ -78,55 +72,50 @@ export default function WalkthroughScreen() {
       </View>
 
       <Screen style={{ flex: 1 }}>
-        {/* hero */}
         <View style={styles.wHero}>
           <Animated.View style={{ transform: [{ translateY: wmFloat }] }}>
             <BloomMark size={104} color="#fff" coreColor="#E6B95C" />
           </Animated.View>
           <Animated.Text style={[styles.wWordmark, fadeUp(wmWord)]}>bluma</Animated.Text>
-          <Animated.Text style={[styles.wTagline, fadeUp(wmTag)]}>her hikâye bir tohum</Animated.Text>
+          <Animated.Text style={[styles.wTagline, fadeUp(wmTag)]}>{t('walkthrough.tagline')}</Animated.Text>
           <Animated.Text style={[styles.wBody, fadeUp(wmBody)]}>
-            Okumayı ve yazmayı tek bir sıcak sayfada buluşturan hikâye platformu. Başlamaya hazır mısın?
+            {t('walkthrough.body')}
           </Animated.Text>
         </View>
 
-        {/* CTAs */}
         <Animated.View style={[styles.wActions, fadeUp(wmBtns)]}>
-          {/* primary — bloom petal rose */}
           <TouchableOpacity
             style={styles.wBtnPrimary}
             onPress={() => router.push('/(auth)/signup')}
             activeOpacity={0.88}
           >
-            <Text style={styles.wBtnPrimaryText}>Hesap Oluştur</Text>
+            <Text style={styles.wBtnPrimaryText}>{t('walkthrough.createAccount')}</Text>
             <Ionicons name="arrow-forward" size={19} color="#fff" />
           </TouchableOpacity>
 
-          {/* secondary — ghost glass */}
           <TouchableOpacity
             style={styles.wBtnSecondary}
             onPress={() => router.push('/(auth)/signin')}
             activeOpacity={0.88}
           >
-            <Text style={styles.wBtnSecondaryText}>Giriş Yap</Text>
+            <Text style={styles.wBtnSecondaryText}>{t('auth.signIn')}</Text>
           </TouchableOpacity>
 
-          {/* tertiary — guest browse */}
           <TouchableOpacity
             style={styles.wBtnGuest}
             onPress={() => { authActions.continueAsGuest(); router.replace('/'); }}
             activeOpacity={0.7}
           >
-            <Text style={styles.wBtnGuestText}>Hesap olmadan keşfet</Text>
+            <Text style={styles.wBtnGuestText}>{t('walkthrough.exploreAsGuest')}</Text>
             <Ionicons name="arrow-forward" size={16} color="rgba(255,255,255,0.82)" />
           </TouchableOpacity>
 
           <Text style={styles.wTerms}>
-            Devam ederek{' '}
-            <Text style={styles.wTermsLink} onPress={openTermsOfService}>Kullanım Koşulları</Text>
-            {' '}ve{' '}
-            <Text style={styles.wTermsLink} onPress={openPrivacyPolicy}>Gizlilik Politikası</Text>
-            {'\''}nı kabul edersin.
+            {t('walkthrough.termsPrefix')}{' '}
+            <Text style={styles.wTermsLink} onPress={openTermsOfService}>{t('legal.terms')}</Text>
+            {' '}{t('auth.termsAnd')}{' '}
+            <Text style={styles.wTermsLink} onPress={openPrivacyPolicy}>{t('legal.privacyPolicy')}</Text>
+            {t('walkthrough.termsSuffix')}
           </Text>
         </Animated.View>
       </Screen>
@@ -139,7 +128,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
 
-  /* welcome */
   welcome: {
     flex: 1,
     backgroundColor: '#432778',

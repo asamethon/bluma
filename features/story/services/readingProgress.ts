@@ -14,6 +14,7 @@ import {
 import { store } from '@/store';
 import { patchStory } from '@/store/slices/storySlice';
 import { Story } from '@/types';
+import { logger } from '@/utils/logger';
 
 export interface ReadingProgress {
   storyId: string;
@@ -35,7 +36,6 @@ async function syncToFirestore(uid: string, storyId: string, chapterIndex: numbe
   }, { merge: true });
 }
 
-// Offline-first: önce yerel yaz (anında), Firestore'a arkada senkron et.
 export async function saveReadingProgress(storyId: string, chapterIndex: number, scrollRatio: number = 0) {
   const { user } = store.getState().auth;
   if (!user?.id) return;
@@ -43,12 +43,10 @@ export async function saveReadingProgress(storyId: string, chapterIndex: number,
   const payload: ReadingProgress = { storyId, chapterIndex, scrollRatio, updatedAt: Date.now() };
   await AsyncStorage.setItem(localKey(user.id, storyId), JSON.stringify(payload)).catch(() => {});
   syncToFirestore(user.id, storyId, chapterIndex, scrollRatio).catch(() => {
-    console.log('Reading progress sync to Firestore failed (non-critical, will retry next save)');
+    logger.debug('Reading progress sync to Firestore failed (non-critical, will retry next save)');
   });
 }
 
-// Yerel ve sunucu kaydını karşılaştırıp en güncelini döndürür — ikinci
-// cihazda kaldığın yerden devam edebilmek için (bkz. YAPILACAKLAR 2.1).
 export async function getReadingProgress(storyId: string): Promise<ReadingProgress | null> {
   const { user } = store.getState().auth;
   if (!user?.id) return null;
@@ -75,8 +73,6 @@ export async function getReadingProgress(storyId: string): Promise<ReadingProgre
   return local || remote;
 }
 
-// "Okumaya devam et" rafı — ana sayfadaki yüklü feed'e bağlı değil, kullanıcının
-// gerçek ilerleme kayıtlarına bağlı (feed'in 50 hikâyelik sınırını aşar).
 export async function loadRecentReadingProgress(limitCount: number = 10): Promise<ReadingProgress[]> {
   const { user } = store.getState().auth;
   if (!user?.id) return [];
@@ -98,15 +94,11 @@ export async function loadRecentReadingProgress(limitCount: number = 10): Promis
       };
     });
   } catch (error) {
-    console.error('Load recent reading progress error:', error);
+    logger.error('Load recent reading progress error:', error);
     return [];
   }
 }
 
-// "Okumaya devam et" rafını yükleyip store'a yazar — hem ana sayfa hem de
-// splash gate (app/_layout.tsx) aynı veriyi okusun diye component state
-// yerine burada, redux'ta tutulur (bkz. CLAUDE.md: sunucu verisi state'e
-// kopyalanmaz kuralı).
 export async function loadContinueReadingShelf(limitCount: number = 5): Promise<void> {
   const { user } = store.getState().auth;
   if (!user?.id) {
@@ -134,13 +126,11 @@ export async function loadContinueReadingShelf(limitCount: number = 5): Promise<
     const result = visible.filter((x) => visibleIds.has(x.story.id)).slice(0, limitCount);
     store.dispatch(patchStory({ continueReading: result, continueReadingLoaded: true }));
   } catch (error) {
-    console.error('Load continue reading shelf error:', error);
+    logger.error('Load continue reading shelf error:', error);
     store.dispatch(patchStory({ continueReading: [], continueReadingLoaded: true }));
   }
 }
 
-// Logout'ta çağrılır — bir sonraki kullanıcı önceki kullanıcının ilerleme
-// önbelleğini görmesin diye cihazdaki tüm readingProgress_{uid}_* siler.
 export async function clearReadingProgressCache(uid: string) {
   try {
     const keys = await AsyncStorage.getAllKeys();
@@ -148,7 +138,7 @@ export async function clearReadingProgressCache(uid: string) {
     const toRemove = keys.filter(k => k.startsWith(prefix));
     if (toRemove.length) await AsyncStorage.multiRemove(toRemove);
   } catch (error) {
-    console.error('Clear reading progress cache error:', error);
+    logger.error('Clear reading progress cache error:', error);
   }
 }
 

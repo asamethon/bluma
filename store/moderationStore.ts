@@ -8,8 +8,10 @@ import {
   serverTimestamp,
   setDoc,
 } from '@react-native-firebase/firestore';
+import i18n from '@/i18n';
 import { store } from './index';
 import { addBlockedUser, patchModeration, removeBlockedUser } from './slices/moderationSlice';
+import { logger } from '@/utils/logger';
 
 export type { ModerationState } from './slices/moderationSlice';
 
@@ -26,18 +28,17 @@ export type ReportReason =
   | 'other';
 
 export const REPORT_REASONS: { value: ReportReason; label: string }[] = [
-  { value: 'spam', label: 'Spam veya yanıltıcı' },
-  { value: 'harassment', label: 'Taciz veya zorbalık' },
-  { value: 'hate', label: 'Nefret söylemi' },
-  { value: 'sexual', label: 'Cinsel/uygunsuz içerik' },
-  { value: 'violence', label: 'Şiddet veya tehdit' },
-  { value: 'self_harm', label: 'Kendine zarar' },
-  { value: 'misinformation', label: 'Yanlış bilgi' },
-  { value: 'other', label: 'Diğer' },
+  { value: 'spam', label: 'report.reasons.spam' },
+  { value: 'harassment', label: 'report.reasons.harassment' },
+  { value: 'hate', label: 'report.reasons.hate' },
+  { value: 'sexual', label: 'report.reasons.sexual' },
+  { value: 'violence', label: 'report.reasons.violence' },
+  { value: 'self_harm', label: 'report.reasons.self_harm' },
+  { value: 'misinformation', label: 'report.reasons.misinformation' },
+  { value: 'other', label: 'report.reasons.other' },
 ];
 
 export const moderationActions = {
-  // Engellenen kullanıcıları yükle (giriş yapan kullanıcı için)
   async loadBlockedUsers() {
     const { user } = store.getState().auth;
     if (!user?.id) {
@@ -49,7 +50,7 @@ export const moderationActions = {
       const snap = await getDocs(collection(db, 'users', user.id, 'blocked'));
       store.dispatch(patchModeration({ blockedUserIds: snap.docs.map(d => d.id) }));
     } catch (error) {
-      console.error('Load blocked users error:', error);
+      logger.error('Load blocked users error:', error);
     } finally {
       store.dispatch(patchModeration({ loaded: true }));
     }
@@ -60,9 +61,11 @@ export const moderationActions = {
     return store.getState().moderation.blockedUserIds.includes(userId);
   },
 
-  // Bir kullanıcı listesini/akışını engellenenlerden arındır
-  filterBlocked<T extends { authorId?: string; userId?: string }>(items: T[]): T[] {
-    const blocked = store.getState().moderation.blockedUserIds;
+  filterBlocked<T extends { authorId?: string; userId?: string }>(
+    items: T[],
+    blockedUserIds?: string[]
+  ): T[] {
+    const blocked = blockedUserIds ?? store.getState().moderation.blockedUserIds;
     if (blocked.length === 0) return items;
     return items.filter(it => {
       const owner = (it.authorId ?? it.userId) as string | undefined;
@@ -70,17 +73,14 @@ export const moderationActions = {
     });
   },
 
-  // Şikayet üzerine admin'in gizlediği içerikleri akıştan çıkar — yazarın
-  // kendisi kendi taslak/gizli hikâyesini stüdyosunda görmeye devam eder,
-  // bu filtre yalnızca genel akışlar (feed/discover/search) için (bkz. 2.7).
   filterHidden<T extends { isHidden?: boolean }>(items: T[]): T[] {
     return items.filter(it => !it.isHidden);
   },
 
   async blockUser(userId: string) {
     const { user } = store.getState().auth;
-    if (!user?.id) return { success: false, error: 'Giriş gerekli.' };
-    if (userId === user.id) return { success: false, error: 'Kendini engelleyemezsin.' };
+    if (!user?.id) return { success: false, error: i18n.t('errors.loginRequired') };
+    if (userId === user.id) return { success: false, error: i18n.t('moderation.cannotBlockSelf') };
     try {
       const db = getFirestore();
       await setDoc(doc(db, 'users', user.id, 'blocked', userId), {
@@ -89,36 +89,35 @@ export const moderationActions = {
       store.dispatch(addBlockedUser(userId));
       return { success: true };
     } catch (error) {
-      console.error('Block user error:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Engelleme başarısız.' };
+      logger.error('Block user error:', error);
+      return { success: false, error: error instanceof Error ? error.message : i18n.t('moderation.blockFailed') };
     }
   },
 
   async unblockUser(userId: string) {
     const { user } = store.getState().auth;
-    if (!user?.id) return { success: false, error: 'Giriş gerekli.' };
+    if (!user?.id) return { success: false, error: i18n.t('errors.loginRequired') };
     try {
       const db = getFirestore();
       await deleteDoc(doc(db, 'users', user.id, 'blocked', userId));
       store.dispatch(removeBlockedUser(userId));
       return { success: true };
     } catch (error) {
-      console.error('Unblock user error:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Engel kaldırılamadı.' };
+      logger.error('Unblock user error:', error);
+      return { success: false, error: error instanceof Error ? error.message : i18n.t('moderation.unblockFailed') };
     }
   },
 
-  // İçerik bildir — moderasyon ekibinin inceleyebileceği `reports` koleksiyonu
   async reportContent(params: {
     type: ReportTargetType;
     targetId: string;
     reason: ReportReason;
     details?: string;
     reportedUserId?: string;
-    contextId?: string; // ör. yorum için storyId
+    contextId?: string;
   }) {
     const { user } = store.getState().auth;
-    if (!user?.id) return { success: false, error: 'Giriş gerekli.' };
+    if (!user?.id) return { success: false, error: i18n.t('errors.loginRequired') };
     try {
       const db = getFirestore();
       await addDoc(collection(db, 'reports'), {
@@ -134,8 +133,8 @@ export const moderationActions = {
       });
       return { success: true };
     } catch (error) {
-      console.error('Report content error:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Bildirim gönderilemedi.' };
+      logger.error('Report content error:', error);
+      return { success: false, error: error instanceof Error ? error.message : i18n.t('report.submitFailed') };
     }
   },
 };

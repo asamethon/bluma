@@ -40,7 +40,7 @@ export function SegmentedControl({
       const segW = (containerWidth - 8) / n;
       pillX.value = withSpring(idx * segW, { stiffness: 420 });
     }
-  }, [idx, containerWidth]);
+  }, [idx, containerWidth, n, pillX]);
 
   const pillStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: pillX.value }],

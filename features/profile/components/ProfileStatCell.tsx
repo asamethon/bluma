@@ -15,7 +15,6 @@ interface ProfileStatCellProps {
   onPress?: () => void;
 }
 
-/** Profil istatistik bar'ındaki tek hücre (hikâye/takipçi/takip/beğeni). */
 export function ProfileStatCell({ icon, value, label, color, onPress }: ProfileStatCellProps) {
   return (
     <TouchableOpacity onPress={onPress} disabled={!onPress} style={{ flex: 1, alignItems: 'center', gap: 3 }}>

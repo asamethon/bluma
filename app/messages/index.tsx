@@ -1,8 +1,8 @@
+import { EmptyThreadState } from '@/features/messaging/components/EmptyThreadState';
 import { ThreadListPane } from '@/features/messaging/components/ThreadListPane';
+import { useResponsive } from '@/hooks/useResponsive';
 
-// Mesajlar kutusu — sohbet listesi. Gerçek içerik ThreadListPane'de: telefonda
-// burada tam ekran render edilir, tablette app/messages/_layout.tsx sol rayda
-// aynı bileşeni kalıcı olarak gösterir.
 export default function MessagesScreen() {
-  return <ThreadListPane />;
+  const { isTablet } = useResponsive();
+  return isTablet ? <EmptyThreadState /> : <ThreadListPane />;
 }

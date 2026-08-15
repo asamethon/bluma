@@ -1,22 +1,20 @@
 import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
 import type { useComposer } from '../../hooks/useComposer';
 import { renderWithRanges } from '../../utils/richText';
 
-// Yazma tuvali — kâğıt kartı üstünde serif bölüm başlığı + gövde metni.
-// Gövde TextInput'u value yerine children alır: metin işaretsiz (display)
-// halde gösterilir, italik aralıklar gerçek italik fontla canlı render edilir
-// (bkz. useChapterEditor — depo biçimine kaydederken _işaretler_ eklenir).
 export function ComposerCanvas({ c }: { c: ReturnType<typeof useComposer> }) {
   const { colors, shadows } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <View style={[styles.paper, shadows.sm, { backgroundColor: colors.surface, borderColor: colors.border }]}>
       <TextInput
         value={c.cur?.title ?? ''}
         onChangeText={c.setChapterTitle}
-        placeholder="Bölüm başlığı"
+        placeholder={t('studio.chapterTitlePlaceholder')}
         placeholderTextColor={colors.textLight}
         maxLength={80}
         style={[styles.title, { color: colors.text }]}
@@ -26,7 +24,7 @@ export function ComposerCanvas({ c }: { c: ReturnType<typeof useComposer> }) {
         onChangeText={c.onChangeBody}
         onSelectionChange={e => c.onBodySelectionChange(e.nativeEvent.selection)}
         selection={c.forcedSel ?? undefined}
-        placeholder="Hikâyeni anlatmaya başla…"
+        placeholder={t('studio.bodyPlaceholder')}
         placeholderTextColor={colors.textLight}
         multiline
         textAlignVertical="top"

@@ -2,9 +2,12 @@ import { useTheme } from "@/constants/theme";
 import { authActions } from "@/store/authStore";
 import { useAppSelector } from "@/store/hooks";
 import { preferencesActions } from "@/store/preferencesStore";
+import { reviewPromptActions } from "@/features/review/services/reviewPrompt";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { SUPPORTED_LANGUAGES, setAppLanguage, type AppLanguage } from "@/i18n";
 import {
     Alert,
     ScrollView,
@@ -16,13 +19,26 @@ import {
 } from "react-native";
 import { Screen } from '@/components/ui';
 
+const LANGUAGE_NAMES: Record<AppLanguage, string> = {
+  en: 'English',
+  tr: 'Türkçe',
+  es: 'Español',
+  ar: 'العربية',
+  de: 'Deutsch',
+  pt: 'Português',
+  'pt-BR': 'Português (Brasil)',
+  id: 'Bahasa Indonesia',
+  ja: '日本語',
+  ko: '한국어',
+  zh: '中文',
+};
+
 export default function SettingsScreen() {
   const { colors } = useTheme();
+  const { t, i18n } = useTranslation();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
 
-  // Redux'tan okunur; setShowMatureContent optimistic dispatch ettiği için
-  // ayrı lokal state gerekmez.
   const matureEnabled = useAppSelector(s => s.preferences.showMatureContent);
 
   useEffect(() => {
@@ -34,10 +50,10 @@ export default function SettingsScreen() {
   };
 
   const handleSignOut = () => {
-    Alert.alert("Çıkış Yap", "Hesabından çıkış yapmak istediğine emin misin?", [
-      { text: "İptal", style: "cancel" },
+    Alert.alert(t('profileScreen.signOut'), t('profileScreen.signOutConfirm'), [
+      { text: t('common.cancel'), style: "cancel" },
       {
-        text: "Çıkış Yap",
+        text: t('profileScreen.signOut'),
         style: "destructive",
         onPress: () => {
           authActions.signOut();
@@ -45,6 +61,11 @@ export default function SettingsScreen() {
         },
       },
     ]);
+  };
+
+  const handleRateApp = async () => {
+    const opened = await reviewPromptActions.openStoreListing();
+    if (!opened) Alert.alert(t('common.error'), t('settings.rateUsFailed'));
   };
 
   return (
@@ -57,7 +78,7 @@ export default function SettingsScreen() {
         >
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Ayarlar</Text>
+        <Text style={styles.headerTitle}>{t('settings.title')}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -66,7 +87,7 @@ export default function SettingsScreen() {
         contentContainerStyle={{ paddingBottom: 40 }}
       >
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Hesap</Text>
+          <Text style={styles.sectionTitle}>{t('settings.accountSection')}</Text>
           <View style={styles.card}>
             <TouchableOpacity
               style={styles.row}
@@ -78,7 +99,7 @@ export default function SettingsScreen() {
                   size={20}
                   color={colors.primary}
                 />
-                <Text style={styles.rowTitle}>Profili Düzenle</Text>
+                <Text style={styles.rowTitle}>{t('profileScreen.editProfile')}</Text>
               </View>
               <Ionicons
                 name="chevron-forward"
@@ -103,7 +124,7 @@ export default function SettingsScreen() {
                     { color: colors.error || "#E53935" },
                   ]}
                 >
-                  Çıkış Yap
+                  {t('profileScreen.signOut')}
                 </Text>
               </View>
               <Ionicons
@@ -116,7 +137,7 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Bildirimler</Text>
+          <Text style={styles.sectionTitle}>{t('notifications.title')}</Text>
           <View style={styles.card}>
             <TouchableOpacity
               style={[styles.row, styles.rowNoBorder]}
@@ -128,7 +149,7 @@ export default function SettingsScreen() {
                   size={20}
                   color={colors.primary}
                 />
-                <Text style={styles.rowTitle}>Bildirim Tercihleri</Text>
+                <Text style={styles.rowTitle}>{t('settings.notificationPrefs')}</Text>
               </View>
               <Ionicons
                 name="chevron-forward"
@@ -140,14 +161,39 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>İçerik</Text>
+          <Text style={styles.sectionTitle}>{t('settings.languageSection')}</Text>
+          <View style={styles.card}>
+            {SUPPORTED_LANGUAGES.map((lang, i) => (
+              <TouchableOpacity
+                key={lang}
+                style={[styles.row, i === SUPPORTED_LANGUAGES.length - 1 && styles.rowNoBorder]}
+                onPress={() => setAppLanguage(lang)}
+              >
+                <View style={styles.rowLeft}>
+                  <Ionicons
+                    name={i18n.language === lang ? "radio-button-on" : "radio-button-off"}
+                    size={20}
+                    color={i18n.language === lang ? colors.primary : colors.textSecondary}
+                  />
+                  <Text style={styles.rowTitle}>{LANGUAGE_NAMES[lang]}</Text>
+                </View>
+                {i18n.language === lang && (
+                  <Ionicons name="checkmark" size={16} color={colors.primary} />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('settings.contentSection')}</Text>
           <View style={styles.card}>
             <View style={[styles.row, styles.rowNoBorder]}>
               <View style={[styles.rowLeft, { flex: 1, paddingRight: 12 }]}>
                 <Ionicons name="warning-outline" size={20} color={colors.primary} />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.rowTitle}>Olgun içeriği göster (18+)</Text>
-                  <Text style={styles.rowSub}>Yetişkin olarak işaretlenmiş hikâyeleri keşfette göster</Text>
+                  <Text style={styles.rowTitle}>{t('settings.matureContent')}</Text>
+                  <Text style={styles.rowSub}>{t('settings.matureContentSub')}</Text>
                 </View>
               </View>
               <Switch value={matureEnabled} onValueChange={handleToggleMature} />
@@ -156,7 +202,7 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Hakkında</Text>
+          <Text style={styles.sectionTitle}>{t('settings.aboutSection')}</Text>
           <View style={styles.card}>
             <TouchableOpacity
               style={styles.row}
@@ -168,7 +214,20 @@ export default function SettingsScreen() {
                   size={20}
                   color={colors.primary}
                 />
-                <Text style={styles.rowTitle}>Yardım & Destek</Text>
+                <Text style={styles.rowTitle}>{t('help.title')}</Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color={colors.textSecondary}
+              />
+            </TouchableOpacity>
+            {/* Elle değerlendirme: sistem diyaloğu kotalı olduğu için burada
+                doğrudan mağaza sayfası açılır. */}
+            <TouchableOpacity style={styles.row} onPress={handleRateApp}>
+              <View style={styles.rowLeft}>
+                <Ionicons name="star-outline" size={20} color={colors.primary} />
+                <Text style={styles.rowTitle}>{t('settings.rateUs')}</Text>
               </View>
               <Ionicons
                 name="chevron-forward"
@@ -189,7 +248,7 @@ export default function SettingsScreen() {
                   size={20}
                   color={colors.primary}
                 />
-                <Text style={styles.rowTitle}>Sürüm</Text>
+                <Text style={styles.rowTitle}>{t('settings.version')}</Text>
               </View>
               <Text style={styles.version}>1.0.0</Text>
             </View>

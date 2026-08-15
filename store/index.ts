@@ -6,6 +6,7 @@ import messagingReducer from './slices/messagingSlice';
 import moderationReducer from './slices/moderationSlice';
 import notificationReducer from './slices/notificationSlice';
 import preferencesReducer from './slices/preferencesSlice';
+import privacyReducer from './slices/privacySlice';
 import readingListReducer from './slices/readingListSlice';
 import storyReducer from './slices/storySlice';
 
@@ -16,6 +17,7 @@ export const store = configureStore({
     preferences: preferencesReducer,
     readingList: readingListReducer,
     moderation: moderationReducer,
+    privacy: privacyReducer,
     challenge: challengeReducer,
     notification: notificationReducer,
     conversation: conversationReducer,
@@ -23,8 +25,6 @@ export const store = configureStore({
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
-      // State içinde Firestore Timestamp/FieldValue taşınıyor; serileştirme
-      // denetimi bu yüzden kapalı. Immutability denetimi açık kalır.
       serializableCheck: false,
     }),
 });

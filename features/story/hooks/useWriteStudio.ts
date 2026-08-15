@@ -1,12 +1,12 @@
 import { useAppSelector } from '@/store/hooks';
+import i18n from '@/i18n';
 import { storyActions } from '@/store/storyStore';
 import { Story } from '@/types';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
+import { useQuickDraft } from './useQuickDraft';
 
-// Yazı Stüdyosu ana ekranı (Hub) — yazarın tüm hikâyelerini (yayında +
-// taslak) listeler. Ekran (app/(tabs)/write.tsx) yalnızca bu hook'u çağırır.
 export function useWriteStudio() {
   const router = useRouter();
   const uid = useAppSelector(s => s.auth.user?.id);
@@ -19,8 +19,6 @@ export function useWriteStudio() {
     if (uid) storyActions.loadUserStories(uid);
   }, [uid]);
 
-  // Sekmeye her dönüşte tazele — composer/edit ekranlarından yapılan
-  // değişiklikler (yayınla, yeni bölüm, silme) Hub'a yansısın.
   useFocusEffect(
     useCallback(() => {
       load();
@@ -38,7 +36,8 @@ export function useWriteStudio() {
     [],
   );
 
-  const newStory = useCallback(() => router.push('/story/new'), [router]);
+  const { starting, startQuickDraft } = useQuickDraft();
+  const newStory = useCallback(() => { void startQuickDraft(); }, [startQuickDraft]);
   const importStory = useCallback(() => router.push('/story/import' as any), [router]);
 
   const editInfo = useCallback(
@@ -59,17 +58,17 @@ export function useWriteStudio() {
   const deleteStory = useCallback(
     (story: Story) => {
       Alert.alert(
-        'Hikâyeyi Sil',
-        `"${story.title}" hikâyesini ve tüm bölümlerini silmek istediğine emin misin? Bu işlem geri alınamaz.`,
+        i18n.t('studio.deleteStoryTitle'),
+        i18n.t('studio.deleteStoryNamedMessage', { title: story.title }),
         [
-          { text: 'Vazgeç', style: 'cancel' },
+          { text: i18n.t('common.cancel'), style: 'cancel' },
           {
-            text: 'Sil',
+            text: i18n.t('common.delete'),
             style: 'destructive',
             onPress: async () => {
               const result = await storyActions.deleteStory(story.id);
               if (result.success) load();
-              else Alert.alert('Hata', result.error || 'Hikâye silinemedi.');
+              else Alert.alert(i18n.t('common.error'), result.error || i18n.t('story.deleteFailed'));
             },
           },
         ],
@@ -86,6 +85,7 @@ export function useWriteStudio() {
     expandedId,
     toggleExpand,
     newStory,
+    starting,
     importStory,
     editInfo,
     openChapter,

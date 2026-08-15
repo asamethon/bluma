@@ -3,6 +3,7 @@ import { categoryLabel, Radius, Spacing, useTheme } from '@/constants/theme';
 import { Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { splitChapters } from '../../utils/chapterContent';
 import { formatRelativeTime } from '../../utils/time';
@@ -20,12 +21,11 @@ type Props = {
   onDelete: () => void;
 };
 
-// Hub'daki bir hikâye kartı — kapak, başlık, tür·zaman, durum rozeti, açılır
-// bölüm listesi ve seçenekler menüsü.
 function StudioStoryCardBase({
   story, expanded, onToggle, onOpenChapter, onAddChapter, onEditInfo, onDelete,
 }: Props) {
   const { colors, shadows } = useTheme();
+  const { t } = useTranslation();
   const [menu, setMenu] = React.useState(false);
   const chapters = React.useMemo(
     () => splitChapters(story.content, story.chapterTitles),
@@ -39,7 +39,7 @@ function StudioStoryCardBase({
         <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
           <View style={styles.titleRow}>
             <Text variant="heading" style={{ flex: 1, fontSize: 17, lineHeight: 23 }} numberOfLines={2}>
-              {story.title || 'Başlıksız'}
+              {story.title || t('studio.untitled')}
             </Text>
             <Pressable onPress={() => setMenu(true)} hitSlop={8}>
               <Ionicons name="ellipsis-vertical" size={18} color={colors.textLight} />
@@ -50,10 +50,10 @@ function StudioStoryCardBase({
           </Text>
           <View style={styles.metaRow}>
             <Badge
-              label={story.isPublished ? 'Yayında' : 'Taslak'}
+              label={story.isPublished ? t('storyStatus.published') : t('storyStatus.draft')}
               tone={story.isPublished ? 'success' : 'neutral'}
             />
-            <Text variant="caption" tone="textLight">{chapters.length} bölüm</Text>
+            <Text variant="caption" tone="textLight">{t('studio.chapterCount', { count: chapters.length })}</Text>
           </View>
         </View>
       </View>
@@ -63,7 +63,7 @@ function StudioStoryCardBase({
         style={[styles.toggle, { borderTopColor: colors.divider }]}
       >
         <Text variant="label" tone="textSecondary">
-          {expanded ? 'Bölümleri Gizle' : 'Bölümleri Göster'}
+          {expanded ? t('studio.hideChapters') : t('studio.showChapters')}
         </Text>
         <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={colors.textSecondary} />
       </Pressable>
@@ -84,7 +84,7 @@ function StudioStoryCardBase({
             style={[styles.addChapter, { borderColor: colors.borderStrong }]}
           >
             <Ionicons name="add" size={16} color={colors.primary} />
-            <Text variant="label" color={colors.primary}>Yeni Bölüm Ekle</Text>
+            <Text variant="label" color={colors.primary}>{t('studio.addChapter')}</Text>
           </Pressable>
         </View>
       )}
@@ -94,8 +94,8 @@ function StudioStoryCardBase({
         onClose={() => setMenu(false)}
         top={140}
         items={[
-          { icon: 'create-outline', label: 'Hikâye Bilgilerini Düzenle', onPress: onEditInfo },
-          { icon: 'trash-outline', label: 'Hikâyeyi Sil', danger: true, onPress: onDelete },
+          { icon: 'create-outline', label: t('studio.editStoryInfo'), onPress: onEditInfo },
+          { icon: 'trash-outline', label: t('studio.deleteStoryTitle'), danger: true, onPress: onDelete },
         ]}
       />
     </View>

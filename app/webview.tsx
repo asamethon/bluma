@@ -6,9 +6,6 @@ import React, { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-// Uygulama içi WebView — yasal sayfaları (Gizlilik / Kullanım Koşulları) ve
-// benzeri harici URL'leri uygulamadan çıkmadan gösterir.
-// Kullanım: router.push('/webview?url=...&title=...'), bkz. utils/legal.ts
 export default function WebViewScreen() {
   const { colors } = useTheme();
   const params = useLocalSearchParams<{ url?: string; title?: string }>();

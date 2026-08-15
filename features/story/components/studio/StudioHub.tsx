@@ -3,13 +3,15 @@ import { Radius, Spacing, useTheme } from "@/constants/theme";
 import { useResponsiveGrid } from "@/hooks/useResponsive";
 import { Story } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
+import React, { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
-    FlatList,
     Pressable,
     RefreshControl,
     StyleSheet,
     View,
 } from "react-native";
+import { FlashList } from '@shopify/flash-list';
 import { StudioStoryCard } from "./StudioStoryCard";
 
 type Props = {
@@ -27,7 +29,6 @@ type Props = {
   bottomInset: number;
 };
 
-// Yazı Stüdyosu (Hub) — yeni hikâye CTA'sı + yazarın hikâye listesi.
 export function StudioHub({
   stories,
   refreshing,
@@ -43,19 +44,43 @@ export function StudioHub({
   bottomInset,
 }: Props) {
   const { colors, shadows } = useTheme();
-  const { numColumns, columnWidth } = useResponsiveGrid();
+  const { t } = useTranslation();
+  const { numColumns } = useResponsiveGrid();
+
+  const renderItem = useCallback(
+    ({ item }: { item: Story }) => (
+      <View
+        style={
+          numColumns > 1
+            ? { paddingHorizontal: Spacing.gutter / 2, marginBottom: Spacing.md + 2 }
+            : { marginBottom: Spacing.md + 2 }
+        }
+      >
+        <StudioStoryCard
+          story={item}
+          expanded={expandedId === item.id}
+          onToggle={() => onToggle(item.id)}
+          onOpenChapter={(i) => onOpenChapter(item.id, i)}
+          onAddChapter={() => onAddChapter(item.id)}
+          onEditInfo={() => onEditInfo(item.id)}
+          onDelete={() => onDelete(item)}
+        />
+      </View>
+    ),
+    [numColumns, expandedId, onToggle, onOpenChapter, onAddChapter, onEditInfo, onDelete]
+  );
 
   const header = (
     <View>
       <Text variant="title" style={{ marginBottom: 4 }}>
-        Yazı Stüdyosu
+        {t('studio.hubTitle')}
       </Text>
       <Text
         variant="body"
         tone="textSecondary"
         style={{ marginBottom: Spacing.xl }}
       >
-        Hikâyelerin, taslakların ve bölümlerin — hepsi burada.
+        {t('studio.hubSubtitle')}
       </Text>
 
       <Pressable
@@ -76,16 +101,16 @@ export function StudioHub({
         </View>
         <View style={{ flex: 1 }}>
           <Text variant="heading" style={{ fontSize: 16.5 }}>
-            Yeni Hikâye Başlat
+            {t('studio.newStoryCta')}
           </Text>
           <Text variant="caption" tone="textSecondary" style={{ marginTop: 2 }}>
-            Başlığını ve türünü seç, ilk bölümünü yaz
+            {t('studio.newStoryCtaSub')}
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={colors.primary} />
       </Pressable>
 
-      <Pressable
+      {/* <Pressable
         onPress={onImportStory}
         style={[
           styles.cta,
@@ -105,17 +130,17 @@ export function StudioHub({
             Hikâyeni Taşı
           </Text>
           <Text variant="caption" tone="textSecondary" style={{ marginTop: 2 }}>
-            Wattpad'den tek seferde yapıştır, otomatik bölümlere ayrılsın
+            Wattpad&apos;den tek seferde yapıştır, otomatik bölümlere ayrılsın
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
-      </Pressable>
+      </Pressable> */}
 
       {stories.length > 0 && (
         <View style={styles.sectionRow}>
           <View style={[styles.tick, { backgroundColor: colors.bloom }]} />
           <Text variant="heading" style={{ fontSize: 20 }}>
-            Hikâyelerin
+            {t('studio.yourStories')}
           </Text>
         </View>
       )}
@@ -123,18 +148,16 @@ export function StudioHub({
   );
 
   return (
-    <FlatList
+    <FlashList
       key={`grid-${numColumns}`}
       data={stories}
       keyExtractor={(s) => s.id}
       numColumns={numColumns}
-      columnWrapperStyle={numColumns > 1 ? { gap: Spacing.gutter } : undefined}
       ListHeaderComponent={header}
       contentContainerStyle={{
         paddingHorizontal: Spacing.screenX,
         paddingTop: Spacing.sm,
         paddingBottom: bottomInset + Spacing.xxl,
-        gap: Spacing.md + 2,
       }}
       refreshControl={
         <RefreshControl
@@ -144,19 +167,7 @@ export function StudioHub({
         />
       }
       showsVerticalScrollIndicator={false}
-      renderItem={({ item }) => (
-        <View style={numColumns > 1 ? { width: columnWidth } : undefined}>
-          <StudioStoryCard
-            story={item}
-            expanded={expandedId === item.id}
-            onToggle={() => onToggle(item.id)}
-            onOpenChapter={(i) => onOpenChapter(item.id, i)}
-            onAddChapter={() => onAddChapter(item.id)}
-            onEditInfo={() => onEditInfo(item.id)}
-            onDelete={() => onDelete(item)}
-          />
-        </View>
-      )}
+      renderItem={renderItem}
       ListEmptyComponent={
         <View style={styles.empty}>
           <Ionicons
@@ -165,7 +176,7 @@ export function StudioHub({
             color={colors.textLight}
           />
           <Text variant="subheading" style={{ marginTop: Spacing.md }}>
-            Henüz hikâyen yok
+            {t('studio.noStoriesYet')}
           </Text>
           <Text
             variant="body"
@@ -173,7 +184,7 @@ export function StudioHub({
             center
             style={{ marginTop: 4 }}
           >
-            Yukarıdaki “Yeni Hikâye Başlat” ile ilk hikâyeni yazmaya başla.
+            {t('studio.noStoriesHint')}
           </Text>
         </View>
       }

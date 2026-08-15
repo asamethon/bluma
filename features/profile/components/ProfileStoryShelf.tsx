@@ -2,6 +2,7 @@ import { StoryCardSpine, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { Story } from '@/types';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 interface ProfileStoryShelfProps {
@@ -11,15 +12,15 @@ interface ProfileStoryShelfProps {
   onStoryPress: (story: Story) => void;
 }
 
-/** "Bahçe" — yayınlanan hikayelerin yatay rafı (profil ekranlarının ortak bölümü). */
 export function ProfileStoryShelf({ title, count, stories, onStoryPress }: ProfileStoryShelfProps) {
+  const { t } = useTranslation();
   if (stories.length === 0) return null;
 
   return (
     <View style={{ marginTop: 8 }}>
       <View style={styles.header}>
         <Text variant="heading" style={{ fontWeight: '700' }}>{title}</Text>
-        <Text variant="caption" tone="textLight">{count} açan hikâye</Text>
+        <Text variant="caption" tone="textLight">{t('profile.bloomingStories', { count })}</Text>
       </View>
       <ScrollView
         horizontal

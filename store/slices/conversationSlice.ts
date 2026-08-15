@@ -4,7 +4,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 export interface ConversationState {
   conversations: Conversation[];
   userConversations: Conversation[];
-  likedConversations: Conversation[];
+  likedConversationIds: string[];
   isLoading: boolean;
   currentConversation: Conversation | null;
   currentConversationComments: ConversationComment[];
@@ -13,7 +13,7 @@ export interface ConversationState {
 const initialState: ConversationState = {
   conversations: [],
   userConversations: [],
-  likedConversations: [],
+  likedConversationIds: [],
   isLoading: true,
   currentConversation: null,
   currentConversationComments: [],

@@ -12,16 +12,16 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { useAppSelector } from '@/store/hooks';
 
-// Route order matches <Tabs> in _layout. "write" is the centre bloom action.
 export const tabsData = [
-  { name: "index", title: "Keşfet", icon: "home", iconOutline: "home-outline" },
-  { name: "search", title: "Ara", icon: "search", iconOutline: "search-outline" },
-  { name: "write", title: "Yaz", isCenter: true },
-  { name: "library", title: "Kütüphane", icon: "bookmark", iconOutline: "bookmark-outline" },
+  { name: "index", title: "tabs.discover", icon: "home", iconOutline: "home-outline" },
+  { name: "search", title: "tabs.search", icon: "search", iconOutline: "search-outline" },
+  { name: "write", title: "tabs.write", isCenter: true },
+  { name: "library", title: "tabs.library", icon: "bookmark", iconOutline: "bookmark-outline" },
   { name: "notifications", hidden: true },
-  { name: "profile", title: "Profil", icon: "person", iconOutline: "person-outline" },
+  { name: "profile", title: "tabs.profile", icon: "person", iconOutline: "person-outline" },
 ];
 
 function TabItem({
@@ -36,6 +36,7 @@ function TabItem({
   onPress: () => void;
 }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const pillStyle = useAnimatedStyle(() => ({
     opacity: withTiming(focused ? 1 : 0, { duration: 180 }),
     transform: [{ scale: withSpring(focused ? 1 : 0.5) }],
@@ -54,7 +55,7 @@ function TabItem({
         )}
       </View>
       <Text style={[styles.label, { color }]} numberOfLines={1}>
-        {tab.title}
+        {t(tab.title)}
       </Text>
     </Pressable>
   );
@@ -73,7 +74,6 @@ function WriteFab({ focused, onPress }: { focused: boolean; onPress: () => void 
           onPressOut={() => (scale.value = withSpring(1))}
           style={[styles.fab, shadows.bloom]}
         >
-          {/* soft outer glow ring */}
           <View style={[styles.fabHalo, { backgroundColor: colors.bloomSoft }]} />
           <BloomMark size={30} color="#FFFFFF" coreColor="#FFFFFF" />
         </Pressable>
@@ -88,7 +88,7 @@ export default function CustomTabBar({ state, navigation }: { state: any; naviga
   const { colors, scheme, shadows } = useTheme();
   const { bottom } = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { isGuest } = useAppSelector(s => s.auth);
+  const isGuest = useAppSelector(s => s.auth.isGuest);
   const { requireAuth } = useGuestGate();
   const router = useRouter();
   const capped = width > TAB_BAR_MAX_WIDTH;
@@ -96,7 +96,6 @@ export default function CustomTabBar({ state, navigation }: { state: any; naviga
   return (
     <View style={[styles.host, { paddingBottom: Math.max(bottom, 10) }]} pointerEvents="box-none">
       <View style={[styles.barWrap, shadows.lg, capped && { width: TAB_BAR_MAX_WIDTH, alignSelf: "center" }]}>
-        {/* clipped blurred background (kept separate so the FAB can overflow) */}
         <View style={styles.blurClip}>
           <BlurView
             intensity={Platform.OS === "ios" ? 40 : 80}
@@ -111,8 +110,6 @@ export default function CustomTabBar({ state, navigation }: { state: any; naviga
             const focused = state.index === index;
             const onPress = () => {
               if (tab.isCenter && isGuest) {
-                // requireAuth returns false when gate was triggered (real context),
-                // or true when it's the default no-op. Fall back to direct navigation.
                 const gateOpened = !requireAuth("write");
                 if (!gateOpened) {
                   router.push("/(auth)/signup" as any);

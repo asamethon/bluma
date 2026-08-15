@@ -10,6 +10,7 @@ import { storyActions } from '@/store/storyStore';
 import { Story } from '@/types';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   RefreshControl,
   SectionList,
@@ -27,10 +28,13 @@ interface LibrarySection {
 
 export default function LibraryScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user: currentUser, isGuest } = useAppSelector(s => s.auth);
-  const { savedStories, likedStories } = useAppSelector(s => s.story);
+  const currentUser = useAppSelector(s => s.auth.user);
+  const isGuest = useAppSelector(s => s.auth.isGuest);
+  const savedStories = useAppSelector(s => s.story.savedStories);
+  const likedStories = useAppSelector(s => s.story.likedStories);
   const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
@@ -54,31 +58,51 @@ export default function LibraryScreen() {
     }
   }, [currentUser?.id]);
 
+  const isEmpty = (!savedStories || savedStories.length === 0) && (!likedStories || likedStories.length === 0);
+
+  const renderItem = useCallback(
+    ({ item: story }: { item: Story }) => (
+      <View style={styles.rowWrap}>
+        <StoryRow
+          story={story}
+          status={story.isCompleted ? 'completed' : 'ongoing'}
+          onPress={() => router.push(`/story/${story.id}/preview` as any)}
+        />
+      </View>
+    ),
+    [router]
+  );
+
+  const renderSectionHeader = useCallback(
+    ({ section }: { section: LibrarySection }) => (
+      <View style={styles.section}>
+        <SectionHeader title={section.title} accent={section.accent} />
+      </View>
+    ),
+    []
+  );
+
+  const sections: LibrarySection[] = useMemo(() => {
+    const list: LibrarySection[] = [];
+    if (savedStories && savedStories.length > 0) {
+      list.push({ title: t('library.saved'), accent: colors.secondary, data: savedStories });
+    }
+    if (likedStories && likedStories.length > 0) {
+      list.push({ title: t('library.liked'), accent: colors.bloom, data: likedStories.slice(0, 10) });
+    }
+    return list;
+  }, [savedStories, likedStories, colors.secondary, colors.bloom, t]);
+
   if (isGuest) {
     return (
       <View style={[styles.root, { backgroundColor: colors.background, paddingTop: insets.top }]}>
         <View style={styles.header}>
-          <Text variant="title">Kütüphanem</Text>
+          <Text variant="title">{t('library.title')}</Text>
         </View>
         <GuestState kind="library" />
       </View>
     );
   }
-
-  const isEmpty = (!savedStories || savedStories.length === 0) && (!likedStories || likedStories.length === 0);
-
-  // savedStories büyüyebilir (kayıt sınırı yok) — ScrollView+.map() yerine
-  // SectionList kullanılır (bkz. docs/ARCHITECTURE.md performans ilkeleri).
-  const sections: LibrarySection[] = useMemo(() => {
-    const list: LibrarySection[] = [];
-    if (savedStories && savedStories.length > 0) {
-      list.push({ title: 'Kaydedilenler', accent: colors.secondary, data: savedStories });
-    }
-    if (likedStories && likedStories.length > 0) {
-      list.push({ title: 'Beğendiklerim', accent: colors.bloom, data: likedStories.slice(0, 10) });
-    }
-    return list;
-  }, [savedStories, likedStories, colors.secondary, colors.bloom]);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background, paddingTop: insets.top }]}>
@@ -97,7 +121,7 @@ export default function LibraryScreen() {
         }
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text variant="title">Kütüphanem</Text>
+            <Text variant="title">{t('library.title')}</Text>
           </View>
         }
         ListEmptyComponent={
@@ -105,28 +129,18 @@ export default function LibraryScreen() {
             <View style={styles.empty}>
               <BloomMark size={64} color={colors.primaryLight} coreColor={colors.bloomLight} />
               <Text variant="heading" center style={{ marginTop: Spacing.xl }}>
-                Kütüphanen henüz boş
+                {t('guest.library.title')}
               </Text>
               <Text variant="body" tone="textSecondary" center style={{ marginTop: Spacing.sm, maxWidth: 280 }}>
-                Beğendiğin hikâyeleri kaydet; hepsi burada seni bekler.
+                {t('library.emptySub')}
               </Text>
             </View>
           ) : null
         }
-        renderSectionHeader={({ section }) => (
-          <View style={styles.section}>
-            <SectionHeader title={section.title} accent={section.accent} />
-          </View>
-        )}
-        renderItem={({ item: story }) => (
-          <View style={styles.rowWrap}>
-            <StoryRow
-              story={story}
-              status={story.isCompleted ? 'Tamamlandı' : 'Devam ediyor'}
-              onPress={() => router.push(`/story/${story.id}/preview` as any)}
-            />
-          </View>
-        )}
+        renderSectionHeader={renderSectionHeader}
+        renderItem={renderItem}
+        initialNumToRender={6}
+        windowSize={11}
       />
     </View>
   );

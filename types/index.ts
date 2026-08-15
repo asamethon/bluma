@@ -1,4 +1,11 @@
-// Bluma App - Type Definitions
+// Gizlilik tercihleri kullanıcı dokümanında (users/{uid}.privacy) yaşar:
+// karşı taraftaki istemcinin de okuyabilmesi gerekir.
+export interface PrivacySettings {
+  privateAccount: boolean;
+  showActivity: boolean;
+  allowMessages: boolean;
+  discoverable: boolean;
+}
 
 export interface User {
   id: string;
@@ -7,6 +14,7 @@ export interface User {
   username?: string;
   bio?: string;
   interests?: string[];
+  intent?: 'reader' | 'writer' | 'both';
   website?: string;
   location?: string;
   authProvider: 'email' | 'google' | 'apple';
@@ -14,6 +22,8 @@ export interface User {
   followingCount?: number;
   storiesCount?: number;
   profileImage?: string;
+  privacy?: PrivacySettings;
+  lastActiveAt?: any;
   createdAt?: any;
   updatedAt?: any;
 }
@@ -30,7 +40,7 @@ export interface Book {
   isCompleted: boolean;
   isPublished: boolean;
   chaptersCount: number;
-  totalReadingTime: number; // in minutes
+  totalReadingTime: number;
   likesCount: number;
   commentsCount: number;
   viewsCount: number;
@@ -55,29 +65,25 @@ export interface Story {
   isCompleted: boolean;
   isPublished: boolean;
   chaptersCount: number;
-  readingTime: number; // in minutes
+  readingTime: number;
   likesCount: number;
   commentsCount: number;
   viewsCount: number;
   createdAt: Date;
   updatedAt: Date;
   isPremium: boolean;
-  // Home feed features
   isEditorsPick?: boolean;
-  // Demo indicator
   isMock?: boolean;
-  // New fields for book-like functionality
-  bookId?: string; // If this story is part of a book
-  chapterNumber?: number; // Chapter number if part of a book
-  isBook?: boolean; // Whether this is a book (has chapters)
-  // Additional metadata fields
+  bookId?: string;
+  chapterNumber?: number;
+  isBook?: boolean;
   language?: string;
   targetAudience?: 'all' | 'teen' | 'adult';
   contentWarnings?: string[];
-  chapterTitles?: string[]; // Bölüm başlıkları
-  isHidden?: boolean; // Admin tarafından şikayet üzerine gizlenmiş (bkz. YAPILACAKLAR 2.7)
-  chaptersInSubcollection?: boolean; // true ise içerik stories/{id}/chapters alt koleksiyonunda (bkz. YAPILACAKLAR 2.2)
-  chapterWordCounts?: number[]; // Stüdyo kartında içeriği indirmeden kelime sayısı göstermek için
+  chapterTitles?: string[];
+  isHidden?: boolean;
+  chaptersInSubcollection?: boolean;
+  chapterWordCounts?: number[];
 }
 
 export interface Chapter {
@@ -91,7 +97,7 @@ export interface Chapter {
   createdAt: Date;
   updatedAt: Date;
   wordCount: number;
-  excerpt?: string; // First few sentences for preview
+  excerpt?: string;
 }
 
 export interface Comment {
@@ -102,9 +108,9 @@ export interface Comment {
   content: string;
   likesCount: number;
   createdAt: Date;
-  parentId?: string; // for replies
+  parentId?: string;
   replies?: Comment[];
-  chapterIndex?: number; // Hangi bölüme yazıldığı (bkz. YAPILACAKLAR 2.3)
+  chapterIndex?: number;
 }
 
 export interface ReadingList {
@@ -118,11 +124,18 @@ export interface ReadingList {
   updatedAt: Date;
 }
 
+// Bildirim metninin dilden bağımsız tarifi: metin okuyanın cihazında üretilir.
+export interface NotificationI18n {
+  titleKey: string;
+  messageKey?: string;
+  params?: Record<string, string | number>;
+}
+
 export interface Notification {
   id: string;
-  userId: string; // Bildirimin alıcısı
-  senderId: string; // Bildirimi tetikleyen kullanıcı (spoof'u önlemek için kural bununla eşleşir)
-  type: 'follow' | 'like' | 'comment' | 'mention' | 'story_published' | 'new_chapter' | 'welcome' | 'conversation_announcement';
+  userId: string;
+  senderId: string;
+  type: 'follow' | 'follow_request' | 'follow_accepted' | 'like' | 'comment' | 'mention' | 'story_published' | 'new_chapter' | 'welcome' | 'conversation_announcement';
   title: string;
   message: string;
   data?: {
@@ -135,13 +148,18 @@ export interface Notification {
     followerProfileImage?: string;
     likerProfileImage?: string;
     commenterProfileImage?: string;
-    chapterIndex?: string; // Bölüm-bazlı beğeni bildirimi (bkz. YAPILACAKLAR 2.3)
-    authorId?: string; // announceConversationToFollowers
+    chapterIndex?: string;
+    authorId?: string;
     authorName?: string;
+    i18n?: NotificationI18n;
   };
   isRead: boolean;
   createdAt: any;
   updatedAt: any;
+  // İstemcide doldurulur (dokümanda saklanmaz): avatar ve eski kayıtların
+  // metnini yerelleştirmek için gönderenin adı.
+  senderName?: string;
+  senderAvatar?: string;
 }
 
 export interface Conversation {
@@ -154,7 +172,7 @@ export interface Conversation {
   likesCount: number;
   commentsCount: number;
   viewsCount: number;
-  isActive: boolean; // Konuşma aktif mi (yorum yapılabilir mi)
+  isActive: boolean;
   createdAt: any;
   updatedAt: any;
   tags?: string[];
@@ -167,10 +185,10 @@ export interface ConversationComment {
   userId: string;
   user: User;
   content: string;
-  image?: string; // base64 image data
+  image?: string;
   likesCount: number;
   createdAt: any;
-  parentId?: string; // for replies
+  parentId?: string;
   replies?: ConversationComment[];
 }
 
@@ -205,25 +223,34 @@ export type NotificationType =
   | 'story_commented'
   | 'mention';
 
-// ── Direct messaging (DM) ─────────────────────────────────────────────────
-// Bire bir sohbet. Thread doküman ID'si iki katılımcı ID'sinden deterministik
-// üretilir (`sortedA_sortedB`) — böylece aynı iki kişi hep aynı thread'e düşer.
+export interface SharedStory {
+  id: string;
+  title: string;
+  coverImage?: string;
+  authorName?: string;
+}
+
 export interface DirectMessage {
   id: string;
   senderId: string;
   text: string;
   image?: string;
-  createdAt: any; // Firestore Timestamp
+  story?: SharedStory;
+  createdAt: any;
+  clientId?: string;
+  // Yalnızca istemcide duran iyimser (henüz sunucuya yazılmamış) kopya.
+  pending?: boolean;
 }
+
+// WhatsApp benzeri gönderim durumu: saat → tek tik → soluk çift tik → mavi çift tik.
+export type MessageStatus = 'sending' | 'sent' | 'delivered' | 'read';
 
 export interface MessageThread {
   id: string;
   participants: string[];
   lastMessage?: { text: string; senderId: string; createdAt: any } | null;
   updatedAt?: any;
-  // Karşı taraf (mevcut kullanıcı olmayan katılımcı) — listener tarafından çözülür.
   otherUser?: User | null;
-  // Mevcut kullanıcının okunmamış mesaj sayısı.
   unread: number;
 }
 

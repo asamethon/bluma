@@ -10,37 +10,43 @@ import {
 } from '@/components/ui';
 import { CategoryMeta, Radius, Spacing, useTheme } from '@/constants/theme';
 import { useFollow } from '@/features/social/hooks/useFollow';
+import { useCanMessage } from '@/features/privacy/hooks/useCanMessage';
+import { useProfileAccess } from '@/features/privacy/hooks/useProfileAccess';
+import { PrivateProfileNotice } from '@/features/privacy/components/PrivateProfileNotice';
 import { useGuestGate } from '@/contexts/GuestContext';
 import { ProfileConversationCard } from '@/features/profile/components/ProfileConversationCard';
 import { ProfileGradientHero } from '@/features/profile/components/ProfileGradientHero';
 import { ProfileStatCell } from '@/features/profile/components/ProfileStatCell';
 import { ProfileStoryShelf } from '@/features/profile/components/ProfileStoryShelf';
-import { authActions, User } from '@/store/authStore';
+import { authActions } from '@/store/authStore';
+import { useProfileUser } from '@/features/profile/hooks/useProfileUser';
 import { useAppSelector } from '@/store/hooks';
 import { moderationActions } from '@/store/moderationStore';
 import { Conversation, Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 
 export default function UserProfileScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const currentUser = useAppSelector(s => s.auth.user);
   const isGuest = useAppSelector(s => s.auth.isGuest);
   const { startAuth } = useGuestGate();
 
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Profil dokümanı canlı dinlenir; sayaç/gizlilik değişimi anında yansır.
+  const { user, isLoading } = useProfileUser(id);
   const [activeTab, setActiveTab] = useState<'stories' | 'conversations'>('stories');
   const [userStories, setUserStories] = useState<Story[]>([]);
   const [userConversations, setUserConversations] = useState<Conversation[]>([]);
@@ -52,52 +58,38 @@ export default function UserProfileScreen() {
   const blockedIds = useAppSelector(s => s.moderation.blockedUserIds);
   const isBlocked = !!user && blockedIds.includes(user.id);
 
-  // ÖNEMLİ: yalnızca primitive currentUser?.id'ye bağlıyız. Daha önce
-  // currentUser OBJESİNE bağlıydı; followUser local auth state'i her
-  // güncellediğinde yeni obje referansı bu effect'i tetikliyor, sayfa
-  // tam ekran spinner'a düşüp baştan yükleniyordu ("gidip gelme" bug'ı).
   const currentUserId = currentUser?.id;
 
-  // Takip durumu + optimistic toggle: features/social/useFollow.
-  // Takipçi sayacı da optimistic güncellenir (hatada ters delta gelir).
-  const follow = useFollow(
-    user?.id,
-    useCallback((delta: number) => {
-      setUser(u => u
-        ? { ...u, followersCount: Math.max(0, (u.followersCount || 0) + delta) }
-        : u);
-    }, [])
-  );
+  // Gizli hesap: içerik yalnızca takipçilere; mesaj izni ayrı kontrol edilir.
+  const access = useProfileAccess(user);
+  const { allowed: canMessage, checking: messageCheckPending } = useCanMessage(user?.id);
+  const contentHidden = access.locked || access.checking;
 
-  const loadUserData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const userData = await authActions.getUserById(id);
-      if (userData) {
-        setUser(userData);
-        loadUserStories(userData.id);
-        const unsub = await loadUserConversations(userData.id);
-        return unsub;
-      }
-    } catch {
-      Alert.alert('Hata', 'Kullanıcı bilgileri yüklenirken bir hata oluştu.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [id]);
+  // Takipçi sayacı da canlı dokümandan geldiği için iyimser düzeltme gerekmez.
+  const follow = useFollow(user?.id, undefined, { live: true });
 
   useEffect(() => {
+    const profileId = user?.id;
+    if (!profileId) return;
     let convUnsub: (() => void) | undefined;
-    const load = async () => {
-      if (id) {
-        const unsub = await loadUserData();
-        if (unsub) convUnsub = unsub;
-      }
+    let cancelled = false;
+
+    loadUserStories(profileId);
+    loadUserConversations(profileId).then(unsub => {
+      if (!unsub) return;
+      if (cancelled) unsub();
+      else convUnsub = unsub;
+    });
+
+    return () => {
+      cancelled = true;
+      if (convUnsub) convUnsub();
     };
-    load();
+  }, [user?.id]);
+
+  useEffect(() => {
     if (currentUserId) moderationActions.loadBlockedUsers();
-    return () => { if (convUnsub) convUnsub(); };
-  }, [id, loadUserData, currentUserId]);
+  }, [currentUserId]);
 
   const loadUserStories = async (userId: string) => {
     try {
@@ -123,9 +115,6 @@ export default function UserProfileScreen() {
       const db = getFirestore();
       const q = query(collection(db, 'conversations'), where('authorId', '==', userId), orderBy('createdAt', 'desc'));
       const unsub = onSnapshot(q, async snap => {
-        // Bu sorgudaki tüm konuşmalar aynı yazara ait (authorId === userId) —
-        // yazarı her doküman için ayrı ayrı sıralı çekmek yerine bir kez alıp
-        // hepsine paylaştırıyoruz.
         const author = await authActions.getUserById(userId);
         const list: Conversation[] = snap.docs.map(doc => {
           const data = { id: doc.id, ...doc.data() } as Conversation;
@@ -142,9 +131,9 @@ export default function UserProfileScreen() {
   const handleFollow = () => {
     if (!user || !currentUser) return;
     if (follow.isFollowing) {
-      Alert.alert('Takipten Çık', `${user.displayName} adlı kullanıcıyı takipten çıkmak istiyor musun?`, [
-        { text: 'İptal', style: 'cancel' },
-        { text: 'Takipten Çık', style: 'destructive', onPress: follow.toggle },
+      Alert.alert(t('social.unfollowTitle'), t('social.unfollowConfirm', { name: user.displayName }), [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('social.unfollowTitle'), style: 'destructive', onPress: follow.toggle },
       ]);
     } else {
       follow.toggle();
@@ -161,27 +150,26 @@ export default function UserProfileScreen() {
     if (!user) return;
     if (isBlocked) {
       moderationActions.unblockUser(user.id).then(r => {
-        if (r.success) Alert.alert('Engel kaldırıldı', `${user.displayName} artık sana gösterilecek.`);
-        else Alert.alert('Hata', r.error || 'Engel kaldırılamadı.');
+        if (r.success) Alert.alert(t('userProfile.unblockedTitle'), t('userProfile.unblockedMessage', { name: user.displayName }));
+        else Alert.alert(t('common.error'), r.error || t('moderation.unblockFailed'));
       });
       return;
     }
     Alert.alert(
-      'Kullanıcıyı engelle',
-      `${user.displayName} engellensin mi? Hikâyeleri ve yorumları sana gösterilmez.`,
+      t('userProfile.blockTitle'),
+      t('userProfile.blockConfirm', { name: user.displayName }),
       [
-        { text: 'Vazgeç', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Engelle',
+          text: t('userProfile.block'),
           style: 'destructive',
           onPress: async () => {
             const r = await moderationActions.blockUser(user.id);
             if (r.success) {
-              // Engellenen kullanıcı takipteyse takibi de bırak (optimistic)
               if (follow.isFollowing) follow.toggle();
-              Alert.alert('Engellendi', 'Bu kullanıcı artık sana gösterilmeyecek.');
+              Alert.alert(t('userProfile.blockedTitle'), t('userProfile.blockedMessage'));
             } else {
-              Alert.alert('Hata', r.error || 'Engelleme başarısız.');
+              Alert.alert(t('common.error'), r.error || t('moderation.blockFailed'));
             }
           },
         },
@@ -200,8 +188,8 @@ export default function UserProfileScreen() {
   if (!user) {
     return (
       <Screen style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
-        <Text variant="body" tone="textSecondary">Kullanıcı bulunamadı</Text>
-        <Button label="Geri Dön" variant="ghost" size="sm" onPress={() => router.back()} style={{ marginTop: 12 }} />
+        <Text variant="body" tone="textSecondary">{t('errors.userNotFound')}</Text>
+        <Button label={t('userProfile.goBack')} variant="ghost" size="sm" onPress={() => router.back()} style={{ marginTop: 12 }} />
       </Screen>
     );
   }
@@ -212,18 +200,36 @@ export default function UserProfileScreen() {
   const genreAccent = primaryGenre ? (CategoryMeta[primaryGenre]?.color ?? '#FF85A8') : '#FF85A8';
 
   const tabOptions = [
-    { value: 'stories', label: 'Hikayeler', icon: 'library-outline' as const },
-    { value: 'conversations', label: 'Konuşmalar', icon: 'chatbubble-ellipses-outline' as const },
+    { value: 'stories', label: t('userProfile.storiesTab'), icon: 'library-outline' as const },
+    { value: 'conversations', label: t('userProfile.conversationsTab'), icon: 'chatbubble-ellipses-outline' as const },
   ];
 
-  return (
-    <Screen style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
-      >
-        {/* ── Hero ──────────────────────────────────────────────── */}
-        <ProfileGradientHero
+  const renderTabItem = ({ item }: { item: any }) => (
+    <View style={{ paddingHorizontal: Spacing.screenX }}>
+      {activeTab === "stories" ? (
+        <StoryRow
+          story={item as Story}
+          status={(item as Story).isCompleted ? "completed" : "ongoing"}
+          onPress={() => router.push(`/story/${item.id}/preview`)}
+        />
+      ) : (
+        <ProfileConversationCard
+          conversation={item as Conversation}
+          onPress={() => router.push(`/conversation/${item.id}` as any)}
+          onImagePress={(imageUri: string) => {
+            setSelectedModalImage(imageUri);
+            setImageModalVisible(true);
+          }}
+        />
+      )}
+    </View>
+  );
+
+  const itemSeparator = () => <View style={{ height: Spacing.md }} />;
+
+  const listHeader = (
+    <>
+      <ProfileGradientHero
           avatarUri={user.profileImage}
           avatarName={user.displayName}
           accentColor={genreAccent}
@@ -245,7 +251,6 @@ export default function UserProfileScreen() {
           }
         />
 
-        {/* ── Identity ──────────────────────────────────────────── */}
         <View style={styles.identity}>
           <View
             style={{
@@ -272,32 +277,40 @@ export default function UserProfileScreen() {
             </Text>
           ) : null}
 
-          {/* Actions */}
           {!isOwnProfile && (
             <View style={styles.actionRow}>
-              {/* Optimistic akış (useFollow): spinner yok, etiket anında değişir */}
               <Button
-                label={follow.isFollowing ? "Takip Ediliyor" : "Takip Et"}
-                variant={follow.isFollowing ? "secondary" : "primary"}
-                icon={follow.isFollowing ? "checkmark" : "add"}
+                label={
+                  follow.isFollowing
+                    ? t('social.following')
+                    : follow.isRequested
+                      ? t('social.requested')
+                      : t('social.follow')
+                }
+                variant={follow.isFollowing || follow.isRequested ? "secondary" : "primary"}
+                icon={
+                  follow.isFollowing ? "checkmark" : follow.isRequested ? "time-outline" : "add"
+                }
                 size="md"
                 onPress={handleFollow}
                 style={{ flex: 1 }}
               />
-              <Button
-                label="Mesaj"
-                variant="secondary"
-                size="md"
-                icon="mail-outline"
-                onPress={() => {
-                  if (isGuest) { startAuth('signup'); return; }
-                  if (user) router.push(`/messages/${user.id}` as any);
-                }}
-              />
+              {/* Mesajlara kapalı hesapta buton hiç görünmez. */}
+              {(isGuest || (!messageCheckPending && canMessage)) && (
+                <Button
+                  label={t('messages.chat')}
+                  variant="secondary"
+                  size="md"
+                  icon="mail-outline"
+                  onPress={() => {
+                    if (isGuest) { startAuth('signup'); return; }
+                    if (user) router.push(`/messages/${user.id}` as any);
+                  }}
+                />
+              )}
             </View>
           )}
 
-          {/* Stats sunk bar */}
           <View
             style={[
               styles.statsBar,
@@ -307,7 +320,7 @@ export default function UserProfileScreen() {
             <ProfileStatCell
               icon="book"
               value={userStories.length}
-              label="Hikâye"
+              label={t('common.story')}
               color={colors.primary}
             />
             <View
@@ -316,7 +329,7 @@ export default function UserProfileScreen() {
             <ProfileStatCell
               icon="people"
               value={user.followersCount || 0}
-              label="Takipçi"
+              label={t('profileScreen.followers')}
               color="#4C6FE0"
               onPress={() =>
                 router.push(`/profile/followers/${user.id}` as any)
@@ -328,7 +341,7 @@ export default function UserProfileScreen() {
             <ProfileStatCell
               icon="leaf"
               value={user.followingCount || 0}
-              label="Takip"
+              label={t('profileScreen.followingShort')}
               color={colors.textSecondary}
               onPress={() =>
                 router.push(`/profile/following/${user.id}` as any)
@@ -337,102 +350,74 @@ export default function UserProfileScreen() {
           </View>
         </View>
 
-        {/* ── Garden shelf ──────────────────────────────────────── */}
-        <ProfileStoryShelf
-          title={`${firstName}'in Bahçesi`}
-          count={userStories.length}
-          stories={userStories}
-          onStoryPress={(story) => router.push(`/story/${story.id}/preview`)}
-        />
-
-        {/* ── Tabs ──────────────────────────────────────────────── */}
-        <View
-          style={{
-            paddingHorizontal: Spacing.screenX,
-            marginTop: 20,
-            marginBottom: 16,
-          }}
-        >
-          <SegmentedControl
-            options={tabOptions}
-            value={activeTab}
-            onChange={(v) => setActiveTab(v as any)}
-          />
-        </View>
-
-        {/* ── Tab content ───────────────────────────────────────── */}
-        <View style={{ paddingHorizontal: Spacing.screenX }}>
-          {activeTab === "stories" ? (
-            userStories.length === 0 ? (
-              <View style={styles.empty}>
-                <Ionicons
-                  name="leaf-outline"
-                  size={32}
-                  color={colors.textSecondary}
-                />
-                <Text
-                  variant="body"
-                  tone="textSecondary"
-                  style={{ marginTop: 8, textAlign: "center" }}
-                >
-                  {isOwnProfile
-                    ? "Henüz yayınlanan hikaye yok."
-                    : "Bu yazar henüz hikaye yayınlamamış."}
-                </Text>
-              </View>
-            ) : (
-              <View style={{ gap: Spacing.md }}>
-                {userStories.map((story) => (
-                  <StoryRow
-                    key={story.id}
-                    story={story}
-                    status={story.isCompleted ? "Tamamlandı" : "Devam ediyor"}
-                    onPress={() => router.push(`/story/${story.id}/preview`)}
-                  />
-                ))}
-              </View>
-            )
-          ) : conversationsLoading ? (
-            <ActivityIndicator
-              color={colors.primary}
-              style={{ marginVertical: 32 }}
+        {access.locked ? (
+          <View style={{ marginTop: 24 }}>
+            <PrivateProfileNotice name={firstName} pending={follow.isRequested} />
+          </View>
+        ) : contentHidden ? null : (
+          <>
+            <ProfileStoryShelf
+              title={t('userProfile.usersGarden', { name: firstName })}
+              count={userStories.length}
+              stories={userStories}
+              onStoryPress={(story) => router.push(`/story/${story.id}/preview`)}
             />
-          ) : userConversations.length === 0 ? (
-            <View style={styles.empty}>
-              <Ionicons
-                name="chatbubble-ellipses-outline"
-                size={32}
-                color={colors.textSecondary}
+
+            <View
+              style={{
+                paddingHorizontal: Spacing.screenX,
+                marginTop: 20,
+                marginBottom: 16,
+              }}
+            >
+              <SegmentedControl
+                options={tabOptions}
+                value={activeTab}
+                onChange={(v) => setActiveTab(v as any)}
               />
-              <Text
-                variant="body"
-                tone="textSecondary"
-                style={{ marginTop: 8, textAlign: "center" }}
-              >
-                {isOwnProfile
-                  ? "Henüz konuşma yok."
-                  : "Bu yazar henüz mesaj paylaşmamış."}
-              </Text>
             </View>
-          ) : (
-            <View style={{ gap: Spacing.md }}>
-              {userConversations.map((conversation) => (
-                <ProfileConversationCard
-                  key={conversation.id}
-                  conversation={conversation}
-                  onPress={() =>
-                    router.push(`/conversation/${conversation.id}` as any)
-                  }
-                  onImagePress={(imageUri) => {
-                    setSelectedModalImage(imageUri);
-                    setImageModalVisible(true);
-                  }}
-                />
-              ))}
-            </View>
-          )}
-        </View>
-      </ScrollView>
+          </>
+        )}
+
+    </>
+  );
+
+  const listEmpty = contentHidden ? null :
+    activeTab === "stories" ? (
+      <View style={styles.empty}>
+        <Ionicons name="leaf-outline" size={32} color={colors.textSecondary} />
+        <Text variant="body" tone="textSecondary" style={{ marginTop: 8, textAlign: "center" }}>
+          {isOwnProfile
+            ? t('profileScreen.noPublishedStories')
+            : t('userProfile.authorNoStories')}
+        </Text>
+      </View>
+    ) : conversationsLoading ? (
+      <ActivityIndicator color={colors.primary} style={{ marginVertical: 32 }} />
+    ) : (
+      <View style={styles.empty}>
+        <Ionicons name="chatbubble-ellipses-outline" size={32} color={colors.textSecondary} />
+        <Text variant="body" tone="textSecondary" style={{ marginTop: 8, textAlign: "center" }}>
+          {isOwnProfile
+            ? t('userProfile.noConversations')
+            : t('userProfile.authorNoMessages')}
+        </Text>
+      </View>
+    );
+
+  return (
+    <Screen style={{ flex: 1, backgroundColor: colors.background }}>
+      <FlashList
+        data={contentHidden ? [] : activeTab === "stories" ? userStories : userConversations}
+        keyExtractor={(item: any) => item.id}
+        renderItem={renderTabItem}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
+        ItemSeparatorComponent={itemSeparator}
+        key={activeTab}
+      />
 
       <ImageModal
         visible={imageModalVisible}
@@ -443,18 +428,17 @@ export default function UserProfileScreen() {
         }}
       />
 
-      {/* Overflow menu */}
       {showMenu && (
         <TouchableOpacity style={styles.menuBackdrop} activeOpacity={1} onPress={() => setShowMenu(false)}>
           <View style={[styles.menuCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <TouchableOpacity style={styles.menuItem} onPress={handleReport}>
               <Ionicons name="flag-outline" size={18} color={colors.text} />
-              <Text variant="body">Kullanıcıyı bildir</Text>
+              <Text variant="body">{t('report.targetUser')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.menuItem} onPress={handleToggleBlock}>
               <Ionicons name={isBlocked ? 'person-add-outline' : 'person-remove-outline'} size={18} color={isBlocked ? colors.text : colors.error} />
               <Text variant="body" color={isBlocked ? colors.text : colors.error}>
-                {isBlocked ? 'Engeli kaldır' : 'Engelle'}
+                {isBlocked ? t('userProfile.unblock') : t('userProfile.block')}
               </Text>
             </TouchableOpacity>
           </View>

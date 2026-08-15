@@ -43,26 +43,76 @@ service cloud.firestore {
     function priorValue(field) {
       return resource == null ? 0 : resource.data.get(field, 0);
     }
+    // True when the caller is NOT blocked by `ownerId`. Engellenen bir
+    // kullanıcının, kurbana ULAŞACAK (push tetikleyen) bildirim/DM yazmasını
+    // kaynağında engeller — worker'daki kontrol savunma derinliği içindir.
+    function notBlockedBy(ownerId) {
+      return !exists(/databases/$(database)/documents/users/$(ownerId)/blocked/$(request.auth.uid));
+    }
+    // Gizlilik → "Mesajlara İzin Ver" kapalıysa, alıcıya YALNIZCA kendi takip
+    // ettiği kişiler yazabilir (users/{uid}.privacy.allowMessages, varsayılan
+    // açık; alan hiç yoksa eski hesap davranışı korunur).
+    function acceptsDMFrom(ownerId) {
+      return get(/databases/$(database)/documents/users/$(ownerId))
+               .data.get('privacy', {}).get('allowMessages', true) == true
+        || exists(/databases/$(database)/documents/users/$(ownerId)/following/$(request.auth.uid));
+    }
 
     // User profiles — public read (guest browsing). Only the owner edits their
     // own document, except the followersCount counter which is incremented by
     // the follower during follow/unfollow.
     match /users/{userId} {
+      // Gizli hesap onayı: onaylayan (hedef), isteği duran kullanıcının takip
+      // dokümanlarını ve sayaçlarını yazabilir. İstek dokümanı bu yazmaların
+      // "yetki belgesi"dir — bu yüzden EN SON silinir.
+      function hasFollowRequest(ownerId, requesterId) {
+        return exists(/databases/$(database)/documents/users/$(ownerId)/followRequests/$(requesterId));
+      }
+      // Gizli hesap doğrudan takip edilemez; yalnızca onaylanmış istekle.
+      function isPrivateAcct(uid) {
+        return get(/databases/$(database)/documents/users/$(uid))
+                 .data.get('privacy', {}).get('privateAccount', false) == true;
+      }
+
       allow read: if true;
       allow create, delete: if isOwner(userId);
       allow update: if isOwner(userId)
-        || (isSignedIn() && isCounterBump('followersCount'));
+        || (isSignedIn() && isCounterBump('followersCount'))
+        // İsteği onaylayan, yalnızca isteği duran kullanıcının followingCount'unu
+        // bump edebilir.
+        || (isSignedIn() && isCounterBump('followingCount')
+            && hasFollowRequest(request.auth.uid, userId));
 
       // followers — written cross-user on follow/unfollow, but a user may only
       // add/remove *their own* follower doc (doc id == follower's uid).
+      // Gizli hesap sahibi, onayladığı isteğin takipçi dokümanını da yazabilir.
       match /followers/{followerId} {
         allow read: if true;
-        allow write: if isSignedIn() && request.auth.uid == followerId;
+        allow create, update: if (isSignedIn() && request.auth.uid == followerId && !isPrivateAcct(userId))
+          || (isOwner(userId) && hasFollowRequest(userId, followerId));
+        // Takibi bırakmak her zaman serbesttir.
+        allow delete: if (isSignedIn() && request.auth.uid == followerId) || isOwner(userId);
       }
-      // following — only the list owner writes.
+      // following — list owner writes; ayrıca gizli hesap sahibi, kendisine
+      // istek gönderen kullanıcının listesine yalnızca KENDİSİNİ ekleyebilir.
       match /following/{followingId} {
         allow read: if true;
-        allow write: if isOwner(userId);
+        allow create, update: if (isOwner(userId) && !isPrivateAcct(followingId))
+          || (isSignedIn() && request.auth.uid == followingId
+              && hasFollowRequest(followingId, userId));
+        allow delete: if isOwner(userId);
+      }
+      // Takip istekleri (gizli hesap) — hedef kullanıcı ve isteği gönderen
+      // görür; yalnızca gönderen oluşturur, iki taraf da silebilir (ret/iptal).
+      match /followRequests/{requesterId} {
+        allow read: if isOwner(userId) || (isSignedIn() && request.auth.uid == requesterId);
+        allow create: if isSignedIn()
+          && request.auth.uid == requesterId
+          && request.resource.data.keys().hasOnly(['userId', 'createdAt'])
+          && request.resource.data.userId == requesterId
+          && notBlockedBy(userId);
+        allow update: if false;
+        allow delete: if isOwner(userId) || (isSignedIn() && request.auth.uid == requesterId);
       }
       // Blocked users — private to the owner.
       match /blocked/{blockedUserId} {
@@ -230,9 +280,14 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.resource.data.senderId == request.auth.uid
         && request.resource.data.type in
-          ['follow', 'like', 'comment', 'mention', 'story_published', 'new_chapter', 'welcome', 'conversation_announcement']
+          ['follow', 'follow_request', 'follow_accepted', 'like', 'comment', 'mention', 'story_published', 'new_chapter', 'welcome', 'conversation_announcement']
         && request.resource.data.keys().hasOnly(
-          ['userId', 'senderId', 'type', 'title', 'message', 'data', 'isRead', 'createdAt', 'updatedAt']);
+          ['userId', 'senderId', 'type', 'title', 'message', 'data', 'isRead', 'createdAt', 'updatedAt'])
+        // Anti-spam/phishing: engellenen kullanıcı bildirim gönderemez ve
+        // saldırgan-kontrollü metin uzunluğu sınırlıdır (push payload'u).
+        && notBlockedBy(request.resource.data.userId)
+        && request.resource.data.get('title', '').size() <= 150
+        && request.resource.data.get('message', '').size() <= 500;
       allow read, update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
@@ -264,25 +319,48 @@ service cloud.firestore {
     // deterministik üretilir. Yalnızca katılımcılar okur/yazar. Mesajlar
     // değiştirilemez; okunmamış sayaçları thread doc'unda tutulur.
     match /messageThreads/{threadId} {
+      // Thread iki kişiliktir; çağıran dışındaki katılımcı = karşı taraf.
+      function otherOf(participants) {
+        return participants[0] == request.auth.uid ? participants[1] : participants[0];
+      }
+
       allow read: if isSignedIn() && request.auth.uid in resource.data.participants;
       allow create: if isSignedIn()
         && request.auth.uid in request.resource.data.participants
-        && request.resource.data.participants.size() == 2;
+        && request.resource.data.participants.size() == 2
+        && acceptsDMFrom(otherOf(request.resource.data.participants));
       // participants değiştirilemez — bir katılımcının kendini/başkasını
       // thread'e ekleyip/çıkarabilmesi (ör. mesajları başka bir hesaba
       // yönlendirmek) engellenir (bkz. YAPILACAKLAR 2.8).
+      // Okundu/gizleme filigranları serbesttir; yeni mesaj önizlemesi yazmak
+      // (lastMessage) alıcının mesaj iznine bağlıdır.
       allow update: if isSignedIn() && request.auth.uid in resource.data.participants
-        && request.resource.data.participants == resource.data.participants;
+        && request.resource.data.participants == resource.data.participants
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['lastMessage'])
+          || acceptsDMFrom(otherOf(resource.data.participants))
+        );
       allow delete: if false;
 
       match /messages/{messageId} {
         function threadParticipants() {
           return get(/databases/$(database)/documents/messageThreads/$(threadId)).data.participants;
         }
+        // Thread iki kişiliktir; gönderen dışındaki katılımcı = alıcı.
+        function otherParticipant() {
+          return threadParticipants()[0] == request.auth.uid
+            ? threadParticipants()[1]
+            : threadParticipants()[0];
+        }
         allow read: if isSignedIn() && request.auth.uid in threadParticipants();
+        // Engellenen kullanıcı DM (dolayısıyla DM push'u) gönderemez; metin
+        // makul bir üst sınırla kısıtlanır (anti-spam).
         allow create: if isSignedIn()
           && request.resource.data.senderId == request.auth.uid
-          && request.auth.uid in threadParticipants();
+          && request.auth.uid in threadParticipants()
+          && notBlockedBy(otherParticipant())
+          && acceptsDMFrom(otherParticipant())
+          && request.resource.data.get('text', '').size() <= 5000;
         allow update, delete: if false;
       }
     }

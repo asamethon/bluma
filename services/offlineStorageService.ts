@@ -1,81 +1,101 @@
 import { Story } from '@/types';
+import i18n from '@/i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '@/utils/logger';
 
 interface OfflineStory extends Story {
   downloadedAt: Date;
-  size: number; // KB cinsinden dosya boyutu
+  size: number;
+}
+
+export interface OfflineChapter {
+  title?: string;
+  content: string;
 }
 
 interface DownloadProgress {
   storyId: string;
-  progress: number; // 0-100 arası
+  progress: number;
   status: 'downloading' | 'completed' | 'failed';
 }
 
 class OfflineStorageService {
   private readonly OFFLINE_STORIES_KEY = '@bluma_offline_stories';
   private readonly DOWNLOAD_PROGRESS_KEY = '@bluma_download_progress';
-  private readonly MAX_STORAGE_SIZE = 500 * 1024; // 500MB limit
+  private readonly OFFLINE_CHAPTERS_KEY = '@bluma_offline_chapters';
+  private readonly MAX_STORAGE_SIZE = 500 * 1024;
 
-  // Offline hikaye indir
-  async downloadStory(story: Story): Promise<{ success: boolean; error?: string }> {
+  private chaptersKey(storyId: string): string {
+    return `${this.OFFLINE_CHAPTERS_KEY}_${storyId}`;
+  }
+
+  async downloadStory(story: Story, chapters?: OfflineChapter[]): Promise<{ success: boolean; error?: string }> {
     try {
-      // Önce storage limitini kontrol et
-      const canDownload = await this.checkStorageLimit(story);
+      const canDownload = await this.checkStorageLimit(story, chapters);
       if (!canDownload) {
-        return { success: false, error: 'Yetersiz depolama alanı. Bazı hikayeleri silin.' };
+        return { success: false, error: i18n.t('offline.insufficientStorage') };
       }
 
-      // İndirme progress'ini başlat
       await this.updateDownloadProgress(story.id, 0, 'downloading');
 
-      // Hikaye verilerini hesapla
-      const storySize = this.calculateStorySize(story);
-      
-      // Offline story objesini oluştur
+      const storySize = this.calculateStorySize(story, chapters);
+
       const offlineStory: OfflineStory = {
         ...story,
         downloadedAt: new Date(),
         size: storySize,
       };
 
-      // Progress güncelle
       await this.updateDownloadProgress(story.id, 50, 'downloading');
 
-      // AsyncStorage'a kaydet
+      if (chapters && chapters.length > 0) {
+        await AsyncStorage.setItem(this.chaptersKey(story.id), JSON.stringify(chapters));
+      }
       await this.saveOfflineStory(offlineStory);
 
-      // Progress tamamla
       await this.updateDownloadProgress(story.id, 100, 'completed');
 
-      // Progress'i temizle (2 saniye sonra)
       setTimeout(() => {
         this.clearDownloadProgress(story.id);
       }, 2000);
 
       return { success: true };
     } catch (error) {
-      console.error('Download story error:', error);
+      logger.error('Download story error:', error);
       await this.updateDownloadProgress(story.id, 0, 'failed');
-      return { success: false, error: 'İndirme sırasında hata oluştu' };
+      return { success: false, error: i18n.t('offline.downloadError') };
     }
   }
 
-  // Offline hikayeyi sil
   async deleteOfflineStory(storyId: string): Promise<boolean> {
     try {
       const offlineStories = await this.getOfflineStories();
       const updatedStories = offlineStories.filter(story => story.id !== storyId);
-      
+
       await AsyncStorage.setItem(this.OFFLINE_STORIES_KEY, JSON.stringify(updatedStories));
+      await AsyncStorage.removeItem(this.chaptersKey(storyId)).catch(() => {});
       return true;
     } catch (error) {
-      console.error('Delete offline story error:', error);
+      logger.error('Delete offline story error:', error);
       return false;
     }
   }
 
-  // Offline hikayeleri listele
+  async getOfflineChapters(storyId: string): Promise<OfflineChapter[] | null> {
+    try {
+      const raw = await AsyncStorage.getItem(this.chaptersKey(storyId));
+      return raw ? (JSON.parse(raw) as OfflineChapter[]) : null;
+    } catch (error) {
+      logger.error('Get offline chapters error:', error);
+      return null;
+    }
+  }
+
+  async getOfflineChapter(storyId: string, index: number): Promise<OfflineChapter | null> {
+    const chapters = await this.getOfflineChapters(storyId);
+    return chapters && chapters[index] ? chapters[index] : null;
+  }
+
   async getOfflineStories(): Promise<OfflineStory[]> {
     try {
       const storiesData = await AsyncStorage.getItem(this.OFFLINE_STORIES_KEY);
@@ -87,93 +107,87 @@ class OfflineStorageService {
         downloadedAt: new Date(story.downloadedAt),
       }));
     } catch (error) {
-      console.error('Get offline stories error:', error);
+      logger.error('Get offline stories error:', error);
       return [];
     }
   }
 
-  // Hikayenin offline olup olmadığını kontrol et
   async isStoryOffline(storyId: string): Promise<boolean> {
     try {
       const offlineStories = await this.getOfflineStories();
       return offlineStories.some(story => story.id === storyId);
     } catch (error) {
-      console.error('Check story offline error:', error);
+      logger.error('Check story offline error:', error);
       return false;
     }
   }
 
-  // Offline hikayeyi getir
   async getOfflineStory(storyId: string): Promise<OfflineStory | null> {
     try {
       const offlineStories = await this.getOfflineStories();
       return offlineStories.find(story => story.id === storyId) || null;
     } catch (error) {
-      console.error('Get offline story error:', error);
+      logger.error('Get offline story error:', error);
       return null;
     }
   }
 
-  // İndirme progress'ini güncelle
   async updateDownloadProgress(storyId: string, progress: number, status: DownloadProgress['status']): Promise<void> {
     try {
       const progressData: DownloadProgress = { storyId, progress, status };
       await AsyncStorage.setItem(`${this.DOWNLOAD_PROGRESS_KEY}_${storyId}`, JSON.stringify(progressData));
     } catch (error) {
-      console.error('Update download progress error:', error);
+      logger.error('Update download progress error:', error);
     }
   }
 
-  // İndirme progress'ini getir
   async getDownloadProgress(storyId: string): Promise<DownloadProgress | null> {
     try {
       const progressData = await AsyncStorage.getItem(`${this.DOWNLOAD_PROGRESS_KEY}_${storyId}`);
       return progressData ? JSON.parse(progressData) : null;
     } catch (error) {
-      console.error('Get download progress error:', error);
+      logger.error('Get download progress error:', error);
       return null;
     }
   }
 
-  // İndirme progress'ini temizle
   async clearDownloadProgress(storyId: string): Promise<void> {
     try {
       await AsyncStorage.removeItem(`${this.DOWNLOAD_PROGRESS_KEY}_${storyId}`);
     } catch (error) {
-      console.error('Clear download progress error:', error);
+      logger.error('Clear download progress error:', error);
     }
   }
 
-  // Storage limitini kontrol et
-  private async checkStorageLimit(story: Story): Promise<boolean> {
+  private async checkStorageLimit(story: Story, chapters?: OfflineChapter[]): Promise<boolean> {
     try {
       const offlineStories = await this.getOfflineStories();
       const currentSize = offlineStories.reduce((total, s) => total + s.size, 0);
-      const newStorySize = this.calculateStorySize(story);
-      
+      const newStorySize = this.calculateStorySize(story, chapters);
+
       return (currentSize + newStorySize) <= this.MAX_STORAGE_SIZE;
     } catch (error) {
-      console.error('Check storage limit error:', error);
+      logger.error('Check storage limit error:', error);
       return false;
     }
   }
 
-  // Hikaye boyutunu hesapla (KB)
-  private calculateStorySize(story: Story): number {
-    const contentSize = (story.content?.length || 0) * 2; // Unicode karakterler için x2
+  private calculateStorySize(story: Story, chapters?: OfflineChapter[]): number {
+    const bodyLength = chapters && chapters.length > 0
+      ? chapters.reduce((total, c) => total + (c.content?.length || 0), 0)
+      : (story.content?.length || 0);
+    const contentSize = bodyLength * 2;
     const titleSize = (story.title?.length || 0) * 2;
     const descriptionSize = (story.description?.length || 0) * 2;
-    const metadataSize = 1024; // Diğer metadata için sabit boyut
-    
+    const metadataSize = 1024;
+
     return Math.ceil((contentSize + titleSize + descriptionSize + metadataSize) / 1024);
   }
 
-  // Offline hikayeyi kaydet
   private async saveOfflineStory(offlineStory: OfflineStory): Promise<void> {
     try {
       const offlineStories = await this.getOfflineStories();
       
-      // Aynı hikaye varsa güncelle, yoksa ekle
       const existingIndex = offlineStories.findIndex(story => story.id === offlineStory.id);
       if (existingIndex >= 0) {
         offlineStories[existingIndex] = offlineStory;
@@ -183,45 +197,43 @@ class OfflineStorageService {
       
       await AsyncStorage.setItem(this.OFFLINE_STORIES_KEY, JSON.stringify(offlineStories));
     } catch (error) {
-      console.error('Save offline story error:', error);
+      logger.error('Save offline story error:', error);
       throw error;
     }
   }
 
-  // Toplam offline storage boyutunu getir
   async getTotalStorageSize(): Promise<{ used: number; total: number }> {
     try {
       const offlineStories = await this.getOfflineStories();
       const used = offlineStories.reduce((total, story) => total + story.size, 0);
       
       return {
-        used, // KB
-        total: this.MAX_STORAGE_SIZE, // KB
+        used,
+        total: this.MAX_STORAGE_SIZE,
       };
     } catch (error) {
-      console.error('Get storage size error:', error);
+      logger.error('Get storage size error:', error);
       return { used: 0, total: this.MAX_STORAGE_SIZE };
     }
   }
 
-  // Tüm offline verileri temizle
   async clearAllOfflineData(): Promise<boolean> {
     try {
       await AsyncStorage.removeItem(this.OFFLINE_STORIES_KEY);
-      
-      // Tüm progress key'leri temizle
+
       const allKeys = await AsyncStorage.getAllKeys();
-      const progressKeys = allKeys.filter(key => key.startsWith(this.DOWNLOAD_PROGRESS_KEY));
-      await AsyncStorage.multiRemove(progressKeys);
-      
+      const staleKeys = allKeys.filter(
+        key => key.startsWith(this.DOWNLOAD_PROGRESS_KEY) || key.startsWith(this.OFFLINE_CHAPTERS_KEY)
+      );
+      if (staleKeys.length > 0) await AsyncStorage.multiRemove(staleKeys);
+
       return true;
     } catch (error) {
-      console.error('Clear all offline data error:', error);
+      logger.error('Clear all offline data error:', error);
       return false;
     }
   }
 
-  // Eski hikayeleri otomatik temizle (30 günden eski)
   async cleanupOldStories(): Promise<number> {
     try {
       const offlineStories = await this.getOfflineStories();
@@ -233,14 +245,17 @@ class OfflineStorageService {
       );
       
       const removedCount = offlineStories.length - freshStories.length;
-      
+
       if (removedCount > 0) {
         await AsyncStorage.setItem(this.OFFLINE_STORIES_KEY, JSON.stringify(freshStories));
+        const freshIds = new Set(freshStories.map(s => s.id));
+        const removedIds = offlineStories.filter(s => !freshIds.has(s.id)).map(s => s.id);
+        await AsyncStorage.multiRemove(removedIds.map(id => this.chaptersKey(id))).catch(() => {});
       }
-      
+
       return removedCount;
     } catch (error) {
-      console.error('Cleanup old stories error:', error);
+      logger.error('Cleanup old stories error:', error);
       return 0;
     }
   }

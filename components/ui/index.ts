@@ -1,4 +1,3 @@
-// Bluma UI kit — the Bloom design system components.
 export { Text } from "./Text";
 export type { TextProps } from "./Text";
 export { Button } from "./Button";

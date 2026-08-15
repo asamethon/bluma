@@ -1,5 +1,6 @@
 import { imageUploadService } from '@/services/imageUploadService';
-import { useState } from 'react';
+import i18n from '@/i18n';
+import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 import { adjustRangesForEdit, diffTexts, shiftRanges, splitRangeAtNewlines } from '../utils/editorEdits';
 import { buildImageToken } from '../utils/imageToken';
@@ -9,20 +10,18 @@ const BULLET = '• ';
 
 type Sel = { start: number; end: number };
 
-// Bölüm gövdesi editörü: metin display uzayında (italik işaretleri gizli),
-// italik aralıklar + italik/madde yazma modları burada yaşar. Her değişiklik
-// depo biçimine (_..._) çevrilip onCommit ile yukarı verilir.
 export function useChapterEditor(onCommit: (storedContent: string) => void) {
   const [display, setDisplay] = useState('');
   const [ranges, setRanges] = useState<ItalicRange[]>([]);
   const [italicMode, setItalicMode] = useState(false);
   const [bulletMode, setBulletMode] = useState(false);
   const [sel, setSel] = useState<Sel>({ start: 0, end: 0 });
-  // Programatik metin değişikliği sonrası imleci konumlandırmak için geçici
-  // kontrollü seçim; kullanıcının ilk dokunuşunda bırakılır.
   const [forcedSel, setForcedSel] = useState<Sel | null>(null);
 
-  const load = (content: string) => {
+  // Referansı SABİT olmalı: useComposer'ın yükleme effect'i buna bağımlı.
+  // Her render'da yeni fonksiyon dönersek effect sonsuz döner ve yazılan
+  // metin sürekli diskteki eski içerikle ezilir.
+  const load = useCallback((content: string) => {
     const parsed = parseItalic(content);
     setDisplay(parsed.display);
     setRanges(parsed.ranges);
@@ -30,7 +29,7 @@ export function useChapterEditor(onCommit: (storedContent: string) => void) {
     setBulletMode(false);
     setForcedSel(null);
     setSel({ start: 0, end: 0 });
-  };
+  }, []);
 
   const commit = (nextDisplay: string, nextRanges: ItalicRange[]) => {
     const norm = normalizeRanges(nextRanges);
@@ -39,8 +38,6 @@ export function useChapterEditor(onCommit: (storedContent: string) => void) {
     onCommit(serializeItalic(nextDisplay, norm));
   };
 
-  // Metin state'i yerleştikten sonra imleci taşı (Android'de aynı render'da
-  // selection + children güncellemek imleci eski metne göre kırpabiliyor).
   const moveCaret = (pos: number) => {
     setSel({ start: pos, end: pos });
     setTimeout(() => setForcedSel({ start: pos, end: pos }), 0);
@@ -52,8 +49,6 @@ export function useChapterEditor(onCommit: (storedContent: string) => void) {
     const italicOn = italicMode && inserted.length > 0 && !inserted.includes('\n');
     let next = adjustRangesForEdit(ranges, pos, removedLen, inserted.length, italicOn);
 
-    // Madde modu: enter'a basınca yeni satıra otomatik madde; boş maddede
-    // enter (üst üste iki enter) maddeyi siler ve moddan çıkar.
     if (bulletMode && inserted === '\n' && removedLen === 0) {
       const lineStart = newText.lastIndexOf('\n', pos - 1) + 1;
       if (newText.slice(lineStart, pos) === BULLET) {
@@ -76,8 +71,6 @@ export function useChapterEditor(onCommit: (storedContent: string) => void) {
     if (forcedSel) setForcedSel(null);
   };
 
-  // Seçim varsa: seçimi italik yap / italikse kaldır. Seçim yoksa: yazma
-  // modunu aç/kapa (açıkken yazılanlar italik olur).
   const toggleItalic = () => {
     const start = Math.min(sel.start, display.length);
     const end = Math.min(sel.end, display.length);
@@ -96,7 +89,6 @@ export function useChapterEditor(onCommit: (storedContent: string) => void) {
     setItalicMode(m => !m);
   };
 
-  // Madde modunu aç/kapa; açarken imlecin satırı maddeyle başlamıyorsa madde ekle.
   const toggleBullet = () => {
     if (bulletMode) {
       setBulletMode(false);
@@ -112,7 +104,6 @@ export function useChapterEditor(onCommit: (storedContent: string) => void) {
     moveCaret(caret + snippet.length);
   };
 
-  // Ayraç, boş satır, resim belirteci gibi tek seferlik eklemeler.
   const insertSnippet = (snippet: string) => {
     const start = Math.min(sel.start, display.length);
     const end = Math.min(sel.end, display.length);
@@ -121,7 +112,6 @@ export function useChapterEditor(onCommit: (storedContent: string) => void) {
     moveCaret(start + snippet.length);
   };
 
-  // Galeriden resim seç → sunucuya yükle → imlece belirteç ekle.
   const [imageUploading, setImageUploading] = useState(false);
   const insertImage = async () => {
     try {
@@ -131,7 +121,7 @@ export function useChapterEditor(onCommit: (storedContent: string) => void) {
       const url = await imageUploadService.uploadStoryContentImage(uri);
       insertSnippet(buildImageToken(url));
     } catch (e) {
-      Alert.alert('Hata', e instanceof Error ? e.message : 'Resim eklenemedi.');
+      Alert.alert(i18n.t('common.error'), e instanceof Error ? e.message : i18n.t('imageUpload.contentError'));
     } finally {
       setImageUploading(false);
     }

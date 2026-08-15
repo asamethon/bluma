@@ -7,17 +7,13 @@ import { Pressable, StyleSheet, View } from 'react-native';
 interface ProfileGradientHeroProps {
   avatarUri?: string;
   avatarName?: string;
-  /** Sağ üstteki ikon butonları (settings/logout ya da back/menu gibi ekrana özgü aksiyonlar). */
   actions?: React.ReactNode;
-  /** Genre/rozet gibi ekstra vurgu rengi — verilmezse sadece varsayılan petal-rose top gösterilir. */
   accentColor?: string;
   height?: number;
   watermarkSize?: number;
-  /** Avatar'ın hero'nun neresinde (top offset) taşacağı — ekranlar arası küçük fark. */
   avatarTop?: number;
 }
 
-/** Gradient hero + BloomMark watermark + taşan avatar deseni — profil ekranlarının ortak üst bölümü. */
 export function ProfileGradientHero({
   avatarUri,
   avatarName,
@@ -27,23 +23,18 @@ export function ProfileGradientHero({
   watermarkSize = 132,
   avatarTop = 56,
 }: ProfileGradientHeroProps) {
-  // Avatar resmi varsa basılı tutunca büyütülmüş halini ortada göster.
   const [viewerVisible, setViewerVisible] = useState(false);
 
   return (
     <View>
       <View style={[styles.hero, { height }]}>
-        {/* diagonal darker base */}
         <View pointerEvents="none" style={styles.baseBlob} />
-        {/* petal-rose / genre-accent blush — upper-right */}
         <View pointerEvents="none" style={[styles.accentBlob, { backgroundColor: accentColor }]} />
-        {/* BloomMark watermark */}
         <View style={[styles.heroWatermark, { right: -14, top: -14 }]} pointerEvents="none">
           <BloomMark size={watermarkSize} color="#fff" coreColor="#fff" />
         </View>
         {actions && <View style={styles.heroActions}>{actions}</View>}
       </View>
-      {/* Avatar dışarıda — hero overflow'dan etkilenmiyor */}
       <View style={[styles.heroAvatarWrap, { top: avatarTop }]}>
         <Pressable
           onLongPress={() => avatarUri && setViewerVisible(true)}

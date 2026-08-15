@@ -3,7 +3,8 @@ import { conversationActions } from '@/store/conversationStore';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -18,9 +19,11 @@ import {
 import { Screen } from '@/components/ui';
 import { ContentMaxWidth, useTheme } from '@/constants/theme';
 import { useAppSelector } from '@/store/hooks';
+import { logger } from '@/utils/logger';
 
 export default function CreateConversationScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const currentUser = useAppSelector(s => s.auth.user);
 
@@ -38,8 +41,8 @@ export default function CreateConversationScreen() {
         setSelectedImage(processedImage);
       }
     } catch (error) {
-      console.error('Error selecting image:', error);
-      Alert.alert('Hata', 'Resim seçilirken bir hata oluştu.');
+      logger.error('Error selecting image:', error);
+      Alert.alert(t('common.error'), t('imageUpload.pickError'));
     }
   };
 
@@ -49,17 +52,17 @@ export default function CreateConversationScreen() {
 
   const handleCreateConversation = async () => {
     if (!currentUser?.id) {
-      Alert.alert('Hata', 'Kullanıcı bilgileri bulunamadı.');
+      Alert.alert(t('common.error'), t('errors.userNotFound'));
       return;
     }
 
     if (!title.trim()) {
-      Alert.alert('Hata', 'Lütfen konuşma başlığı girin.');
+      Alert.alert(t('common.error'), t('conversations.enterTitle'));
       return;
     }
 
     if (!content.trim()) {
-      Alert.alert('Hata', 'Lütfen konuşma içeriği girin.');
+      Alert.alert(t('common.error'), t('conversations.enterContent'));
       return;
     }
 
@@ -76,29 +79,27 @@ export default function CreateConversationScreen() {
       });
 
       if (result.success) {
-        console.log('Conversation created successfully:', result.conversationId);
+        logger.debug('Conversation created successfully:', result.conversationId);
         
-        // Send notification to followers if announced
         if (announceToFollowers && result.conversationId) {
           try {
             await conversationActions.announceConversationToFollowers(result.conversationId, currentUser);
-            console.log('Announcement sent to followers');
+            logger.debug('Announcement sent to followers');
           } catch (error) {
-            console.error('Error sending announcement to followers:', error);
+            logger.error('Error sending announcement to followers:', error);
           }
         }
         
         Alert.alert(
-          'Başarılı',
-          announceToFollowers 
-            ? 'Konuşma başarıyla oluşturuldu ve takipçilerinize duyuruldu!' 
-            : 'Konuşma başarıyla oluşturuldu!',
+          t('common.success'),
+          announceToFollowers
+            ? t('conversations.createdAnnounced')
+            : t('conversations.created'),
           [
             {
-              text: 'Tamam',
+              text: t('common.ok'),
               onPress: () => {
                 router.back();
-                // Force refresh user conversations
                 if (currentUser?.id) {
                   conversationActions.getUserConversations(currentUser.id);
                 }
@@ -107,11 +108,11 @@ export default function CreateConversationScreen() {
           ]
         );
       } else {
-        Alert.alert('Hata', result.error || 'Konuşma oluşturulurken bir hata oluştu.');
+        Alert.alert(t('common.error'), result.error || t('conversations.createFailed'));
       }
     } catch (error) {
-      console.error('Create conversation error:', error);
-      Alert.alert('Hata', 'Konuşma oluşturulurken bir hata oluştu.');
+      logger.error('Create conversation error:', error);
+      Alert.alert(t('common.error'), t('conversations.createFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -120,11 +121,11 @@ export default function CreateConversationScreen() {
   const handleCancel = () => {
     if (title.trim() || content.trim()) {
       Alert.alert(
-        'Çıkış',
-        'Değişiklikleriniz kaydedilmeyecek. Çıkmak istediğinizden emin misiniz?',
+        t('conversations.exitTitle'),
+        t('conversations.exitConfirm'),
         [
-          { text: 'İptal', style: 'cancel' },
-          { text: 'Çık', style: 'destructive', onPress: () => router.back() },
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('conversations.exit'), style: 'destructive', onPress: () => router.back() },
         ]
       );
     } else {
@@ -132,7 +133,7 @@ export default function CreateConversationScreen() {
     }
   };
 
-  const styles = createStyles(colors);
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <Screen style={styles.container} maxContentWidth={ContentMaxWidth.content}>
@@ -140,14 +141,13 @@ export default function CreateConversationScreen() {
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.headerButton} onPress={handleCancel}>
             <Text style={[styles.headerButtonText, { color: colors.textSecondary }]}>
-              İptal
+              {t('common.cancel')}
             </Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Konuşma Başlat</Text>
+          <Text style={styles.headerTitle}>{t('conversations.startConversation')}</Text>
           <TouchableOpacity
             style={[
               styles.headerButton,
@@ -163,18 +163,17 @@ export default function CreateConversationScreen() {
                 (!title.trim() || !content.trim() || isSubmitting) && { color: colors.textSecondary },
               ]}
             >
-              {isSubmitting ? 'Oluşturuluyor...' : 'Paylaş'}
+              {isSubmitting ? t('conversations.creating') : t('messages.share')}
             </Text>
           </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Title Input */}
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Başlık</Text>
+            <Text style={styles.inputLabel}>{t('conversations.titleLabel')}</Text>
             <TextInput
               style={[styles.titleInput, { color: colors.text, borderColor: colors.border }]}
-              placeholder="Konuşma başlığını girin..."
+              placeholder={t('conversations.titlePlaceholder')}
               placeholderTextColor={colors.textSecondary}
               value={title}
               onChangeText={setTitle}
@@ -184,12 +183,11 @@ export default function CreateConversationScreen() {
             <Text style={styles.characterCount}>{title.length}/100</Text>
           </View>
 
-          {/* Content Input */}
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>İçerik</Text>
+            <Text style={styles.inputLabel}>{t('conversations.contentLabel')}</Text>
             <TextInput
               style={[styles.contentInput, { color: colors.text, borderColor: colors.border }]}
-              placeholder="Ne düşünüyorsun? Takipçilerinle paylaş..."
+              placeholder={t('conversations.contentPlaceholder')}
               placeholderTextColor={colors.textSecondary}
               value={content}
               onChangeText={setContent}
@@ -198,9 +196,8 @@ export default function CreateConversationScreen() {
             />
           </View>
 
-          {/* Image Selection */}
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Resim (Opsiyonel)</Text>
+            <Text style={styles.inputLabel}>{t('conversations.imageOptional')}</Text>
             
             {selectedImage ? (
               <View style={styles.imagePreviewContainer}>
@@ -223,13 +220,12 @@ export default function CreateConversationScreen() {
               >
                 <Ionicons name="image-outline" size={24} color={colors.textSecondary} />
                 <Text style={[styles.imageSelectText, { color: colors.textSecondary }]}>
-                  Resim Ekle
+                  {t('conversations.addImage')}
                 </Text>
               </TouchableOpacity>
             )}
           </View>
 
-          {/* Announce to Followers Option */}
           <View style={styles.announceContainer}>
             <TouchableOpacity
               style={styles.announceButton}
@@ -244,28 +240,27 @@ export default function CreateConversationScreen() {
                 />
               </View>
               <View style={styles.announceTextContainer}>
-                <Text style={styles.announceTitle}>Bunu duyur</Text>
+                <Text style={styles.announceTitle}>{t('conversations.announceTitle')}</Text>
                 <Text style={styles.announceSubtitle}>
-                  Takipçilerinize bu konuşmayı başlattığınıza dair bildirim gönder
+                  {t('conversations.announceSubtitle')}
                 </Text>
               </View>
             </TouchableOpacity>
           </View>
 
-          {/* Tips */}
           <View style={styles.tipsContainer}>
-            <Text style={styles.tipsTitle}>İpuçları:</Text>
+            <Text style={styles.tipsTitle}>{t('conversations.tipsTitle')}</Text>
             <View style={styles.tipItem}>
               <Ionicons name="bulb-outline" size={16} color={colors.primary} />
-              <Text style={styles.tipText}>Takipçilerinle etkileşim kurmak için sorular sorun</Text>
+              <Text style={styles.tipText}>{t('conversations.tip1')}</Text>
             </View>
             <View style={styles.tipItem}>
               <Ionicons name="heart-outline" size={16} color={colors.primary} />
-              <Text style={styles.tipText}>Güncel konular hakkında düşüncelerinizi paylaşın</Text>
+              <Text style={styles.tipText}>{t('conversations.tip2')}</Text>
             </View>
             <View style={styles.tipItem}>
               <Ionicons name="chatbubble-outline" size={16} color={colors.primary} />
-              <Text style={styles.tipText}>Takipçilerinizin yorum yapmasını teşvik edin</Text>
+              <Text style={styles.tipText}>{t('conversations.tip3')}</Text>
             </View>
           </View>
         </ScrollView>

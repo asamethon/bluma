@@ -4,8 +4,6 @@ import { Image } from 'expo-image';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-// Küçük kitap-sırtı kapak küçük görseli — kapak varsa görsel, yoksa türün
-// rengiyle bir kitap ikonu; solunda türün renk şeridi.
 export function CoverThumb({
   coverImage,
   category,

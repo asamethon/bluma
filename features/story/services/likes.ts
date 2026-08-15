@@ -1,69 +1,65 @@
 import { Story } from '@/types';
 import {
-    addDoc,
-    collection,
-    deleteDoc,
-    doc,
-    getDocs,
-    getFirestore,
-    increment,
-    orderBy,
-    query,
-    serverTimestamp,
-    updateDoc,
-    where,
+  collection,
+  deleteDoc,
+  doc,
+  getCountFromServer,
+  getDocs,
+  getFirestore,
+  increment,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  where,
 } from '@react-native-firebase/firestore';
 import { notificationActions } from '../../../store/notificationStore';
 import { getStoryById } from './storyApi';
 import { patchStory } from '@/store/slices/storySlice';
 import { store } from '@/store';
+import i18n from '@/i18n';
+import { logger } from '@/utils/logger';
 
-// Like/Unlike story
-// Optimistic: UI'yi anında günceller, Firebase işini arka planda yürütür.
-// Sayaç, tüm `likes` koleksiyonunu okumak yerine atomik increment() ile
-// güncellenir (her dokunuşta O(n) okuma yapmaz).
 export async function likeStory(storyId: string) {
   try {
     const { user } = store.getState().auth;
     if (!user?.id) {
-      throw new Error('User not authenticated');
+      throw new Error(i18n.t('errors.loginRequired'));
     }
 
     const wasLiked = store.getState().story.likedStories.some(s => s.id === storyId);
 
-    // Hedef hikâyeyi state'lerden bul (likedStories'a eklemek için)
     const findStory = (): Story | undefined =>
       store.getState().story.stories.find(s => s.id === storyId) ||
       store.getState().story.discoverStories.find(s => s.id === storyId) ||
       store.getState().story.followingStories.find(s => s.id === storyId) ||
       (store.getState().story.currentStory?.id === storyId ? store.getState().story.currentStory! : undefined);
 
-    // 1) Optimistic likesCount güncellemesi (tüm feed state'leri + currentStory)
     applyLikeDelta(storyId, wasLiked ? -1 : 1);
 
-    // 2) Optimistic likedStories listesi
     if (wasLiked) {
       store.dispatch(patchStory({ likedStories: store.getState().story.likedStories.filter(s => s.id !== storyId) }));
     } else {
       const story = findStory();
       if (story) {
-        store.dispatch(patchStory({ likedStories: store.getState().story.likedStories.some(s => s.id === storyId)
+        store.dispatch(patchStory({
+          likedStories: store.getState().story.likedStories.some(s => s.id === storyId)
             ? store.getState().story.likedStories
-            : [{ ...story, likesCount: (story.likesCount || 0) + 1 }, ...store.getState().story.likedStories] }));
+            : [{ ...story, likesCount: (story.likesCount || 0) + 1 }, ...store.getState().story.likedStories]
+        }));
       }
     }
 
-    // 3) Firebase işini arka planda yür
     performLikeStoryFirebaseOperation(storyId, user.id);
 
     return { success: true };
   } catch (error) {
-    console.error('Like story error:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Like operation failed' };
+    logger.error('Like story error:', error);
+    return { success: false, error: error instanceof Error ? error.message : i18n.t('story.likeFailed') };
   }
 }
 
-// Bir hikâyenin likesCount'unu tüm feed state'lerinde + currentStory'de değiştir.
 export function applyLikeDelta(storyId: string, delta: number) {
   const upd = (arr: Story[]) =>
     arr.map(s => s.id === storyId ? { ...s, likesCount: Math.max(0, (s.likesCount || 0) + delta) } : s);
@@ -79,53 +75,38 @@ export function applyLikeDelta(storyId: string, delta: number) {
   }
 }
 
-// Firebase like işlemlerini arka planda yap (server durumunu otorite kabul eder)
 export async function performLikeStoryFirebaseOperation(storyId: string, userId: string) {
   try {
     const firestore = getFirestore();
     const storyRef = doc(firestore, 'stories', storyId);
+    const likesRef = collection(firestore, 'stories', storyId, 'likes');
+    const userLikedRef = collection(firestore, 'users', userId, 'likedStories');
 
-    // Server'da gerçekten beğenilmiş mi? (1 küçük okuma)
-    const likeDoc = await getDocs(query(collection(firestore, 'stories', storyId, 'likes'), where('userId', '==', userId)));
+    const likeDocs = await getDocs(query(likesRef, where('userId', '==', userId)));
 
-    if (!likeDoc.empty) {
-      // Unlike
-      await deleteDoc(likeDoc.docs[0].ref);
-
-      const userLikedStoriesQuery = query(
-        collection(firestore, 'users', userId, 'likedStories'),
-        where('storyId', '==', storyId)
-      );
-      const userLikedStoriesDoc = await getDocs(userLikedStoriesQuery);
-      if (!userLikedStoriesDoc.empty) {
-        await deleteDoc(userLikedStoriesDoc.docs[0].ref);
-      }
-
-      await updateDoc(storyRef, { likesCount: increment(-1) });
+    if (!likeDocs.empty) {
+      const userLikedDocs = await getDocs(query(userLikedRef, where('storyId', '==', storyId)));
+      await Promise.all([
+        ...likeDocs.docs.map(d => deleteDoc(d.ref)),
+        ...userLikedDocs.docs.map(d => deleteDoc(d.ref)),
+        updateDoc(storyRef, { likesCount: increment(-1) }),
+      ]);
     } else {
-      // Like
-      await addDoc(collection(firestore, 'stories', storyId, 'likes'), {
-        userId,
-        createdAt: serverTimestamp(),
-      });
-      await addDoc(collection(firestore, 'users', userId, 'likedStories'), {
-        storyId,
-        createdAt: serverTimestamp(),
-      });
-      await updateDoc(storyRef, { likesCount: increment(1) });
+      await Promise.all([
+        setDoc(doc(likesRef, userId), { userId, createdAt: serverTimestamp() }),
+        setDoc(doc(userLikedRef, storyId), { storyId, createdAt: serverTimestamp() }),
+        updateDoc(storyRef, { likesCount: increment(1) }),
+      ]);
 
-      // Bildirim gönderme işlemini arka planda yap
       sendLikeNotification(storyId, userId);
     }
   } catch (error) {
-    console.error('Firebase like operation error:', error);
-    // Hata durumunda server gerçeğinden yeniden eşitle
+    logger.error('Firebase like operation error:', error);
     refreshLikedStoriesState();
     updateStoryLikesCount(storyId);
   }
 }
 
-// Bildirim gönderme işlemini arka planda yap
 export async function sendLikeNotification(storyId: string, userId: string) {
   try {
     const { user } = store.getState().auth;
@@ -133,24 +114,22 @@ export async function sendLikeNotification(storyId: string, userId: string) {
 
     const storyData = await getStoryById(storyId);
     if (storyData && storyData.authorId !== userId) {
-      // Push gönderimi VPS'teki push-worker'ın işi (bkz. YAPILACAKLAR 3.1).
       notificationActions.createLikeNotification(
         userId,
         storyData.authorId,
-        user.displayName || user.username || 'Bir kullanıcı',
+        user.displayName || user.username || i18n.t('notifications.someone'),
         storyData.title,
         storyId,
-        false // isConversation flag
+        false
       ).catch(error => {
-        console.error('Story like notification error:', error);
+        logger.error('Story like notification error:', error);
       });
     }
   } catch (error) {
-    console.error('Send like notification error:', error);
+    logger.error('Send like notification error:', error);
   }
 }
 
-// UI'yi geri al (hata durumunda)
 export function revertLikeStoryUI(storyId: string) {
   const currentStories = store.getState().story.stories;
   const storyIndex = currentStories.findIndex(s => s.id === storyId);
@@ -160,18 +139,20 @@ export function revertLikeStoryUI(storyId: string) {
     const isCurrentlyLiked = store.getState().story.likedStories.some(s => s.id === storyId);
 
     if (isCurrentlyLiked) {
-      // Geri al: unlike yapılmışsa like'a çevir
-      store.dispatch(patchStory({ stories: store.getState().story.stories.map(s => s.id === storyId
+      store.dispatch(patchStory({
+        stories: store.getState().story.stories.map(s => s.id === storyId
           ? { ...s, likesCount: (s.likesCount || 0) + 1 }
           : s
-        ) }));
+        )
+      }));
       store.dispatch(patchStory({ likedStories: [...store.getState().story.likedStories, story] }));
     } else {
-      // Geri al: like yapılmışsa unlike'a çevir
-      store.dispatch(patchStory({ stories: store.getState().story.stories.map(s => s.id === storyId
+      store.dispatch(patchStory({
+        stories: store.getState().story.stories.map(s => s.id === storyId
           ? { ...s, likesCount: Math.max(0, (s.likesCount || 0) - 1) }
           : s
-        ) }));
+        )
+      }));
       store.dispatch(patchStory({ likedStories: store.getState().story.likedStories.filter(s => s.id !== storyId) }));
     }
   }
@@ -182,39 +163,35 @@ export async function isStoryLiked(storyId: string): Promise<boolean> {
     const { user } = store.getState().auth;
     if (!user?.id) return false;
 
-    // Real-time likedStories state'inden kontrol et
     const likedStories = store.getState().story.likedStories;
     return likedStories.some(story => story.id === storyId);
   } catch (error) {
-    console.error('Check story like error:', error);
+    logger.error('Check story like error:', error);
     return false;
   }
 }
 
-// Story likes count'ını Firebase'den güncelle
 export async function updateStoryLikesCount(storyId: string) {
   try {
     const firestore = getFirestore();
     const storyRef = doc(firestore, 'stories', storyId);
 
-    // Gerçek beğeni sayısını al
-    const allLikes = await getDocs(collection(firestore, 'stories', storyId, 'likes'));
-    const realLikesCount = allLikes.size;
+    const countSnap = await getCountFromServer(collection(firestore, 'stories', storyId, 'likes'));
+    const realLikesCount = countSnap.data().count;
 
-    // Story'yi güncelle
     await updateDoc(storyRef, { likesCount: realLikesCount });
 
-    // UI'yi güncelle
-    store.dispatch(patchStory({ stories: store.getState().story.stories.map(s => s.id === storyId
+    store.dispatch(patchStory({
+      stories: store.getState().story.stories.map(s => s.id === storyId
         ? { ...s, likesCount: realLikesCount }
         : s
-      ) }));
+      )
+    }));
   } catch (error) {
-    console.error('Update story likes count error:', error);
+    logger.error('Update story likes count error:', error);
   }
 }
 
-// LikedStories state'ini Firebase'den yenile
 export async function refreshLikedStoriesState() {
   try {
     const { user } = store.getState().auth;
@@ -232,7 +209,7 @@ export async function refreshLikedStoriesState() {
     );
     store.dispatch(patchStory({ likedStories: fetched.filter((s): s is Story => !!s) }));
   } catch (error) {
-    console.error('Refresh liked stories state error:', error);
+    logger.error('Refresh liked stories state error:', error);
   }
 }
 
@@ -253,7 +230,7 @@ export async function loadLikedStories() {
     );
     store.dispatch(patchStory({ likedStories: fetched.filter((s): s is Story => !!s) }));
   } catch (error) {
-    console.error('Load liked stories error:', error);
+    logger.error('Load liked stories error:', error);
   }
 }
 

@@ -12,7 +12,6 @@ import {
   limit,
   onSnapshot,
   orderBy,
-  query,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -20,14 +19,28 @@ import {
 } from '@react-native-firebase/firestore';
 import { authActions } from './authStore';
 import { notificationActions } from './notificationStore';
+import i18n from '@/i18n';
 import { store } from './index';
 import { patchConversation } from './slices/conversationSlice';
+import { logger } from '@/utils/logger';
 
 export type { ConversationState } from './slices/conversationSlice';
 
-// Conversation actions
+let userConversationsUnsub: (() => void) | null = null;
+let userConversationsUserId: string | null = null;
+let likedConversationsUnsub: (() => void) | null = null;
+let likedConversationsUserId: string | null = null;
+
+async function enrichConversation(snapDoc: any): Promise<Conversation> {
+  const conversationData = { id: snapDoc.id, ...snapDoc.data() } as Conversation;
+  if (conversationData.authorId) {
+    const author = await authActions.getUserById(conversationData.authorId);
+    if (author) conversationData.author = author;
+  }
+  return conversationData;
+}
+
 export const conversationActions = {
-  // Initialize conversations
   async initializeConversations() {
     try {
       store.dispatch(patchConversation({ isLoading: true }));
@@ -35,7 +48,6 @@ export const conversationActions = {
       const db = getFirestore();
       const conversationsRef = collection(db, 'conversations');
       
-      // Get all active conversations
       const q = firestoreQuery(
         conversationsRef,
         where('isActive', '==', true),
@@ -43,119 +55,66 @@ export const conversationActions = {
         limit(50)
       );
       
-      // Listen for real-time updates
       const unsubscribe = onSnapshot(q, async (snapshot) => {
-        const conversations: Conversation[] = [];
-        
-        if (snapshot && !snapshot.empty) {
-          for (const doc of snapshot.docs) {
-            const conversationData = { id: doc.id, ...doc.data() } as Conversation;
-            
-            // Get author data
-            if (conversationData.authorId) {
-              const author = await authActions.getUserById(conversationData.authorId);
-              if (author) {
-                conversationData.author = author;
-              }
-            }
-            
-            conversations.push(conversationData);
-          }
-        }
-        
+        const conversations: Conversation[] = snapshot
+          ? await Promise.all(snapshot.docs.map(d => enrichConversation(d)))
+          : [];
+
         store.dispatch(patchConversation({ conversations, isLoading: false }));
       });
 
       return unsubscribe;
     } catch (error) {
-      console.error('Initialize conversations error:', error);
+      logger.error('Initialize conversations error:', error);
       store.dispatch(patchConversation({ isLoading: false }));
     }
   },
 
-  // Get user's conversations with real-time updates
   async getUserConversations(userId: string) {
     try {
-      console.log('Getting conversations for user:', userId);
+      if (userConversationsUnsub && userConversationsUserId === userId) return userConversationsUnsub;
+      if (userConversationsUnsub) userConversationsUnsub();
+      userConversationsUserId = userId;
+
       const db = getFirestore();
       const conversationsRef = collection(db, 'conversations');
-      
+
       const q = firestoreQuery(
         conversationsRef,
         where('authorId', '==', userId),
-        orderBy('createdAt', 'desc')
+        orderBy('createdAt', 'desc'),
+        limit(50)
       );
-      
-      const unsubscribe = onSnapshot(q, async (snapshot) => {
-        console.log('User conversations snapshot:', {
-          empty: snapshot.empty,
-          size: snapshot.size,
-          docs: snapshot.docs.length,
-        });
-        
-        const conversations: Conversation[] = [];
-        
-        if (snapshot && !snapshot.empty) {
-          for (const doc of snapshot.docs) {
-            const conversationData = { id: doc.id, ...doc.data() } as Conversation;
-            console.log('Conversation data:', conversationData);
-            
-            // Get author data
-            if (conversationData.authorId) {
-              const author = await authActions.getUserById(conversationData.authorId);
-              if (author) {
-                conversationData.author = author;
-              }
-            }
-            
-            conversations.push(conversationData);
-          }
-        }
-        
-        console.log('Final conversations array:', conversations.length);
+
+      userConversationsUnsub = onSnapshot(q, async (snapshot) => {
+        const conversations: Conversation[] = snapshot
+          ? await Promise.all(snapshot.docs.map(d => enrichConversation(d)))
+          : [];
         store.dispatch(patchConversation({ userConversations: conversations }));
       });
-      
-      return unsubscribe;
+
+      return userConversationsUnsub;
     } catch (error) {
-      console.error('Get user conversations error:', error);
+      logger.error('Get user conversations error:', error);
     }
   },
 
-  // Get real-time updates for a specific conversation
   async getConversationRealTimeUpdates(conversationId: string) {
     try {
-      console.log('Setting up real-time updates for conversation:', conversationId);
       const db = getFirestore();
-      
+
       const conversationRef = doc(db, 'conversations', conversationId);
-      
+
       const unsubscribe = onSnapshot(conversationRef, async (doc) => {
         if (doc.exists()) {
-          const conversationData = { id: doc.id, ...doc.data() } as Conversation;
-          console.log('Real-time conversation update:', {
-            id: conversationData.id,
-            likesCount: conversationData.likesCount,
-            commentsCount: conversationData.commentsCount,
-            viewsCount: conversationData.viewsCount,
-          });
-          
-          // Get author data
-          if (conversationData.authorId) {
-            const author = await authActions.getUserById(conversationData.authorId);
-            if (author) {
-              conversationData.author = author;
-            }
-          }
-          
-          // Update the conversation in userConversations if it exists
+          const conversationData = await enrichConversation(doc);
+
           const currentUserConversations = store.getState().conversation.userConversations;
           const updatedConversations = currentUserConversations.map(conv =>
             conv.id === conversationId ? conversationData : conv
           );
           store.dispatch(patchConversation({ userConversations: updatedConversations }));
 
-          // Also update in currentConversation if it's the same
           const currentConversation = store.getState().conversation.currentConversation;
           if (currentConversation?.id === conversationId) {
             store.dispatch(patchConversation({ currentConversation: conversationData }));
@@ -165,71 +124,42 @@ export const conversationActions = {
       
       return unsubscribe;
     } catch (error) {
-      console.error('Get conversation real-time updates error:', error);
+      logger.error('Get conversation real-time updates error:', error);
     }
   },
 
-  // Get user's liked conversations
   async getLikedConversations(userId: string) {
     try {
-      console.log('Getting liked conversations for user:', userId);
+      if (likedConversationsUnsub && likedConversationsUserId === userId) return likedConversationsUnsub;
+      if (likedConversationsUnsub) likedConversationsUnsub();
+      likedConversationsUserId = userId;
+
       const db = getFirestore();
-      
+
       const q = firestoreQuery(
         collection(db, 'users', userId, 'likedConversations'),
         orderBy('createdAt', 'desc')
       );
-      
-      const unsubscribe = onSnapshot(q, async (snapshot) => {
-        console.log('Liked conversations snapshot:', {
-          empty: snapshot.empty,
-          size: snapshot.size,
-          docs: snapshot.docs.length,
-        });
-        
-        const likedConversationIds: string[] = [];
-        
-        if (snapshot && !snapshot.empty) {
-          for (const doc of snapshot.docs) {
-            const likeData = doc.data() as any;
-            if (likeData.conversationId) {
-              likedConversationIds.push(likeData.conversationId);
-            }
-          }
-        }
-        
-        console.log('Liked conversation IDs:', likedConversationIds);
-        
-        // For now, just store the IDs to avoid type issues
-        // We'll create a simple structure with just the ID
-        const likedConversations = likedConversationIds.map(id => ({
-          id,
-          authorId: '',
-          title: '',
-          content: '',
-          likesCount: 0,
-          commentsCount: 0,
-          viewsCount: 0,
-          isActive: true,
-          createdAt: null,
-          updatedAt: null,
-          author: undefined,
-        } as unknown as Conversation));
-        
-        console.log('Final liked conversations array:', likedConversations.length);
-        store.dispatch(patchConversation({ likedConversations }));
+
+      likedConversationsUnsub = onSnapshot(q, (snapshot) => {
+        const likedConversationIds = snapshot
+          ? snapshot.docs
+              .map(d => (d.data() as any)?.conversationId)
+              .filter((id: unknown): id is string => typeof id === 'string')
+          : [];
+
+        store.dispatch(patchConversation({ likedConversationIds }));
       });
-      
-      return unsubscribe;
+
+      return likedConversationsUnsub;
     } catch (error) {
-      console.error('Get liked conversations error:', error);
+      logger.error('Get liked conversations error:', error);
     }
   },
 
-  // Create new conversation
   async createConversation(conversation: Omit<Conversation, 'id' | 'createdAt' | 'updatedAt' | 'likesCount' | 'commentsCount' | 'viewsCount'>) {
     try {
-      console.log('Creating conversation:', conversation);
+      logger.debug('Creating conversation:', conversation);
       const db = getFirestore();
       const conversationsRef = collection(db, 'conversations');
       
@@ -242,18 +172,17 @@ export const conversationActions = {
         updatedAt: serverTimestamp(),
       };
       
-      console.log('New conversation data:', newConversation);
+      logger.debug('New conversation data:', newConversation);
       const docRef = await addDoc(conversationsRef, newConversation);
-      console.log('Conversation created with ID:', docRef.id);
+      logger.debug('Conversation created with ID:', docRef.id);
       
       return { success: true, conversationId: docRef.id };
     } catch (error) {
-      console.error('Create conversation error:', error);
-      return { success: false, error: 'Konuşma oluşturulurken bir hata oluştu.' };
+      logger.error('Create conversation error:', error);
+      return { success: false, error: i18n.t('conversations.createFailed') };
     }
   },
 
-  // Get conversation by ID
   async getConversationById(conversationId: string) {
     try {
       const db = getFirestore();
@@ -263,7 +192,6 @@ export const conversationActions = {
       if (conversationDoc.exists()) {
         const conversationData = { id: conversationDoc.id, ...conversationDoc.data() } as Conversation;
         
-        // Get author data
         if (conversationData.authorId) {
           const author = await authActions.getUserById(conversationData.authorId);
           if (author) {
@@ -277,15 +205,14 @@ export const conversationActions = {
       
       return null;
     } catch (error) {
-      console.error('Get conversation error:', error);
+      logger.error('Get conversation error:', error);
       return null;
     }
   },
 
-  // Get conversation comments
   async getConversationComments(conversationId: string) {
     try {
-      console.log('Getting comments for conversation:', conversationId);
+      logger.debug('Getting comments for conversation:', conversationId);
       const db = getFirestore();
       const commentsRef = collection(db, 'conversationComments');
       
@@ -304,7 +231,6 @@ export const conversationActions = {
           for (const doc of snapshot.docs) {
             const commentData = { id: doc.id, ...doc.data() } as ConversationComment;
             
-            // Get user data
             if (commentData.userId) {
               const user = await authActions.getUserById(commentData.userId);
               if (user) {
@@ -321,16 +247,15 @@ export const conversationActions = {
       
       return unsubscribe;
     } catch (error) {
-      console.error('Get conversation comments error:', error);
+      logger.error('Get conversation comments error:', error);
     }
   },
 
-  // Add comment to conversation
   async addComment(conversationId: string, content: string, image?: string) {
     try {
       const currentUser = store.getState().auth.user;
       if (!currentUser) {
-        return { success: false, error: 'Kullanıcı bulunamadı.' };
+        return { success: false, error: i18n.t('errors.userNotFound') };
       }
 
       const db = getFirestore();
@@ -344,104 +269,106 @@ export const conversationActions = {
         createdAt: serverTimestamp(),
       };
 
-      // Add image if provided
       if (image) {
-        if (image.length > 1000000) { // 1MB check
-          return { success: false, error: 'Resim çok büyük. Lütfen daha küçük bir resim seçin.' };
+        if (image.length > 1000000) {
+          return { success: false, error: i18n.t('imageUpload.tooLarge') };
         }
         newComment.image = image;
       }
       
       await addDoc(commentsRef, newComment);
       
-      // Update conversation comment count
       const conversationRef = doc(db, 'conversations', conversationId);
       await updateDoc(conversationRef, {
         commentsCount: increment(1),
         updatedAt: serverTimestamp(),
       });
       
-      // Send notification to conversation author (background task)
       this.sendConversationCommentNotification(conversationId, currentUser.id, content);
       
       return { success: true };
     } catch (error) {
-      console.error('Add comment error:', error);
-      return { success: false, error: 'Yorum eklenirken bir hata oluştu.' };
+      logger.error('Add comment error:', error);
+      return { success: false, error: i18n.t('conversations.commentFailed') };
     }
   },
 
-  // Like conversation
   async likeConversation(conversationId: string) {
     try {
       const currentUser = store.getState().auth.user;
       if (!currentUser) {
-        return { success: false, error: 'Kullanıcı bulunamadı.' };
+        return { success: false, error: i18n.t('errors.userNotFound') };
       }
 
-      // Firebase işlemlerini yap
-      await conversationActions.performLikeConversationFirebaseOperation(conversationId, currentUser.id);
-      
+      conversationActions.toggleLikeConversationUI(conversationId);
+
+      conversationActions.performLikeConversationFirebaseOperation(conversationId, currentUser.id);
+
       return { success: true };
     } catch (error) {
-      console.error('Like conversation error:', error);
-      return { success: false, error: 'Beğeni eklenirken bir hata oluştu.' };
+      logger.error('Like conversation error:', error);
+      return { success: false, error: i18n.t('conversations.likeFailed') };
     }
   },
 
-  // Firebase like işlemlerini arka planda yap
+  toggleLikeConversationUI(conversationId: string) {
+    const state = store.getState().conversation;
+    const isLiked = state.likedConversationIds.includes(conversationId);
+    const delta = isLiked ? -1 : 1;
+    const bump = (list: Conversation[]) =>
+      list.map(c => c.id === conversationId
+        ? { ...c, likesCount: Math.max(0, (c.likesCount || 0) + delta) }
+        : c
+      );
+
+    store.dispatch(patchConversation({
+      likedConversationIds: isLiked
+        ? state.likedConversationIds.filter(id => id !== conversationId)
+        : [...state.likedConversationIds, conversationId],
+      conversations: bump(state.conversations),
+      userConversations: bump(state.userConversations),
+      ...(state.currentConversation?.id === conversationId
+        ? {
+            currentConversation: {
+              ...state.currentConversation,
+              likesCount: Math.max(0, (state.currentConversation.likesCount || 0) + delta),
+            },
+          }
+        : {}),
+    }));
+  },
+
   async performLikeConversationFirebaseOperation(conversationId: string, userId: string) {
     try {
       const db = getFirestore();
       const conversationRef = doc(db, 'conversations', conversationId);
-      
-      // Check if already liked
-      const likeDoc = await getDocs(firestoreQuery(collection(db, 'conversations', conversationId, 'likes'), where('userId', '==', userId)));
-      
-      if (!likeDoc.empty) {
-        // Unlike - conversations/{conversationId}/likes koleksiyonundan sil
-        await deleteDoc(likeDoc.docs[0].ref);
-        
-        // Unlike - users/{userId}/likedConversations koleksiyonundan sil
-        const userLikedConversationsQuery = firestoreQuery(
-          collection(db, 'users', userId, 'likedConversations'),
-          where('conversationId', '==', conversationId)
-        );
-        const userLikedConversationsDoc = await getDocs(userLikedConversationsQuery);
-        if (!userLikedConversationsDoc.empty) {
-          await deleteDoc(userLikedConversationsDoc.docs[0].ref);
-        }
-        
-        // Atomik azalt — tüm likes koleksiyonunu okuyup saymak her beğeni
-        // geri almada O(n) okumaydı.
-        await updateDoc(conversationRef, { likesCount: increment(-1) });
-      } else {
-        // Like - conversations/{conversationId}/likes koleksiyonuna ekle
-        await addDoc(collection(db, 'conversations', conversationId, 'likes'), {
-          userId,
-          createdAt: serverTimestamp(),
-        });
-        
-        // Like - users/{userId}/likedConversations koleksiyonuna ekle
-        await addDoc(collection(db, 'users', userId, 'likedConversations'), {
-          conversationId,
-          createdAt: serverTimestamp(),
-        });
-        
-        // Atomik artır (bkz. unlike dalındaki not).
-        await updateDoc(conversationRef, { likesCount: increment(1) });
+      const likesRef = collection(db, 'conversations', conversationId, 'likes');
+      const userLikedRef = collection(db, 'users', userId, 'likedConversations');
 
-        // Bildirim gönderme işlemini arka planda yap
+      const likeDocs = await getDocs(firestoreQuery(likesRef, where('userId', '==', userId)));
+
+      if (!likeDocs.empty) {
+        const userLikedDocs = await getDocs(firestoreQuery(userLikedRef, where('conversationId', '==', conversationId)));
+        await Promise.all([
+          ...likeDocs.docs.map(d => deleteDoc(d.ref)),
+          ...userLikedDocs.docs.map(d => deleteDoc(d.ref)),
+          updateDoc(conversationRef, { likesCount: increment(-1) }),
+        ]);
+      } else {
+        await Promise.all([
+          setDoc(doc(likesRef, userId), { userId, createdAt: serverTimestamp() }),
+          setDoc(doc(userLikedRef, conversationId), { conversationId, createdAt: serverTimestamp() }),
+          updateDoc(conversationRef, { likesCount: increment(1) }),
+        ]);
+
         this.sendConversationLikeNotification(conversationId, userId);
       }
     } catch (error) {
-      console.error('Firebase like operation error:', error);
-      // Hata durumunda UI'yi geri al
+      logger.error('Firebase like operation error:', error);
       conversationActions.revertLikeConversationUI(conversationId);
     }
   },
 
-  // Conversation beğeni bildirimi gönder
   async sendConversationLikeNotification(conversationId: string, likerId: string) {
     try {
       const currentUser = store.getState().auth.user;
@@ -451,31 +378,28 @@ export const conversationActions = {
       const conversationDoc = await getDoc(doc(db, 'conversations', conversationId));
       
       if (!conversationDoc.exists()) {
-        console.log('Conversation not found for like notification:', conversationId);
+        logger.debug('Conversation not found for like notification:', conversationId);
         return;
       }
 
       const conversationData = conversationDoc.data();
       const conversationAuthorId = conversationData.author?.id || conversationData.authorId;
       
-      // Kendi konuşmasını beğenmişse bildirim gönderme
       if (conversationAuthorId === likerId) {
         return;
       }
 
-      const likerName = currentUser.displayName || currentUser.username || "Bir kullanıcı";
-      const conversationTitle = conversationData.title || "Konuşmanız";
+      const likerName = currentUser.displayName || currentUser.username || i18n.t('notifications.someone');
+      const conversationTitle = conversationData.title || i18n.t('conversations.yourConversation');
 
-      // Firestore'a bildirim yaz — push gönderimi VPS'teki push-worker'ın işi
-      // (notifications onCreate'i dinler, bkz. YAPILACAKLAR 3.1).
       try {
         const notificationsRef = collection(db, 'notifications');
         await addDoc(notificationsRef, {
           userId: conversationAuthorId,
           senderId: likerId,
           type: 'like',
-          title: 'Yeni Beğeni',
-          message: `${likerName} "${conversationTitle}" konuşmanızı beğendi`,
+          title: i18n.t('notifications.newLikeTitle'),
+          message: i18n.t('notifications.conversationLikedMessage', { name: likerName, conversation: conversationTitle }),
           data: {
             conversationId,
             likerId,
@@ -486,14 +410,13 @@ export const conversationActions = {
           updatedAt: serverTimestamp(),
         });
       } catch (error) {
-        console.error('Conversation like notification error:', error);
+        logger.error('Conversation like notification error:', error);
       }
     } catch (error) {
-      console.error('Send conversation like notification error:', error);
+      logger.error('Send conversation like notification error:', error);
     }
   },
 
-  // Conversation yorum bildirimi gönder
   async sendConversationCommentNotification(conversationId: string, commenterId: string, commentText: string) {
     try {
       const currentUser = store.getState().auth.user;
@@ -503,31 +426,28 @@ export const conversationActions = {
       const conversationDoc = await getDoc(doc(db, 'conversations', conversationId));
       
       if (!conversationDoc.exists()) {
-        console.log('Conversation not found for comment notification:', conversationId);
+        logger.debug('Conversation not found for comment notification:', conversationId);
         return;
       }
 
       const conversationData = conversationDoc.data();
       const conversationAuthorId = conversationData.author?.id || conversationData.authorId;
       
-      // Kendi konuşmasına yorum yapmışsa bildirim gönderme
       if (conversationAuthorId === commenterId) {
         return;
       }
 
-      const commenterName = currentUser.displayName || currentUser.username || "Bir kullanıcı";
-      const conversationTitle = conversationData.title || "Konuşmanız";
+      const commenterName = currentUser.displayName || currentUser.username || i18n.t('notifications.someone');
+      const conversationTitle = conversationData.title || i18n.t('conversations.yourConversation');
 
-      // Firestore'a bildirim yaz — push gönderimi VPS'teki push-worker'ın işi
-      // (notifications onCreate'i dinler, bkz. YAPILACAKLAR 3.1).
       try {
         const notificationsRef = collection(db, 'notifications');
         await addDoc(notificationsRef, {
           userId: conversationAuthorId,
           senderId: commenterId,
           type: 'comment',
-          title: 'Yeni Yorum',
-          message: `${commenterName} "${conversationTitle}" konuşmanıza yorum yaptı`,
+          title: i18n.t('notifications.newCommentTitle'),
+          message: i18n.t('notifications.conversationCommentMessage', { name: commenterName, conversation: conversationTitle }),
           data: {
             conversationId,
             commenterId,
@@ -539,59 +459,21 @@ export const conversationActions = {
           updatedAt: serverTimestamp(),
         });
       } catch (error) {
-        console.error('Conversation comment notification error:', error);
+        logger.error('Conversation comment notification error:', error);
       }
     } catch (error) {
-      console.error('Send conversation comment notification error:', error);
+      logger.error('Send conversation comment notification error:', error);
     }
   },
 
-  // UI'yi geri al (hata durumunda)
   revertLikeConversationUI(conversationId: string) {
-    const { conversations, likedConversations } = store.getState().conversation;
-    const conversation = conversations.find(c => c.id === conversationId);
-
-    if (conversation) {
-      const isCurrentlyLiked = likedConversations.some(c => c.id === conversationId);
-
-      if (isCurrentlyLiked) {
-        // Geri al: unlike yapılmışsa like'a çevir
-        store.dispatch(patchConversation({
-          conversations: conversations.map(c => c.id === conversationId
-            ? { ...c, likesCount: (c.likesCount || 0) + 1 }
-            : c
-          ),
-          likedConversations: [...likedConversations, conversation],
-        }));
-      } else {
-        // Geri al: like yapılmışsa unlike'a çevir
-        store.dispatch(patchConversation({
-          conversations: conversations.map(c => c.id === conversationId
-            ? { ...c, likesCount: Math.max(0, (c.likesCount || 0) - 1) }
-            : c
-          ),
-          likedConversations: likedConversations.filter(c => c.id !== conversationId),
-        }));
-      }
-    }
+    conversationActions.toggleLikeConversationUI(conversationId);
   },
 
-  // Check if conversation is liked
-  async isConversationLiked(conversationId: string): Promise<boolean> {
-    try {
-      const currentUser = store.getState().auth.user;
-      if (!currentUser?.id) return false;
-
-      // Real-time likedConversations state'inden kontrol et
-      const likedConversations = store.getState().conversation.likedConversations;
-      return likedConversations.some(conversation => conversation.id === conversationId);
-    } catch (error) {
-      console.error('Check conversation like error:', error);
-      return false;
-    }
+  isConversationLiked(conversationId: string): boolean {
+    return store.getState().conversation.likedConversationIds.includes(conversationId);
   },
 
-  // Delete conversation
   async deleteConversation(conversationId: string) {
     try {
       const db = getFirestore();
@@ -600,12 +482,11 @@ export const conversationActions = {
       
       return { success: true };
     } catch (error) {
-      console.error('Delete conversation error:', error);
-      return { success: false, error: 'Konuşma silinirken bir hata oluştu.' };
+      logger.error('Delete conversation error:', error);
+      return { success: false, error: i18n.t('conversations.deleteFailed') };
     }
   },
 
-  // Update conversation
   async updateConversation(conversationId: string, updates: Partial<Conversation>) {
     try {
       const db = getFirestore();
@@ -618,18 +499,16 @@ export const conversationActions = {
       
       return { success: true };
     } catch (error) {
-      console.error('Update conversation error:', error);
-      return { success: false, error: 'Konuşma güncellenirken bir hata oluştu.' };
+      logger.error('Update conversation error:', error);
+      return { success: false, error: i18n.t('conversations.updateFailed') };
     }
   },
 
-  // Announce conversation to followers
   async announceConversationToFollowers(conversationId: string, author: User) {
     try {
-      console.log('Announcing conversation to followers:', conversationId);
+      logger.debug('Announcing conversation to followers:', conversationId);
       const db = getFirestore();
       
-      // Get author's followers
       const followersQuery = firestoreQuery(
         collection(db, 'users', author.id, 'followers')
       );
@@ -637,16 +516,15 @@ export const conversationActions = {
       const followersSnapshot = await getDocs(followersQuery);
       
       if (followersSnapshot.empty) {
-        console.log('No followers found for user:', author.id);
+        logger.debug('No followers found for user:', author.id);
         return;
       }
       
-      console.log('Found', followersSnapshot.docs.length, 'followers');
+      logger.debug('Found', followersSnapshot.docs.length, 'followers');
       
-      // Create notifications for each follower — notificationActions.createNotification
-      // kullanılır ki senderId/alan seti kuralla (bkz. YAPILACAKLAR 0.3) tutarlı olsun.
-      const title = `${author.displayName || author.username} yeni bir konuşma başlattı`;
-      const message = `"${author.displayName || author.username}" takip ettiğiniz kişi yeni bir konuşma başlattı. Hemen katılın!`;
+      const params = { name: author.displayName || author.username || i18n.t('notifications.someone') };
+      const title = i18n.t('notifications.newConversationTitle', params);
+      const message = i18n.t('notifications.newConversationMessage', params);
       const notificationPromises = followersSnapshot.docs.map(async (followerDoc: any) => {
         const followerId = followerDoc.id;
         if (followerId === author.id) return;
@@ -661,22 +539,31 @@ export const conversationActions = {
             conversationId,
             authorId: author.id,
             authorName: author.displayName || author.username,
+            i18n: {
+              titleKey: 'notifications.newConversationTitle',
+              messageKey: 'notifications.newConversationMessage',
+              params,
+            },
           },
           isRead: false,
         });
       });
       
       await Promise.all(notificationPromises);
-      console.log('All follower notifications sent successfully');
+      logger.debug('All follower notifications sent successfully');
       
     } catch (error) {
-      console.error('Announce conversation to followers error:', error);
+      logger.error('Announce conversation to followers error:', error);
       throw error;
     }
   },
 
-  // Cleanup listeners
   cleanupListeners() {
-    // Cleanup will be handled by individual unsubscribe functions
+    if (userConversationsUnsub) userConversationsUnsub();
+    userConversationsUnsub = null;
+    userConversationsUserId = null;
+    if (likedConversationsUnsub) likedConversationsUnsub();
+    likedConversationsUnsub = null;
+    likedConversationsUserId = null;
   },
-}; 
+};

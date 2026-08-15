@@ -2,18 +2,17 @@ import React from "react";
 import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { useTranslation } from "react-i18next";
 import type { Story } from "@/types";
 import { Radius, Spacing, categoryColor, useTheme } from "@/constants/theme";
+import { formatCount } from "@/utils/format";
 import { Text } from "./Text";
 import { Badge } from "./Badge";
 
-function formatCount(n?: number) {
-  if (!n) return "0";
-  if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}b`;
-  return `${n}`;
-}
+export type StoryRowStatus = "completed" | "ongoing" | "draft" | "published";
+const KNOWN_STATUSES: string[] = ["completed", "ongoing", "draft", "published"];
 
-export function StoryRow({
+export const StoryRow = React.memo(function StoryRow({
   story,
   status,
   onPress,
@@ -21,12 +20,13 @@ export function StoryRow({
   style,
 }: {
   story: Story;
-  status?: string | null;
+  status?: StoryRowStatus | (string & {}) | null;
   onPress?: () => void;
   onMenu?: () => void;
   style?: any;
 }) {
   const { colors, shadows } = useTheme();
+  const { t } = useTranslation();
   const accent = categoryColor(story.category, colors.primary);
 
   return (
@@ -34,17 +34,22 @@ export function StoryRow({
       onPress={onPress}
       style={[styles.row, { backgroundColor: colors.surface, borderColor: colors.border }, shadows.sm, style]}
     >
-      {/* cover thumb with spine */}
       <View style={[styles.cover, { backgroundColor: accent + "33" }]}>
         {story.coverImage ? (
-          <Image source={{ uri: story.coverImage }} style={StyleSheet.absoluteFill} contentFit="cover" />
+          <Image
+            source={{ uri: story.coverImage }}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            recyclingKey={story.id}
+            transition={120}
+          />
         ) : (
           <Ionicons name="book" size={22} color={accent} />
         )}
         <View style={[styles.spine, { backgroundColor: accent }]} />
       </View>
 
-      {/* body */}
       <View style={styles.body}>
         <View style={styles.titleRow}>
           <Text variant="subheading" numberOfLines={2} style={styles.title}>
@@ -76,10 +81,10 @@ export function StoryRow({
           {status && (
             <View style={{ marginLeft: "auto" }}>
               <Badge
-                label={status}
+                label={KNOWN_STATUSES.includes(status) ? t(`storyStatus.${status}`) : status}
                 tone={
-                  status === "Tamamlandı" ? "bloom"
-                  : status === "Taslak" ? "neutral"
+                  status === "completed" ? "bloom"
+                  : status === "draft" ? "neutral"
                   : "primary"
                 }
               />
@@ -89,7 +94,7 @@ export function StoryRow({
       </View>
     </Pressable>
   );
-}
+});
 
 function Stat({ icon, value, color }: { icon: any; value: string; color: string }) {
   return (

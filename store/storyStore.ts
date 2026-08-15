@@ -11,8 +11,6 @@ import { storyApiActions } from '@/features/story/services/storyApi';
 import { invalidateUserCache, userCacheActions } from '@/features/story/services/userCache';
 import { viewsActions } from '@/features/story/services/views';
 
-// Geriye dönük uyumluluk için: mevcut import edenler `storyStore`'dan
-// `invalidateUserCache`/`StoryState` alıyordu.
 export { invalidateUserCache };
 export type { StoryState } from './slices/storySlice';
 

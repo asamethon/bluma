@@ -1,16 +1,13 @@
+import i18n from '@/i18n';
 import { imageUploadService } from '@/services/imageUploadService';
 import { useAppSelector } from '@/store/hooks';
 import { storyActions } from '@/store/storyStore';
 import { StoryCategory } from '@/types';
+import { defaultChapterTitle } from '../utils/chapterContent';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 
-// "Hikâye Bilgilerini Düzenle" — hikâye üstü meta veriler (başlık, tür,
-// açıklama, kapak) yazma tuvalinden ayrı, kendi ekranında yaşar. Hem yeni
-// hikâye (id yok) hem de mevcut hikâye düzenleme için ortak kullanılır.
-// Not: klavye yüksekliği burada değil, StoryInfoForm bileşeninde
-// useAnimatedKeyboard ile takip edilir (bkz. o dosyadaki yorum).
 export function useStoryInfoForm(id?: string) {
   const router = useRouter();
   const uid = useAppSelector(s => s.auth.user?.id);
@@ -26,7 +23,6 @@ export function useStoryInfoForm(id?: string) {
   const [coverSheet, setCoverSheet] = useState(false);
   const [titleError, setTitleError] = useState(false);
 
-  // Mevcut hikâyeyi yükle (düzenleme modu).
   useEffect(() => {
     if (isNew || !id) return;
     let alive = true;
@@ -34,7 +30,7 @@ export function useStoryInfoForm(id?: string) {
       const story = await storyActions.getStoryById(id);
       if (!alive) return;
       if (!story) {
-        Alert.alert('Hata', 'Hikâye bulunamadı.');
+        Alert.alert(i18n.t('common.error'), i18n.t('story.notFound'));
         router.back();
         return;
       }
@@ -45,15 +41,14 @@ export function useStoryInfoForm(id?: string) {
       setLoadingStory(false);
     })();
     return () => { alive = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, isNew, router]);
 
   const pickCover = async () => {
     try {
       const uri = await imageUploadService.pickImageFromGallery();
       if (uri) setCoverImage(uri);
     } catch (e) {
-      Alert.alert('Hata', e instanceof Error ? e.message : 'Resim seçilemedi.');
+      Alert.alert(i18n.t('common.error'), e instanceof Error ? e.message : i18n.t('imageUpload.pickError'));
     }
   };
 
@@ -62,11 +57,10 @@ export function useStoryInfoForm(id?: string) {
       const uri = await imageUploadService.takePhotoWithCamera();
       if (uri) setCoverImage(uri);
     } catch (e) {
-      Alert.alert('Hata', e instanceof Error ? e.message : 'Fotoğraf çekilemedi.');
+      Alert.alert(i18n.t('common.error'), e instanceof Error ? e.message : i18n.t('imageUpload.captureError'));
     }
   };
 
-  // Yerel (henüz yüklenmemiş) kapak resmini VPS görsel servisine yükler.
   const resolveCover = async (storyId: string): Promise<string | undefined> => {
     if (!coverImage) return undefined;
     if (coverImage.startsWith('http')) return coverImage;
@@ -79,20 +73,18 @@ export function useStoryInfoForm(id?: string) {
 
   const save = async () => {
     if (!uid) {
-      Alert.alert('Giriş gerekli', 'Devam etmek için giriş yapmalısın.');
+      Alert.alert(i18n.t('studio.loginRequiredTitle'), i18n.t('studio.loginRequiredMessage'));
       return;
     }
     if (title.trim().length < 3) {
       setTitleError(true);
-      Alert.alert('Başlık eksik', 'Hikâye başlığı en az 3 karakter olmalı.');
+      Alert.alert(i18n.t('studio.titleMissingTitle'), i18n.t('studio.titleMissingMessage'));
       return;
     }
 
     setSaving(true);
     try {
       if (isNew) {
-        // Yeni hikâye açık bir aksiyonla gerçek bir taslak dokümanı olur;
-        // sonra composer bu taslağı düzenler (her tuşta çöp doküman yok).
         const result = await storyActions.createStory({
           title: title.trim(),
           description: description.trim(),
@@ -102,7 +94,7 @@ export function useStoryInfoForm(id?: string) {
           isCompleted: false,
           isPublished: false,
           chaptersCount: 1,
-          chapterTitles: ['Bölüm 1'],
+          chapterTitles: [defaultChapterTitle(1)],
           readingTime: 1,
           isPremium: false,
           authorId: uid,
@@ -113,7 +105,7 @@ export function useStoryInfoForm(id?: string) {
           if (cover) await storyActions.updateStory(result.storyId, { coverImage: cover });
           router.replace(`/story/compose/${result.storyId}?ch=0`);
         } else {
-          Alert.alert('Hata', result.error || 'Hikâye oluşturulamadı.');
+          Alert.alert(i18n.t('common.error'), result.error || i18n.t('story.createFailed'));
         }
       } else {
         const cover = await resolveCover(id!);
@@ -125,7 +117,7 @@ export function useStoryInfoForm(id?: string) {
         if (cover) updates.coverImage = cover;
         const result = await storyActions.updateStory(id!, updates);
         if (result.success) router.back();
-        else Alert.alert('Hata', result.error || 'Hikâye güncellenemedi.');
+        else Alert.alert(i18n.t('common.error'), result.error || i18n.t('story.updateFailed'));
       }
     } finally {
       setSaving(false);
@@ -135,17 +127,17 @@ export function useStoryInfoForm(id?: string) {
   const remove = () => {
     if (isNew || !id) return;
     Alert.alert(
-      'Hikâyeyi Sil',
-      'Bu hikâyeyi ve tüm bölümlerini silmek istediğine emin misin? Bu işlem geri alınamaz.',
+      i18n.t('studio.deleteStoryTitle'),
+      i18n.t('studio.deleteStoryMessage'),
       [
-        { text: 'Vazgeç', style: 'cancel' },
+        { text: i18n.t('common.cancel'), style: 'cancel' },
         {
-          text: 'Sil',
+          text: i18n.t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             const result = await storyActions.deleteStory(id);
             if (result.success) router.replace('/(tabs)/write');
-            else Alert.alert('Hata', result.error || 'Hikâye silinemedi.');
+            else Alert.alert(i18n.t('common.error'), result.error || i18n.t('story.deleteFailed'));
           },
         },
       ],

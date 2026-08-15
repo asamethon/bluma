@@ -19,7 +19,7 @@ import http from 'node:http';
 // admin.auth() namespace API'sini kaldırdı — modüler alt-yol importları
 // gerekiyor (bkz. https://firebase.google.com/docs/admin/migrate).
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { handleDeleteAccount } from './deleteAccount.js';
 
@@ -43,6 +43,8 @@ const DEFAULT_SETTINGS = {
 // olmayan türler (mention, welcome) yalnızca genel pushNotifications'a bakar.
 const CATEGORY_FIELD = {
   follow: 'followNotifications',
+  follow_request: 'followNotifications',
+  follow_accepted: 'followNotifications',
   like: 'likeNotifications',
   comment: 'commentNotifications',
   story_published: 'storyNotifications',
@@ -68,6 +70,78 @@ async function getPushToken(userId) {
   }
 }
 
+// Firestore Timestamp | Date | null → ms.
+function toMillis(ts) {
+  if (!ts) return 0;
+  if (typeof ts.toMillis === 'function') return ts.toMillis();
+  if (ts instanceof Date) return ts.getTime();
+  if (typeof ts._seconds === 'number') return ts._seconds * 1000;
+  return 0;
+}
+
+// Expo push token'ı FİZİKSEL cihaza aittir, kullanıcıya değil. Aynı cihazda iki
+// hesap kullanılınca (çıkış yapıp başka hesaba girmek dâhil) her iki kullanıcının
+// userPushTokens dokümanı AYNI token'ı taşır. Worker alıcıyı userId ile bulup bu
+// token'a push atınca bildirim o an cihazda oturumlu olan (yanlış) hesaba düşer —
+// "eski hesabımı takip ettiğimde bildirim bana geliyor" bug'ının kökü buydu.
+//
+// Değişmez kural: bir token yalnızca EN SON kaydeden kullanıcıya aittir. Bir
+// token dokümanı yazıldığında/güncellendiğinde, aynı token'ı taşıyan daha ESKİ
+// (updatedAt'i küçük) tüm dokümanları sileriz. İstemci de çıkışta kendi
+// dokümanını siler; bu, temiz çıkış yapılmayan hesap-değiştirmelerine karşı
+// sunucu tarafı güvencesidir. Karşılaştırma updatedAt ile yapıldığından açılıştaki
+// ilk snapshot'ta dokümanlar rastgele sırada işlense de en yeni olan korunur.
+async function dedupePushToken(docSnap) {
+  const token = docSnap.data()?.expoPushToken;
+  if (!token) return;
+  const mineMs = toMillis(docSnap.data()?.updatedAt);
+  const snap = await db.collection('userPushTokens').where('expoPushToken', '==', token).get();
+  const stale = snap.docs.filter(
+    (d) => d.id !== docSnap.id && toMillis(d.data()?.updatedAt) < mineMs
+  );
+  if (!stale.length) return;
+  await Promise.all(stale.map((d) => d.ref.delete().catch(() => {})));
+  console.log(`[pushTokens] ${docSnap.id} token'ı için ${stale.length} eski kayıt silindi`);
+}
+
+// userPushTokens dinleyicisi — watchAdded'dan farklı olarak ilk snapshot'ı
+// ATLAMAZ: açılışta zaten var olan çift kayıtları da temizlemek istiyoruz.
+// 'removed' değişiklikleri (silme sonucu) yok sayılır, döngü oluşmaz.
+function watchPushTokens() {
+  const attach = () => {
+    let unsub = null;
+    unsub = db.collection('userPushTokens').onSnapshot(
+      (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === 'added' || change.type === 'modified') {
+            dedupePushToken(change.doc).catch((e) => console.error('[pushTokens] hata:', e));
+          }
+        });
+      },
+      (error) => {
+        console.error('[pushTokens] dinleyici hatası, 10sn sonra yeniden bağlanılacak:', error?.message || error);
+        try { unsub && unsub(); } catch {}
+        setTimeout(attach, 10000);
+      }
+    );
+  };
+  attach();
+}
+
+// Alıcı (ownerId) gönderen'i (senderId) engellediyse push atlanır. Kurallar
+// artık engellenen yazımını kaynağında reddediyor; bu, savunma derinliği ve
+// kural deploy'undan ÖNCE yazılmış dokümanlar için ek koruma.
+async function isBlocked(ownerId, senderId) {
+  if (!ownerId || !senderId || ownerId === senderId) return false;
+  try {
+    const snap = await db.collection('users').doc(ownerId).collection('blocked').doc(senderId).get();
+    return snap.exists;
+  } catch {
+    return false;
+  }
+}
+
+// Başarılı gönderimde true döner — DM'lerde "çift tik" filigranı buna bağlı.
 async function sendExpoPush(token, title, body, data) {
   try {
     const res = await fetch('https://exp.host/--/api/v2/push/send', {
@@ -78,23 +152,40 @@ async function sendExpoPush(token, title, body, data) {
     const result = await res.json();
     if (result?.data?.status !== 'ok') {
       console.error('[push] Expo push başarısız:', JSON.stringify(result));
+      return false;
     }
+    console.log(`[push] gönderildi: "${title}"`);
+    return true;
   } catch (error) {
     console.error('[push] Expo push isteği hata verdi:', error.message);
+    return false;
   }
 }
 
 async function processNotification(docSnap) {
   const n = docSnap.data();
   if (!n?.userId) return;
+  if (await isBlocked(n.userId, n.senderId)) {
+    console.log(`[notifications] atlandı (engellenmiş): ${n.senderId} -> ${n.userId}`);
+    return;
+  }
 
   const settings = await getSettings(n.userId);
-  if (!settings.pushNotifications) return;
+  if (!settings.pushNotifications) {
+    console.log(`[notifications] atlandı (push kapalı): ${n.userId}`);
+    return;
+  }
   const categoryField = CATEGORY_FIELD[n.type];
-  if (categoryField && settings[categoryField] === false) return;
+  if (categoryField && settings[categoryField] === false) {
+    console.log(`[notifications] atlandı (${categoryField} kapalı): ${n.userId}`);
+    return;
+  }
 
   const token = await getPushToken(n.userId);
-  if (!token) return;
+  if (!token) {
+    console.log(`[notifications] atlandı (token yok): ${n.userId}`);
+    return;
+  }
 
   await sendExpoPush(token, n.title || 'Bluma', n.message || '', n.data || {});
 }
@@ -108,42 +199,75 @@ async function processDirectMessage(docSnap) {
   const participants = threadSnap.data()?.participants || [];
   const recipientId = participants.find((p) => p !== msg.senderId);
   if (!recipientId) return;
+  if (await isBlocked(recipientId, msg.senderId)) {
+    console.log(`[messages] atlandı (engellenmiş): ${msg.senderId} -> ${recipientId}`);
+    return;
+  }
 
   const settings = await getSettings(recipientId);
-  if (!settings.pushNotifications) return;
+  if (!settings.pushNotifications) {
+    console.log(`[messages] atlandı (push kapalı): ${recipientId}`);
+    return;
+  }
 
   const token = await getPushToken(recipientId);
-  if (!token) return;
+  if (!token) {
+    console.log(`[messages] atlandı (token yok): ${recipientId}`);
+    return;
+  }
 
   const senderSnap = await db.collection('users').doc(msg.senderId).get();
   const senderName = senderSnap.data()?.displayName || senderSnap.data()?.username || 'Yeni mesaj';
   const body = msg.text || (msg.image ? '📷 Fotoğraf gönderdi' : 'Yeni mesaj gönderdi');
 
-  await sendExpoPush(token, senderName, body, { type: 'message', senderId: msg.senderId });
+  const ok = await sendExpoPush(token, senderName, body, { type: 'message', senderId: msg.senderId });
+  // Bildirim alıcının cihazına ulaştıysa "teslim edildi" filigranını ilerlet —
+  // gönderen istemci bunu görünce soluk çift tike geçer. Filigran serverTimestamp
+  // olduğundan daima artar; istemci kuralları buraya yazamaz (Admin SDK).
+  if (ok) {
+    await threadRef
+      .set({ lastDelivered: { [recipientId]: FieldValue.serverTimestamp() } }, { merge: true })
+      .catch((e) => console.error('[messages] teslim filigranı yazılamadı:', e.message));
+  }
 }
 
 // Her iki dinleyici de "skip initial snapshot" deseni kullanır — onSnapshot
 // ilk tetiklendiğinde eşleşen TÜM geçmiş dokümanları 'added' olarak verir;
 // bunları işlersek işçi her başladığında geçmişin tamamına push atardı.
+// Kendini iyileştiren dinleyici: hata gelince (ör. DM için collection-group
+// index henüz deploy edilmemişse FAILED_PRECONDITION) log basıp 10sn sonra
+// yeniden bağlanır. Böylece index sonradan hazır olunca worker'ı yeniden
+// başlatmadan DM push'ları kendiliğinden çalışmaya başlar. Yeniden bağlanınca
+// ilk snapshot yine atlanır (geçmişe toplu push atmamak için).
 function watchAdded(query, handler, label) {
   let first = true;
-  query.onSnapshot(
-    (snapshot) => {
-      if (first) { first = false; return; }
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          handler(change.doc).catch((error) => console.error(`[${label}] işleme hatası:`, error));
-        }
-      });
-    },
-    (error) => console.error(`[${label}] dinleyici hatası:`, error)
-  );
+  const attach = () => {
+    let unsub = null;
+    unsub = query.onSnapshot(
+      (snapshot) => {
+        if (first) { first = false; return; }
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === 'added') {
+            handler(change.doc).catch((error) => console.error(`[${label}] işleme hatası:`, error));
+          }
+        });
+      },
+      (error) => {
+        console.error(`[${label}] dinleyici hatası, 10sn sonra yeniden bağlanılacak:`, error?.message || error);
+        try { unsub && unsub(); } catch {}
+        first = true;
+        setTimeout(attach, 10000);
+      }
+    );
+  };
+  attach();
 }
 
 watchAdded(db.collection('notifications').orderBy('createdAt', 'desc').limit(50), processNotification, 'notifications');
 watchAdded(db.collectionGroup('messages').orderBy('createdAt', 'desc').limit(50), processDirectMessage, 'messages');
+watchPushTokens();
 
-console.log('Bluma push worker başladı — notifications ve messages dinleniyor.');
+console.log('Bluma push worker başladı — notifications, messages ve push token dedupe dinleniyor.');
 
 // Health endpoint + hesap silme (bkz. YAPILACAKLAR 0.4/3.1 — kalıcı çözüm,
 // Admin SDK re-authenticate gerektirmez ve DM thread'lerini de silebilir).

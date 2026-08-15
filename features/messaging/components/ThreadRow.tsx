@@ -3,20 +3,22 @@ import { useTheme } from '@/constants/theme';
 import { formatThreadTime } from '@/features/messaging/utils/time';
 import { MessageThread } from '@/types';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 
-// Mesajlar kutusundaki tek sohbet satırı. React.memo + stabil onPress ile
-// liste yeniden render'da hafif kalır.
 function ThreadRowBase({
   thread,
   currentUserId,
   onPress,
+  onLongPress,
 }: {
   thread: MessageThread;
   currentUserId?: string;
   onPress: (otherUserId: string) => void;
+  onLongPress?: (thread: MessageThread) => void;
 }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const other = thread.otherUser;
   const otherId = thread.participants.find((p) => p !== currentUserId);
   const unread = thread.unread > 0;
@@ -25,6 +27,8 @@ function ThreadRowBase({
   return (
     <Pressable
       onPress={() => otherId && onPress(otherId)}
+      onLongPress={onLongPress ? () => onLongPress(thread) : undefined}
+      delayLongPress={350}
       style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 2 }}
       android_ripple={{ color: colors.surfaceVariant }}
     >
@@ -36,7 +40,7 @@ function ThreadRowBase({
             numberOfLines={1}
             style={{ flex: 1, fontWeight: unread ? '800' : '700' }}
           >
-            {other?.displayName || 'Kullanıcı'}
+            {other?.displayName || t('common.user')}
           </Text>
           <Text variant="caption" color={unread ? colors.primary : colors.textLight} style={{ fontWeight: '600' }}>
             {formatThreadTime(thread.lastMessage?.createdAt)}
@@ -49,8 +53,8 @@ function ThreadRowBase({
             color={unread ? colors.text : colors.textLight}
             style={{ flex: 1, fontSize: 13, fontWeight: unread ? '600' : '400' }}
           >
-            {fromMe ? 'Sen: ' : ''}
-            {thread.lastMessage?.text || 'Sohbeti başlat'}
+            {fromMe ? t('messages.youPrefix') : ''}
+            {thread.lastMessage?.text || t('messages.startConversation')}
           </Text>
           {unread && (
             <View

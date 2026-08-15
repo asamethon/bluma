@@ -4,10 +4,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { Radius, Spacing, useTheme } from "@/constants/theme";
 import { Text } from "./Text";
 
-/**
- * SectionHeader — a feed section title with the signature bloom "tick" accent
- * to the left and an optional "Tümü" (see all) affordance.
- */
 export function SectionHeader({
   title,
   accent,

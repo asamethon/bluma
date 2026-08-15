@@ -10,12 +10,11 @@ import {
   serverTimestamp,
 } from '@react-native-firebase/firestore';
 import { store } from '@/store';
+import i18n from '@/i18n';
 import { notificationActions } from '../../../store/notificationStore';
 import { getStoryById } from './storyApi';
+import { logger } from '@/utils/logger';
 
-// Bölüm-bazlı beğeni (bkz. YAPILACAKLAR 2.3) — hikâye toplamından ayrı,
-// stories/{id}/chapters/{n}/likes/{uid} deterministik dokümanı + chapter
-// dokümanındaki likesCount alanı.
 function chapterRef(storyId: string, chapterIndex: number) {
   return doc(getFirestore(), 'stories', storyId, 'chapters', String(chapterIndex));
 }
@@ -40,24 +39,36 @@ export async function toggleChapterLike(storyId: string, chapterIndex: number, w
       await setDoc(likeRef, { userId: user.id, createdAt: serverTimestamp() });
       await updateDoc(chapterRef(storyId, chapterIndex), { likesCount: increment(1) });
 
-      // Yazara "X, N. bölümünü beğendi" bildirimi — kendi hikâyeni beğenmek
-      // bildirim üretmez.
       const story = await getStoryById(storyId);
       if (story && story.authorId !== user.id) {
+        // Metin okuyanın dilinde üretilsin diye tarif dokümana yazılır.
+        const params = {
+          name: user.displayName || user.username || i18n.t('notifications.someone'),
+          story: story.title,
+          chapter: chapterIndex + 1,
+        };
         notificationActions.createNotification({
           userId: story.authorId,
           senderId: user.id,
           type: 'like',
-          title: 'Bölüm Beğenildi',
-          message: `${user.displayName || user.username || 'Bir kullanıcı'} "${story.title}" hikâyenin ${chapterIndex + 1}. bölümünü beğendi`,
-          data: { storyId, chapterIndex: String(chapterIndex) },
+          title: i18n.t('notifications.chapterLikedTitle'),
+          message: i18n.t('notifications.chapterLikedMessage', params),
+          data: {
+            storyId,
+            chapterIndex: String(chapterIndex),
+            i18n: {
+              titleKey: 'notifications.chapterLikedTitle',
+              messageKey: 'notifications.chapterLikedMessage',
+              params,
+            },
+          },
           isRead: false,
         }).catch(() => {});
       }
     }
     return { success: true };
   } catch (error) {
-    console.error('Toggle chapter like error:', error);
+    logger.error('Toggle chapter like error:', error);
     return { success: false };
   }
 }

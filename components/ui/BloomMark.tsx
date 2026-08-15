@@ -2,14 +2,6 @@ import React from "react";
 import { StyleSheet, Text, View, type ViewStyle } from "react-native";
 import { Fonts, useTheme } from "@/constants/theme";
 
-/**
- * BloomMark — Bluma's signature brand mark.
- *
- * A five-petal bloom assembled entirely from rotated rounded Views (no SVG
- * dependency). The name "bluma" reads as "bloom", so the whole identity grows
- * from this single flower: it's the logo, the loading state, and the heart of
- * the Write button in the tab bar.
- */
 export function BloomMark({
   size = 28,
   color,
@@ -37,7 +29,6 @@ export function BloomMark({
     >
       {Array.from({ length: petals }).map((_, i) => {
         const angle = (360 / petals) * i;
-        // Two-tone alternating petals give the bloom a little depth.
         const tone = i % 2 === 0 ? petalColor : shade(petalColor, -0.08);
         return (
           <View
@@ -58,7 +49,6 @@ export function BloomMark({
           />
         );
       })}
-      {/* bloom core */}
       <View
         style={{
           position: "absolute",
@@ -72,9 +62,6 @@ export function BloomMark({
   );
 }
 
-/**
- * BlumaWordmark — the bloom mark locked up with the serif wordmark.
- */
 export function BlumaWordmark({
   size = 26,
   color,
@@ -106,7 +93,6 @@ export function BlumaWordmark({
   );
 }
 
-// Lightweight hex shading so petals can be two-tone without extra deps.
 function shade(hex: string, amount: number): string {
   const m = hex.replace("#", "");
   if (m.length !== 6) return hex;

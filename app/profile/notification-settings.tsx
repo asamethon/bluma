@@ -6,7 +6,8 @@ import { useAppSelector } from '@/store/hooks';
 import { NotificationSettings } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 const DEFAULTS: Omit<NotificationSettings, 'userId' | 'updatedAt'> = {
@@ -22,26 +23,24 @@ const DEFAULTS: Omit<NotificationSettings, 'userId' | 'updatedAt'> = {
 type Row = { key: keyof typeof DEFAULTS; icon: keyof typeof Ionicons.glyphMap; title: string; caption: string };
 
 const CHANNELS: Row[] = [
-  { key: 'pushNotifications', icon: 'notifications-outline', title: 'Push Bildirimleri', caption: 'Telefonuna anlık bildirim gönderelim' },
-  { key: 'emailNotifications', icon: 'mail-outline', title: 'E-posta Bildirimleri', caption: 'Önemli güncellemeleri e-posta ile al' },
+  { key: 'pushNotifications', icon: 'notifications-outline', title: 'notifSettings.push', caption: 'notifSettings.pushSub' },
+  { key: 'emailNotifications', icon: 'mail-outline', title: 'notifSettings.email', caption: 'notifSettings.emailSub' },
 ];
 
 const ACTIVITY: Row[] = [
-  { key: 'storyNotifications', icon: 'book-outline', title: 'Yeni Bölüm', caption: 'Takip ettiğin yazarlar bölüm yayınlayınca' },
-  { key: 'likeNotifications', icon: 'heart-outline', title: 'Beğeniler', caption: 'Hikayelerin beğeni aldığında' },
-  { key: 'commentNotifications', icon: 'chatbubble-ellipses-outline', title: 'Yorumlar', caption: 'İçeriklerine yorum yapıldığında' },
-  { key: 'followNotifications', icon: 'person-add-outline', title: 'Yeni Takipçi', caption: 'Biri seni takip etmeye başladığında' },
+  { key: 'storyNotifications', icon: 'book-outline', title: 'notifSettings.newChapter', caption: 'notifSettings.newChapterSub' },
+  { key: 'likeNotifications', icon: 'heart-outline', title: 'notifSettings.likes', caption: 'notifSettings.likesSub' },
+  { key: 'commentNotifications', icon: 'chatbubble-ellipses-outline', title: 'notifSettings.comments', caption: 'notifSettings.commentsSub' },
+  { key: 'followNotifications', icon: 'person-add-outline', title: 'notifSettings.newFollower', caption: 'notifSettings.newFollowerSub' },
 ];
 
-// Bildirim tercihleri Redux/Firestore üzerinden (notificationStore) yönetilir
-// — burada sadece AsyncStorage'a değil, gönderim tarafının da okuduğu
-// notificationSettings/{userId} dokümanına yazılır (bkz. pushNotificationService).
 export default function NotificationSettingsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { user } = useAppSelector(s => s.auth);
+  const { t } = useTranslation();
+  const user = useAppSelector(s => s.auth.user);
   const settings = useAppSelector(s => s.notification.settings);
-  const styles = createStyles(colors);
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   useEffect(() => {
     if (user?.id) notificationActions.loadNotificationSettings(user.id);
@@ -53,7 +52,6 @@ export default function NotificationSettingsScreen() {
     if (!user?.id) return;
     notificationActions.updateNotificationSettings(user.id, { [key]: value });
 
-    // Push'u açarken cihaz token'ını kaydet (izin isteği dahil).
     if (key === 'pushNotifications' && value) {
       pushNotificationService.saveUserPushToken(user.id).catch(() => {});
     }
@@ -67,8 +65,8 @@ export default function NotificationSettingsScreen() {
         <Ionicons name={row.icon} size={19} color={colors.primary} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text variant="bodyStrong">{row.title}</Text>
-        <Text variant="caption" tone="textLight">{row.caption}</Text>
+        <Text variant="bodyStrong">{t(row.title)}</Text>
+        <Text variant="caption" tone="textLight">{t(row.caption)}</Text>
       </View>
       <Switch checked={state[row.key]} onChange={v => toggle(row.key, v)} disabled={disabled} />
     </View>
@@ -80,7 +78,7 @@ export default function NotificationSettingsScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.headerIcon} hitSlop={8}>
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text variant="subheading">Bildirimler</Text>
+        <Text variant="subheading">{t('notifications.title')}</Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -89,7 +87,7 @@ export default function NotificationSettingsScreen() {
         contentContainerStyle={{ padding: Spacing.screenX, paddingBottom: 60 }}
         showsVerticalScrollIndicator={false}
       >
-        <Text variant="overline" tone="textLight" style={styles.sectionLabel}>Kanallar</Text>
+        <Text variant="overline" tone="textLight" style={styles.sectionLabel}>{t('notifSettings.channels')}</Text>
         <View style={styles.card}>
           {CHANNELS.map((row, i) => (
             <React.Fragment key={row.key}>
@@ -100,7 +98,7 @@ export default function NotificationSettingsScreen() {
         </View>
 
         <Text variant="overline" tone="textLight" style={[styles.sectionLabel, { marginTop: Spacing.xl }]}>
-          Etkinlik
+          {t('notifSettings.activity')}
         </Text>
         <View style={styles.card}>
           {ACTIVITY.map((row, i) => (
@@ -115,7 +113,7 @@ export default function NotificationSettingsScreen() {
           <View style={[styles.note, { backgroundColor: colors.surfaceVariant }]}>
             <Ionicons name="information-circle-outline" size={18} color={colors.textSecondary} />
             <Text variant="caption" tone="textSecondary" style={{ flex: 1 }}>
-              Etkinlik bildirimlerini açmak için önce Push Bildirimlerini etkinleştir.
+              {t('notifSettings.enablePushFirst')}
             </Text>
           </View>
         )}

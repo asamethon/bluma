@@ -13,6 +13,7 @@ import {
   serverTimestamp,
   updateDoc,
 } from '@react-native-firebase/firestore';
+import i18n from '@/i18n';
 import { store } from './index';
 import {
   addStoryToList,
@@ -24,6 +25,7 @@ import {
   type ReadingListMeta,
 } from './slices/readingListSlice';
 import { storyActions } from './storyStore';
+import { logger } from '@/utils/logger';
 
 export type { ReadingListMeta, ReadingListState } from './slices/readingListSlice';
 
@@ -42,7 +44,7 @@ export const readingListActions = {
         const data = d.data() as any;
         return {
           id: d.id,
-          name: data.name || 'Liste',
+          name: data.name || i18n.t('lists.list'),
           description: data.description || '',
           isPublic: data.isPublic !== false,
           storyIds: Array.isArray(data.storyIds) ? data.storyIds : [],
@@ -52,7 +54,7 @@ export const readingListActions = {
       });
       store.dispatch(patchReadingList({ lists }));
     } catch (error) {
-      console.error('Load reading lists error:', error);
+      logger.error('Load reading lists error:', error);
     } finally {
       store.dispatch(patchReadingList({ loaded: true }));
     }
@@ -60,9 +62,9 @@ export const readingListActions = {
 
   async createList(name: string, opts?: { description?: string; isPublic?: boolean }) {
     const { user } = store.getState().auth;
-    if (!user?.id) return { success: false, error: 'Giriş gerekli.' };
+    if (!user?.id) return { success: false, error: i18n.t('errors.loginRequired') };
     const trimmed = name.trim();
-    if (!trimmed) return { success: false, error: 'Liste adı boş olamaz.' };
+    if (!trimmed) return { success: false, error: i18n.t('lists.nameEmpty') };
     try {
       const ref = await addDoc(listsRef(user.id), {
         name: trimmed,
@@ -81,36 +83,36 @@ export const readingListActions = {
       }));
       return { success: true, listId: ref.id };
     } catch (error) {
-      console.error('Create reading list error:', error);
-      return { success: false, error: 'Liste oluşturulamadı.' };
+      logger.error('Create reading list error:', error);
+      return { success: false, error: i18n.t('lists.createFailed') };
     }
   },
 
   async renameList(listId: string, name: string) {
     const { user } = store.getState().auth;
-    if (!user?.id) return { success: false, error: 'Giriş gerekli.' };
+    if (!user?.id) return { success: false, error: i18n.t('errors.loginRequired') };
     const trimmed = name.trim();
-    if (!trimmed) return { success: false, error: 'Liste adı boş olamaz.' };
+    if (!trimmed) return { success: false, error: i18n.t('lists.nameEmpty') };
     try {
       await updateDoc(doc(listsRef(user.id), listId), { name: trimmed, updatedAt: serverTimestamp() });
       store.dispatch(updateList({ listId, patch: { name: trimmed } }));
       return { success: true };
     } catch (error) {
-      console.error('Rename reading list error:', error);
-      return { success: false, error: 'Liste güncellenemedi.' };
+      logger.error('Rename reading list error:', error);
+      return { success: false, error: i18n.t('lists.updateFailed') };
     }
   },
 
   async deleteList(listId: string) {
     const { user } = store.getState().auth;
-    if (!user?.id) return { success: false, error: 'Giriş gerekli.' };
+    if (!user?.id) return { success: false, error: i18n.t('errors.loginRequired') };
     try {
       await deleteDoc(doc(listsRef(user.id), listId));
       store.dispatch(removeList(listId));
       return { success: true };
     } catch (error) {
-      console.error('Delete reading list error:', error);
-      return { success: false, error: 'Liste silinemedi.' };
+      logger.error('Delete reading list error:', error);
+      return { success: false, error: i18n.t('lists.deleteFailed') };
     }
   },
 
@@ -121,9 +123,8 @@ export const readingListActions = {
 
   async addStory(listId: string, storyId: string) {
     const { user } = store.getState().auth;
-    if (!user?.id) return { success: false, error: 'Giriş gerekli.' };
+    if (!user?.id) return { success: false, error: i18n.t('errors.loginRequired') };
     try {
-      // Optimistic
       store.dispatch(addStoryToList({ listId, storyId }));
       await updateDoc(doc(listsRef(user.id), listId), {
         storyIds: arrayUnion(storyId),
@@ -131,15 +132,15 @@ export const readingListActions = {
       });
       return { success: true };
     } catch (error) {
-      console.error('Add story to list error:', error);
+      logger.error('Add story to list error:', error);
       this.loadLists();
-      return { success: false, error: 'Hikâye listeye eklenemedi.' };
+      return { success: false, error: i18n.t('lists.addStoryFailed') };
     }
   },
 
   async removeStory(listId: string, storyId: string) {
     const { user } = store.getState().auth;
-    if (!user?.id) return { success: false, error: 'Giriş gerekli.' };
+    if (!user?.id) return { success: false, error: i18n.t('errors.loginRequired') };
     try {
       store.dispatch(removeStoryFromList({ listId, storyId }));
       await updateDoc(doc(listsRef(user.id), listId), {
@@ -148,13 +149,12 @@ export const readingListActions = {
       });
       return { success: true };
     } catch (error) {
-      console.error('Remove story from list error:', error);
+      logger.error('Remove story from list error:', error);
       this.loadLists();
-      return { success: false, error: 'Hikâye listeden çıkarılamadı.' };
+      return { success: false, error: i18n.t('lists.removeStoryFailed') };
     }
   },
 
-  // Bir listenin hikâyelerini (sıralı) yükle
   async getListStories(listId: string): Promise<Story[]> {
     const list = store.getState().readingList.lists.find(l => l.id === listId);
     if (!list || list.storyIds.length === 0) return [];

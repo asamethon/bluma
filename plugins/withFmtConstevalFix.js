@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+ 
 /**
  * Custom Expo config plugin to fix the {fmt} library `consteval` build
  * error that started appearing on Xcode 26.4+ for React Native projects.

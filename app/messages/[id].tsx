@@ -4,18 +4,23 @@ import { Spacing, useTheme } from '@/constants/theme';
 import { MessageBubble } from '@/features/messaging/components/MessageBubble';
 import { TypingBubble } from '@/features/messaging/components/TypingBubble';
 import { useChat } from '@/features/messaging/hooks/useChat';
+import { formatPresence } from '@/features/privacy/hooks/usePresence';
+import { messageStatus } from '@/features/messaging/utils/status';
 import { shouldShowStamp } from '@/features/messaging/utils/time';
 import { DirectMessage } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useRef, useState } from 'react';
-import { FlatList, Platform, Pressable, TextInput, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { Platform, Pressable, TextInput, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import type { FlashListRef } from '@shopify/flash-list';
 import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
 
-// Tek sohbet ekranı — rota parametresi karşı kullanıcının ID'si.
 export default function ChatScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const {
@@ -31,14 +36,15 @@ export default function ChatScreen() {
     removeImage,
     isSending,
     otherTyping,
+    deliveredUntil,
+    readUntil,
+    messagingBlocked,
+    presence,
   } = useChat(id);
-  const listRef = useRef<FlatList<DirectMessage>>(null);
+  const presenceLabel = formatPresence(presence);
+  const listRef = useRef<FlashListRef<DirectMessage>>(null);
   const [viewerImage, setViewerImage] = useState<string | null>(null);
 
-  // KeyboardAvoidingView'ın kendi ölçümüne güvenmiyoruz: Android'de edge-to-edge
-  // (gradle.properties: edgeToEdgeEnabled) native resize'ı devre dışı bırakıyor;
-  // useAnimatedKeyboard WindowInsetsAnimationCompat (IME inset) kullandığından
-  // edge-to-edge'den bağımsız, her iki platformda da güvenilir çalışıyor.
   const keyboard = useAnimatedKeyboard();
   const chatContainerStyle = useAnimatedStyle(() => ({ paddingBottom: keyboard.height.value }));
 
@@ -49,23 +55,28 @@ export default function ChatScreen() {
   const renderItem = useCallback(
     ({ item, index }: { item: DirectMessage; index: number }) => {
       const prev = index > 0 ? messages[index - 1] : null;
+      const mine = item.senderId === currentUserId;
       return (
         <MessageBubble
           text={item.text}
           image={item.image}
-          mine={item.senderId === currentUserId}
+          story={item.story}
+          mine={mine}
+          // Tik yalnızca gönderene gösterilir (WhatsApp davranışı).
+          status={mine ? messageStatus(item, deliveredUntil, readUntil) : undefined}
           showStamp={shouldShowStamp(prev?.createdAt, item.createdAt)}
+          firstInGroup={!!prev && prev.senderId !== item.senderId}
           stampTs={item.createdAt}
           onImagePress={setViewerImage}
+          onStoryPress={(storyId) => router.push(`/story/${storyId}` as any)}
         />
       );
     },
-    [messages, currentUserId]
+    [messages, currentUserId, router, deliveredUntil, readUntil]
   );
 
   return (
     <Screen style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Header */}
       <View
         style={{
           flexDirection: 'row',
@@ -83,9 +94,13 @@ export default function ChatScreen() {
           onPress={() => otherUser && router.push(`/user/${otherUser.id}` as any)}
         >
           <Text variant="subheading" numberOfLines={1}>
-            {otherUser?.displayName || 'Sohbet'}
+            {otherUser?.displayName || t('messages.chat')}
           </Text>
-          {otherUser?.username ? (
+          {presenceLabel ? (
+            <Text variant="caption" tone={presence.online ? 'primary' : 'textLight'}>
+              {presenceLabel}
+            </Text>
+          ) : otherUser?.username ? (
             <Text variant="caption" tone="textLight">@{otherUser.username}</Text>
           ) : null}
         </Pressable>
@@ -93,7 +108,7 @@ export default function ChatScreen() {
       </View>
 
       <Animated.View style={[{ flex: 1 }, chatContainerStyle]}>
-        <FlatList
+        <FlashList
           ref={listRef}
           data={messages}
           keyExtractor={(m) => m.id}
@@ -107,14 +122,13 @@ export default function ChatScreen() {
               <View style={{ alignItems: 'center', paddingVertical: 64, paddingHorizontal: 24 }}>
                 <Ionicons name="chatbubble-ellipses-outline" size={32} color={colors.primary} />
                 <Text variant="body" tone="textLight" style={{ marginTop: 10, fontStyle: 'italic', textAlign: 'center' }}>
-                  İlk mesajı sen gönder.
+                  {t('messages.sendFirstMessage')}
                 </Text>
               </View>
             )
           }
         />
 
-        {/* Seçilen görsel önizlemesi */}
         {selectedImage && (
           <View style={{ paddingHorizontal: Spacing.screenX, paddingTop: 10 }}>
             <View style={{ alignSelf: 'flex-start', position: 'relative' }}>
@@ -143,7 +157,26 @@ export default function ChatScreen() {
           </View>
         )}
 
-        {/* Composer */}
+        {messagingBlocked ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+              gap: 10,
+              paddingHorizontal: Spacing.screenX,
+              paddingTop: 14,
+              paddingBottom: 18,
+              borderTopWidth: 1,
+              borderTopColor: colors.border,
+              backgroundColor: colors.background,
+            }}
+          >
+            <Ionicons name="lock-closed-outline" size={18} color={colors.textLight} />
+            <Text variant="caption" tone="textSecondary" style={{ flex: 1 }}>
+              {t('privacy.messagesOff', { name: otherUser?.displayName || t('common.user') })}
+            </Text>
+          </View>
+        ) : (
         <View
           style={{
             flexDirection: 'row',
@@ -186,7 +219,7 @@ export default function ChatScreen() {
             <TextInput
               value={draft}
               onChangeText={setDraft}
-              placeholder="Bir mesaj yaz…"
+              placeholder={t('messages.composerPlaceholder')}
               placeholderTextColor={colors.textLight}
               multiline
               style={{ fontSize: 14.5, lineHeight: 19, color: colors.text, paddingVertical: Platform.OS === 'ios' ? 12 : 8 }}
@@ -211,6 +244,7 @@ export default function ChatScreen() {
             />
           </Pressable>
         </View>
+        )}
       </Animated.View>
 
       <ImageModal visible={!!viewerImage} imageUri={viewerImage || ''} onClose={() => setViewerImage(null)} />

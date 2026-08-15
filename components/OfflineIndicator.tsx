@@ -1,7 +1,8 @@
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useTheme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     Animated,
     StyleSheet,
@@ -15,17 +16,15 @@ interface OfflineIndicatorProps {
 
 export default function OfflineIndicator({ showWhenOnline = false }: OfflineIndicatorProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const networkState = useNetworkStatus();
 
   const [slideAnim] = useState(new Animated.Value(-60));
   const [isVisible, setIsVisible] = useState(false);
-  // Whether we have actually been offline during this session. We only surface
-  // the green "reconnected" banner when recovering from a *real* offline state,
-  // not on first mount or on the spurious NetInfo toggles that fire constantly.
   const wasOfflineRef = useRef(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const styles = createStyles(colors);
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   useEffect(() => {
     const clearHideTimer = () => {
@@ -51,25 +50,21 @@ export default function OfflineIndicator({ showWhenOnline = false }: OfflineIndi
     };
 
     if (networkState.isOffline) {
-      // Genuinely offline — remember it and show the persistent offline banner.
       wasOfflineRef.current = true;
       clearHideTimer();
       slideIn();
     } else if (showWhenOnline && wasOfflineRef.current) {
-      // Online again *after* having been offline — this is the only case worth
-      // a "reconnected" toast. Show it briefly then auto-hide.
       wasOfflineRef.current = false;
       clearHideTimer();
       slideIn();
       hideTimer.current = setTimeout(slideOut, 2000);
     } else {
-      // Plain online (initial mount / NetInfo noise) — never announce anything.
       clearHideTimer();
       slideOut();
     }
 
     return clearHideTimer;
-  }, [networkState.isOffline, showWhenOnline]);
+  }, [networkState.isOffline, showWhenOnline, slideAnim]);
 
   if (!isVisible) return null;
 
@@ -91,7 +86,7 @@ export default function OfflineIndicator({ showWhenOnline = false }: OfflineIndi
           styles.text,
           networkState.isOffline ? styles.offlineText : styles.onlineText
         ]}>
-          {networkState.isOffline ? 'Çevrimdışı mod - İndirilen hikayeler kullanılabilir' : 'İnternet bağlantısı yeniden kuruldu'}
+          {networkState.isOffline ? t('offline.offlineBanner') : t('offline.reconnected')}
         </Text>
       </View>
     </Animated.View>
@@ -106,7 +101,7 @@ const createStyles = (colors: any) =>
       left: 0,
       right: 0,
       zIndex: 1000,
-      paddingTop: 50, // Status bar için
+      paddingTop: 50,
       paddingHorizontal: 16,
       paddingBottom: 12,
     },

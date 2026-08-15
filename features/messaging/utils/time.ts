@@ -1,7 +1,4 @@
-// DM zaman biçimlendirme yardımcıları. Firestore Timestamp | Date | null kabul eder.
-
-const GUNLER = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
-const AYLAR = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+import i18n from '@/i18n';
 
 function toDate(ts: any): Date | null {
   if (!ts) return null;
@@ -12,38 +9,51 @@ function toDate(ts: any): Date | null {
 
 const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
 const clock = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+// Firestore Timestamp | Date | ISO metin → ms (yoksa 0).
+export function toMillis(ts: any): number {
+  const d = toDate(ts);
+  return d ? d.getTime() : 0;
+}
+
+// Baloncuğun sağ alt köşesindeki saat (14:32).
+export function formatClock(ts: any): string {
+  const d = toDate(ts);
+  return d ? clock(d) : '';
+}
+
 const isSameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
-// Sohbet listesindeki son mesaj zamanı (kısa, göz atılabilir).
 export function formatThreadTime(ts: any): string {
   const d = toDate(ts);
   if (!d) return '';
   const now = new Date();
   const diffMin = Math.floor((now.getTime() - d.getTime()) / 60000);
-  if (diffMin < 1) return 'Şimdi';
-  if (diffMin < 60) return `${diffMin} dk`;
+  if (diffMin < 1) return i18n.t('time.now');
+  if (diffMin < 60) return i18n.t('time.minutesShort', { count: diffMin });
   if (isSameDay(d, now)) return clock(d);
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
-  if (isSameDay(d, yesterday)) return 'Dün';
-  if (now.getTime() - d.getTime() < 7 * 86400000) return GUNLER[d.getDay()];
+  if (isSameDay(d, yesterday)) return i18n.t('time.yesterday');
+  if (now.getTime() - d.getTime() < 7 * 86400000) {
+    return d.toLocaleDateString(i18n.language, { weekday: 'long' });
+  }
   return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}`;
 }
 
-// Sohbet ekranındaki gün/saat ayracı etiketi.
 export function formatMessageStamp(ts: any): string {
   const d = toDate(ts);
-  if (!d) return 'Şimdi';
+  if (!d) return i18n.t('time.now');
   const now = new Date();
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
-  if (isSameDay(d, now)) return `Bugün ${clock(d)}`;
-  if (isSameDay(d, yesterday)) return `Dün ${clock(d)}`;
-  return `${d.getDate()} ${AYLAR[d.getMonth()]} ${clock(d)}`;
+  if (isSameDay(d, now)) return i18n.t('time.todayAt', { time: clock(d) });
+  if (isSameDay(d, yesterday)) return i18n.t('time.yesterdayAt', { time: clock(d) });
+  const dateLabel = d.toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' });
+  return `${dateLabel} ${clock(d)}`;
 }
 
-// İki mesaj arasında yeni ayraç gösterilmeli mi? (5 dk'dan uzun boşlukta.)
 export function shouldShowStamp(prev: any, curr: any): boolean {
   const a = toDate(prev);
   const b = toDate(curr);

@@ -13,20 +13,31 @@ import {
   increment,
 } from '@react-native-firebase/firestore';
 import { notificationActions } from '../../../store/notificationStore';
+import { challengeActions } from '@/store/challengeStore';
+import { privacyActions } from '@/features/privacy/services/privacyService';
+import { isPrivateAccount } from '@/features/privacy/types';
+import { followRequestActions } from '@/features/social/services/followRequests';
+import { getUserById as getCachedUserById } from '@/features/auth/services/userCache';
 import { patchAuth, User } from '@/store/slices/authSlice';
+import { addFollowingId, removeFollowingId } from '@/store/slices/privacySlice';
 import { store } from '@/store';
+import i18n from '@/i18n';
+import { logger } from '@/utils/logger';
 
-// Follow a user
 async function followUser(userIdToFollow: string) {
   try {
     const currentUser = store.getState().auth.user;
-    if (!currentUser) return { success: false, error: 'Kullanıcı bulunamadı.' };
+    if (!currentUser) return { success: false, error: i18n.t('errors.userNotFound') };
+
+    // Gizli hesap doğrudan takip edilemez: onaya düşen bir istek gönderilir.
+    const target = await getCachedUserById(userIdToFollow);
+    if (isPrivateAccount(target)) {
+      const result = await followRequestActions.sendFollowRequest(userIdToFollow);
+      return { ...result, pending: true };
+    }
 
     const db = getFirestore();
 
-    // Asıl takip ilişkisi: iki doküman paralel yazılır. Yalnızca bunlar
-    // beklenir — sayaçlar ve bildirim arka planda yürür ki buton saniyelerce
-    // dönmesin (push bildirimi HTTP çağrısı tek başına 1-3 sn sürebiliyor).
     const currentUserFollowingRef = doc(db, 'users', currentUser.id, 'following', userIdToFollow);
     const targetUserFollowersRef = doc(db, 'users', userIdToFollow, 'followers', currentUser.id);
     await Promise.all([
@@ -40,43 +51,42 @@ async function followUser(userIdToFollow: string) {
       }),
     ]);
 
-    // Sayaçlar — atomik increment, arka planda; hata takibi bozmaz.
     updateDoc(doc(db, 'users', currentUser.id), {
       followingCount: increment(1),
-    }).catch((e: any) => console.error('Following count update error:', e));
+    }).catch((e: any) => logger.error('Following count update error:', e));
     updateDoc(doc(db, 'users', userIdToFollow), {
       followersCount: increment(1),
-    }).catch((e: any) => console.error('Followers count update error:', e));
+    }).catch((e: any) => logger.error('Followers count update error:', e));
 
-    // Bildirim (in-app + push) — arka planda.
     notificationActions.createFollowNotification(
       currentUser.id,
       userIdToFollow,
       currentUser.displayName
-    ).catch((e: any) => console.error('Follow notification error:', e));
+    ).catch((e: any) => logger.error('Follow notification error:', e));
 
-    // Update local state
     store.dispatch(patchAuth({ user: {
       ...currentUser,
       followingCount: (currentUser.followingCount || 0) + 1,
     } }));
+    // Gizli hesap filtresi takip listesine bakar; anında güncel tutulur.
+    store.dispatch(addFollowingId(userIdToFollow));
+
+    challengeActions.trackAction(currentUser.id, 'newFollows').catch(() => {});
 
     return { success: true };
   } catch (error) {
-    console.error('Follow user error:', error);
-    return { success: false, error: 'Takip edilirken bir hata oluştu.' };
+    logger.error('Follow user error:', error);
+    return { success: false, error: i18n.t('social.followFailed') };
   }
 }
 
-// Unfollow a user
 async function unfollowUser(userIdToUnfollow: string) {
   try {
     const currentUser = store.getState().auth.user;
-    if (!currentUser) return { success: false, error: 'Kullanıcı bulunamadı.' };
+    if (!currentUser) return { success: false, error: i18n.t('errors.userNotFound') };
 
     const db = getFirestore();
 
-    // İlişki dokümanları paralel silinir; sayaçlar arka planda (bkz. followUser).
     const currentUserFollowingRef = doc(db, 'users', currentUser.id, 'following', userIdToUnfollow);
     const targetUserFollowersRef = doc(db, 'users', userIdToUnfollow, 'followers', currentUser.id);
     await Promise.all([
@@ -86,25 +96,24 @@ async function unfollowUser(userIdToUnfollow: string) {
 
     updateDoc(doc(db, 'users', currentUser.id), {
       followingCount: increment(-1),
-    }).catch((e: any) => console.error('Following count update error:', e));
+    }).catch((e: any) => logger.error('Following count update error:', e));
     updateDoc(doc(db, 'users', userIdToUnfollow), {
       followersCount: increment(-1),
-    }).catch((e: any) => console.error('Followers count update error:', e));
+    }).catch((e: any) => logger.error('Followers count update error:', e));
 
-    // Update local state
     store.dispatch(patchAuth({ user: {
       ...currentUser,
       followingCount: Math.max((currentUser.followingCount || 0) - 1, 0),
     } }));
+    store.dispatch(removeFollowingId(userIdToUnfollow));
 
     return { success: true };
   } catch (error) {
-    console.error('Unfollow user error:', error);
-    return { success: false, error: 'Takipten çıkılırken bir hata oluştu.' };
+    logger.error('Unfollow user error:', error);
+    return { success: false, error: i18n.t('social.unfollowFailed') };
   }
 }
 
-// Check if current user is following another user
 async function isFollowingUser(userId: string): Promise<boolean> {
   try {
     const currentUser = store.getState().auth.user;
@@ -116,12 +125,11 @@ async function isFollowingUser(userId: string): Promise<boolean> {
 
     return followingDoc.exists();
   } catch (error) {
-    console.error('Check following error:', error);
+    logger.error('Check following error:', error);
     return false;
   }
 }
 
-// Get user followers count
 async function getUserFollowersCount(userId: string): Promise<number> {
   try {
     const db = getFirestore();
@@ -129,36 +137,29 @@ async function getUserFollowersCount(userId: string): Promise<number> {
     const userData = userDoc.data();
     return userData?.followersCount || 0;
   } catch (error) {
-    console.error('Get followers count error:', error);
+    logger.error('Get followers count error:', error);
     return 0;
   }
 }
 
-// Search users by username or display name
 async function searchUsers(searchQuery: string): Promise<User[]> {
   try {
     const db = getFirestore();
     const usersRef = collection(db, 'users');
 
-    // Clean search query
     const cleanQuery = searchQuery.toLowerCase().trim();
     if (cleanQuery.length < 2) {
-      return []; // Minimum 2 karakter gerekli
+      return [];
     }
 
     const users: User[] = [];
 
-    // Search by username (exact match first, then contains)
     const exactUsernameQuery = query(usersRef, where('username', '==', cleanQuery));
     const exactUsernameSnapshot = await getDocs(exactUsernameQuery);
 
-    // Search by username (contains - for partial matches)
     const usernameQuery = query(usersRef, where('username', '>=', cleanQuery), where('username', '<=', cleanQuery + ''));
     const usernameSnapshot = await getDocs(usernameQuery);
 
-    // Search by display name (contains). displayName büyük harfle
-    // saklanabildiği için hem küçük harfli hem baş harfi büyük varyantı
-    // sorgulanır ("samet" → "Samet"); aksi hâlde range sorgusu hiç eşleşmez.
     const capitalizedQuery =
       cleanQuery.charAt(0).toLocaleUpperCase('tr-TR') + cleanQuery.slice(1);
     const displayNameVariants = Array.from(new Set([cleanQuery, capitalizedQuery]));
@@ -168,7 +169,6 @@ async function searchUsers(searchQuery: string): Promise<User[]> {
       )
     );
 
-    // Add exact username matches first (highest priority)
     exactUsernameSnapshot.forEach((doc: any) => {
       const userData = { id: doc.id, ...doc.data() } as User;
       if (!users.find(user => user.id === userData.id)) {
@@ -176,7 +176,6 @@ async function searchUsers(searchQuery: string): Promise<User[]> {
       }
     });
 
-    // Add partial username matches
     usernameSnapshot.forEach((doc: any) => {
       const userData = { id: doc.id, ...doc.data() } as User;
       if (!users.find(user => user.id === userData.id)) {
@@ -184,7 +183,6 @@ async function searchUsers(searchQuery: string): Promise<User[]> {
       }
     });
 
-    // Add display name matches (avoid duplicates)
     displayNameSnapshots.forEach(snapshot => {
       snapshot.forEach((doc: any) => {
         const userData = { id: doc.id, ...doc.data() } as User;
@@ -194,32 +192,28 @@ async function searchUsers(searchQuery: string): Promise<User[]> {
       });
     });
 
-    // Sort results: exact matches first, then by relevance
     users.sort((a, b) => {
       const aUsername = a.username?.toLowerCase() || '';
       const bUsername = b.username?.toLowerCase() || '';
       const aDisplayName = a.displayName?.toLowerCase() || '';
       const bDisplayName = b.displayName?.toLowerCase() || '';
 
-      // Exact username match gets highest priority
       if (aUsername === cleanQuery && bUsername !== cleanQuery) return -1;
       if (bUsername === cleanQuery && aUsername !== cleanQuery) return 1;
 
-      // Username starts with query gets higher priority
       if (aUsername.startsWith(cleanQuery) && !bUsername.startsWith(cleanQuery)) return -1;
       if (bUsername.startsWith(cleanQuery) && !aUsername.startsWith(cleanQuery)) return 1;
 
-      // Display name starts with query gets higher priority
       if (aDisplayName.startsWith(cleanQuery) && !bDisplayName.startsWith(cleanQuery)) return -1;
       if (bDisplayName.startsWith(cleanQuery) && !aDisplayName.startsWith(cleanQuery)) return 1;
 
-      // Sort by follower count (more popular users first)
       return (b.followersCount || 0) - (a.followersCount || 0);
     });
 
-    return users.slice(0, 20); // Limit to 20 results
+    // "Aramada göster" kapalı hesaplar sonuçlardan düşer.
+    return privacyActions.filterDiscoverable(users).slice(0, 20);
   } catch (error) {
-    console.error('Search users error:', error);
+    logger.error('Search users error:', error);
     return [];
   }
 }

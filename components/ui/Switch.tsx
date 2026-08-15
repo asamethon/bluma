@@ -28,7 +28,7 @@ export function Switch({
 
   React.useEffect(() => {
     thumbX.value = withSpring(checked ? 20 : 0, { damping: 15, stiffness: 160 });
-  }, [checked]);
+  }, [checked, thumbX]);
 
   return (
     <Pressable

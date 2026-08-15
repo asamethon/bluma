@@ -1,6 +1,8 @@
 import React from 'react';
 import * as Sentry from '@sentry/react-native';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import i18n from '@/i18n';
+import { logger } from '@/utils/logger';
 
 interface Props {
   children: React.ReactNode;
@@ -22,9 +24,8 @@ class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    logger.error('ErrorBoundary caught an error:', error, errorInfo);
     
-    // Report error to Sentry
     Sentry.captureException(error, {
       contexts: {
         react: {
@@ -33,7 +34,6 @@ class ErrorBoundary extends React.Component<Props, State> {
       },
     });
     
-    // Prevent infinite loops
     if (this.state.hasError) {
       return;
     }
@@ -47,17 +47,17 @@ class ErrorBoundary extends React.Component<Props, State> {
     if (this.state.hasError) {
       return (
         <View style={styles.container}>
-          <Text style={styles.title}>Bir Hata Oluştu</Text>
+          <Text style={styles.title}>{i18n.t('errors.boundaryTitle')}</Text>
           <Text style={styles.message}>
-            Uygulama beklenmeyen bir hatayla karşılaştı. Lütfen tekrar deneyin.
+            {i18n.t('errors.boundaryMessage')}
           </Text>
           {__DEV__ && this.state.error && (
             <Text style={styles.errorDetails}>
-              Hata: {this.state.error.message}
+              {i18n.t('errors.errorDetail', { message: this.state.error.message })}
             </Text>
           )}
           <TouchableOpacity style={styles.button} onPress={this.handleRestart}>
-            <Text style={styles.buttonText}>Tekrar Dene</Text>
+            <Text style={styles.buttonText}>{i18n.t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
       );

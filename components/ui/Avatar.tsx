@@ -4,10 +4,6 @@ import { Image } from "expo-image";
 import { Radius, useTheme } from "@/constants/theme";
 import { Text } from "./Text";
 
-/**
- * Avatar — circular profile image with a graceful initials fallback on a
- * violet wash, plus an optional bloom ring for verified / featured authors.
- */
 export function Avatar({
   uri,
   name,
@@ -40,7 +36,13 @@ export function Avatar({
       }}
     >
       {uri ? (
-        <Image source={{ uri }} style={{ width: size, height: size }} contentFit="cover" />
+        <Image
+          source={{ uri }}
+          style={{ width: size, height: size }}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          recyclingKey={uri}
+        />
       ) : (
         <Text
           color={colors.primary}

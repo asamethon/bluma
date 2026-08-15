@@ -1,58 +1,26 @@
 import { Screen, Switch, Text } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
+import { usePrivacySettings } from '@/features/privacy/hooks/usePrivacySettings';
+import { PrivacySettings } from '@/features/privacy/types';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { useAppSelector } from '@/store/hooks';
 
-type PrivacyState = {
-  privateAccount: boolean;
-  showActivity: boolean;
-  allowMessages: boolean;
-  discoverable: boolean;
-};
-
-const DEFAULTS: PrivacyState = {
-  privateAccount: false,
-  showActivity: true,
-  allowMessages: true,
-  discoverable: true,
-};
-
-const ROWS: { key: keyof PrivacyState; icon: keyof typeof Ionicons.glyphMap; title: string; caption: string }[] = [
-  { key: 'privateAccount', icon: 'lock-closed-outline', title: 'Gizli Hesap', caption: 'Hikayelerini ve profilini yalnızca takipçilerin görebilir' },
-  { key: 'showActivity', icon: 'pulse-outline', title: 'Etkinlik Durumu', caption: 'Çevrimiçi olduğun ve son görülme bilgisi gösterilsin' },
-  { key: 'allowMessages', icon: 'chatbubble-ellipses-outline', title: 'Mesajlara İzin Ver', caption: 'Herkes sana mesaj gönderebilsin' },
-  { key: 'discoverable', icon: 'search-outline', title: 'Aramada Göster', caption: 'Profilin arama sonuçlarında ve önerilerde çıksın' },
+const ROWS: { key: keyof PrivacySettings; icon: keyof typeof Ionicons.glyphMap; title: string; caption: string }[] = [
+  { key: 'privateAccount', icon: 'lock-closed-outline', title: 'privacy.privateAccount', caption: 'privacy.privateAccountSub' },
+  { key: 'showActivity', icon: 'pulse-outline', title: 'privacy.showActivity', caption: 'privacy.showActivitySub' },
+  { key: 'allowMessages', icon: 'chatbubble-ellipses-outline', title: 'privacy.allowMessages', caption: 'privacy.allowMessagesSub' },
+  { key: 'discoverable', icon: 'search-outline', title: 'privacy.discoverable', caption: 'privacy.discoverableSub' },
 ];
 
 export default function PrivacyScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { user } = useAppSelector(s => s.auth);
-  const styles = createStyles(colors);
-
-  const storageKey = `privacySettings:${user?.id ?? 'guest'}`;
-  const [state, setState] = useState<PrivacyState>(DEFAULTS);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const raw = await AsyncStorage.getItem(storageKey);
-        if (raw) setState({ ...DEFAULTS, ...JSON.parse(raw) });
-      } catch {}
-    })();
-  }, [storageKey]);
-
-  const toggle = async (key: keyof PrivacyState, value: boolean) => {
-    const nextState = { ...state, [key]: value };
-    setState(nextState);
-    try {
-      await AsyncStorage.setItem(storageKey, JSON.stringify(nextState));
-    } catch {}
-  };
+  const { t } = useTranslation();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { settings, toggle, error, isGuest } = usePrivacySettings();
 
   return (
     <Screen style={styles.container} edges={['top']}>
@@ -60,7 +28,7 @@ export default function PrivacyScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.headerIcon} hitSlop={8}>
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text variant="subheading">Gizlilik</Text>
+        <Text variant="subheading">{t('privacy.title')}</Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -70,7 +38,7 @@ export default function PrivacyScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text variant="body" tone="textSecondary" style={{ marginBottom: Spacing.lg }}>
-          Profilinin ve içeriklerinin kimler tarafından görülebileceğini buradan yönetebilirsin.
+          {t('privacy.description')}
         </Text>
 
         <View style={styles.card}>
@@ -82,19 +50,32 @@ export default function PrivacyScreen() {
                   <Ionicons name={row.icon} size={19} color={colors.primary} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text variant="bodyStrong">{row.title}</Text>
-                  <Text variant="caption" tone="textLight">{row.caption}</Text>
+                  <Text variant="bodyStrong">{t(row.title)}</Text>
+                  <Text variant="caption" tone="textLight">{t(row.caption)}</Text>
                 </View>
-                <Switch checked={state[row.key]} onChange={v => toggle(row.key, v)} />
+                <Switch
+                  checked={settings[row.key]}
+                  onChange={v => toggle(row.key, v)}
+                  disabled={isGuest}
+                />
               </View>
             </React.Fragment>
           ))}
         </View>
 
+        {error && (
+          <View style={[styles.note, { backgroundColor: colors.surfaceVariant }]}>
+            <Ionicons name="alert-circle-outline" size={18} color={colors.error} />
+            <Text variant="caption" color={colors.error} style={{ flex: 1 }}>
+              {error}
+            </Text>
+          </View>
+        )}
+
         <View style={[styles.note, { backgroundColor: colors.surfaceVariant }]}>
           <Ionicons name="information-circle-outline" size={18} color={colors.textSecondary} />
           <Text variant="caption" tone="textSecondary" style={{ flex: 1 }}>
-            Engellenen hesapları ve veri taleplerini Yardım & Destek bölümünden yönetebilirsin.
+            {t('privacy.note')}
           </Text>
         </View>
       </ScrollView>

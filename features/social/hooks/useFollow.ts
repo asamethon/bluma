@@ -1,49 +1,126 @@
 import { authActions } from '@/store/authStore';
 import { useCallback, useEffect, useState } from 'react';
 import { useAppSelector } from '@/store/hooks';
+import { getUserById } from '@/features/auth/services/userCache';
+import { isPrivateAccount } from '@/features/privacy/types';
+import { followRequestActions } from '../services/followRequests';
+import { useIsFollower } from './useIsFollower';
 
-// Optimistic takip hook'u — mimarinin referans implementasyonu
-// (bkz. docs/ARCHITECTURE.md). UI anında güncellenir, Firestore işi arka
-// planda yürür, hatada geri alınır; `busy` yalnızca çift tıklamayı engeller
-// (spinner göstermek için DEĞİL).
-//
-// `onCountChange`: ekran, takipçi sayacı gibi yerel state'ini optimistic
-// güncellemek isterse delta (+1/-1) alır; geri almalarda ters delta gelir.
+/**
+ * Takip durumu: yok → (gizli hesapta) istek gönderildi → takip ediliyor.
+ * Gizli hesapta takipçi sayacı iyimser artırılmaz; takip onaydan sonra başlar.
+ *
+ * `live`: profil gibi tek kişilik ekranlarda takipçi dokümanı canlı dinlenir
+ * (istek onaylanınca ekran kendiliğinden açılır). Listelerde kapalıdır —
+ * satır başına dinleyici açmamak için.
+ */
 export function useFollow(
   targetUserId: string | undefined,
-  onCountChange?: (delta: number) => void
+  onCountChange?: (delta: number) => void,
+  options?: { live?: boolean }
 ) {
+  const live = !!options?.live;
   const currentUserId = useAppSelector(s => s.auth.user?.id);
   const isSelf = !!targetUserId && targetUserId === currentUserId;
 
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isRequested, setIsRequested] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  // Mevcut takip durumunu yükle (misafir/kendi profili için gereksiz)
+  const liveFollower = useIsFollower(targetUserId, live);
+
+  // Dinleyici geldiğinde gerçek kaynak odur; onay/takipten çıkma anında yansır.
+  useEffect(() => {
+    if (liveFollower === null) return;
+    setIsFollowing(liveFollower);
+    if (liveFollower) setIsRequested(false);
+  }, [liveFollower]);
+
   useEffect(() => {
     if (!targetUserId || !currentUserId || isSelf) return;
-    authActions.isFollowingUser(targetUserId).then(setIsFollowing).catch(() => {});
-  }, [targetUserId, currentUserId, isSelf]);
+    let alive = true;
+
+    (async () => {
+      // Canlı modda takip durumu dinleyiciden gelir, tekrar okunmaz.
+      const following = live
+        ? false
+        : await authActions.isFollowingUser(targetUserId).catch(() => false);
+      if (!alive) return;
+      if (!live) setIsFollowing(following);
+
+      const target = await getUserById(targetUserId).catch(() => null);
+      if (!alive) return;
+      const priv = isPrivateAccount(target);
+      setIsPrivate(priv);
+
+      if (!following && priv) {
+        const pending = await followRequestActions.hasPendingRequest(targetUserId);
+        if (alive) setIsRequested(pending);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [targetUserId, currentUserId, isSelf, live]);
 
   const toggle = useCallback(() => {
     if (!targetUserId || busy || isSelf) return;
-    const next = !isFollowing;
-
-    // Optimistic: önce UI
-    setIsFollowing(next);
-    onCountChange?.(next ? 1 : -1);
     setBusy(true);
 
-    const revert = () => {
-      setIsFollowing(!next);
-      onCountChange?.(next ? -1 : 1);
+    const settle = (promise: Promise<any>, revert: () => void) => {
+      promise
+        .then(r => { if (!r?.success) revert(); })
+        .catch(revert)
+        .finally(() => setBusy(false));
     };
 
-    (next ? authActions.followUser(targetUserId) : authActions.unfollowUser(targetUserId))
-      .then(r => { if (!r?.success) revert(); })
-      .catch(revert)
-      .finally(() => setBusy(false));
-  }, [targetUserId, busy, isSelf, isFollowing, onCountChange]);
+    if (isFollowing) {
+      setIsFollowing(false);
+      onCountChange?.(-1);
+      settle(authActions.unfollowUser(targetUserId), () => {
+        setIsFollowing(true);
+        onCountChange?.(1);
+      });
+      return;
+    }
 
-  return { isFollowing, isSelf, busy, toggle };
+    if (isRequested) {
+      setIsRequested(false);
+      settle(followRequestActions.cancelFollowRequest(targetUserId), () => setIsRequested(true));
+      return;
+    }
+
+    if (isPrivate) {
+      setIsRequested(true);
+      settle(followRequestActions.sendFollowRequest(targetUserId), () => setIsRequested(false));
+      return;
+    }
+
+    setIsFollowing(true);
+    onCountChange?.(1);
+    const undoOptimisticFollow = () => {
+      setIsFollowing(false);
+      onCountChange?.(-1);
+    };
+    authActions
+      .followUser(targetUserId)
+      .then(r => {
+        if (!r?.success) {
+          undoOptimisticFollow();
+          return;
+        }
+        // Hesap bu arada gizliye dönmüşse servis takip yerine istek gönderir.
+        if ((r as { pending?: boolean }).pending) {
+          undoOptimisticFollow();
+          setIsPrivate(true);
+          setIsRequested(true);
+        }
+      })
+      .catch(undoOptimisticFollow)
+      .finally(() => setBusy(false));
+  }, [targetUserId, busy, isSelf, isFollowing, isRequested, isPrivate, onCountChange]);
+
+  return { isFollowing, isRequested, isPrivate, isSelf, busy, toggle };
 }

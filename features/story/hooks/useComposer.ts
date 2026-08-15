@@ -1,17 +1,15 @@
+import i18n from '@/i18n';
 import { storyActions } from '@/store/storyStore';
+import { challengeActions } from '@/store/challengeStore';
+import { reviewPromptActions } from '@/features/review/services/reviewPrompt';
 import { Story, StoryCategory } from '@/types';
-import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert } from 'react-native';
-import { joinChapters, splitChapters, StudioChapter } from '../utils/chapterContent';
+import { defaultChapterTitle, joinChapters, splitChapters, StudioChapter } from '../utils/chapterContent';
 import { charCount, readingMinutes, wordCount } from '../utils/textStats';
 import { useChapterEditor } from './useChapterEditor';
 
-// "Yaz" — tek bir bölümü sessiz bir kâğıt yüzeyinde düzenleyen composer.
-// Otomatik kaydetme yalnızca içerik alanlarını yazar (başlık/tür/kapak bilgi
-// ekranına aittir); yayınlama açık ve hikâye düzeyindedir. Gövde metni
-// useChapterEditor'da işaretsiz (display) halde düzenlenir; depoya _italik_
-// işaretli biçim yazılır.
 export function useComposer(id: string, chParam?: string) {
   const router = useRouter();
 
@@ -30,9 +28,6 @@ export function useComposer(id: string, chParam?: string) {
   const [publishing, setPublishing] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Kaydetme: bölüm gövdeleri stories/{id}/chapters alt koleksiyonuna yazılır
-  // (bkz. YAPILACAKLAR 2.2) — story dokümanında yalnızca metadata kalır, tam
-  // içerik artık ana sayfa/feed dinleyicilerinin indirdiği dokümanda taşınmaz.
   const persist = async (next: StudioChapter[]) => {
     const readingTime = readingMinutes(joinChapters(next));
     await Promise.all([
@@ -71,6 +66,9 @@ export function useComposer(id: string, chParam?: string) {
   };
 
   const editor = useChapterEditor(setChapterBody);
+  // Effect bağımlılığı OBJE olamaz: `editor` her render'da yeni referans.
+  // Yalnızca sabit referanslı `load`'a bağlanıyoruz.
+  const loadEditor = editor.load;
 
   useEffect(() => {
     let alive = true;
@@ -78,30 +76,28 @@ export function useComposer(id: string, chParam?: string) {
       const s = await storyActions.getStoryById(id);
       if (!alive) return;
       if (!s) {
-        Alert.alert('Hata', 'Hikâye bulunamadı.');
+        Alert.alert(i18n.t('common.error'), i18n.t('story.notFound'));
         router.back();
         return;
       }
-      // Yeni bölüm modeline geçmiş hikâyeler alt koleksiyondan, eskiler
-      // (henüz migrasyon script'i çalışmamış) legacy `content` alanından yüklenir.
       const loaded = s.chaptersInSubcollection
         ? await storyActions.loadAllChapters(id)
         : splitChapters(s.content, s.chapterTitles);
-      const chs = loaded.length > 0 ? loaded : [{ id: '1', title: 'Bölüm 1', content: '' }];
+      const chs = loaded.length > 0 ? loaded : [{ id: '1', title: defaultChapterTitle(1), content: '' }];
       setStory(s);
       setCategory(s.category || 'other');
       setIsPublished(!!s.isPublished);
       if (chParam === 'new') {
-        const withNew = [...chs, { id: Date.now().toString(), title: `Bölüm ${chs.length + 1}`, content: '' }];
+        const withNew = [...chs, { id: Date.now().toString(), title: defaultChapterTitle(chs.length + 1), content: '' }];
         setChapters(withNew);
         setIndex(withNew.length - 1);
-        editor.load('');
+        loadEditor('');
       } else {
         const wanted = parseInt(chParam || '0', 10) || 0;
         const idx = Math.max(0, Math.min(chs.length - 1, wanted));
         setChapters(chs);
         setIndex(idx);
-        editor.load(chs[idx]?.content ?? '');
+        loadEditor(chs[idx]?.content ?? '');
       }
       setLoading(false);
     })();
@@ -109,8 +105,20 @@ export function useComposer(id: string, chParam?: string) {
       alive = false;
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [chParam, id, loadEditor, router]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      (async () => {
+        const s = await storyActions.getStoryById(id);
+        if (!alive || !s) return;
+        setStory(s);
+        setCategory(s.category || 'other');
+      })();
+      return () => { alive = false; };
+    }, [id]),
+  );
 
   const switchTo = (i: number) => {
     setIndex(i);
@@ -118,10 +126,8 @@ export function useComposer(id: string, chParam?: string) {
     setSheet(false);
   };
 
-  // Boş bölüm KAYDEDİLMEZ — yalnızca içerik yazılınca kalıcılaşır (yayındaki
-  // hikâyelerde erken "yeni bölüm" bildirimini de önler).
   const addChapter = () => {
-    const next = [...chapters, { id: Date.now().toString(), title: `Bölüm ${chapters.length + 1}`, content: '' }];
+    const next = [...chapters, { id: Date.now().toString(), title: defaultChapterTitle(chapters.length + 1), content: '' }];
     setChapters(next);
     setIndex(next.length - 1);
     editor.load('');
@@ -130,13 +136,13 @@ export function useComposer(id: string, chParam?: string) {
 
   const deleteChapter = () => {
     if (chapters.length <= 1) {
-      Alert.alert('Silinemez', 'Bir hikâyenin en az bir bölümü olmalı.');
+      Alert.alert(i18n.t('studio.cannotDeleteTitle'), i18n.t('studio.cannotDeleteMessage'));
       return;
     }
-    Alert.alert('Bölümü Sil', 'Bu bölümü silmek istediğine emin misin?', [
-      { text: 'Vazgeç', style: 'cancel' },
+    Alert.alert(i18n.t('studio.deleteChapterTitle'), i18n.t('studio.deleteChapterMessage'), [
+      { text: i18n.t('common.cancel'), style: 'cancel' },
       {
-        text: 'Sil',
+        text: i18n.t('common.delete'),
         style: 'destructive',
         onPress: () => {
           const next = chapters.filter((_, i) => i !== index);
@@ -151,14 +157,23 @@ export function useComposer(id: string, chParam?: string) {
   };
 
   const publish = () => {
-    if (category === 'other') {
-      Alert.alert('Tür seç', 'Yayınlamadan önce hikâyen için bir tür seçmelisin. "Hikâye Bilgilerini Düzenle" ekranından ekleyebilirsin.');
+    const title = (story?.title || '').trim();
+    const needsInfo =
+      title.length < 3 || title === i18n.t('studio.untitledStory') || category === 'other';
+    if (needsInfo) {
+      Alert.alert(i18n.t('studio.completeInfoTitle'), i18n.t('studio.completeInfoMessage'), [
+        { text: i18n.t('common.cancel'), style: 'cancel' },
+        {
+          text: i18n.t('studio.completeInfoAction'),
+          onPress: () => router.push(`/story/edit/${id}`),
+        },
+      ]);
       return;
     }
-    Alert.alert('Hikâyeyi Yayınla', `"${story?.title}" adlı hikâyeni yayınlamak istiyor musun?`, [
-      { text: 'Vazgeç', style: 'cancel' },
+    Alert.alert(i18n.t('studio.publishTitle'), i18n.t('studio.publishMessage', { title: story?.title }), [
+      { text: i18n.t('common.cancel'), style: 'cancel' },
       {
-        text: 'Yayınla',
+        text: i18n.t('studio.publishAction'),
         onPress: async () => {
           setPublishing(true);
           if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -175,10 +190,31 @@ export function useComposer(id: string, chParam?: string) {
           });
           setPublishing(false);
           if (result.success) {
+            const firstPublish = !isPublished && !!story?.authorId;
+            if (firstPublish) {
+              challengeActions.trackAction(story!.authorId, 'storiesPublished').catch(() => { });
+            }
             setIsPublished(true);
-            Alert.alert('Harika!', 'Hikâyen yayınlandı ve artık herkes okuyabilir.');
+            // Değerlendirme, kendi uyarımız kapandıktan SONRA istenir ki iki
+            // diyalog üst üste binmesin.
+            Alert.alert(i18n.t('studio.publishedTitle'), i18n.t('studio.publishedMessage'), [
+              {
+                text: i18n.t('common.ok'),
+                onPress: () => {
+                  // Editörden çıkılır: yayın akışının sonu ana akıştır, yoksa
+                  // yazar hâlâ "yazıyormuş" gibi bir ekranda kalıyor.
+                  router.replace('/(tabs)');
+                  if (firstPublish) {
+                    // İlk yayın = en güçlü değer anı; eşikleri beklemeden sorulur.
+                    reviewPromptActions
+                      .recordMoment('storyPublished', { immediate: true })
+                      .catch(() => { });
+                  }
+                },
+              },
+            ]);
           } else {
-            Alert.alert('Hata', result.error || 'Hikâye yayınlanamadı.');
+            Alert.alert(i18n.t('common.error'), result.error || i18n.t('studio.publishFailed'));
           }
         },
       },
@@ -191,7 +227,6 @@ export function useComposer(id: string, chParam?: string) {
     menu, setMenu, publishing, imageUploading: editor.imageUploading,
     words: wordCount(editor.display), chars: charCount(editor.display), readMin: readingMinutes(editor.display),
     setChapterTitle, switchTo, addChapter, deleteChapter, publish, insertImage: editor.insertImage,
-    // Gövde editörü (display uzayı — işaretler gizli)
     bodyDisplay: editor.display, bodyRanges: editor.ranges,
     italicMode: editor.italicMode, bulletMode: editor.bulletMode, forcedSel: editor.forcedSel,
     onChangeBody: editor.onChangeText, onBodySelectionChange: editor.onSelectionChange,

@@ -7,8 +7,6 @@ import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// Hikâye Bilgilerini Düzenle — yalnızca meta veriler (başlık/tür/açıklama/kapak).
-// Bölüm yazımı composer'da yapılır.
 export default function StoryEditScreen() {
   const { colors } = useTheme();
   const { bottom } = useSafeAreaInsets();

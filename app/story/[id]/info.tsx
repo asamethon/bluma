@@ -5,9 +5,11 @@ import { buildStoryShareUrl } from '@/utils/deepLinks';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+    ActivityIndicator,
     Alert,
     ScrollView,
     Share,
@@ -18,17 +20,32 @@ import {
 } from 'react-native';
 import { Screen } from '@/components/ui';
 import { useTheme } from '@/constants/theme';
+import { ShareStorySheet } from '@/features/messaging/components/ShareStorySheet';
 import { store } from '@/store';
+import { useAppSelector } from '@/store/hooks';
+import { useProfileAccess } from '@/features/privacy/hooks/useProfileAccess';
+import { PrivateProfileNotice } from '@/features/privacy/components/PrivateProfileNotice';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { logger } from '@/utils/logger';
 
 export default function StoryInfoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [story, setStory] = useState<Story | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [, setIsLoading] = useState<boolean>(true);
   const [isSaved, setIsSaved] = useState<boolean>(false);
   const [savedChapter, setSavedChapter] = useState<number | null>(null);
+  const [shareVisible, setShareVisible] = useState<boolean>(false);
+  // Gizli hesabın hikâyesi doğrudan bağlantıyla da açılamaz.
+  const authorAccess = useProfileAccess(story?.author);
+
+  const isDownloaded = useAppSelector(s => s.story.offlineStories.some(o => o.id === id));
+  const downloadProgress = useAppSelector(s => s.story.isDownloading[String(id)]);
+  const isDownloading = downloadProgress !== undefined;
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -39,13 +56,10 @@ export default function StoryInfoScreen() {
         setIsLoading(true);
         const data = await storyActions.getStoryWithOfflineFallback(id);
         setStory(data);
-        // Real-time updates
         const unsub = storyActions.setupStoryDetailListener(id);
         unsubscribe = unsub;
-        // Check saved
         const saved = await storyActions.isStorySaved(id);
         setIsSaved(saved);
-        // Load reading progress
         try {
           const raw = await AsyncStorage.getItem(`readingProgress_${id}`);
           if (raw) {
@@ -56,7 +70,7 @@ export default function StoryInfoScreen() {
           }
         } catch {}
       } catch (e) {
-        console.error('Load story info error', e);
+        logger.error('Load story info error', e);
       } finally {
         setIsLoading(false);
       }
@@ -70,7 +84,7 @@ export default function StoryInfoScreen() {
   const handleToggleSave = async () => {
     const { user } = store.getState().auth;
     if (!user?.id) {
-      Alert.alert('Giriş Gerekli', 'Kütüphaneye eklemek için giriş yapmalısın.');
+      Alert.alert(t('studio.loginRequiredTitle'), t('storyScreen.saveLoginRequired'));
       return;
     }
     if (!story) return;
@@ -78,15 +92,34 @@ export default function StoryInfoScreen() {
     if (res.success) setIsSaved(prev => !prev);
   };
 
-  const handleShare = async () => {
+  const handleShareLink = async () => {
     try {
       const url = buildStoryShareUrl(String(id));
       await Share.share({
-        title: story?.title || 'Bluma Hikaye',
-        message: story?.title ? `"${story.title}" hikayesini Bluma'da oku:\n${url}` : url,
+        title: story?.title || 'Bluma',
+        message: story?.title ? t('storyScreen.shareMessage', { title: story.title, url }) : url,
       });
     } catch (e) {
-      console.error('Share error', e);
+      logger.error('Share error', e);
+    }
+  };
+
+  const handleToggleDownload = async () => {
+    if (!story || isDownloading) return;
+    if (isDownloaded) {
+      Alert.alert(
+        t('storyScreen.removeOfflineTitle'),
+        t('storyScreen.removeOfflineConfirm', { title: story.title }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('lists.remove'), style: 'destructive', onPress: () => storyActions.deleteOfflineStory(story.id) },
+        ]
+      );
+      return;
+    }
+    const res = await storyActions.downloadStoryOffline(story);
+    if (!res.success) {
+      Alert.alert(t('storyScreen.downloadFailedTitle'), res.error || t('storyScreen.downloadFailedMessage'));
     }
   };
 
@@ -99,33 +132,38 @@ export default function StoryInfoScreen() {
     router.push(url as any);
   };
 
-  // Helpers for chapter list rendering
-  const formatNumber = (num?: number): string => {
-    if (!num) return '0';
-    if (num < 1000) return `${num}`;
-    if (num < 1000000) {
-      const k = num / 1000;
-      return k % 1 === 0 ? `${k}K` : `${k.toFixed(1)}K`;
-    }
-    const m = num / 1000000;
-    return m % 1 === 0 ? `${m}M` : `${m.toFixed(1)}M`;
-  };
-  const formatDate = (d: Date): string => d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
-
   type ChapterListItem = { id: string; title: string };
   const getChapters = (): ChapterListItem[] => {
     if (!story) return [];
     const hasTitles = !!(story.chapterTitles && story.chapterTitles.length > 0);
     const titles = hasTitles
       ? story.chapterTitles!
-      : Array.from({ length: Math.max(1, story.chaptersCount || 1) }).map((_, i) => `${i + 1}. Bölüm`);
-    // Bölüm başına gerçek (yorum/beğeni/okunma) veri modeli olmadığından,
-    // satır başına yalnızca başlık gösteriyoruz — uydurma istatistik üretmiyoruz.
-    return titles.map((t, idx) => ({
+      : Array.from({ length: Math.max(1, story.chaptersCount || 1) }).map((_, i) => t('story.chapterN', { number: i + 1 }));
+    return titles.map((chTitle, idx) => ({
       id: `${idx + 1}`,
-      title: hasTitles ? `${idx + 1}. Bölüm – ${t}` : `${idx + 1}. Bölüm`,
+      title: hasTitles
+        ? `${t('story.chapterN', { number: idx + 1 })} – ${chTitle}`
+        : t('story.chapterN', { number: idx + 1 }),
     }));
   };
+
+  if (authorAccess.locked || authorAccess.checking) {
+    return (
+      <Screen style={styles.container}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={styles.headerBar}>
+          <TouchableOpacity style={styles.headerIcon} onPress={() => router.back()}>
+            <Ionicons name="chevron-back" size={26} color={colors.text} />
+          </TouchableOpacity>
+        </View>
+        {authorAccess.locked && (
+          <View style={{ marginTop: 40 }}>
+            <PrivateProfileNotice name={story?.author?.displayName?.split(' ')[0]} />
+          </View>
+        )}
+      </Screen>
+    );
+  }
 
   return (
     <Screen style={styles.container}>
@@ -138,7 +176,6 @@ export default function StoryInfoScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Hero */}
         <View style={styles.hero}>
           {story?.coverImage ? (
             <Image source={{ uri: story.coverImage }} style={styles.cover} contentFit="cover" />
@@ -146,35 +183,46 @@ export default function StoryInfoScreen() {
             <View style={[styles.cover, styles.coverPlaceholder]} />
           )}
           <View style={styles.heroMeta}>
-            <Text style={styles.title}>{story?.title || 'Hikaye'}</Text>
+            <Text style={styles.title}>{story?.title || t('common.story')}</Text>
             <TouchableOpacity onPress={() => story?.authorId && router.push(`/user/${story.authorId}`)}>
               <Text style={styles.author}>@{story?.author?.username || 'yazar'}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Actions */}
         <View style={styles.actionsRow}>
           <TouchableOpacity style={styles.primaryAction} onPress={handleToggleSave}>
             <Ionicons name={isSaved ? 'bookmark' : 'bookmark-outline'} size={18} color={colors.primary} />
-            <Text style={styles.primaryActionText}>{isSaved ? 'Kütüphanede' : 'Kütüphaneye Ekle'}</Text>
+            <Text style={styles.primaryActionText}>{isSaved ? t('storyScreen.inLibrary') : t('storyScreen.addToLibrary')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconAction} onPress={handleShare}>
+          <TouchableOpacity
+            style={styles.iconAction}
+            onPress={handleToggleDownload}
+            disabled={isDownloading}
+          >
+            {isDownloading ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <Ionicons
+                name={isDownloaded ? 'checkmark-circle' : 'download-outline'}
+                size={18}
+                color={isDownloaded ? colors.primary : colors.text}
+              />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconAction} onPress={() => setShareVisible(true)}>
             <Ionicons name="share-social-outline" size={18} color={colors.text} />
           </TouchableOpacity>
         </View>
 
-        {/* Description */}
         {story?.description ? (
           <View style={styles.card}> 
             <Text style={styles.description}>{story.description}</Text>
           </View>
         ) : null}
 
-        {/* Chapters */}
         <View style={styles.sectionHeader}> 
-          <Text style={styles.sectionTitle}>Bölümler</Text>
-          {/* Son güncelleme gösterimi basitçe updatedAt alanından */}
+          <Text style={styles.sectionTitle}>{t('studio.chapters')}</Text>
           {story?.updatedAt && (
             <Text style={styles.sectionSub}>
               Son güncelleme: {new Date((story.updatedAt as any)?.toDate ? (story.updatedAt as any).toDate() : story.updatedAt).toLocaleDateString('tr-TR')}
@@ -192,7 +240,6 @@ export default function StoryInfoScreen() {
           ))}
         </View>
 
-        {/* Continue reading button (if progress exists) */}
         {savedChapter !== null && (
           <TouchableOpacity style={[styles.readButton, styles.continueButton]} onPress={() => handleStartReading(savedChapter)}>
             <Ionicons name="play-circle-outline" size={18} color={colors.surface} />
@@ -202,12 +249,28 @@ export default function StoryInfoScreen() {
           </TouchableOpacity>
         )}
 
-        {/* Start reading button */}
         <TouchableOpacity style={styles.readButton} onPress={() => handleStartReading(0)}>
           <Ionicons name="book-outline" size={18} color={colors.surface} />
-          <Text style={styles.readButtonText}>Baştan Oku</Text>
+          <Text style={styles.readButtonText}>{t('storyScreen.readFromStart')}</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <ShareStorySheet
+        visible={shareVisible}
+        onClose={() => setShareVisible(false)}
+        onShareLink={handleShareLink}
+        safeBottom={insets.bottom}
+        story={
+          story
+            ? {
+                id: String(id),
+                title: story.title,
+                coverImage: story.coverImage,
+                authorName: story.author?.displayName || story.author?.username,
+              }
+            : null
+        }
+      />
     </Screen>
   );
 }
@@ -370,5 +433,4 @@ const createStyles = (colors: any) =>
       fontWeight: '800',
     },
   });
-
 

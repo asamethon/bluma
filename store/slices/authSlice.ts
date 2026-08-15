@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { PrivacySettings } from '@/types';
 
 export interface User {
   id: string;
@@ -10,13 +11,22 @@ export interface User {
   website?: string;
   location?: string;
   authProvider: 'email' | 'google' | 'apple';
-  appleUserId?: string; // Apple'ın kararlı kullanıcı ID'si — hesap silmede refreshAsync reauth için gerekir
+  appleUserId?: string;
   followersCount?: number;
   followingCount?: number;
   storiesCount?: number;
   profileImage?: string;
+  privacy?: PrivacySettings;
+  lastActiveAt?: any;
   createdAt?: any;
   updatedAt?: any;
+  // Kayıt anının bağlamı — yalnızca kullanıcı ilk oluşturulurken yazılır.
+  signupPlatform?: 'ios' | 'android' | 'web';
+  signupOsVersion?: string;
+  signupAppVersion?: string;
+  signupDeviceModel?: string;
+  signupLanguage?: string;
+  signupRegion?: string;
 }
 
 export interface AuthState {
@@ -29,7 +39,7 @@ export interface AuthState {
 }
 
 const initialState: AuthState = {
-  isLoading: true, // initializeAuth() tamamlanana kadar true
+  isLoading: true,
   isAuthenticated: false,
   hasCompletedOnboarding: false,
   isGuest: false,
@@ -41,7 +51,6 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    // Kısmi güncelleme — servisler alan bazında yamalar
     patchAuth(state, action: PayloadAction<Partial<AuthState>>) {
       Object.assign(state, action.payload);
     },

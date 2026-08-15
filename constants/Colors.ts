@@ -37,6 +37,7 @@ export const Colors = {
 
     // Status
     accent: '#FF5C8A', // alias of bloom (kept for back-compat)
+    readTick: '#8FD9FF', // DM "okundu" mavi çift tik (koyu mor baloncuk üstünde)
     success: '#46B98A',
     warning: '#E6A455',
     error: '#E5604F',
@@ -82,6 +83,7 @@ export const Colors = {
     onPrimary: '#1A1426',
 
     accent: '#FF85A8',
+    readTick: '#1B5E96', // açık lavanta baloncuk üstünde okunur koyu mavi
     success: '#5FCB9C',
     warning: '#E6B36A',
     error: '#F0796A',

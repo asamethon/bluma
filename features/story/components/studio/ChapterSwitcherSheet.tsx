@@ -3,13 +3,14 @@ import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { useComposer } from '../../hooks/useComposer';
 import { ChapterRow } from './ChapterRow';
 
-// Bölüm seçici alt sayfası — bölümler arası geçiş + yeni bölüm ekleme.
 export function ChapterSwitcherSheet({ c, safeBottom }: { c: ReturnType<typeof useComposer>; safeBottom: number }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const { isTablet } = useResponsive();
 
   return (
@@ -19,7 +20,7 @@ export function ChapterSwitcherSheet({ c, safeBottom }: { c: ReturnType<typeof u
         <View style={[styles.sheet, { backgroundColor: colors.surface, paddingBottom: safeBottom + Spacing.xl }]}>
           <View style={[styles.handle, { backgroundColor: colors.border }]} />
           <View style={styles.head}>
-            <Text variant="heading" style={{ fontSize: 18 }}>Bölümler</Text>
+            <Text variant="heading" style={{ fontSize: 18 }}>{t('studio.chapters')}</Text>
             <Pressable onPress={() => c.setSheet(false)} hitSlop={8} style={[styles.close, { backgroundColor: colors.surfaceVariant }]}>
               <Ionicons name="close" size={16} color={colors.textSecondary} />
             </Pressable>
@@ -30,7 +31,7 @@ export function ChapterSwitcherSheet({ c, safeBottom }: { c: ReturnType<typeof u
             ))}
             <Pressable onPress={c.addChapter} style={[styles.add, { borderColor: colors.borderStrong }]}>
               <Ionicons name="add" size={16} color={colors.primary} />
-              <Text variant="label" color={colors.primary}>Yeni Bölüm Ekle</Text>
+              <Text variant="label" color={colors.primary}>{t('studio.addChapter')}</Text>
             </Pressable>
           </ScrollView>
         </View>

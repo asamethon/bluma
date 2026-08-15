@@ -14,6 +14,8 @@ import { useAppSelector } from '@/store/hooks';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import {
   ScrollView,
   StyleSheet,
@@ -27,14 +29,18 @@ type FilterValue = 'all' | Pillar;
 const GOLD = '#E6B95C';
 
 function fmtXp(n: number) {
-  return n >= 1000 ? `${(n / 1000).toFixed(1)}b` : `${n}`;
+  return n >= 1000 ? `${(n / 1000).toFixed(1)}${i18n.t('common.thousandSuffix')}` : `${n}`;
 }
 
 export default function ChallengesScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const currentUser = useAppSelector(s => s.auth.user);
-  const { xp, streak, challengeProgress, claimedChallenges } = useAppSelector(s => s.challenge);
+  const xp = useAppSelector(s => s.challenge.xp);
+  const streak = useAppSelector(s => s.challenge.streak);
+  const challengeProgress = useAppSelector(s => s.challenge.challengeProgress);
+  const claimedChallenges = useAppSelector(s => s.challenge.claimedChallenges);
 
   const [filter, setFilter] = useState<FilterValue>('all');
 
@@ -68,25 +74,24 @@ export default function ChallengesScreen() {
   const wfPct = Math.min(wfCur / WEEKLY_FEATURED.goal, 1);
 
   const FILTERS: { value: FilterValue; label: string; icon?: string }[] = [
-    { value: 'all',     label: 'Tümü' },
-    { value: 'write',   label: 'Yaz',       icon: 'create-outline' },
-    { value: 'read',    label: 'Oku',        icon: 'book-outline' },
-    { value: 'comment', label: 'Topluluk',   icon: 'chatbubbles-outline' },
+    { value: 'all',     label: t('challengesScreen.filterAll') },
+    { value: 'write',   label: t('challengesScreen.filterWrite'),     icon: 'create-outline' },
+    { value: 'read',    label: t('challengesScreen.filterRead'),      icon: 'book-outline' },
+    { value: 'comment', label: t('challengesScreen.filterCommunity'), icon: 'chatbubbles-outline' },
   ];
 
   return (
     <Screen style={{ flex: 1, backgroundColor: colors.background }}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.headerTitle, { color: colors.text, fontFamily: Fonts.serif }]}>Görevler</Text>
+          <Text style={[styles.headerTitle, { color: colors.text, fontFamily: Fonts.serif }]}>{t('challengesScreen.title')}</Text>
           <Text style={[styles.headerSub, { color: colors.textLight }]}>
-            {doneCount}/{CHALLENGE_DEFS.length} tamamlandı
+            {t('challengesScreen.completedCount', { done: doneCount, total: CHALLENGE_DEFS.length })}
           </Text>
         </View>
         <View style={[styles.xpChip, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}>
@@ -97,7 +102,6 @@ export default function ChallengesScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
 
-        {/* ── Rank Hero ─────────────────────────────────────────── */}
         <View style={styles.rankHero}>
           <View pointerEvents="none" style={{ position: 'absolute', left: -40, bottom: -40, width: 180, height: 180, borderRadius: 90, backgroundColor: '#5E3FB0', opacity: 0.6 }} />
           <View pointerEvents="none" style={{ position: 'absolute', right: -30, top: -30, width: 160, height: 160, borderRadius: 80, backgroundColor: '#7C5CD0', opacity: 0.4 }} />
@@ -110,8 +114,8 @@ export default function ChallengesScreen() {
               <Ionicons name={rank.icon as any} size={26} color="#fff" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.rankLevelLabel}>Seviye {rankIndex + 1}</Text>
-              <Text style={[styles.rankName, { fontFamily: Fonts.serif }]}>{rank.name}</Text>
+              <Text style={styles.rankLevelLabel}>{t('challengesScreen.level', { level: rankIndex + 1 })}</Text>
+              <Text style={[styles.rankName, { fontFamily: Fonts.serif }]}>{t(rank.name)}</Text>
             </View>
           </View>
 
@@ -120,10 +124,10 @@ export default function ChallengesScreen() {
               <Text style={styles.xpSmall}>{fmtXp(xp)} XP</Text>
               {nextRank ? (
                 <Text style={styles.xpSmall}>
-                  Sonraki: {nextRank.name} · {fmtXp(ceil - xp)} XP kaldı
+                  {t('challengesScreen.nextRank', { rank: t(nextRank.name), xp: fmtXp(ceil - xp) })}
                 </Text>
               ) : (
-                <Text style={styles.xpSmall}>En yüksek seviye</Text>
+                <Text style={styles.xpSmall}>{t('challengesScreen.maxLevel')}</Text>
               )}
             </View>
             <View style={styles.xpBarBg}>
@@ -136,9 +140,9 @@ export default function ChallengesScreen() {
               <Ionicons name="flame" size={20} color={GOLD} />
               <View>
                 <Text style={[styles.heroPillValue, { fontFamily: Fonts.serif }]}>
-                  {streak} gün
+                  {t('challengesScreen.dayCount', { count: streak })}
                 </Text>
-                <Text style={styles.heroPillLabel}>seri</Text>
+                <Text style={styles.heroPillLabel}>{t('challengesScreen.streakLabel')}</Text>
               </View>
             </View>
             <View style={styles.heroPill}>
@@ -147,13 +151,12 @@ export default function ChallengesScreen() {
                 <Text style={[styles.heroPillValue, { fontFamily: Fonts.serif }]}>
                   {doneCount}/{CHALLENGE_DEFS.length}
                 </Text>
-                <Text style={styles.heroPillLabel}>görev</Text>
+                <Text style={styles.heroPillLabel}>{t('challengesScreen.challengeLabel')}</Text>
               </View>
             </View>
           </View>
         </View>
 
-        {/* ── Haftalık Öne Çıkan ──────────────────────────────────── */}
         <View style={[styles.weeklyCard, { backgroundColor: colors.bloomSoft, borderColor: colors.bloomLight }]}>
           <View style={[styles.weeklyIcon, { backgroundColor: colors.bloom }]}>
             <Ionicons name="trophy" size={22} color="#fff" />
@@ -161,14 +164,14 @@ export default function ChallengesScreen() {
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Text style={[styles.weeklyTitle, { flex: 1, color: colors.text, fontFamily: Fonts.serif }]}>
-                {WEEKLY_FEATURED.title}
+                {t(WEEKLY_FEATURED.title)}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
                 <Ionicons name="hourglass-outline" size={13} color={colors.bloom} />
-                <Text style={[styles.weeklyMeta, { color: colors.bloom }]}>{WEEKLY_FEATURED.endsIn}</Text>
+                <Text style={[styles.weeklyMeta, { color: colors.bloom }]}>{t(WEEKLY_FEATURED.endsIn)}</Text>
               </View>
             </View>
-            <Text style={[styles.weeklyDesc, { color: colors.textSecondary }]}>{WEEKLY_FEATURED.desc}</Text>
+            <Text style={[styles.weeklyDesc, { color: colors.textSecondary }]}>{t(WEEKLY_FEATURED.desc)}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 9 }}>
               <View style={[styles.progressBg, { flex: 1, backgroundColor: colors.surface }]}>
                 <View style={[styles.progressFill, { width: `${wfPct * 100}%` as any, backgroundColor: colors.bloom }]} />
@@ -186,7 +189,6 @@ export default function ChallengesScreen() {
           </View>
         </View>
 
-        {/* ── Filtreler ────────────────────────────────────────────── */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -218,7 +220,6 @@ export default function ChallengesScreen() {
           })}
         </ScrollView>
 
-        {/* ── Görev Listesi ────────────────────────────────────────── */}
         <View style={{ paddingHorizontal: Spacing.screenX, gap: 11 }}>
           {list.map(c => {
             const cur = getCur(c.id);
@@ -261,7 +262,7 @@ export default function ChallengesScreen() {
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
                       <Text style={[styles.challengeTitle, { flex: 1, color: colors.text }]}>
-                        {c.title}
+                        {t(c.title)}
                       </Text>
                       <View
                         style={[
@@ -290,13 +291,13 @@ export default function ChallengesScreen() {
                     </View>
 
                     <Text style={[styles.challengeDesc, { color: colors.textSecondary }]}>
-                      {c.desc}
+                      {t(c.desc)}
                     </Text>
 
                     {c.badge && !done && (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 8 }}>
                         <Ionicons name="ribbon" size={13} color={col} />
-                        <Text style={[styles.badgeNote, { color: col }]}>"{c.badge}" rozeti</Text>
+                        <Text style={[styles.badgeNote, { color: col }]}>{t('challengesScreen.badgeNote', { badge: t(c.badge) })}</Text>
                       </View>
                     )}
 
@@ -307,10 +308,10 @@ export default function ChallengesScreen() {
                           onPress={() => handleClaim(c.id)}
                           activeOpacity={0.8}
                         >
-                          <Text style={styles.claimBtnText}>Ödülü Al</Text>
+                          <Text style={styles.claimBtnText}>{t('challengesScreen.claimReward')}</Text>
                         </TouchableOpacity>
                       ) : done ? (
-                        <Text style={[styles.doneLabel, { color: colors.success }]}>Tamamlandı</Text>
+                        <Text style={[styles.doneLabel, { color: colors.success }]}>{t('storyStatus.completed')}</Text>
                       ) : (
                         <>
                           <View style={[styles.progressBg, { flex: 1, backgroundColor: colors.surfaceVariant }]}>

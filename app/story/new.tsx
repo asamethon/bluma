@@ -5,8 +5,6 @@ import { useStoryInfoForm } from '@/features/story/hooks/useStoryInfoForm';
 import React from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// Yeni hikâye — bilgi formu. Kaydet → taslak dokümanı oluşturur ve composer'a
-// geçer (useStoryInfoForm içinde).
 export default function NewStoryScreen() {
   const { colors } = useTheme();
   const { bottom } = useSafeAreaInsets();

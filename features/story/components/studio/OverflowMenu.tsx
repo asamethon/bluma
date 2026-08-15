@@ -11,7 +11,6 @@ export type OverflowItem = {
   onPress: () => void;
 };
 
-// Küçük, sağ-üste tutunan aksiyon menüsü (Modal + saydam arka plan).
 export function OverflowMenu({
   visible,
   onClose,

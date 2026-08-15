@@ -10,11 +10,9 @@ interface ProfileConversationCardProps {
   conversation: Conversation;
   onPress: () => void;
   onImagePress: (imageUri: string) => void;
-  /** Verilmezse silme ikonu gösterilmez (başkasının konuşması). */
   onDelete?: () => void;
 }
 
-/** Profil "Konuşmalar" sekmesindeki tek konuşma kartı. */
 export function ProfileConversationCard({ conversation, onPress, onImagePress, onDelete }: ProfileConversationCardProps) {
   const { colors } = useTheme();
 

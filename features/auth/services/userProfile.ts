@@ -10,11 +10,11 @@ import {
   deleteUser,
 } from '@react-native-firebase/auth';
 import { API_SERVER_URL } from '@/constants/config';
+import { imageUploadService } from '@/services/imageUploadService';
 import {
   getFirestore,
   collection,
   doc,
-  getDoc,
   getDocs,
   setDoc,
   query,
@@ -25,36 +25,36 @@ import {
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { patchAuth, User } from '@/store/slices/authSlice';
+import { getUserById as getCachedUserById, primeCachedUser } from '@/features/auth/services/userCache';
+import { endSession } from '@/features/auth/services/sessionState';
 import { store } from '@/store';
+import i18n from '@/i18n';
 import { storyApiActions } from '@/features/story/services/storyApi';
 import { readingProgressActions } from '@/features/story/services/readingProgress';
+import { logger } from '@/utils/logger';
 
-// Google/Apple girişli kullanıcıda Firebase oturumu eskiyse deleteUser
-// `auth/requires-recent-login` ile patlar; hesabı gerçekten silebilmek için
-// önce sessizce reauthenticate ediyoruz (Apple'ın hesap silme zorunluluğu).
 async function reauthenticateForDeletion(currentUser: User, firebaseUser: any) {
   if (currentUser.authProvider === 'google') {
     const userInfo: any = await GoogleSignin.signInSilently();
     const idToken = userInfo?.data?.idToken;
     if (!idToken) {
-      throw Object.assign(new Error('Google oturumu bulunamadı'), { code: 'auth/requires-recent-login' });
+      throw Object.assign(new Error(i18n.t('authErrors.googleSessionMissing')), { code: 'auth/requires-recent-login' });
     }
     const credential = GoogleAuthProvider.credential(idToken);
     await reauthenticateWithCredential(firebaseUser, credential);
   } else if (currentUser.authProvider === 'apple') {
     if (!currentUser.appleUserId) {
-      throw Object.assign(new Error('Apple kullanıcı kimliği bulunamadı'), { code: 'auth/requires-recent-login' });
+      throw Object.assign(new Error(i18n.t('authErrors.appleUserIdMissing')), { code: 'auth/requires-recent-login' });
     }
     const refreshed = await AppleAuthentication.refreshAsync({ user: currentUser.appleUserId });
     if (!refreshed.identityToken) {
-      throw Object.assign(new Error('Apple kimlik doğrulaması yenilenemedi'), { code: 'auth/requires-recent-login' });
+      throw Object.assign(new Error(i18n.t('authErrors.appleRefreshFailed')), { code: 'auth/requires-recent-login' });
     }
     const credential = AppleAuthProvider.credential(refreshed.identityToken);
     await reauthenticateWithCredential(firebaseUser, credential);
   }
 }
 
-// Check if username is available
 async function checkUsernameAvailability(username: string): Promise<boolean> {
   try {
     const db = getFirestore();
@@ -62,149 +62,127 @@ async function checkUsernameAvailability(username: string): Promise<boolean> {
     const q = query(usersRef, where('username', '==', username));
     const querySnapshot = await getDocs(q);
 
-    return querySnapshot.empty; // true if username is available, false if taken
+    return querySnapshot.empty;
   } catch (error: any) {
-    console.error('Username availability check error:', error);
+    logger.error('Username availability check error:', error);
 
-    // If Firestore permission denied, assume username is available to allow signup to continue
     if (error.code === 'firestore/permission-denied') {
-      console.log('Firestore permission denied, assuming username is available');
+      logger.debug('Firestore permission denied, assuming username is available');
       return true;
     }
 
-    // For other errors, assume taken to be safe
     return false;
   }
 }
 
-// Get user by ID
 async function getUserById(userId: string): Promise<User | null> {
-  try {
-    const db = getFirestore();
-    const userDoc = await getDoc(doc(db, 'users', userId));
-
-    if (userDoc.exists()) {
-      return { id: userDoc.id, ...userDoc.data() } as User;
-    }
-
-    return null;
-  } catch (error) {
-    console.error('Get user by ID error:', error);
-    return null;
-  }
+  return getCachedUserById(userId);
 }
 
-// Complete onboarding
-async function completeOnboarding(userData: { username: string; interests: string[]; bio: string }) {
+async function completeOnboarding(userData: {
+  username: string;
+  interests: string[];
+  bio: string;
+  displayName?: string;
+  profileImage?: string | null;
+  intent?: 'reader' | 'writer' | 'both';
+}) {
   try {
     store.dispatch(patchAuth({ isLoading: true }));
 
     const db = getFirestore();
 
-    // Check if username is available
     const isUsernameAvailable = await checkUsernameAvailability(userData.username);
     if (!isUsernameAvailable) {
-      return { success: false, error: 'Bu kullanıcı adı zaten kullanımda.' };
+      return { success: false, error: i18n.t('account.usernameTaken') };
     }
 
-    // Update user data
     const currentUser = store.getState().auth.user;
     if (currentUser) {
-      const updatedUser = {
+      let profileImageUrl: string | undefined;
+      if (userData.profileImage) {
+        try {
+          profileImageUrl = await imageUploadService.uploadProfileImage(currentUser.id, userData.profileImage);
+        } catch (uploadError) {
+          logger.error('Onboarding profil fotoğrafı yüklenemedi:', uploadError);
+        }
+      }
+
+      const updatedUser: User = {
         ...currentUser,
         username: userData.username,
         bio: userData.bio,
         interests: userData.interests,
+        ...(userData.intent ? { intent: userData.intent } : {}),
+        ...(userData.displayName ? { displayName: userData.displayName } : {}),
+        ...(profileImageUrl ? { profileImage: profileImageUrl } : {}),
       };
 
-      // Save to Firestore
       const userDocRef = doc(db, 'users', currentUser.id);
       await setDoc(userDocRef, {
         ...updatedUser,
         updatedAt: serverTimestamp(),
       }, { merge: true });
 
-      // Save to AsyncStorage
       await AsyncStorage.setItem('userData', JSON.stringify(updatedUser));
       await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
 
-      // Update state
       store.dispatch(patchAuth({ user: updatedUser }));
       store.dispatch(patchAuth({ hasCompletedOnboarding: true }));
 
-      console.log('Onboarding completed successfully');
+      logger.debug('Onboarding completed successfully');
       return { success: true };
     }
 
   } catch (error) {
-    console.error('Onboarding error:', error);
-    return { success: false, error: 'Profil oluşturulurken bir hata oluştu.' };
+    logger.error('Onboarding error:', error);
+    return { success: false, error: i18n.t('account.onboardingFailed') };
   } finally {
     store.dispatch(patchAuth({ isLoading: false }));
   }
 }
 
-// Update user profile
 async function updateUserProfile(updatedUser: User) {
   try {
     store.dispatch(patchAuth({ isLoading: true }));
 
     const db = getFirestore();
 
-    // Save to Firestore
     const userDocRef = doc(db, 'users', updatedUser.id);
     await setDoc(userDocRef, {
       ...updatedUser,
       updatedAt: serverTimestamp(),
     });
 
-    // Save to AsyncStorage
     await AsyncStorage.setItem('userData', JSON.stringify(updatedUser));
 
-    // Update state
     store.dispatch(patchAuth({ user: updatedUser }));
+    primeCachedUser(updatedUser);
 
-    console.log('Profile updated successfully');
     return { success: true };
   } catch (error) {
-    console.error('Profile update error:', error);
-    return { success: false, error: 'Profil güncellenirken bir hata oluştu.' };
+    logger.error('Profile update error:', error);
+    return { success: false, error: i18n.t('account.profileUpdateFailed') };
   } finally {
     store.dispatch(patchAuth({ isLoading: false }));
   }
 }
 
-// Uygulama içinde kalan durumu temizler (server ya da client silme yolu
-// başarılı olduktan sonra ortak adım).
 async function clearLocalAccountState(uid: string) {
-  // Hesap sunucu tarafında (Admin SDK) silindi — istemcinin kendi Firebase
-  // Auth oturumu hâlâ "giriş yapılmış" sanabilir, yerel oturumu da kapat.
+  // Önce yerel durum temizlenir ki auth dinleyicisi araya girip oturumu geri kurmasın.
+  await endSession({ asGuest: true });
   try { await firebaseSignOut(getAuth()); } catch {}
-
-  await AsyncStorage.multiRemove(['userToken', 'authProvider', 'userData', 'hasCompletedOnboarding']);
   await readingProgressActions.clearReadingProgressCache(uid);
-  store.dispatch(patchAuth({ isAuthenticated: false }));
-  store.dispatch(patchAuth({ hasCompletedOnboarding: false }));
-  // "Oturum yok" durumunun tek karşılığı isGuest:true — false bırakılırsa
-  // isGuest'e bakan ekranlar ne misafir ne giriş yapılmış durumunu
-  // karşılamadığından bozuk/asılı kalıyor (bkz. session.ts signOut()).
-  store.dispatch(patchAuth({ isGuest: true }));
-  store.dispatch(patchAuth({ user: null }));
-  store.dispatch(patchAuth({ token: null }));
 }
 
-// Delete user account — API_SERVER_URL yapılandırılmışsa VPS'teki
-// push-worker/delete-account'a delege eder (Admin SDK: reauthenticate
-// gerektirmez, DM thread'lerini de siler — bkz. YAPILACAKLAR 0.4/3.1).
-// Yapılandırılmamışsa eski istemci-taraflı akışa düşer.
 async function deleteAccount(password?: string) {
   const currentUser = store.getState().auth.user;
   if (!currentUser) {
-    return { success: false, error: 'Kullanıcı bulunamadı.' };
+    return { success: false, error: i18n.t('errors.userNotFound') };
   }
   const firebaseUser = getAuth().currentUser;
   if (!firebaseUser) {
-    return { success: false, error: 'Firebase kullanıcısı bulunamadı.' };
+    return { success: false, error: i18n.t('errors.userNotFound') };
   }
 
   if (API_SERVER_URL) {
@@ -217,14 +195,14 @@ async function deleteAccount(password?: string) {
       });
       const result = await res.json();
       if (!res.ok || !result.success) {
-        return { success: false, error: result.error || 'Hesap silinirken bir hata oluştu.' };
+        return { success: false, error: result.error || i18n.t('account.deleteFailed') };
       }
       await clearLocalAccountState(currentUser.id);
-      console.log('Account deletion successful (server)');
+      logger.debug('Account deletion successful (server)');
       return { success: true };
     } catch (error) {
-      console.error('Account deletion error (server):', error);
-      return { success: false, error: 'Sunucuya ulaşılamadı. Lütfen tekrar dene.' };
+      logger.error('Account deletion error (server):', error);
+      return { success: false, error: i18n.t('errors.serverUnreachable') };
     } finally {
       store.dispatch(patchAuth({ isLoading: false }));
     }
@@ -237,9 +215,6 @@ async function deleteAccountClientSide(password: string | undefined, currentUser
   try {
     store.dispatch(patchAuth({ isLoading: true }));
 
-    // Re-authenticate: password for email accounts, silent Google/Apple
-    // credential refresh for social accounts (deleteUser fails with
-    // auth/requires-recent-login otherwise if the session isn't fresh).
     try {
       if (password && currentUser.authProvider === 'email') {
         const credential = EmailAuthProvider.credential(currentUser.email, password);
@@ -247,36 +222,31 @@ async function deleteAccountClientSide(password: string | undefined, currentUser
       } else if (currentUser.authProvider !== 'email') {
         await reauthenticateForDeletion(currentUser, firebaseUser);
       }
-      console.log('User re-authenticated successfully');
+      logger.debug('User re-authenticated successfully');
     } catch (reauthError: any) {
       if (reauthError.code === 'auth/wrong-password') {
-        return { success: false, error: 'Hatalı şifre.' };
+        return { success: false, error: i18n.t('authErrors.wrongPassword') };
       } else if (reauthError.code === 'auth/user-mismatch') {
-        return { success: false, error: 'Kullanıcı bilgileri eşleşmiyor.' };
+        return { success: false, error: i18n.t('account.userMismatch') };
       } else if (reauthError.code === 'auth/requires-recent-login') {
-        return { success: false, error: 'Hesabını silmek için lütfen çıkış yapıp tekrar giriş yap.' };
+        return { success: false, error: i18n.t('account.deleteRequiresRelogin') };
       } else {
-        return { success: false, error: 'Kimlik doğrulama hatası.' };
+        return { success: false, error: i18n.t('account.reauthFailed') };
       }
     }
 
     const db = getFirestore();
 
-    // Hikâyeleri deleteStory() ile sil — alt koleksiyonları (likes/views/
-    // comments) doğru sırada temizler, storiesCount'u düşürür. Raw deleteDoc
-    // bunları yetim bırakıyordu ve kurallar gereği bir daha silinemiyordu.
     const storiesRef = query(collection(db, 'stories'), where('authorId', '==', currentUser.id));
     const storiesSnapshot = await getDocs(storiesRef);
     for (const storyDoc of storiesSnapshot.docs) {
       await storyApiActions.deleteStory(storyDoc.id);
     }
 
-    // Delete user's conversations
     const conversationsRef = query(collection(db, 'conversations'), where('authorId', '==', currentUser.id));
     const conversationsSnapshot = await getDocs(conversationsRef);
     await Promise.all(conversationsSnapshot.docs.map(d => deleteDoc(d.ref)));
 
-    // Delete user's followers/following relationships
     const followersRef = collection(db, 'users', currentUser.id, 'followers');
     const followingRef = collection(db, 'users', currentUser.id, 'following');
     const followersSnapshot = await getDocs(followersRef);
@@ -286,45 +256,38 @@ async function deleteAccountClientSide(password: string | undefined, currentUser
       ...followingSnapshot.docs.map(d => deleteDoc(d.ref)),
     ]);
 
-    // Kullanıcının kişisel alt koleksiyonlarını temizle (KVKK/GDPR).
-    const personalSubcollections = ['likedStories', 'savedStories', 'likedConversations', 'readingLists', 'readingProgress', 'blocked'];
+    const personalSubcollections = ['likedStories', 'savedStories', 'likedConversations', 'readingLists', 'readingProgress', 'blocked', 'followRequests'];
     for (const sub of personalSubcollections) {
       const snapshot = await getDocs(collection(db, 'users', currentUser.id, sub));
       await Promise.all(snapshot.docs.map(d => deleteDoc(d.ref)));
     }
 
-    // Kullanıcıya ait bildirimler, push token ve bildirim tercihleri
     const notificationsSnapshot = await getDocs(query(collection(db, 'notifications'), where('userId', '==', currentUser.id)));
     await Promise.all(notificationsSnapshot.docs.map(d => deleteDoc(d.ref)));
     await deleteDoc(doc(db, 'userPushTokens', currentUser.id)).catch(() => {});
     await deleteDoc(doc(db, 'notificationSettings', currentUser.id)).catch(() => {});
 
-    // NOT: DM thread'leri (messageThreads) kasıtlı olarak silinmiyor — diğer
-    // katılımcının konuşma geçmişini korumak için kural `delete: if false`.
-    // Kalıcı çözüm FAZ 3: tek Cloud Function ile tüm kullanıcı verisini sil.
 
-    // Delete user document
     await deleteDoc(doc(db, 'users', currentUser.id));
 
-    // Delete Firebase auth user
     await deleteUser(firebaseUser);
 
     await clearLocalAccountState(currentUser.id);
 
-    console.log('Account deletion successful');
+    logger.debug('Account deletion successful');
     return { success: true };
   } catch (error: any) {
-    console.error('Account deletion error:', error);
+    logger.error('Account deletion error:', error);
     store.dispatch(patchAuth({ isLoading: false }));
 
     if (error.code === 'auth/requires-recent-login') {
-      return { success: false, error: 'Hesap silmek için şifreni tekrar girmen gerekiyor.' };
+      return { success: false, error: i18n.t('account.deleteNeedsPassword') };
     } else if (error.code === 'auth/user-not-found') {
-      return { success: false, error: 'Kullanıcı bulunamadı.' };
+      return { success: false, error: i18n.t('errors.userNotFound') };
     } else if (error.code === 'auth/network-request-failed') {
-      return { success: false, error: 'Ağ bağlantısı hatası.' };
+      return { success: false, error: i18n.t('authErrors.network') };
     } else {
-      return { success: false, error: 'Hesap silinirken bir hata oluştu.' };
+      return { success: false, error: i18n.t('account.deleteFailed') };
     }
   }
 }

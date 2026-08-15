@@ -7,26 +7,28 @@ import {
   StoryRow,
   Text,
 } from '@/components/ui';
-import { CategoryMeta, Radius, Spacing, categoryColor, useTheme } from '@/constants/theme';
+import { CategoryMeta, Radius, Spacing, useTheme } from '@/constants/theme';
 import { FollowButton } from '@/features/social/components/FollowButton';
 import { useResponsiveGrid } from '@/hooks/useResponsive';
 import { authActions, User } from '@/store/authStore';
 import { useAppSelector } from '@/store/hooks';
 import { moderationActions } from '@/store/moderationStore';
 import { preferencesActions } from '@/store/preferencesStore';
+import { privacyActions } from '@/features/privacy/services/privacyService';
 import { Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
-  FlatList,
   Pressable,
   StyleSheet,
   TextInput,
   View,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 
 const GENRE_KEYS = [
   'romance', 'fantasy', 'sci_fi', 'mystery',
@@ -46,9 +48,10 @@ interface SearchHistoryItem {
 
 export default function SearchScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const currentUserId = useAppSelector(s => s.auth.user?.id);
-  const { numColumns, columnWidth } = useResponsiveGrid();
+  const { numColumns } = useResponsiveGrid();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
@@ -58,8 +61,6 @@ export default function SearchScreen() {
   const [isSearchingUsers, setIsSearchingUsers] = useState(false);
   const [recentSearches, setRecentSearches] = useState<SearchHistoryItem[]>([]);
 
-  // Trend Aramalar — gerçek kataloğdan, etkileşime (beğeni + yorum) göre
-  // en popüler hikâye başlıkları. Mock veri yok.
   const trendingSearches = useMemo(
     () =>
       [...allStories]
@@ -78,20 +79,30 @@ export default function SearchScreen() {
     loadAllStories();
     loadRecentSearches();
     preferencesActions.load();
-    if (currentUserId) moderationActions.loadBlockedUsers();
+    if (currentUserId) {
+      moderationActions.loadBlockedUsers();
+      privacyActions.load();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Tercih/engel değişince listeyi tazele (reaktif)
   const matureOn = useAppSelector(s => s.preferences.showMatureContent);
-  const blockedCount = useAppSelector(s => s.moderation.blockedUserIds.length);
+  const isGuest = useAppSelector(s => s.auth.isGuest);
+  const blockedIds = useAppSelector(s => s.moderation.blockedUserIds);
+  const followingIds = useAppSelector(s => s.privacy.followingIds);
 
-  // Türetilmiş değer — eskiden useState+useEffect+setTimeout ile tutuluyordu.
-  // Filtreleme senkron ve ucuz; render'da hesaplamak fazladan bir render
-  // turu ve yapay 200ms gecikmeyi ortadan kaldırır.
   const filteredStories = useMemo(() => {
-    // Engellenen yazarları ve (tercih kapalıysa) 18+ içeriği gizle
-    let filtered = preferencesActions.filterMature(moderationActions.filterHidden(moderationActions.filterBlocked(allStories)));
+    let filtered = preferencesActions.filterMature(
+      moderationActions.filterHidden(
+        // Gizli hesapların hikâyeleri takipçi olmayanlara gösterilmez.
+        privacyActions.filterPrivateContent(
+          moderationActions.filterBlocked(allStories, blockedIds),
+          followingIds
+        )
+      ),
+      matureOn,
+      isGuest
+    );
     if (selectedGenre) filtered = filtered.filter(s => s.category === selectedGenre);
     if (searchQuery.trim()) {
       const t = searchQuery.toLowerCase();
@@ -101,7 +112,7 @@ export default function SearchScreen() {
       );
     }
     return filtered;
-  }, [allStories, selectedGenre, searchQuery, matureOn, blockedCount]);
+  }, [allStories, selectedGenre, searchQuery, matureOn, isGuest, blockedIds, followingIds]);
 
   useEffect(() => {
     if (searchQuery.trim().length >= 2) searchUsersByQuery(searchQuery);
@@ -153,8 +164,6 @@ export default function SearchScreen() {
       const firestore = await import('@react-native-firebase/firestore');
       const { collection, query, where, orderBy, limit, getDocs, getFirestore } = firestore;
       const db = getFirestore();
-      // Sunucu tarafında yayınlananları filtrele — istemcide ayıklamaya gerek
-      // kalmadan limit kadar gerçek sonuç döner.
       const q = query(
         collection(db, 'stories'),
         where('isPublished', '==', true),
@@ -173,20 +182,41 @@ export default function SearchScreen() {
       const list: Story[] = snapshot.docs.map(doc => {
         const data = doc.data() as Story;
         const author = authorMap.get(data.authorId) || null;
-        return { ...data, id: doc.id, author: author || { id: data.authorId || '', email: '', displayName: (data as any).authorName || 'Anonim', authProvider: 'email' } };
+        return { ...data, id: doc.id, author: author || { id: data.authorId || '', email: '', displayName: (data as any).authorName || t('common.anonymous'), authProvider: 'email' } };
       });
       setAllStories(list);
     } catch {}
     finally { setIsLoading(false); }
   };
 
-  const handleStoryPress = (story: Story) => {
+  const handleStoryPress = useCallback((story: Story) => {
     const item: SearchHistoryItem = { type: 'story', id: story.id, title: story.title, image: story.coverImage, timestamp: Date.now() };
-    const next = [item, ...recentSearches.filter(i => !(i.type === 'story' && i.id === story.id))].slice(0, 10);
-    setRecentSearches(next);
-    AsyncStorage.setItem('searchHistoryV2', JSON.stringify(next)).catch(() => {});
+    setRecentSearches(prev => {
+      const next = [item, ...prev.filter(i => !(i.type === 'story' && i.id === story.id))].slice(0, 10);
+      AsyncStorage.setItem('searchHistoryV2', JSON.stringify(next)).catch(() => {});
+      return next;
+    });
     router.push(`/story/${story.id}/preview`);
-  };
+  }, [router]);
+
+  const renderStoryItem = useCallback(
+    ({ item: story }: { item: Story }) => (
+      <View
+        style={
+          numColumns > 1
+            ? { paddingHorizontal: Spacing.gutter / 2, marginBottom: Spacing.md }
+            : { paddingHorizontal: Spacing.screenX, marginBottom: Spacing.md }
+        }
+      >
+        <StoryRow
+          story={story}
+          status={story.isCompleted ? 'completed' : null}
+          onPress={() => handleStoryPress(story)}
+        />
+      </View>
+    ),
+    [numColumns, handleStoryPress]
+  );
 
   const isEmpty = !isLoading && !isSearchingUsers && filteredStories.length === 0 && searchUsers.length === 0;
   const showIdle = !searchQuery.trim() && !selectedGenre;
@@ -194,14 +224,12 @@ export default function SearchScreen() {
 
   const listHeader = (
     <>
-      {/* Header */}
       <View style={styles.headerRow}>
         <Text variant="title" style={{ fontSize: 26, fontWeight: "700" }}>
-          Keşfet
+          {t('tabs.discover')}
         </Text>
       </View>
 
-      {/* Search input */}
       <View
         style={[
           styles.searchBar,
@@ -215,7 +243,7 @@ export default function SearchScreen() {
         />
         <TextInput
           style={[styles.searchInput, { color: colors.text }]}
-          placeholder="Hikaye, yazar ya da etiket ara"
+          placeholder={t('search.placeholder')}
           placeholderTextColor={colors.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -233,7 +261,6 @@ export default function SearchScreen() {
         )}
       </View>
 
-      {/* Trend Aramalar — gerçek kataloğdan, sadece idle modda göster */}
       {showIdle && trendingSearches.length > 0 && (
         <View style={styles.section}>
           <Text
@@ -241,7 +268,7 @@ export default function SearchScreen() {
             tone="textLight"
             style={styles.overlineLabel}
           >
-            TREND ARAMALAR
+            {t('search.trending')}
           </Text>
           <View style={styles.trendingRow}>
             {trendingSearches.map((title) => (
@@ -269,9 +296,8 @@ export default function SearchScreen() {
         </View>
       )}
 
-      {/* Genre chips */}
       <View style={styles.sectionSpacing}>
-        <SectionHeader title="Türler" accent={colors.primary} />
+        <SectionHeader title={t('search.genres')} accent={colors.primary} />
         <View style={styles.genreGrid}>
           {GENRE_KEYS.map((g) => (
             <CategoryChip
@@ -284,16 +310,15 @@ export default function SearchScreen() {
         </View>
       </View>
 
-      {/* Recent searches */}
       {showIdle && recentSearches.length > 0 && (
         <View style={styles.section}>
           <View style={styles.rowBetween}>
             <Text variant="subheading" style={{ fontWeight: "700" }}>
-              Son Aramalar
+              {t('search.recentSearches')}
             </Text>
             <Pressable onPress={clearSearchHistory}>
               <Text variant="caption" tone="primary">
-                Temizle
+                {t('search.clear')}
               </Text>
             </Pressable>
           </View>
@@ -343,7 +368,7 @@ export default function SearchScreen() {
                     </Text>
                     {item.type !== "query" && (
                       <Text variant="caption" tone="textSecondary">
-                        {item.type === "story" ? "Hikaye" : `@${item.username}`}
+                        {item.type === "story" ? t('common.story') : `@${item.username}`}
                       </Text>
                     )}
                   </View>
@@ -365,23 +390,21 @@ export default function SearchScreen() {
         </View>
       )}
 
-      {/* Results section */}
       {(!showIdle || selectedGenre !== null) && (
         <View style={styles.sectionSpacing}>
           <View style={styles.rowBetween}>
             <Text variant="heading" style={{ fontSize: 18, fontWeight: "700" }}>
               {selectedGenre
-                ? (CategoryMeta[selectedGenre]?.label ?? selectedGenre)
+                ? (CategoryMeta[selectedGenre] ? t(CategoryMeta[selectedGenre].label) : selectedGenre)
                 : searchQuery
                   ? `"${searchQuery}"`
-                  : "Tüm Sonuçlar"}
+                  : t('search.allResults')}
             </Text>
-            <Badge label={`${filteredStories.length} hikâye`} tone="neutral" />
+            <Badge label={t('lists.storyCount', { count: filteredStories.length })} tone="neutral" />
           </View>
         </View>
       )}
 
-      {/* Users — searchUsers zaten authStore.searchUsers içinde .slice(0, 20) ile sınırlı */}
       {searchUsers.length > 0 && (
         <View
           style={[
@@ -433,14 +456,16 @@ export default function SearchScreen() {
 
   return (
     <Screen style={{ flex: 1, backgroundColor: colors.background }}>
-      <FlatList
+      <FlashList
         key={`grid-${numColumns}`}
         data={busy ? [] : filteredStories}
         keyExtractor={(story) => story.id}
         numColumns={numColumns}
-        columnWrapperStyle={numColumns > 1 ? { gap: Spacing.gutter, paddingHorizontal: Spacing.screenX } : undefined}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{
+          paddingBottom: 120,
+          paddingHorizontal: numColumns > 1 ? Spacing.screenX : 0,
+        }}
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={listHeader}
         ListEmptyComponent={
@@ -448,26 +473,12 @@ export default function SearchScreen() {
             <View style={styles.empty}>
               <Ionicons name="leaf-outline" size={38} color={colors.primaryLight} />
               <Text variant="body" tone="textSecondary" style={{ marginTop: 12, fontStyle: 'italic', textAlign: 'center' }}>
-                Bu bahçede henüz hiçbir şey filizlenmedi.
+                {t('search.emptyResults')}
               </Text>
             </View>
           ) : null
         }
-        renderItem={({ item: story }) => (
-          <View
-            style={
-              numColumns > 1
-                ? { width: columnWidth, marginBottom: Spacing.md }
-                : { paddingHorizontal: Spacing.screenX, marginBottom: Spacing.md }
-            }
-          >
-            <StoryRow
-              story={story}
-              status={story.isCompleted ? 'Tamamlandı' : null}
-              onPress={() => handleStoryPress(story)}
-            />
-          </View>
-        )}
+        renderItem={renderStoryItem}
       />
     </Screen>
   );

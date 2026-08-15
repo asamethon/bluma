@@ -20,46 +20,51 @@ import {
 } from '@react-native-firebase/firestore';
 import { patchAuth, User } from '@/store/slices/authSlice';
 import { store } from '@/store';
+import i18n from '@/i18n';
+import { authError, AuthResult } from './authErrors';
+import { buildSignupContext, trackSignupContext } from './signupContext';
+import { logger } from '@/utils/logger';
 
-// Sign in with email
-async function signInWithEmail(email: string, password: string) {
+// Klavye/otomatik doldurma kaynaklı boşluk ve büyük harf, Firebase'de
+// auth/invalid-credential hatasına yol açıyor — tek noktada temizliyoruz.
+const normalizeEmail = (email: string) => email.trim().toLowerCase();
+
+async function signInWithEmail(email: string, password: string): Promise<AuthResult> {
   try {
     store.dispatch(patchAuth({ isLoading: true }));
 
     const authInstance = getAuth();
-    const userCredential = await signInWithEmailAndPassword(authInstance, email, password);
+    const userCredential = await signInWithEmailAndPassword(authInstance, normalizeEmail(email), password);
     const firebaseUser = userCredential.user;
 
-    // Get user data from Firestore
     const db = getFirestore();
     const userDocRef = doc(db, 'users', firebaseUser.uid);
     const userDoc = await getDoc(userDocRef);
     let userData = userDoc.data();
 
     if (!userData) {
-      // Create user data if it doesn't exist
+      const signupContext = buildSignupContext();
       userData = {
         id: firebaseUser.uid,
         email: firebaseUser.email || '',
-        displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+        displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || i18n.t('common.user'),
         authProvider: 'email' as const,
+        ...signupContext,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
 
       await setDoc(userDocRef, userData);
+      trackSignupContext(signupContext);
     }
 
-    // Get Firebase token
     const token = await getIdToken(firebaseUser);
 
-    // Update state
     store.dispatch(patchAuth({ token: token }));
     store.dispatch(patchAuth({ user: userData as User }));
     store.dispatch(patchAuth({ isAuthenticated: true }));
     store.dispatch(patchAuth({ isGuest: false }));
 
-    // Check if user has completed onboarding
     if (userData.username && userData.interests) {
       store.dispatch(patchAuth({ hasCompletedOnboarding: true }));
       await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
@@ -68,176 +73,117 @@ async function signInWithEmail(email: string, password: string) {
       await AsyncStorage.setItem('hasCompletedOnboarding', 'false');
     }
 
-    // Save to AsyncStorage
     await AsyncStorage.setItem('userToken', token);
     await AsyncStorage.setItem('userData', JSON.stringify(userData));
 
-    // Save push token
     try {
       const { pushNotificationService } = await import('@/services/pushNotificationService');
       await pushNotificationService.saveUserPushToken(firebaseUser.uid);
     } catch (error) {
-      console.log('Push token kaydedilirken hata (non-critical):', error);
+      logger.debug('Push token kaydedilirken hata (non-critical):', error);
     }
 
-    // Set loading to false before returning
     store.dispatch(patchAuth({ isLoading: false }));
 
     return { success: true };
   } catch (error: any) {
-    console.error('Email sign in error:', error);
+    logger.error('Email sign in error:', error);
 
-    if (error.code === 'auth/user-not-found') {
-      return { success: false, error: 'Bu e-posta adresi ile kayıtlı kullanıcı bulunamadı.' };
-    } else if (error.code === 'auth/wrong-password') {
-      return { success: false, error: 'Hatalı şifre.' };
-    } else if (error.code === 'auth/invalid-email') {
-      return { success: false, error: 'Geçersiz e-posta adresi.' };
-    } else if (error.code === 'auth/user-disabled') {
-      return { success: false, error: 'Hesap devre dışı bırakılmış.' };
-    } else if (error.code === 'auth/too-many-requests') {
-      return { success: false, error: 'Çok fazla deneme. Lütfen daha sonra tekrar deneyin.' };
-    } else if (error.code === 'auth/network-request-failed') {
-      return { success: false, error: 'Ağ bağlantısı hatası.' };
-    } else if (error.code === 'auth/internal-error') {
-      return { success: false, error: 'Sunucu hatası. Lütfen daha sonra tekrar deneyin.' };
-    } else if (error.code === 'firestore/permission-denied') {
-      return { success: false, error: 'Veritabanı erişim hatası.' };
-    } else {
-      return { success: false, error: 'Giriş yapılırken bir hata oluştu.' };
-    }
+    return authError(error.code, 'authErrors.signInFailed');
   } finally {
     store.dispatch(patchAuth({ isLoading: false }));
   }
 }
 
-// Sign up with email
-async function signUpWithEmail(email: string, password: string, displayName: string) {
+async function signUpWithEmail(email: string, password: string, displayName: string): Promise<AuthResult> {
   try {
     store.dispatch(patchAuth({ isLoading: true }));
 
     const authInstance = getAuth();
-    const userCredential = await createUserWithEmailAndPassword(authInstance, email, password);
+    const userCredential = await createUserWithEmailAndPassword(authInstance, normalizeEmail(email), password);
     const firebaseUser = userCredential.user;
 
-    // Update Firebase profile
     await updateProfile(firebaseUser, {
       displayName: displayName,
     });
 
-    // Create user data
+    const signupContext = buildSignupContext();
     const userData = {
       id: firebaseUser.uid,
       email: firebaseUser.email || '',
       displayName: displayName,
       authProvider: 'email' as const,
+      ...signupContext,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
 
-    // Save to Firestore
     const db = getFirestore();
     const userDocRef = doc(db, 'users', firebaseUser.uid);
     await setDoc(userDocRef, userData);
 
-    // Get Firebase token
     const token = await getIdToken(firebaseUser);
 
-    // Update state
     store.dispatch(patchAuth({ token: token }));
     store.dispatch(patchAuth({ user: userData as User }));
     store.dispatch(patchAuth({ isAuthenticated: true }));
     store.dispatch(patchAuth({ isGuest: false }));
-    store.dispatch(patchAuth({ hasCompletedOnboarding: false })); // New user needs onboarding
+    store.dispatch(patchAuth({ hasCompletedOnboarding: false }));
 
-    // Save to AsyncStorage
     await AsyncStorage.setItem('userToken', token);
     await AsyncStorage.setItem('userData', JSON.stringify(userData));
     await AsyncStorage.setItem('hasCompletedOnboarding', 'false');
 
-    // Save push token
     try {
       const { pushNotificationService } = await import('@/services/pushNotificationService');
       await pushNotificationService.saveUserPushToken(firebaseUser.uid);
     } catch (error) {
-      console.log('Push token kaydedilirken hata (non-critical):', error);
+      logger.debug('Push token kaydedilirken hata (non-critical):', error);
     }
 
-    // Retention funnel'ı için (bkz. YAPILACAKLAR 3.2) — kayıt olayı
+    trackSignupContext(signupContext);
     logEvent(getAnalytics(), 'sign_up', { method: 'email' }).catch(() => {});
 
-    // Set loading to false before returning
     store.dispatch(patchAuth({ isLoading: false }));
 
     return { success: true };
   } catch (error: any) {
-    console.error('Email sign up error:', error);
+    logger.error('Email sign up error:', error);
 
-    if (error.code === 'auth/email-already-in-use') {
-      return { success: false, error: 'Bu e-posta adresi zaten kullanımda.' };
-    } else if (error.code === 'auth/invalid-email') {
-      return { success: false, error: 'Geçersiz e-posta adresi.' };
-    } else if (error.code === 'auth/weak-password') {
-      return { success: false, error: 'Şifre en az 6 karakter olmalıdır.' };
-    } else if (error.code === 'auth/operation-not-allowed') {
-      return { success: false, error: 'E-posta ile kayıt etkin değil.' };
-    } else if (error.code === 'auth/too-many-requests') {
-      return { success: false, error: 'Çok fazla deneme. Lütfen daha sonra tekrar deneyin.' };
-    } else if (error.code === 'auth/network-request-failed') {
-      return { success: false, error: 'Ağ bağlantısı hatası.' };
-    } else if (error.code === 'auth/internal-error') {
-      return { success: false, error: 'Sunucu hatası. Lütfen daha sonra tekrar deneyin.' };
-    } else if (error.code === 'firestore/permission-denied') {
-      return { success: false, error: 'Veritabanı erişim hatası.' };
-    } else {
-      return { success: false, error: 'Kayıt olurken bir hata oluştu.' };
-    }
+    return authError(error.code, 'authErrors.signUpFailed');
   } finally {
     store.dispatch(patchAuth({ isLoading: false }));
   }
 }
 
-// Reset password
-async function resetPassword(email: string) {
+async function resetPassword(email: string): Promise<AuthResult> {
   try {
     store.dispatch(patchAuth({ isLoading: true }));
 
-    // Send password reset email
-    await sendPasswordResetEmail(getAuth(), email);
+    await sendPasswordResetEmail(getAuth(), normalizeEmail(email));
 
-    console.log('Password reset email sent successfully');
+    logger.debug('Password reset email sent successfully');
     return { success: true };
   } catch (error: any) {
-    console.error('Password reset error:', error);
+    logger.error('Password reset error:', error);
 
-    if (error.code === 'auth/user-not-found') {
-      return { success: false, error: 'Bu e-posta adresi ile kayıtlı kullanıcı bulunamadı.' };
-    } else if (error.code === 'auth/invalid-email') {
-      return { success: false, error: 'Geçersiz e-posta adresi.' };
-    } else if (error.code === 'auth/too-many-requests') {
-      return { success: false, error: 'Çok fazla deneme. Lütfen daha sonra tekrar deneyin.' };
-    } else if (error.code === 'auth/network-request-failed') {
-      return { success: false, error: 'Ağ bağlantısı hatası.' };
-    } else {
-      return { success: false, error: 'Şifre sıfırlama e-postası gönderilirken bir hata oluştu.' };
-    }
+    return authError(error.code, 'authErrors.resetFailed');
   } finally {
     store.dispatch(patchAuth({ isLoading: false }));
   }
 }
 
-// Change password (email accounts only) — reauthenticate, then update.
-async function changePassword(currentPassword: string, newPassword: string) {
+async function changePassword(currentPassword: string, newPassword: string): Promise<AuthResult> {
   try {
     const user = store.getState().auth.user;
     const firebaseUser = getAuth().currentUser;
     if (!user || !firebaseUser) {
-      return { success: false, error: 'Oturum bulunamadı. Lütfen tekrar giriş yap.' };
+      return { success: false, error: i18n.t('authErrors.noSession') };
     }
     if (user.authProvider !== 'email') {
       return {
         success: false,
-        error: 'Bu hesap Google/Apple ile oluşturulduğu için uygulama içinden şifre değiştirilemez.',
+        error: i18n.t('authErrors.socialPasswordChange'),
       };
     }
 
@@ -245,24 +191,24 @@ async function changePassword(currentPassword: string, newPassword: string) {
     await reauthenticateWithCredential(firebaseUser, credential);
     await updatePassword(firebaseUser, newPassword);
 
-    console.log('Password changed successfully');
+    logger.debug('Password changed successfully');
     return { success: true };
   } catch (error: any) {
-    console.error('Change password error:', error);
+    logger.error('Change password error:', error);
     switch (error?.code) {
       case 'auth/wrong-password':
       case 'auth/invalid-credential':
-        return { success: false, error: 'Mevcut şifren yanlış.' };
+        return { success: false, error: i18n.t('authErrors.currentPasswordWrong') };
       case 'auth/weak-password':
-        return { success: false, error: 'Yeni şifre çok zayıf. En az 6 karakter olmalı.' };
+        return { success: false, error: i18n.t('authErrors.newPasswordWeak') };
       case 'auth/too-many-requests':
-        return { success: false, error: 'Çok fazla deneme yapıldı. Lütfen daha sonra tekrar dene.' };
+        return { success: false, error: i18n.t('authErrors.tooManyRequests') };
       case 'auth/requires-recent-login':
-        return { success: false, error: 'Güvenlik için tekrar giriş yapman gerekiyor.' };
+        return { success: false, error: i18n.t('authErrors.requiresRecentLogin') };
       case 'auth/network-request-failed':
-        return { success: false, error: 'Ağ bağlantısı hatası.' };
+        return { success: false, error: i18n.t('authErrors.network') };
       default:
-        return { success: false, error: 'Şifre değiştirilirken bir hata oluştu.' };
+        return { success: false, error: i18n.t('authErrors.changePasswordFailed') };
     }
   }
 }

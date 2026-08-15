@@ -7,21 +7,19 @@ import {
 } from '@react-native-firebase/firestore';
 import { store } from './index';
 import { patchChallenge, setChallengeState } from './slices/challengeSlice';
+import { reviewPromptActions } from '@/features/review/services/reviewPrompt';
+import { logger } from '@/utils/logger';
 
 export type { ChallengeState } from './slices/challengeSlice';
 
-// ─────────────────────────────────────────────────────────────────
-// Sabit tanımlar — değişmez, kodda yaşar
-// ─────────────────────────────────────────────────────────────────
-
 export const RANKS = [
-  { name: 'Yeni Kalem',  min: 0,    icon: 'pencil-outline' },
-  { name: 'Okur',        min: 500,  icon: 'book-outline' },
-  { name: 'Yorumcu',     min: 1200, icon: 'chatbubbles-outline' },
-  { name: 'Anlatıcı',   min: 2500, icon: 'create-outline' },
-  { name: 'Hikâyeci',   min: 3500, icon: 'library-outline' },
-  { name: 'Romancı',    min: 5200, icon: 'bookmarks-outline' },
-  { name: 'Usta Kalem', min: 8000, icon: 'trophy-outline' },
+  { name: 'challenges.ranks.newPen',      min: 0,    icon: 'pencil-outline' },
+  { name: 'challenges.ranks.reader',      min: 500,  icon: 'book-outline' },
+  { name: 'challenges.ranks.commenter',   min: 1200, icon: 'chatbubbles-outline' },
+  { name: 'challenges.ranks.narrator',    min: 2500, icon: 'create-outline' },
+  { name: 'challenges.ranks.storyteller', min: 3500, icon: 'library-outline' },
+  { name: 'challenges.ranks.novelist',    min: 5200, icon: 'bookmarks-outline' },
+  { name: 'challenges.ranks.masterPen',   min: 8000, icon: 'trophy-outline' },
 ];
 
 export type Pillar = 'write' | 'read' | 'comment';
@@ -46,18 +44,18 @@ export interface ChallengeDef {
 }
 
 export const CHALLENGE_DEFS: ChallengeDef[] = [
-  { id: 'w1', pillar: 'write',   icon: 'create-outline',             title: 'Bu hafta 3 yeni hikaye yayınla',       desc: 'Okurların devamını bekliyor.',               goal: 3,   xp: 150, tracker: 'storiesPublished' },
-  { id: 'w2', pillar: 'write',   icon: 'flame-outline',              title: '5 günlük yazma serisi',                desc: 'Her gün en az bir hikaye yayınla.',          goal: 5,   xp: 200, tracker: 'streakDays' },
-  { id: 'w3', pillar: 'write',   icon: 'checkmark-done-outline',     title: 'Yarım kalan bir hikayeyi tamamla',     desc: '"Tamamlandı" olarak işaretle.',              goal: 1,   xp: 300, tracker: 'manual', badge: 'Tamamlayıcı' },
-  { id: 'w4', pillar: 'write',   icon: 'bulb-outline',               title: 'İlk hikayeni yayınla',                 desc: 'Yazar yolculuğuna merhaba de.',              goal: 1,   xp: 100, tracker: 'storiesPublished' },
-  { id: 'r1', pillar: 'read',    icon: 'book-outline',               title: 'Bu hafta 5 bölüm oku',                 desc: 'Akışındaki yeni hikayelerden.',              goal: 5,   xp: 80,  tracker: 'chaptersRead' },
-  { id: 'r2', pillar: 'read',    icon: 'checkmark-circle-outline',   title: 'Bir hikayeyi sonuna kadar oku',        desc: 'Son bölüme kadar git.',                      goal: 3,   xp: 150, tracker: 'chaptersRead' },
-  { id: 'r3', pillar: 'read',    icon: 'time-outline',               title: '10 hikaye oku',                        desc: 'Bu hafta en az 10 farklı bölümü bitir.',     goal: 10,  xp: 120, tracker: 'chaptersRead' },
-  { id: 'r4', pillar: 'read',    icon: 'compass-outline',            title: 'Yeni bir yazar keşfet',                desc: 'Hiç okumadığın birinin hikayesini aç.',      goal: 1,   xp: 100, tracker: 'manual' },
-  { id: 'c1', pillar: 'comment', icon: 'chatbubble-ellipses-outline',title: '5 hikayeye yorum bırak',               desc: 'Yazarları geri bildiriminle besle.',         goal: 5,   xp: 90,  tracker: 'commentsPosted' },
-  { id: 'c2', pillar: 'comment', icon: 'person-add-outline',         title: '3 yeni yazar takip et',               desc: 'Okuma çevreni genişlet.',                    goal: 3,   xp: 60,  tracker: 'newFollows' },
-  { id: 'c3', pillar: 'comment', icon: 'heart-outline',              title: '10 beğeni yap',                        desc: 'Sevdiğin hikayeleri öne çıkar.',             goal: 10,  xp: 40,  tracker: 'manual' },
-  { id: 'c4', pillar: 'comment', icon: 'ribbon-outline',             title: 'Bir yazara ilham ver',                 desc: 'Yorumun "öne çıkan" seçilsin.',              goal: 1,   xp: 180, tracker: 'manual', badge: 'İlham Veren' },
+  { id: 'w1', pillar: 'write',   icon: 'create-outline',              title: 'challenges.defs.w1.title', desc: 'challenges.defs.w1.desc', goal: 3,  xp: 150, tracker: 'storiesPublished' },
+  { id: 'w2', pillar: 'write',   icon: 'flame-outline',               title: 'challenges.defs.w2.title', desc: 'challenges.defs.w2.desc', goal: 5,  xp: 200, tracker: 'streakDays' },
+  { id: 'w3', pillar: 'write',   icon: 'checkmark-done-outline',      title: 'challenges.defs.w3.title', desc: 'challenges.defs.w3.desc', goal: 1,  xp: 300, tracker: 'manual', badge: 'challenges.defs.w3.badge' },
+  { id: 'w4', pillar: 'write',   icon: 'bulb-outline',                title: 'challenges.defs.w4.title', desc: 'challenges.defs.w4.desc', goal: 1,  xp: 100, tracker: 'storiesPublished' },
+  { id: 'r1', pillar: 'read',    icon: 'book-outline',                title: 'challenges.defs.r1.title', desc: 'challenges.defs.r1.desc', goal: 5,  xp: 80,  tracker: 'chaptersRead' },
+  { id: 'r2', pillar: 'read',    icon: 'checkmark-circle-outline',    title: 'challenges.defs.r2.title', desc: 'challenges.defs.r2.desc', goal: 3,  xp: 150, tracker: 'chaptersRead' },
+  { id: 'r3', pillar: 'read',    icon: 'time-outline',                title: 'challenges.defs.r3.title', desc: 'challenges.defs.r3.desc', goal: 10, xp: 120, tracker: 'chaptersRead' },
+  { id: 'r4', pillar: 'read',    icon: 'compass-outline',             title: 'challenges.defs.r4.title', desc: 'challenges.defs.r4.desc', goal: 1,  xp: 100, tracker: 'manual' },
+  { id: 'c1', pillar: 'comment', icon: 'chatbubble-ellipses-outline', title: 'challenges.defs.c1.title', desc: 'challenges.defs.c1.desc', goal: 5,  xp: 90,  tracker: 'commentsPosted' },
+  { id: 'c2', pillar: 'comment', icon: 'person-add-outline',          title: 'challenges.defs.c2.title', desc: 'challenges.defs.c2.desc', goal: 3,  xp: 60,  tracker: 'newFollows' },
+  { id: 'c3', pillar: 'comment', icon: 'heart-outline',               title: 'challenges.defs.c3.title', desc: 'challenges.defs.c3.desc', goal: 10, xp: 40,  tracker: 'manual' },
+  { id: 'c4', pillar: 'comment', icon: 'ribbon-outline',              title: 'challenges.defs.c4.title', desc: 'challenges.defs.c4.desc', goal: 1,  xp: 180, tracker: 'manual', badge: 'challenges.defs.c4.badge' },
 ];
 
 export const PILLAR_COLORS: Record<Pillar, string> = {
@@ -67,17 +65,13 @@ export const PILLAR_COLORS: Record<Pillar, string> = {
 };
 
 export const WEEKLY_FEATURED = {
-  title: 'Hafta Sonu Okuma Maratonu',
-  desc: 'Cuma–Pazar arası 3 bölüm bitir, 2 yorum bırak.',
+  title: 'challenges.weekly.title',
+  desc: 'challenges.weekly.desc',
   xp: 250,
-  endsIn: '2 gün',
+  endsIn: 'challenges.weekly.endsIn',
   cur: 0,
   goal: 5,
 };
-
-// ─────────────────────────────────────────────────────────────────
-// Yardımcılar
-// ─────────────────────────────────────────────────────────────────
 
 export function getRankIndex(xp: number): number {
   let idx = 0;
@@ -98,10 +92,6 @@ function getWeekStartStr(): string {
   return new Date(d.getFullYear(), d.getMonth(), diff).toISOString().split('T')[0];
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Actions
-// ─────────────────────────────────────────────────────────────────
-
 export const challengeActions = {
   async loadProgress(userId: string) {
     try {
@@ -114,23 +104,21 @@ export const challengeActions = {
       const weekStart = getWeekStartStr();
       const isNewWeek = (data.challengeWeekStart || '') < weekStart;
 
-      // Streak hesapla
       let newStreak = data.streak || 0;
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayStr = yesterday.toISOString().split('T')[0];
 
       if (!data.lastActiveDate || data.lastActiveDate < yesterdayStr) {
-        newStreak = 1; // Gün atlandı, sıfırla
+        newStreak = 1;
       } else if (data.lastActiveDate === yesterdayStr) {
-        newStreak = (data.streak || 0) + 1; // Dün aktifti, artır
+        newStreak = (data.streak || 0) + 1;
       } else {
-        newStreak = data.streak || 1; // Bugün zaten kayıtlı
+        newStreak = data.streak || 1;
       }
 
       let challengeProgress: Record<string, number> = data.challengeProgress || {};
 
-      // Yeni hafta: haftalık görevleri sıfırla
       if (isNewWeek) {
         const weeklyTrackers: Tracker[] = ['storiesPublished', 'chaptersRead', 'commentsPosted', 'newFollows'];
         CHALLENGE_DEFS.forEach(c => {
@@ -140,7 +128,6 @@ export const challengeActions = {
         });
       }
 
-      // Streak görevini güncelle
       CHALLENGE_DEFS.filter(c => c.tracker === 'streakDays').forEach(c => {
         challengeProgress[c.id] = Math.min(newStreak, c.goal);
       });
@@ -153,7 +140,6 @@ export const challengeActions = {
         isLoaded: true,
       }));
 
-      // Streak ve lastActiveDate'i geri yaz
       if (data.lastActiveDate !== today || isNewWeek) {
         await updateDoc(userRef, {
           streak: newStreak,
@@ -163,7 +149,7 @@ export const challengeActions = {
         });
       }
     } catch (error) {
-      console.error('challengeStore loadProgress hatası:', error);
+      logger.error('challengeStore loadProgress hatası:', error);
     }
   },
 
@@ -184,27 +170,36 @@ export const challengeActions = {
         claimedChallenges: arrayUnion(challengeId),
       });
     } catch (error) {
-      console.error('challengeStore claimChallenge hatası:', error);
+      logger.error('challengeStore claimChallenge hatası:', error);
     }
   },
 
   async trackAction(userId: string, tracker: Tracker, amount = 1) {
     try {
       const progress = { ...store.getState().challenge.challengeProgress };
+      let justCompleted = false;
 
       CHALLENGE_DEFS.forEach(c => {
         if (c.tracker === tracker) {
-          progress[c.id] = Math.min((progress[c.id] || 0) + amount, c.goal);
+          const before = progress[c.id] || 0;
+          const after = Math.min(before + amount, c.goal);
+          progress[c.id] = after;
+          if (before < c.goal && after >= c.goal) justCompleted = true;
         }
       });
 
       store.dispatch(patchChallenge({ challengeProgress: progress }));
 
+      // Görevi bitirmek de bir "mutlu an": değerlendirme eşiğine sayılır.
+      if (justCompleted) {
+        reviewPromptActions.recordMoment('challengeCompleted').catch(() => {});
+      }
+
       await updateDoc(doc(getFirestore(), 'users', userId), {
         challengeProgress: progress,
       });
     } catch (error) {
-      console.error('challengeStore trackAction hatası:', error);
+      logger.error('challengeStore trackAction hatası:', error);
     }
   },
 };

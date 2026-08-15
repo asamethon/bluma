@@ -1,197 +1,87 @@
 import { useTheme } from '@/constants/theme';
+import { SavedStoryCard } from '@/features/story/components/SavedStoryCard';
 import { storyActions } from '@/store/storyStore';
 import { Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { Screen } from '@/components/ui';
 import { useAppSelector } from '@/store/hooks';
+import { logger } from '@/utils/logger';
 
 export default function SavedStoriesScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
-  const { user: currentUser } = useAppSelector(s => s.auth);
-  const { savedStories, isLoading } = useAppSelector(s => s.story);
-  
+  const currentUser = useAppSelector(s => s.auth.user);
+  const savedStories = useAppSelector(s => s.story.savedStories);
+  const isLoading = useAppSelector(s => s.story.isLoading);
+
   const [refreshing, setRefreshing] = useState(false);
 
-  const styles = createStyles(colors);
-
-  useEffect(() => {
-    if (currentUser?.id) {
-      loadSavedStories();
-    }
-  }, [currentUser?.id]);
-
-  const loadSavedStories = async () => {
-    if (!currentUser?.id) return;
-    
-    try {
-      // We can't directly load saved stories if the method doesn't exist.
-      // Assuming saved stories are loaded via real-time listeners or we need to implement it.
-      // For now, let's use loadUserStories as a placeholder or remove the call if it's handled by state.
-      // Ideally storyActions should have loadSavedStories or we fetch from user doc.
-      
-      // Temporary fix: just log or leave empty if state is managed elsewhere
-      console.log("Loading saved stories...");
-    } catch (error) {
-      console.error('Load saved stories error:', error);
-    }
-  };
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadSavedStories();
+    await storyActions.loadSavedStories();
     setRefreshing(false);
   };
 
-  const handleStoryPress = (storyId: string) => {
-    router.push(`/story/${storyId}/preview`);
-  };
+  const handleStoryPress = useCallback((story: Story) => {
+    router.push(`/story/${story.id}/preview`);
+  }, [router]);
 
-  const handleUnsaveStory = async (storyId: string) => {
+  const handleAuthorPress = useCallback((story: Story) => {
+    router.push(`/user/${story.authorId}`);
+  }, [router]);
+
+  const handleUnsaveStory = useCallback(async (story: Story) => {
     try {
-      const result = await storyActions.saveStory(storyId);
-      if (result.success) {
-        // Reload saved stories
-        await loadSavedStories();
-      }
+      await storyActions.saveStory(story.id);
     } catch (error) {
-      console.error('Unsave story error:', error);
+      logger.error('Unsave story error:', error);
     }
-  };
+  }, []);
 
-  const formatTimeAgo = (timestamp: any) => {
-    if (!timestamp) return 'Yeni';
-    
-    const now = new Date();
-    const storyDate = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    const diffInMinutes = Math.floor((now.getTime() - storyDate.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'Şimdi';
-    if (diffInMinutes < 60) return `${diffInMinutes} dk önce`;
-    
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours} saat önce`;
-    
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays} gün önce`;
-    
-    return storyDate.toLocaleDateString('tr-TR');
-  };
+  const renderItem = useCallback(
+    ({ item }: { item: Story }) => (
+      <SavedStoryCard
+        story={item}
+        onPress={handleStoryPress}
+        onAuthorPress={handleAuthorPress}
+        onUnsave={handleUnsaveStory}
+      />
+    ),
+    [handleStoryPress, handleAuthorPress, handleUnsaveStory]
+  );
 
-  const renderStoryCard = (story: Story) => {
-    return (
-      <TouchableOpacity
-        key={story.id}
-        style={styles.storyCard}
-        onPress={() => handleStoryPress(story.id)}
-      >
-        <View style={styles.storyHeader}>
-          <TouchableOpacity
-            style={styles.authorInfo}
-            onPress={() => router.push(`/user/${story.authorId}`)}
-          >
-            <View style={styles.authorAvatar}>
-              {story.author?.profileImage ? (
-                <Image
-                  source={{ uri: story.author.profileImage }}
-                  style={styles.authorAvatarImage}
-                />
-              ) : (
-                <Ionicons name="person" size={16} color={colors.primary} />
-              )}
-            </View>
-            <View>
-              <View style={styles.authorNameContainer}>
-                <Text style={styles.authorName}>
-                  {story.author?.displayName || "Anonim"}
-                </Text>
-              </View>
-              <Text style={styles.authorUsername}>
-                @{story.author?.username || "user"}
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.unsaveButton}
-            onPress={(e) => {
-              e.stopPropagation();
-              handleUnsaveStory(story.id);
-            }}
-          >
-            <Ionicons name="bookmark" size={20} color={colors.secondary} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.storyContent}>
-          <Text style={styles.storyTitle}>{story.title}</Text>
-          <Text style={styles.storyDescription} numberOfLines={3}>
-            {story.description || story.content?.substring(0, 150) + "..."}
-          </Text>
-        </View>
-
-        <View style={styles.storyFooter}>
-          <View style={styles.storyStats}>
-            <View style={styles.statItem}>
-              <Ionicons
-                name="time-outline"
-                size={14}
-                color={colors.textSecondary}
-              />
-              <Text style={styles.statText}>{story.readingTime || 5} dk</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Ionicons
-                name="heart-outline"
-                size={14}
-                color={colors.textSecondary}
-              />
-              <Text style={styles.statText}>{story.likesCount || 0}</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Ionicons
-                name="chatbubble-outline"
-                size={14}
-                color={colors.textSecondary}
-              />
-              <Text style={styles.statText}>{story.commentsCount || 0}</Text>
-            </View>
-          </View>
-
-          <Text style={styles.storyTime}>{formatTimeAgo(story.createdAt)}</Text>
-        </View>
+  const header = (
+    <View style={styles.header}>
+      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <Ionicons name="arrow-back" size={24} color={colors.text} />
       </TouchableOpacity>
-    );
-  };
+      <Text style={styles.headerTitle}>{t('saved.title')}</Text>
+      <View style={styles.backButton} />
+    </View>
+  );
 
   if (!currentUser?.id) {
     return (
       <Screen style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Kaydedilen Hikayeler</Text>
-          <View style={styles.backButton} />
-        </View>
-        
+        {header}
         <View style={styles.emptyState}>
           <Ionicons name="log-in-outline" size={48} color={colors.textSecondary} />
-          <Text style={styles.emptyStateTitle}>Giriş Gerekli</Text>
-          <Text style={styles.emptyStateMessage}>
-            Kaydedilen hikayelerinizi görmek için giriş yapmalısınız.
-          </Text>
+          <Text style={styles.emptyStateTitle}>{t('studio.loginRequiredTitle')}</Text>
+          <Text style={styles.emptyStateMessage}>{t('saved.loginMessage')}</Text>
         </View>
       </Screen>
     );
@@ -199,40 +89,28 @@ export default function SavedStoriesScreen() {
 
   return (
     <Screen style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Kaydedilen Hikayeler</Text>
-        <View style={styles.backButton} />
-      </View>
-
-      <ScrollView 
+      {header}
+      <FlashList
+        data={savedStories}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 120 }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        contentContainerStyle={styles.listContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        ListEmptyComponent={
+          isLoading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>{t('saved.loading')}</Text>
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Ionicons name="bookmark-outline" size={48} color={colors.textSecondary} />
+              <Text style={styles.emptyStateTitle}>{t('saved.emptyTitle')}</Text>
+              <Text style={styles.emptyStateMessage}>{t('saved.emptyMessage')}</Text>
+            </View>
+          )
         }
-      >
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Hikayeler yükleniyor...</Text>
-          </View>
-        ) : savedStories.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="bookmark-outline" size={48} color={colors.textSecondary} />
-            <Text style={styles.emptyStateTitle}>Henüz hikaye kaydetmediniz</Text>
-            <Text style={styles.emptyStateMessage}>
-              Beğendiğiniz hikayeleri kaydedin ve daha sonra kolayca erişin.
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.storiesContainer}>
-            {savedStories.map(story => renderStoryCard(story))}
-          </View>
-        )}
-      </ScrollView>
+      />
     </Screen>
   );
 }
@@ -260,6 +138,10 @@ const createStyles = (colors: any) =>
       fontSize: 18, lineHeight: 23,
       fontWeight: '600',
       color: colors.text,
+    },
+    listContent: {
+      paddingTop: 16,
+      paddingBottom: 120,
     },
     loadingContainer: {
       paddingVertical: 40,
@@ -289,102 +171,4 @@ const createStyles = (colors: any) =>
       textAlign: 'center',
       lineHeight: 20,
     },
-    storiesContainer: {
-      paddingTop: 16,
-    },
-    storyCard: {
-      marginHorizontal: 20,
-      backgroundColor: colors.surface,
-      borderRadius: 16,
-      padding: 16,
-      marginBottom: 16,
-      shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 8,
-      elevation: 3,
-    },
-    storyHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 12,
-    },
-    authorInfo: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flex: 1,
-    },
-    authorAvatar: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: colors.primaryLight,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginRight: 8,
-    },
-    authorAvatarImage: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-    },
-    authorName: {
-      fontSize: 14, lineHeight: 18,
-      fontWeight: '600',
-      color: colors.text,
-    },
-    authorNameContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-    },
-    verifiedBadge: {
-      width: 12,
-      height: 12,
-    },
-    authorUsername: {
-      fontSize: 12, lineHeight: 16,
-      color: colors.primary,
-    },
-    unsaveButton: {
-      padding: 4,
-    },
-    storyContent: {
-      marginBottom: 16,
-    },
-    storyTitle: {
-      fontSize: 18,
-      fontWeight: '600',
-      color: colors.text,
-      marginBottom: 8,
-      lineHeight: 24,
-    },
-    storyDescription: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      lineHeight: 20,
-    },
-    storyFooter: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    storyStats: {
-      flexDirection: 'row',
-      gap: 16,
-    },
-    statItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-    },
-    statText: {
-      fontSize: 12, lineHeight: 16,
-      color: colors.textSecondary,
-    },
-    storyTime: {
-      fontSize: 12, lineHeight: 16,
-      color: colors.textSecondary,
-    },
-  }); 
+  });

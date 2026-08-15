@@ -2,9 +2,12 @@ import {
   Screen, BloomMark, Button, Text } from '@/components/ui';
 import { CategoryMeta, Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
 import { authActions } from '@/store/authStore';
+import { useAvatarPicker } from '@/features/profile/hooks/useAvatarPicker';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { Redirect } from 'expo-router';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '@/store/hooks';
 import {
   Alert,
@@ -15,42 +18,44 @@ import {
   View,
 } from 'react-native';
 
-/* ── Intent options ─────────────────────────────────────── */
 const INTENTS = [
-  { id: 'reader', icon: 'book',   title: 'Okumak için',  sub: 'Yeni hikâyeler keşfet, kütüphaneni doldur.', color: '#7C5CD0' },
-  { id: 'writer', icon: 'create', title: 'Yazmak için',  sub: 'Kendi hikâyeni yaz, okurlarınla büyüt.',    color: '#FF5C8A' },
-  { id: 'both',   icon: 'leaf',   title: 'İkisi de',     sub: 'Hem oku hem yaz — tam ortada.',               color: '#2FA98A' },
+  { id: 'reader', icon: 'book',   title: 'onboarding.intentReader',  sub: 'onboarding.intentReaderSub', color: '#7C5CD0' },
+  { id: 'writer', icon: 'create', title: 'onboarding.intentWriter',  sub: 'onboarding.intentWriterSub', color: '#FF5C8A' },
+  { id: 'both',   icon: 'leaf',   title: 'onboarding.intentBoth',    sub: 'onboarding.intentBothSub',   color: '#2FA98A' },
 ] as const;
 
 type Intent = typeof INTENTS[number]['id'] | null;
 
-/* ── Genre keys ─────────────────────────────────────────── */
 const GENRE_KEYS = [
   'romance', 'fantasy', 'sci_fi', 'mystery',
   'adventure', 'horror', 'comedy', 'drama', 'poetry',
 ] as const;
 
-/* ── Step meta ──────────────────────────────────────────── */
 const STEPS = [
-  { title: "Bluma'ya neden geldin?",   sub: 'Sana göre bir akış hazırlayalım. İstediğin zaman değiştirebilirsin.' },
-  { title: 'Hangi türler ilgini çeker?', sub: 'En az 3 tür seç — akışını bunlara göre kuralım.' },
-  { title: 'Kendine bir isim seç',     sub: 'Okurların seni bu isimle tanısın. İstediğin zaman değiştirebilirsin.' },
-  { title: 'Her şey hazır!',           sub: '' },
+  { title: 'onboarding.step1Title', sub: 'onboarding.step1Sub' },
+  { title: 'onboarding.step2Title', sub: 'onboarding.step2Sub' },
+  { title: 'onboarding.step3Title', sub: 'onboarding.step3Sub' },
+  { title: 'onboarding.step4Title', sub: '' },
 ];
 const TOTAL = STEPS.length;
 
 export default function OnboardingScreen() {
   const { colors, fonts } = useTheme();
+  const { t } = useTranslation();
   const [step, setStep]   = useState(0);
   const [intent, setIntent] = useState<Intent>(null);
   const [userData, setUserData] = useState({ username: '', displayName: '', interests: [] as string[], bio: '' });
   const [usernameStatus, setUsernameStatus] = useState<'checking' | 'available' | 'taken' | null>(null);
+  const { image: avatarUri, showOptions: showAvatarOptions } = useAvatarPicker();
 
-  const { isLoading, isAuthenticated, hasCompletedOnboarding } = useAppSelector(s => s.auth);
+  const isLoading = useAppSelector(s => s.auth.isLoading);
+  const isAuthenticated = useAppSelector(s => s.auth.isAuthenticated);
+  const hasCompletedOnboarding = useAppSelector(s => s.auth.hasCompletedOnboarding);
   if (!isAuthenticated) return <Redirect href="/(auth)/signin" />;
-  if (hasCompletedOnboarding) return <Redirect href="/" />;
 
-  /* ── helpers ─────────────────────────────────────────── */
+  if (hasCompletedOnboarding)
+    return <Redirect href={intent && intent !== 'reader' ? '/(tabs)/write' : '/'} />;
+
   const toggleGenre = (key: string) =>
     setUserData(prev => ({
       ...prev,
@@ -85,14 +90,13 @@ export default function OnboardingScreen() {
   const back = () => step > 0 && setStep(s => s - 1);
 
   const handleFinish = async () => {
-    const result = await authActions.completeOnboarding({ ...userData, displayName: userData.displayName || undefined, intent: intent ?? 'both' } as any);
-    if (!result?.success) Alert.alert('Hata', result?.error || 'Profil oluşturulurken bir hata oluştu.');
+    const result = await authActions.completeOnboarding({ ...userData, displayName: userData.displayName || undefined, profileImage: avatarUri, intent: intent ?? 'both' } as any);
+    if (!result?.success) Alert.alert(t('common.error'), result?.error || t('account.onboardingFailed'));
   };
 
   const isCompletion = step === TOTAL - 1;
   const progressFraction = (step + 1) / TOTAL;
 
-  /* ── Step 0: Intent ─────────────────────────────────── */
   const renderIntent = () => (
     <View style={{ gap: 12, marginTop: 22 }}>
       {INTENTS.map(it => {
@@ -115,8 +119,8 @@ export default function OnboardingScreen() {
               <Ionicons name={it.icon as any} size={25} color={on ? '#fff' : it.color} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[s.intentTitle, { fontFamily: Fonts.serif, color: colors.text }]}>{it.title}</Text>
-              <Text variant="caption" tone="textSecondary" style={{ marginTop: 2, lineHeight: 18 }}>{it.sub}</Text>
+              <Text style={[s.intentTitle, { fontFamily: Fonts.serif, color: colors.text }]}>{t(it.title)}</Text>
+              <Text variant="caption" tone="textSecondary" style={{ marginTop: 2, lineHeight: 18 }}>{t(it.sub)}</Text>
             </View>
             <View style={[s.intentCheck, { backgroundColor: on ? it.color : 'transparent', borderColor: on ? it.color : colors.border, borderWidth: on ? 0 : 2 }]}>
               {on && <Ionicons name="checkmark" size={15} color="#fff" />}
@@ -127,11 +131,10 @@ export default function OnboardingScreen() {
     </View>
   );
 
-  /* ── Step 1: Genre grid ─────────────────────────────── */
   const renderGenres = () => (
     <View style={{ marginTop: 22 }}>
       <Text variant="caption" tone="textSecondary" style={{ marginBottom: 16 }}>
-        {userData.interests.length}/3+ tür seçildi
+        {t('onboarding.genresSelected', { count: userData.interests.length })}
       </Text>
       <View style={s.genreGrid}>
         {GENRE_KEYS.map(key => {
@@ -154,7 +157,7 @@ export default function OnboardingScreen() {
                 <Ionicons name={meta.icon as any} size={22} color={on ? '#fff' : meta.color} />
               </View>
               <Text variant="label" style={{ fontWeight: '700', color: on ? '#fff' : colors.text, marginTop: 8 }}>
-                {meta.label}
+                {t(meta.label)}
               </Text>
               {on && (
                 <View style={s.genreCheck}>
@@ -168,27 +171,28 @@ export default function OnboardingScreen() {
     </View>
   );
 
-  /* ── Step 2: Identity — avatar + display name + username ─────────── */
   const renderUsername = () => (
     <View style={{ marginTop: 22, gap: 16 }}>
-      {/* avatar placeholder with camera badge */}
-      <View style={s.avatarWrap}>
-        <View style={[s.avatarCircle, { backgroundColor: colors.primary + '22', borderColor: colors.primary + '44', borderWidth: 2 }]}>
-          <Text style={[s.avatarInitial, { color: colors.primary, fontFamily: fonts.serif }]}>
-            {userData.displayName ? userData.displayName.charAt(0).toUpperCase() : '?'}
-          </Text>
+      <TouchableOpacity style={s.avatarWrap} onPress={showAvatarOptions} activeOpacity={0.85}>
+        <View style={[s.avatarCircle, { backgroundColor: colors.primary + '22', borderColor: colors.primary + '44', borderWidth: 2, overflow: 'hidden' }]}>
+          {avatarUri ? (
+            <Image source={{ uri: avatarUri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+          ) : (
+            <Text style={[s.avatarInitial, { color: colors.primary, fontFamily: fonts.serif }]}>
+              {userData.displayName ? userData.displayName.charAt(0).toUpperCase() : '?'}
+            </Text>
+          )}
         </View>
         <View style={[s.cameraBadge, { backgroundColor: colors.primary, borderColor: colors.background }]}>
           <Ionicons name="camera" size={15} color="#fff" />
         </View>
-      </View>
+      </TouchableOpacity>
 
-      {/* display name */}
       <View style={[s.inputRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <Ionicons name="happy-outline" size={20} color={colors.textSecondary} />
         <TextInput
           style={[s.textInput, { color: colors.text, fontFamily: fonts.sans }]}
-          placeholder="Görünen adın"
+          placeholder={t('onboarding.displayNamePlaceholder')}
           placeholderTextColor={colors.textSecondary}
           value={userData.displayName}
           onChangeText={v => setUserData(prev => ({ ...prev, displayName: v }))}
@@ -197,13 +201,12 @@ export default function OnboardingScreen() {
         />
       </View>
 
-      {/* username */}
       <View>
         <View style={[s.inputRow, { backgroundColor: colors.surface, borderColor: userData.username.length >= 3 && usernameStatus === 'available' ? colors.success : colors.border }]}>
           <Text style={[s.atPrefix, { color: colors.primary, fontFamily: fonts.sans }]}>@</Text>
           <TextInput
             style={[s.textInput, { color: colors.text, fontFamily: fonts.sans }]}
-            placeholder="kullaniciadi"
+            placeholder={t('onboarding.usernamePlaceholder')}
             placeholderTextColor={colors.textSecondary}
             value={userData.username}
             onChangeText={updateUsername}
@@ -213,26 +216,26 @@ export default function OnboardingScreen() {
           />
         </View>
         <Text variant="caption" tone="textSecondary" style={{ textAlign: 'center', marginTop: 8 }}>
-          {userData.username.length}/20 · Sadece harf, rakam ve alt çizgi
+          {t('onboarding.usernameHint', { length: userData.username.length })}
         </Text>
         {userData.username.length >= 3 && (
           <View style={s.usernameStatus}>
             {usernameStatus === 'checking' && (
               <>
                 <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
-                <Text variant="caption" tone="textSecondary">Kontrol ediliyor…</Text>
+                <Text variant="caption" tone="textSecondary">{t('onboarding.checking')}</Text>
               </>
             )}
             {usernameStatus === 'available' && (
               <>
                 <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-                <Text variant="caption" style={{ color: colors.success }}>@{userData.username} kullanılabilir</Text>
+                <Text variant="caption" style={{ color: colors.success }}>{t('onboarding.usernameAvailable', { username: userData.username })}</Text>
               </>
             )}
             {usernameStatus === 'taken' && (
               <>
                 <Ionicons name="close-circle" size={16} color={colors.error} />
-                <Text variant="caption" style={{ color: colors.error }}>@{userData.username} kullanılamaz</Text>
+                <Text variant="caption" style={{ color: colors.error }}>{t('onboarding.usernameTaken', { username: userData.username })}</Text>
               </>
             )}
           </View>
@@ -241,15 +244,14 @@ export default function OnboardingScreen() {
     </View>
   );
 
-  /* ── Step 3: Completion ─────────────────────────────── */
   const renderCompletion = () => (
     <View style={[s.completionWrap]}>
       <BloomMark size={108} />
       <Text style={[s.completionHeading, { fontFamily: fonts.serif, color: colors.text }]}>
-        Her şey hazır!
+        {t('onboarding.step4Title')}
       </Text>
       <Text variant="body" tone="textSecondary" style={{ textAlign: 'center', maxWidth: 290, lineHeight: 24, marginTop: 8 }}>
-        {userData.interests.length} tür seçtin, akışını ona göre kurduk. İlk hikâyene başlamaya hazırsın.
+        {t('onboarding.completionSub', { count: userData.interests.length })}
       </Text>
       {userData.interests.length > 0 && (
         <View style={s.genrePills}>
@@ -257,7 +259,7 @@ export default function OnboardingScreen() {
             <View key={k} style={[s.genrePill, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <View style={[s.genreDot, { backgroundColor: CategoryMeta[k as keyof typeof CategoryMeta]?.color }]} />
               <Text variant="caption" style={{ fontWeight: '700', color: colors.text }}>
-                {CategoryMeta[k as keyof typeof CategoryMeta]?.label ?? k}
+                {CategoryMeta[k as keyof typeof CategoryMeta]?.label ? t(CategoryMeta[k as keyof typeof CategoryMeta].label) : k}
               </Text>
             </View>
           ))}
@@ -275,7 +277,6 @@ export default function OnboardingScreen() {
 
   return (
     <Screen style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Progress header */}
       <View style={[s.progressHeader, { paddingHorizontal: Spacing.screenX }]}>
         <TouchableOpacity
           onPress={back}
@@ -285,7 +286,6 @@ export default function OnboardingScreen() {
           <Ionicons name="chevron-back" size={22} color={colors.text} />
         </TouchableOpacity>
 
-        {/* violet gradient progress bar */}
         <View style={[s.progressTrack, { backgroundColor: colors.border }]}>
           <View style={[s.progressFill, { width: `${progressFraction * 100}%` }]} />
         </View>
@@ -304,10 +304,10 @@ export default function OnboardingScreen() {
         {!isCompletion && (
           <View style={{ marginTop: 22, marginBottom: 4 }}>
             <Text style={[s.stepTitle, { fontFamily: fonts.serif, color: colors.text }]}>
-              {STEPS[step].title}
+              {t(STEPS[step].title)}
             </Text>
             <Text variant="body" tone="textSecondary" style={{ marginTop: 6, lineHeight: 22 }}>
-              {STEPS[step].sub}
+              {STEPS[step].sub ? t(STEPS[step].sub) : ''}
             </Text>
           </View>
         )}
@@ -315,11 +315,10 @@ export default function OnboardingScreen() {
         {renderStep()}
       </ScrollView>
 
-      {/* Footer CTA */}
       <View style={[s.footer, { borderTopColor: isCompletion ? 'transparent' : colors.border }]}>
         {isCompletion ? (
           <Button
-            label={isLoading ? 'Kaydediliyor…' : "Bluma'ya Gir"}
+            label={isLoading ? t('onboarding.savingProgress') : t('onboarding.enterBluma')}
             variant="primary"
             size="lg"
             iconRight="arrow-forward"
@@ -328,7 +327,7 @@ export default function OnboardingScreen() {
           />
         ) : (
           <Button
-            label="Devam Et"
+            label={t('common.continue')}
             variant="primary"
             size="lg"
             iconRight="arrow-forward"
@@ -365,7 +364,6 @@ const s = StyleSheet.create({
     fontSize: 26, fontWeight: '700', letterSpacing: -0.5, lineHeight: 36,
   },
 
-  /* intent */
   intentCard: {
     flexDirection: 'row', alignItems: 'center', gap: 16,
     padding: 18, borderRadius: Radius.xl,
@@ -385,7 +383,6 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
 
-  /* genres */
   genreGrid: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 12,
   },
@@ -405,7 +402,6 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
 
-  /* avatar picker */
   avatarWrap: {
     alignItems: 'center',
     position: 'relative',
@@ -426,7 +422,6 @@ const s = StyleSheet.create({
     borderWidth: 3,
   },
 
-  /* username */
   inputRow: {
     flexDirection: 'row', alignItems: 'center',
     borderRadius: Radius.lg, borderWidth: 2,
@@ -439,7 +434,6 @@ const s = StyleSheet.create({
     justifyContent: 'center', gap: 8, marginTop: 10,
   },
 
-  /* completion */
   completionWrap: {
     alignItems: 'center', paddingTop: 40,
   },
@@ -458,7 +452,6 @@ const s = StyleSheet.create({
   },
   genreDot: { width: 8, height: 8, borderRadius: 4 },
 
-  /* footer */
   footer: {
     paddingHorizontal: Spacing.screenX,
     paddingTop: 12, paddingBottom: 26,

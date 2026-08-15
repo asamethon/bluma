@@ -1,10 +1,10 @@
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { CategoryMeta, Radius, Spacing, useTheme } from "@/constants/theme";
 import { Text } from "./Text";
 
-/** Generic pill. */
 export function Chip({
   label,
   active,
@@ -45,7 +45,6 @@ export function Chip({
   );
 }
 
-/** Category chip wired to CategoryMeta (label + bloom hue + icon). */
 export function CategoryChip({
   category,
   active,
@@ -56,9 +55,10 @@ export function CategoryChip({
   onPress?: () => void;
 }) {
   const meta = CategoryMeta[category] ?? CategoryMeta.other;
+  const { t } = useTranslation();
   return (
     <Chip
-      label={meta.label}
+      label={t(meta.label)}
       icon={meta.icon as any}
       color={meta.color}
       active={active}
@@ -67,13 +67,13 @@ export function CategoryChip({
   );
 }
 
-/** Tiny solid tag used to overlay a genre badge on a cover. */
 export function GenreTag({ category }: { category: string }) {
   const meta = CategoryMeta[category] ?? CategoryMeta.other;
+  const { t } = useTranslation();
   return (
     <View style={[styles.tag, { backgroundColor: meta.color }]}>
       <Text variant="overline" color="#fff" style={{ fontSize: 9, letterSpacing: 0.8 }}>
-        {meta.label}
+        {t(meta.label)}
       </Text>
     </View>
   );

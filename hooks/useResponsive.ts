@@ -3,11 +3,6 @@ import { Breakpoints, ContentMaxWidth, Spacing } from '@/constants/theme';
 
 export type SizeClass = 'compact' | 'medium' | 'expanded';
 
-/**
- * Reactive size-class helper — built on useWindowDimensions (not the static
- * Dimensions.get) so it stays correct across rotation and iPad Split View /
- * Slide Over resizes.
- */
 export function useResponsive() {
   const { width, height } = useWindowDimensions();
   const sizeClass: SizeClass =
@@ -25,10 +20,6 @@ export function useResponsive() {
   };
 }
 
-/**
- * Column-width helper for grid FlatLists. Note: `numColumns` cannot change on
- * a FlatList without a full remount — callers must set `key={`grid-${numColumns}`}`.
- */
 export function useResponsiveGrid(gutter: number = Spacing.gutter) {
   const { width, numColumns } = useResponsive();
   const cappedWidth = Math.min(width, ContentMaxWidth.grid);

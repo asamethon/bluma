@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { Redirect, useRouter } from "expo-router";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAppSelector } from '@/store/hooks';
 import {
   Alert,
@@ -19,7 +20,6 @@ import {
   View,
 } from "react-native";
 
-/* ── Labeled input — label floats above, border turns violet on focus ─── */
 function LabeledInput({
   label,
   icon,
@@ -64,9 +64,12 @@ function LabeledInput({
 export default function SignInScreen() {
   const router = useRouter();
   const { colors, fonts } = useTheme();
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { isLoading, isAuthenticated, hasCompletedOnboarding } = useAppSelector(s => s.auth);
+  const isLoading = useAppSelector(s => s.auth.isLoading);
+  const isAuthenticated = useAppSelector(s => s.auth.isAuthenticated);
+  const hasCompletedOnboarding = useAppSelector(s => s.auth.hasCompletedOnboarding);
   const [showPassword, setShowPassword] = useState(false);
 
   if (isAuthenticated && hasCompletedOnboarding) return <Redirect href="/" />;
@@ -74,19 +77,19 @@ export default function SignInScreen() {
 
   const handleEmailSignIn = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert("Hata", "Lütfen e-posta ve şifre alanlarını doldurun.");
+      Alert.alert(t('common.error'), t('auth.fillEmailPassword'));
       return;
     }
     const result = await authActions.signInWithEmail(email, password);
     if (!result.success)
-      Alert.alert("Hata", result.error || "Giriş yapılırken bir hata oluştu.");
+      Alert.alert(t('common.error'), result.error || t('authErrors.signInFailed'));
   };
 
   const handleGoogleSignIn = async () => {
     if (isLoading) return;
     const result = await authActions.signInWithGoogle();
     if (!result.success)
-      Alert.alert("Hata", result.error || "Google ile giriş yapılırken bir hata oluştu.");
+      Alert.alert(t('common.error'), result.error || t('authErrors.googleSignInFailed'));
   };
 
   const handleAppleSignIn = async () => {
@@ -99,35 +102,35 @@ export default function SignInScreen() {
       });
       const result = await authActions.signInWithApple(credential);
       if (!result.success)
-        Alert.alert("Hata", result.error || "Apple ile giriş yapılırken bir hata oluştu.");
+        Alert.alert(t('common.error'), result.error || t('authErrors.appleSignInFailed'));
     } catch (error: any) {
       if (error.code !== "ERR_CANCELED")
-        Alert.alert("Hata", "Apple ile giriş yapılırken bir hata oluştu.");
+        Alert.alert(t('common.error'), t('authErrors.appleSignInFailed'));
     }
   };
 
   const handleForgotPassword = () => {
     if (!email.trim()) {
-      Alert.alert("Hata", "Lütfen önce e-posta adresinizi girin.");
+      Alert.alert(t('common.error'), t('auth.enterEmailFirst'));
       return;
     }
     if (!email.includes("@")) {
-      Alert.alert("Hata", "Lütfen geçerli bir e-posta adresi girin.");
+      Alert.alert(t('common.error'), t('auth.enterValidEmail'));
       return;
     }
     Alert.alert(
-      "Şifre Sıfırlama",
-      `${email} adresine şifre sıfırlama e-postası gönderilsin mi?`,
+      t('auth.resetPasswordTitle'),
+      t('auth.resetPasswordConfirm', { email }),
       [
-        { text: "İptal", style: "cancel" },
+        { text: t('common.cancel'), style: "cancel" },
         {
-          text: "Gönder",
+          text: t('messages.send'),
           onPress: async () => {
             const result = await authActions.resetPassword(email.trim());
             if (result.success)
-              Alert.alert("Başarılı", "Şifre sıfırlama e-postası gönderildi.");
+              Alert.alert(t('common.success'), t('auth.resetEmailSent'));
             else
-              Alert.alert("Hata", result.error || "Şifre sıfırlama e-postası gönderilemedi.");
+              Alert.alert(t('common.error'), result.error || t('authErrors.resetFailed'));
           },
         },
       ]
@@ -147,7 +150,6 @@ export default function SignInScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Back button — filled surface-sunk, no border */}
           <TouchableOpacity
             style={[s.backBtn, { backgroundColor: colors.surfaceVariant }]}
             onPress={() => {
@@ -158,30 +160,28 @@ export default function SignInScreen() {
             <Ionicons name="chevron-back" size={22} color={colors.text} />
           </TouchableOpacity>
 
-          {/* Heading */}
           <Text style={[s.heading, { fontFamily: fonts.serif, color: colors.text }]}>
-            Tekrar hoş geldin
+            {t('auth.welcomeBack')}
           </Text>
           <Text variant="body" tone="textSecondary" style={{ marginTop: 6, lineHeight: 22 }}>
-            Hikâyelerin seni bekliyor. Kaldığın yerden devam et.
+            {t('auth.welcomeBackSub')}
           </Text>
 
-          {/* Form */}
           <View style={s.form}>
             <LabeledInput
-              label="E-posta"
+              label={t('auth.emailLabel')}
               icon="mail-outline"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
-              placeholder="isim@örnek.com"
+              placeholder={t('auth.emailPlaceholder')}
             />
 
             <View>
               <LabeledInput
-                label="Şifre"
+                label={t('auth.passwordLabel')}
                 icon="lock-closed-outline"
                 value={password}
                 onChangeText={setPassword}
@@ -201,13 +201,13 @@ export default function SignInScreen() {
               />
               <TouchableOpacity style={s.forgotRow} onPress={handleForgotPassword}>
                 <Text variant="caption" tone="primary" style={{ fontWeight: "700" }}>
-                  Şifremi unuttum
+                  {t('auth.forgotPassword')}
                 </Text>
               </TouchableOpacity>
             </View>
 
             <Button
-              label={isLoading ? "Giriş yapılıyor…" : "Giriş Yap"}
+              label={isLoading ? t('auth.signingIn') : t('auth.signIn')}
               variant="primary"
               size="lg"
               iconRight="arrow-forward"
@@ -216,16 +216,14 @@ export default function SignInScreen() {
               style={{ marginTop: 4 }}
             />
 
-            {/* Divider */}
             <View style={s.dividerRow}>
               <View style={[s.dividerLine, { backgroundColor: colors.border }]} />
               <Text variant="caption" tone="textLight" style={s.dividerLabel}>
-                veya şununla devam et
+                {t('auth.orContinueWith')}
               </Text>
               <View style={[s.dividerLine, { backgroundColor: colors.border }]} />
             </View>
 
-            {/* Social buttons */}
             <View style={s.socialRow}>
               {showApple && (
                 <TouchableOpacity
@@ -252,17 +250,16 @@ export default function SignInScreen() {
             </View>
           </View>
 
-          {/* Spacer + Footer */}
           <View style={{ flex: 1 }} />
           <View style={s.footer}>
-            <Text variant="body" tone="textSecondary">Hesabın yok mu? </Text>
+            <Text variant="body" tone="textSecondary">{t('auth.noAccount')} </Text>
             <TouchableOpacity
               onPress={() => {
                 if (router.canGoBack()) router.back();
                 else router.push("/(auth)/signup");
               }}
             >
-              <Text variant="body" tone="primary" style={{ fontWeight: "700" }}>Kaydol</Text>
+              <Text variant="body" tone="primary" style={{ fontWeight: "700" }}>{t('auth.signUp')}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

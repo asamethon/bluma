@@ -14,19 +14,12 @@ type ColorToken =
   | "error";
 
 export interface TextProps extends RNTextProps {
-  /** Type ramp role — picks size/weight/line-height/tracking. */
   variant?: TypeRole;
-  /** Semantic color token from the theme. */
   tone?: ColorToken;
-  /** Override color directly (wins over `tone`). */
   color?: string;
   center?: boolean;
 }
 
-/**
- * Typed text primitive. Every label in the app should flow through this so the
- * type ramp stays consistent — no more ad-hoc fontSize/fontWeight pairs.
- */
 export function Text({
   variant = "body",
   tone = "text",

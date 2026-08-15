@@ -10,9 +10,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-// Karşı taraf yazarken solda gösterilen üç noktalı animasyonlu balon.
-// (Kendi mesajlarımızla aynı stil sistemine oturur: sunk yüzey, sol alt köşesi
-// keskin.)
 
 function Dot({ delay, color }: { delay: number; color: string }) {
   const v = useSharedValue(0.3);

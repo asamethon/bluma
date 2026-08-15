@@ -4,6 +4,7 @@ import { StoryCategory } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import React, { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
 import type { useStoryInfoForm } from '../../hooks/useStoryInfoForm';
@@ -15,20 +16,12 @@ const WRITE_GENRES: StoryCategory[] = [
 
 type Form = ReturnType<typeof useStoryInfoForm>;
 
-// "Hikâye Bilgilerini Düzenle" formu — yeni + düzenleme ekranlarınca paylaşılır.
 export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: number }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const scrollRef = useRef<ScrollView>(null);
-  // Her alanın scroll içeriğindeki y konumu — odaklanınca klavyenin üstüne kaydırmak için.
   const fieldOffsets = useRef({ title: 0, description: 0 });
 
-  // KeyboardAvoidingView'ın kendi otomatik ölçümüne güvenmiyoruz: iOS'ta
-  // QuickType şeridiyle gelen gerçek yükseklik eksik hesaplanıyordu; Android'de
-  // ise edge-to-edge (gradle.properties: edgeToEdgeEnabled) native pencere
-  // resize'ını devre dışı bırakıyor, bu yüzden Keyboard.addListener'ın
-  // resize-tabanlı ölçümü hiç tetiklenmiyor / 0 kalıyordu. useAnimatedKeyboard
-  // ise Android'de WindowInsetsAnimationCompat (IME inset) kullanır — edge-to-edge'den
-  // bağımsız, her iki platformda da güvenilir.
   const keyboard = useAnimatedKeyboard();
   const containerAnimStyle = useAnimatedStyle(() => ({ paddingBottom: keyboard.height.value }));
   const fillerAnimStyle = useAnimatedStyle(() => ({ height: keyboard.height.value }));
@@ -44,8 +37,6 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Klavyenin yuvarlak üst köşelerinden sızan boşluğu footer'la aynı
-          renkte doldurur — sabit ekran altına, klavyeden bağımsız konumlanır. */}
       <Animated.View
         pointerEvents="none"
         style={[styles.keyboardFiller, fillerAnimStyle, { backgroundColor: colors.surface }]}
@@ -54,7 +45,7 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
         <View style={styles.header}>
           <IconButton icon="chevron-back" onPress={form.cancel} />
           <Text variant="heading" style={{ fontSize: 18 }}>
-            {form.isNew ? 'Yeni Hikâye' : 'Hikâye Bilgilerini Düzenle'}
+            {form.isNew ? t('studio.newStory') : t('studio.editStoryInfo')}
           </Text>
         </View>
 
@@ -65,7 +56,6 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Kapak */}
           <View style={{ alignItems: 'center', paddingTop: Spacing.sm }}>
             <View style={styles.coverWrap}>
               <View
@@ -88,17 +78,16 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
             </View>
           </View>
 
-          {/* Başlık */}
           <View
             style={{ gap: Spacing.sm }}
             onLayout={e => { fieldOffsets.current.title = e.nativeEvent.layout.y; }}
           >
-            <Text variant="label" tone="textSecondary">Hikâye Başlığı</Text>
+            <Text variant="label" tone="textSecondary">{t('studio.storyTitleLabel')}</Text>
             <TextInput
               value={form.title}
               onChangeText={v => { form.setTitle(v); if (v.trim()) form.setTitleError(false); }}
               onFocus={() => scrollToField('title')}
-              placeholder="Okurların göreceği ana başlık"
+              placeholder={t('studio.storyTitlePlaceholder')}
               placeholderTextColor={colors.textLight}
               maxLength={100}
               style={[
@@ -106,12 +95,11 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
                 { color: colors.text, backgroundColor: colors.surface, borderColor: form.titleError ? colors.error : colors.border },
               ]}
             />
-            {form.titleError && <Text variant="caption" tone="error">Başlık en az 3 karakter olmalı.</Text>}
+            {form.titleError && <Text variant="caption" tone="error">{t('studio.titleTooShort')}</Text>}
           </View>
 
-          {/* Tür */}
           <View style={{ gap: Spacing.md }}>
-            <Text variant="label" tone="textSecondary">Tür</Text>
+            <Text variant="label" tone="textSecondary">{t('studio.genreLabel')}</Text>
             <View style={styles.chips}>
               {WRITE_GENRES.map(g => (
                 <CategoryChip
@@ -124,17 +112,16 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
             </View>
           </View>
 
-          {/* Açıklama */}
           <View
             style={{ gap: Spacing.sm }}
             onLayout={e => { fieldOffsets.current.description = e.nativeEvent.layout.y; }}
           >
-            <Text variant="label" tone="textSecondary">Kısa Açıklama</Text>
+            <Text variant="label" tone="textSecondary">{t('studio.descriptionLabel')}</Text>
             <TextInput
               value={form.description}
               onChangeText={form.setDescription}
               onFocus={() => scrollToField('description')}
-              placeholder="Okurların kapakta göreceği kısa özet"
+              placeholder={t('studio.descriptionPlaceholder')}
               placeholderTextColor={colors.textLight}
               maxLength={160}
               multiline
@@ -147,14 +134,14 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
           </View>
 
           {!form.isNew && (
-            <Button label="Hikâyeyi Sil" variant="ghost" icon="trash-outline" onPress={form.remove} />
+            <Button label={t('studio.deleteStoryTitle')} variant="ghost" icon="trash-outline" onPress={form.remove} />
           )}
         </ScrollView>
 
         <Animated.View style={[styles.footer, footerAnimStyle, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
-          <Button label="Vazgeç" variant="secondary" onPress={form.cancel} style={{ flex: 1 }} />
+          <Button label={t('common.cancel')} variant="secondary" onPress={form.cancel} style={{ flex: 1 }} />
           <Button
-            label="Kaydet"
+            label={t('common.save')}
             variant="primary"
             icon="checkmark"
             loading={form.saving}

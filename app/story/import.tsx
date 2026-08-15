@@ -3,6 +3,7 @@ import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { useImportStory } from '@/features/story/hooks/useImportStory';
 import { useRouter } from 'expo-router';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ScrollView,
   StyleSheet,
@@ -15,32 +16,29 @@ const GENRE_KEYS = [
   'adventure', 'horror', 'comedy', 'drama', 'poetry',
 ] as const;
 
-// "Hikâyeni Taşı" — Wattpad'den (ya da başka bir kaynaktan) çok bölümlü bir
-// metni tek seferde yapıştır → otomatik bölümlere ayrılır → önizle → yayınla.
-// Ekran yalnızca kompozisyon yapar; iş mantığı useImportStory'de.
 export default function ImportStoryScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t, i18n } = useTranslation();
   const s = useImportStory();
 
   return (
     <Screen style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={styles.header}>
         <IconButton icon="close" size={40} onPress={() => router.back()} />
-        <Text variant="subheading" style={{ fontWeight: '700' }}>Hikâyeni Taşı</Text>
+        <Text variant="subheading" style={{ fontWeight: '700' }}>{t('import.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <Text variant="caption" tone="textSecondary" style={{ marginBottom: 16 }}>
-          Wattpad'deki (ya da başka bir yerdeki) hikâyeni tek seferde buraya yapıştır —
-          "Bölüm 1", "1. Bölüm" gibi başlıkları otomatik tanıyıp bölümlere ayırırız.
+          {t('import.description')}
         </Text>
 
         <TextInput
           value={s.title}
           onChangeText={s.setTitle}
-          placeholder="Hikâye başlığı"
+          placeholder={t('import.titlePlaceholder')}
           placeholderTextColor={colors.textSecondary}
           style={[styles.titleInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }]}
         />
@@ -59,7 +57,7 @@ export default function ImportStoryScreen() {
         <TextInput
           value={s.pastedText}
           onChangeText={s.setPastedText}
-          placeholder="Hikâyenin tamamını buraya yapıştır…"
+          placeholder={t('import.pastePlaceholder')}
           placeholderTextColor={colors.textSecondary}
           multiline
           textAlignVertical="top"
@@ -69,7 +67,7 @@ export default function ImportStoryScreen() {
         {s.pastedText.trim().length > 0 && (
           <View style={[styles.previewCard, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}>
             <Text variant="label" style={{ fontWeight: '700', marginBottom: 8 }}>
-              {s.chapters.length} bölüm algılandı · {s.totalWords.toLocaleString('tr-TR')} kelime
+              {t('import.detected', { chapters: s.chapters.length, words: s.totalWords.toLocaleString(i18n.language) })}
             </Text>
             {s.chapters.slice(0, 5).map((c, i) => (
               <Text key={c.id} variant="caption" tone="textSecondary" numberOfLines={1} style={{ marginTop: 2 }}>
@@ -78,14 +76,14 @@ export default function ImportStoryScreen() {
             ))}
             {s.chapters.length > 5 && (
               <Text variant="caption" tone="textLight" style={{ marginTop: 2 }}>
-                ve {s.chapters.length - 5} bölüm daha…
+                {t('import.andMore', { count: s.chapters.length - 5 })}
               </Text>
             )}
           </View>
         )}
 
         <Button
-          label={s.publishing ? 'Yayınlanıyor…' : 'Yayınla'}
+          label={s.publishing ? t('import.publishing') : t('studio.publishAction')}
           variant="primary"
           onPress={s.publish}
           disabled={s.publishing || s.chapters.length === 0}

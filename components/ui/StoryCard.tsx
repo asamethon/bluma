@@ -8,8 +8,11 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { useTranslation } from "react-i18next";
 import type { Story } from "@/types";
+import { formatCount } from "@/utils/format";
 import {
+  Fonts,
   Motion,
   Radius,
   Spacing,
@@ -20,11 +23,6 @@ import {
 import { Text } from "./Text";
 import { Avatar } from "./Avatar";
 
-/**
- * A bottom-up scrim: a real linear gradient from transparent at the top to a
- * near-opaque tint behind the title/author block. The mid stop eases the ramp
- * so the top edge stays feather-soft.
- */
 function BottomScrim({ color }: { color: string }) {
   return (
     <LinearGradient
@@ -46,13 +44,7 @@ function usePress() {
   };
 }
 
-/**
- * StoryCardSpine — the signature shelf card. A 2:3 book cover with a thin
- * bloom-tinted "spine" down the left edge, a genre tag, premium/completed
- * markers, and a clean title/author block below. This is the shape that should
- * make Bluma instantly recognizable in a horizontal shelf.
- */
-export function StoryCardSpine({
+export const StoryCardSpine = React.memo(function StoryCardSpine({
   story,
   width = 138,
   onPress,
@@ -62,6 +54,7 @@ export function StoryCardSpine({
   onPress?: () => void;
 }) {
   const { colors, shadows } = useTheme();
+  const { t } = useTranslation();
   const press = usePress();
   const accent = categoryColor(story.category, colors.primary);
   const coverH = width * 1.5;
@@ -71,17 +64,29 @@ export function StoryCardSpine({
       <Pressable onPress={onPress} onPressIn={press.onPressIn} onPressOut={press.onPressOut}>
         <View style={[styles.cover, { height: coverH }, shadows.md]}>
           {story.coverImage ? (
-            <Image source={{ uri: story.coverImage }} style={StyleSheet.absoluteFill} contentFit="cover" />
+            <Image
+              source={{ uri: story.coverImage }}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              recyclingKey={story.id}
+              transition={120}
+            />
           ) : (
             <View style={[StyleSheet.absoluteFill, { backgroundColor: accent + "33", alignItems: "center", justifyContent: "center" }]}>
               <Ionicons name="book" size={width * 0.3} color={accent} />
             </View>
           )}
 
-          {/* signature spine */}
           <View style={[styles.spine, { backgroundColor: accent }]} />
 
-          {/* top markers */}
+          <LinearGradient
+            colors={["transparent", "rgba(21,18,28,0.32)", "rgba(21,18,28,0.78)"]}
+            locations={[0.48, 0.74, 1]}
+            pointerEvents="none"
+            style={StyleSheet.absoluteFill}
+          />
+
           <View style={styles.topRow}>
             <View style={[styles.genrePill, { backgroundColor: accent }]}>
               <Text variant="overline" color="#fff" style={{ fontSize: 8.5, letterSpacing: 0.6 }}>
@@ -94,25 +99,38 @@ export function StoryCardSpine({
               </View>
             )}
           </View>
+
+          <View style={[styles.coverFooter, styles.statusRow]}>
+            {story.isCompleted ? (
+              <>
+                <View style={[styles.statusDot, { backgroundColor: colors.success }]} />
+                <Text variant="caption" color="#fff" style={styles.statusText}>
+                  {t("storyStatus.completed")}
+                </Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name="layers-outline" size={12} color="#fff" />
+                <Text variant="caption" color="#fff" style={styles.statusText}>
+                  {t("studio.chapterCount", { count: story.chaptersCount || 1 })}
+                </Text>
+              </>
+            )}
+          </View>
         </View>
 
         <Text variant="bodyStrong" numberOfLines={2} style={{ marginTop: Spacing.sm, lineHeight: 20 }}>
           {story.title}
         </Text>
         <Text variant="caption" tone="textLight" numberOfLines={1} style={{ marginTop: 2 }}>
-          {story.author?.username ? `@${story.author.username}` : story.author?.displayName || "Anonim"}
+          {story.author?.username ? `@${story.author.username}` : story.author?.displayName || t("common.anonymous")}
         </Text>
       </Pressable>
     </Animated.View>
   );
-}
+});
 
-/**
- * StoryCardFeature — large editorial card for the top of a section. Cover with
- * a stronger scrim, title in the serif display face, author chip and quick
- * read stats. Used for "Editörün Seçimi" highlights.
- */
-export function StoryCardFeature({
+export const StoryCardFeature = React.memo(function StoryCardFeature({
   story,
   onPress,
 }: {
@@ -120,6 +138,7 @@ export function StoryCardFeature({
   onPress?: () => void;
 }) {
   const { colors, shadows } = useTheme();
+  const { t } = useTranslation();
   const press = usePress();
   const accent = categoryColor(story.category, colors.primary);
 
@@ -128,7 +147,14 @@ export function StoryCardFeature({
       <Pressable onPress={onPress} onPressIn={press.onPressIn} onPressOut={press.onPressOut}>
         <View style={[styles.feature, shadows.lg]}>
           {story.coverImage ? (
-            <Image source={{ uri: story.coverImage }} style={StyleSheet.absoluteFill} contentFit="cover" />
+            <Image
+              source={{ uri: story.coverImage }}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              recyclingKey={story.id}
+              transition={120}
+            />
           ) : (
             <View style={[StyleSheet.absoluteFill, { backgroundColor: accent }]} />
           )}
@@ -160,11 +186,11 @@ export function StoryCardFeature({
             <View style={styles.featureMeta}>
               <Avatar uri={story.author?.profileImage} name={story.author?.displayName} size={26} />
               <Text variant="label" color="#fff" numberOfLines={1} style={{ flex: 1 }}>
-                {story.author?.displayName || "Anonim"}
+                {story.author?.displayName || t("common.anonymous")}
               </Text>
               <View style={styles.statPill}>
                 <Ionicons name="book-outline" size={12} color="#fff" />
-                <Text variant="caption" color="#fff">{story.readingTime || 5}dk</Text>
+                <Text variant="caption" color="#fff">{t("story.readingMinutesShort", { count: story.readingTime || 5 })}</Text>
               </View>
               <View style={styles.statPill}>
                 <Ionicons name="heart" size={12} color={colors.bloom} />
@@ -176,13 +202,8 @@ export function StoryCardFeature({
       </Pressable>
     </Animated.View>
   );
-}
+});
 
-function formatCount(n?: number) {
-  if (!n) return "0";
-  if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}b`;
-  return `${n}`;
-}
 
 const styles = StyleSheet.create({
   cover: {
@@ -232,6 +253,7 @@ const styles = StyleSheet.create({
   },
   statusRow: { flexDirection: "row", alignItems: "center", gap: 5 },
   statusDot: { width: 7, height: 7, borderRadius: 4 },
+  statusText: { fontSize: 10.5, fontFamily: Fonts.sansSemiBold },
 
   featureWrap: { paddingHorizontal: Spacing.screenX },
   feature: {
