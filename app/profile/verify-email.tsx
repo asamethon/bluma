@@ -1,18 +1,18 @@
-import { Button, Screen, Text } from '@/components/ui';
+import { Screen, Text } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
-import { useEmailVerification } from '@/features/auth/hooks/useEmailVerification';
+import { EmailVerifyField } from '@/features/auth/components/EmailVerifyField';
+import { GRACE_DAYS } from '@/features/auth/services/emailGrace';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { t } = useTranslation();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const v = useEmailVerification();
 
   return (
     <Screen style={styles.container}>
@@ -26,61 +26,13 @@ export default function VerifyEmailScreen() {
 
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
-          <Ionicons
-            name={v.verified ? 'checkmark-circle' : 'mail-unread-outline'}
-            size={32}
-            color={v.verified ? colors.success : colors.primary}
-          />
+          <Ionicons name="mail-unread-outline" size={32} color={colors.primary} />
           <Text variant="body" style={styles.center}>
-            {v.verified ? t('emailVerify.verifiedBody') : t('emailVerify.pendingBody', { email: v.email })}
+            {t('emailVerify.explainer', { days: GRACE_DAYS })}
           </Text>
         </View>
 
-        {!v.verified && (
-          <>
-            <Button label={t('emailVerify.checkNow')} onPress={v.check} disabled={v.busy} />
-            <Button
-              label={t('emailVerify.resend')}
-              variant="secondary"
-              onPress={v.resend}
-              disabled={v.busy}
-            />
-
-            <Text variant="subheading" style={styles.sectionTitle}>
-              {t('emailVerify.wrongAddressTitle')}
-            </Text>
-            <Text variant="caption" tone="textSecondary">
-              {t('emailVerify.wrongAddressBody')}
-            </Text>
-
-            <TextInput
-              style={styles.input}
-              value={v.newEmail}
-              onChangeText={v.setNewEmail}
-              placeholder={t('emailVerify.newEmailPlaceholder')}
-              placeholderTextColor={colors.textSecondary}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              autoComplete="email"
-            />
-            {v.needsPassword && (
-              <TextInput
-                style={styles.input}
-                value={v.password}
-                onChangeText={v.setPassword}
-                placeholder={t('emailVerify.passwordPlaceholder')}
-                placeholderTextColor={colors.textSecondary}
-                secureTextEntry
-                autoCapitalize="none"
-              />
-            )}
-            <Button
-              label={t('emailVerify.changeSubmit')}
-              onPress={v.submitChange}
-              disabled={v.busy || !v.newEmail.trim()}
-            />
-          </>
-        )}
+        <EmailVerifyField />
       </ScrollView>
     </Screen>
   );
@@ -96,7 +48,7 @@ const createStyles = (colors: any) =>
       paddingHorizontal: Spacing.lg,
       paddingVertical: Spacing.md,
     },
-    body: { padding: Spacing.lg, gap: Spacing.md },
+    body: { padding: Spacing.lg, gap: Spacing.lg },
     card: {
       alignItems: 'center',
       gap: Spacing.sm,
@@ -107,14 +59,4 @@ const createStyles = (colors: any) =>
       borderColor: colors.border,
     },
     center: { textAlign: 'center' },
-    sectionTitle: { marginTop: Spacing.lg },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: Radius.md,
-      paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.sm,
-      color: colors.text,
-      backgroundColor: colors.surface,
-    },
   });

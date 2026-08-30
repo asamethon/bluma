@@ -1,4 +1,5 @@
 import { Avatar, Button, Screen, Text } from '@/components/ui';
+import { EmailVerifyField } from '@/features/auth/components/EmailVerifyField';
 import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
 import { imageUploadService } from '@/services/imageUploadService';
 import { authActions, User } from '@/store/authStore';
@@ -282,19 +283,8 @@ export default function EditProfileScreen() {
             <Divider colors={colors} />
 
             <View style={fieldStyles.field}>
-              <Text variant="label" tone="textSecondary" style={{ marginBottom: 8 }}>
-                {t('auth.emailLabel')}
-              </Text>
-              <View style={[fieldStyles.inputBox, fieldStyles.inputDisabled, { borderColor: colors.border, backgroundColor: colors.surfaceVariant }]}>
-                <Ionicons name="mail-outline" size={18} color={colors.textLight} style={{ marginRight: 8 }} />
-                <Text variant="body" tone="textSecondary" style={{ flex: 1 }} numberOfLines={1}>
-                  {formData.email || '—'}
-                </Text>
-                <Ionicons name="lock-closed" size={14} color={colors.textLight} />
-              </View>
-              <Text variant="caption" tone="textLight" style={{ marginTop: 6 }}>
-                {t('editProfile.emailReadonly')}
-              </Text>
+              {/* Doğrulanmamışsa düzenlenebilir + "Doğrula"; doğrulanmışsa kilitli. */}
+              <EmailVerifyField />
             </View>
           </View>
         </View>

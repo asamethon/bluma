@@ -337,6 +337,18 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
+    // E-posta doğrulama süresi. Sayaç kullanıcı uyarıyı gördüğünde başlar ve
+    // bir daha DEĞİŞTİRİLEMEZ — aksi halde dokümanı silip süreyi sıfırlamak
+    // mümkün olurdu. Sunucudaki deactivate-unverified.js bu kaydı okur.
+    match /emailGrace/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasOnly(['userId', 'startedAt'])
+        && request.resource.data.userId == userId
+        && request.resource.data.startedAt == request.time;
+      allow update, delete: if false;
+    }
+
     // Hesap → cihaz eşlemesi. Cihaz kimliği kişisel veridir: herkese açık
     // users dokümanına YAZILMAZ, burada durur ve yalnızca admin okur.
     // Banlı cihaz yeni hesabını buraya kaydedemez (ban zinciri kopmasın).

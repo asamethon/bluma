@@ -15,6 +15,7 @@ import { SplashAnimation } from '@/components/ui';
 import { DeviceBannedScreen } from '@/features/moderation/components/DeviceBannedScreen';
 import { useDeviceBan } from '@/features/moderation/hooks/useDeviceBan';
 import { Linking } from 'react-native';
+import { useEmailVerificationAlert } from '@/features/auth/hooks/useEmailVerificationAlert';
 import { setupNotificationListeners } from '@/utils/notification';
 import { GuestProvider } from '@/contexts/GuestContext';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
@@ -88,6 +89,7 @@ function RootLayoutInner() {
   const stories = useAppSelector(s => s.story.stories);
   const continueReading = useAppSelector(s => s.story.continueReading);
   const deviceBan = useDeviceBan();
+  useEmailVerificationAlert();
   const [splashTimedOut, setSplashTimedOut] = useState(false);
   const [imagesReady, setImagesReady] = useState(false);
   const [introFinished, setIntroFinished] = useState(false);

@@ -1012,6 +1012,13 @@
     "typoTitle": "Check the address",
     "typoBody": "Did you mean {{suggestion}}?",
     "typoUse": "Yes, fix it",
-    "typoKeep": "No, keep mine"
+    "typoKeep": "No, keep mine",
+    "verifyAction": "Verify",
+    "fieldHint": "You can change your address. Tapping \"Verify\" sends the link to it; once verified, the address is locked.",
+    "explainer": "Verify your email address to keep using your account. If you typed it wrong, fix it below — it can't be changed after verification.",
+    "alertTitle": "Verify your email",
+    "alertBody": "Your email address isn't verified. If you don't verify it within {{days}} days, your account will be suspended. If the address is wrong, you can fix it on the verification screen.",
+    "alertLater": "Later",
+    "alertGo": "Verify now"
   }
 }
