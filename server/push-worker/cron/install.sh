@@ -37,4 +37,6 @@ block=$(printf '%s\n%s\n%s\n' "$BEGIN" "$(cat "$DIR/crontab.example")" "$END")
 
 printf '%s\n%s\n' "$without_block" "$block" | sed '/^$/N;/^\n$/D' | crontab -
 echo "Kuruldu. Aktif bluma işleri:"
-crontab -l | grep -c 'bluma-cron.sh' || true
+# Yalnızca yorum OLMAYAN satırlar — sayı yerine işin kendisini göster,
+# "kaç tane" bilgisi yorum satırları yüzünden yanıltıcı oluyordu.
+crontab -l | grep -E '^[[:space:]]*[^#[:space:]].*bluma-cron\.sh' || echo '  (aktif iş yok)'
