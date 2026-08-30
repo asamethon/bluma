@@ -11,6 +11,7 @@ import React, { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import {
+  Linking,
   RefreshControl,
   StyleSheet,
   TouchableOpacity,
@@ -287,6 +288,10 @@ export default function NotificationsScreen() {
         case "story_published":
           if (item.data?.storyId)
             router.push(`/story/${item.data.storyId}/preview`);
+          break;
+        case "announcement":
+          if (item.data?.url) Linking.openURL(item.data.url).catch(() => {});
+          else if (item.data?.route) router.push(item.data.route as any);
           break;
         case "verify_email":
           router.push("/profile/verify-email" as any);

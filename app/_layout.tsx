@@ -14,6 +14,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import { SplashAnimation } from '@/components/ui';
 import { DeviceBannedScreen } from '@/features/moderation/components/DeviceBannedScreen';
 import { useDeviceBan } from '@/features/moderation/hooks/useDeviceBan';
+import { Linking } from 'react-native';
 import { setupNotificationListeners } from '@/utils/notification';
 import { GuestProvider } from '@/contexts/GuestContext';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
@@ -101,8 +102,13 @@ function RootLayoutInner() {
   // Push bildirimine tıklanınca ilgili ekrana git. Dinleyici hiç
   // kurulmadığı için tıklama şimdiye kadar yalnızca uygulamayı açıyordu.
   useEffect(() => setupNotificationListeners(undefined, (response) => {
-    const route = response.notification.request.content.data?.route;
-    if (typeof route === 'string' && route.startsWith('/')) router.push(route as any);
+    const data = response.notification.request.content.data ?? {};
+    if (typeof data.route === 'string' && data.route.startsWith('/')) {
+      router.push(data.route as any);
+    } else if (typeof data.url === 'string' && /^https?:\/\//.test(data.url)) {
+      // Duyurularda mağaza bağlantısı gelir; yalnızca http(s) açılır.
+      Linking.openURL(data.url).catch(() => {});
+    }
   }), []);
 
   useEffect(() => {

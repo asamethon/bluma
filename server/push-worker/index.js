@@ -23,6 +23,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { handleDeleteAccount } from './deleteAccount.js';
 import { handleBanDevice } from './banDevice.js';
+import { sendExpoPush } from './expoPush.js';
 
 const PORT = Number(process.env.PORT || 8789);
 const HOST = process.env.HOST || '127.0.0.1';
@@ -143,29 +144,14 @@ async function isBlocked(ownerId, senderId) {
 }
 
 // Başarılı gönderimde true döner — DM'lerde "çift tik" filigranı buna bağlı.
-async function sendExpoPush(token, title, body, data) {
-  try {
-    const res = await fetch('https://exp.host/--/api/v2/push/send', {
-      method: 'POST',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: token, sound: 'default', title, body, data }),
-    });
-    const result = await res.json();
-    if (result?.data?.status !== 'ok') {
-      console.error('[push] Expo push başarısız:', JSON.stringify(result));
-      return false;
-    }
-    console.log(`[push] gönderildi: "${title}"`);
-    return true;
-  } catch (error) {
-    console.error('[push] Expo push isteği hata verdi:', error.message);
-    return false;
-  }
-}
 
 async function processNotification(docSnap) {
   const n = docSnap.data();
   if (!n?.userId) return;
+  // Toplu duyurularda push'u announce.js kendisi (gruplayarak) gönderir;
+  // buradaki dinleyici limit(50) penceresiyle çalıştığı için toplu yazımda
+  // bildirimlerin bir kısmını kaçırırdı.
+  if (n.pushSent) return;
   if (await isBlocked(n.userId, n.senderId)) {
     console.log(`[notifications] atlandı (engellenmiş): ${n.senderId} -> ${n.userId}`);
     return;
