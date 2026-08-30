@@ -67,10 +67,22 @@ service cloud.firestore {
       return request.auth.token.get('email_verified', false) == true
         || request.auth.token.firebase.sign_in_provider != 'password';
     }
-    // İçerik üretimi için kısayol: oturumlu, banlı cihazda değil, e-postası
-    // doğrulanmış.
+    // AŞAMALI AÇILIŞ ANAHTARI — doğrulama zorunluluğu.
+    //
+    // false iken doğrulama YALNIZCA istemcide istenir (anlaşılır mesaj,
+    // otomatik yeniden gönderim); kural kimseyi engellemez. Yeni build
+    // mağazada yayılıp doğrulanmamış hesap sayısı erimeden true yapma:
+    // uygulamanın eski sürümündeki kullanıcı sebebini göremeden ham
+    // "permission denied" alır (bkz. notify-unverified.js).
+    function requireVerifiedEmail() {
+      return false;
+    }
+    // İçerik üretimi için kısayol: oturumlu, banlı cihazda değil ve
+    // (anahtar açıksa) e-postası doğrulanmış.
     function canPublish() {
-      return isSignedIn() && !onBannedDevice() && emailVerified();
+      return isSignedIn()
+        && !onBannedDevice()
+        && (!requireVerifiedEmail() || emailVerified());
     }
 
     // True when the caller is NOT blocked by `ownerId`. Engellenen bir
