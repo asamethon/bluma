@@ -31,10 +31,13 @@ export async function sendAuthEmailViaServer(
       body: JSON.stringify({ kind, ...(newEmail ? { newEmail } : {}) }),
     });
     if (res.ok) return true;
-    logger.debug('Auth email server declined, falling back:', res.status);
+    // Yedeğe düşüş sessiz olmamalı: Firebase'in sade postası gitse bile
+    // sunucunun neden reddettiğini bilmezsek sorunu hiç göremeyiz.
+    const detail = await res.text().catch(() => '');
+    logger.error(`Auth email server declined (${res.status}), falling back:`, detail.slice(0, 200));
     return false;
   } catch (error) {
-    logger.debug('Auth email server unreachable, falling back:', error);
+    logger.error('Auth email server unreachable, falling back:', error);
     return false;
   }
 }
