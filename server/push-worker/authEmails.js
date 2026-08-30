@@ -181,3 +181,81 @@ export async function handleActionPage(req, res) {
     res.end('Sayfa yüklenemedi');
   }
 }
+
+/**
+ * Basit oran sınırı (bellek içi).
+ *
+ * /send-password-reset kimlik doğrulaması İSTEMEZ — kullanıcı zaten giriş
+ * yapamıyor. Bu yüzden kötüye kullanıma açık: aynı adrese sınırsız posta
+ * yağdırılabilir. Adres başına ve toplamda sınırlıyoruz.
+ *
+ * Bellek içi olması yeniden başlatmada sıfırlanır; kabul edilebilir, çünkü
+ * amaç kaba bir tavan koymak, kusursuz muhasebe değil.
+ */
+const RESET_WINDOW_MS = 60 * 60 * 1000;
+const RESET_PER_EMAIL = 3;
+const RESET_TOTAL = 50;
+const resetHits = new Map();
+
+function rateLimited(email) {
+  const now = Date.now();
+  for (const [key, times] of resetHits) {
+    const fresh = times.filter((t) => now - t < RESET_WINDOW_MS);
+    if (fresh.length) resetHits.set(key, fresh);
+    else resetHits.delete(key);
+  }
+  const total = [...resetHits.values()].reduce((n, times) => n + times.length, 0);
+  if (total >= RESET_TOTAL) return true;
+
+  const mine = resetHits.get(email) || [];
+  if (mine.length >= RESET_PER_EMAIL) return true;
+  resetHits.set(email, [...mine, now]);
+  return false;
+}
+
+/**
+ * POST /send-password-reset — { email, locale }
+ *
+ * Kimlik doğrulaması yok (kullanıcı giriş yapamıyor). Hesap olsun olmasın
+ * HER ZAMAN başarı döner: aksi halde uç nokta "bu adres kayıtlı mı?"
+ * sorusuna cevap veren bir hesap sayacına dönüşür.
+ */
+export async function handleSendPasswordReset(auth, req, res) {
+  const ok = () => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true }));
+  };
+  try {
+    if (!mailerReady()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'mailer-unconfigured' }));
+      return;
+    }
+
+    const { email, locale } = await readJson(req);
+    const address = String(email || '').trim().toLowerCase();
+    if (!address || !address.includes('@')) return ok();
+
+    if (rateLimited(address)) {
+      console.log('[send-password-reset] oran sınırı:', address);
+      return ok();
+    }
+
+    // Hesap yoksa ya da sosyal girişse sessizce başarı dön — bilgi sızdırma.
+    let user;
+    try {
+      user = await auth.getUserByEmail(address);
+    } catch {
+      return ok();
+    }
+    if (!user.providerData.some((p) => p.providerId === 'password')) return ok();
+
+    await sendAuthMailFor(auth, user, { kind: 'reset', lang: pickLang(locale) });
+    ok();
+  } catch (error) {
+    console.error('[send-password-reset] hata:', error.message);
+    // İstemci yedeğe düşebilsin diye hatayı gizlemiyoruz.
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: false, error: error.message }));
+  }
+}

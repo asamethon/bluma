@@ -25,6 +25,7 @@ import { authError, AuthResult } from './authErrors';
 import { buildSignupContext, trackSignupContext } from './signupContext';
 import { isDisposableEmail } from './disposableEmails';
 import { applyAuthLanguage, sendVerificationEmail } from './emailVerification';
+import { sendPasswordResetViaServer } from './authEmailApi';
 import { logger } from '@/utils/logger';
 
 // Klavye/otomatik doldurma kaynaklı boşluk ve büyük harf, Firebase'de
@@ -170,8 +171,12 @@ async function resetPassword(email: string): Promise<AuthResult> {
   try {
     store.dispatch(patchAuth({ isLoading: true }));
 
-    await applyAuthLanguage();
-    await sendPasswordResetEmail(getAuth(), normalizeEmail(email));
+    // Önce kendi sunucumuz (tasarlanmış şablon, kendi alan adımız);
+    // ulaşılamazsa Firebase'in sade postası gitsin.
+    if (!(await sendPasswordResetViaServer(normalizeEmail(email)))) {
+      await applyAuthLanguage();
+      await sendPasswordResetEmail(getAuth(), normalizeEmail(email));
+    }
 
     logger.debug('Password reset email sent successfully');
     return { success: true };

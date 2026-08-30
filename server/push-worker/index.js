@@ -24,7 +24,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { handleDeleteAccount } from './deleteAccount.js';
 import { handleBanDevice } from './banDevice.js';
 import { sendExpoPush } from './expoPush.js';
-import { handleSendAuthEmail, handleActionPage } from './authEmails.js';
+import { handleSendAuthEmail, handleActionPage, handleSendPasswordReset } from './authEmails.js';
 
 const PORT = Number(process.env.PORT || 8789);
 const HOST = process.env.HOST || '127.0.0.1';
@@ -278,6 +278,12 @@ http.createServer((req, res) => {
   // tasarımımızla, kendi alan adımızdan (bkz. authEmails.js).
   if (req.url === '/send-auth-email' && req.method === 'POST') {
     handleSendAuthEmail(auth, req, res);
+    return;
+  }
+  // Şifre sıfırlama — kullanıcı giriş yapamadığı için kimlik doğrulaması yok;
+  // oran sınırlı ve hesap varlığını sızdırmaz (bkz. authEmails.js).
+  if (req.url === '/send-password-reset' && req.method === 'POST') {
+    handleSendPasswordReset(auth, req, res);
     return;
   }
   // Cihaz banı — admin custom claim'i olan hesap çağırabilir (bkz. banDevice.js).

@@ -43,3 +43,25 @@ export async function sendAuthEmailViaServer(
     return false;
   }
 }
+
+/**
+ * Şifre sıfırlama — kullanıcı giriş YAPMAMIŞ olduğu için token yok; sunucu
+ * bu uç noktada kimlik doğrulamıyor, bunun yerine oran sınırı uyguluyor ve
+ * hesabın var olup olmadığını sızdırmıyor.
+ */
+export async function sendPasswordResetViaServer(email: string): Promise<boolean> {
+  if (!API_SERVER_URL) return false;
+  try {
+    const res = await fetch(`${API_SERVER_URL}/send-password-reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, locale: i18n.language }),
+    });
+    if (res.ok) return true;
+    logger.error(`Password reset server declined (${res.status}), falling back`);
+    return false;
+  } catch (error) {
+    logger.error('Password reset server unreachable, falling back:', error);
+    return false;
+  }
+}
