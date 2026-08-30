@@ -28,7 +28,7 @@ kullanır — güvenlik kurallarına tabi değildir, token'ı yalnızca burada o
 ```bash
 sudo mkdir -p /opt/bluma-push-worker
 # server/push-worker/ klasörünü sunucuya kopyala (node_modules HARİÇ):
-#   rsync -av --exclude node_modules server/push-worker/ root@SUNUCU:/opt/bluma-push-worker/
+#   rsync -av --exclude node_modules --exclude package-lock.json server/push-worker/ root@SUNUCU:/opt/bluma-push-worker/
 cd /opt/bluma-push-worker && npm install --omit=dev
 
 # Servis hesabı anahtarını güvenli bir konuma koy (repo dışı, dar izinli):
@@ -80,8 +80,13 @@ curl http://127.0.0.1:8789/health   # { "ok": true }
 
 ## 4. Güncelleme
 
+> **`--delete` kullanacaksan dikkat:** repo yarn kullandığı için
+> `package-lock.json` `.gitignore`'da ve rsync onu sunucudan siler. Aşağıdaki
+> komutta bu yüzden `--exclude package-lock.json` var. Yanlışlıkla silinirse
+> `npm install --package-lock-only` ile geri üretilir.
+
 ```bash
-rsync -av --exclude node_modules server/push-worker/ root@SUNUCU:/opt/bluma-push-worker/
+rsync -av --exclude node_modules --exclude package-lock.json server/push-worker/ root@SUNUCU:/opt/bluma-push-worker/
 ssh root@SUNUCU "cd /opt/bluma-push-worker && npm install --omit=dev && systemctl restart bluma-push-worker"
 ```
 
