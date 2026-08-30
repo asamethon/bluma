@@ -1018,7 +1018,7 @@
     "typoKeep": "Hayır, böyle kalsın",
     "verifyAction": "Doğrula",
     "fieldHint": "Adresini değiştirebilirsin. \"Doğrula\"ya bastığında bağlantı bu adrese gider; doğruladıktan sonra adres kilitlenir.",
-    "explainer": "Hesabını kullanmaya devam etmek için e-posta adresini doğrulaman gerekiyor. Adresi yanlış yazdıysan aşağıdan düzeltebilirsin — doğrulandıktan sonra değiştirilemez.",
+    "explainer": "Hesabını kullanmaya devam etmek için e-posta adresini doğrulaman gerekiyor. Adresi yanlış yazdıysan aşağıdan düzeltebilirsin, doğrulandıktan sonra değiştirilemez.",
     "alertTitle": "E-postanı doğrula",
     "alertBody": "Hesabının e-posta adresi doğrulanmamış. {{days}} gün içinde doğrulamazsan hesabın askıya alınacak. Adresi yanlış yazdıysan doğrulama ekranından düzeltebilirsin.",
     "alertLater": "Daha sonra",
