@@ -13,15 +13,39 @@
 // API'sini kaldırdı — modüler alt-yol importları gerekiyor.
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 
 const DRY_RUN = process.argv.includes('--dry-run');
 
 const app = initializeApp({ credential: applicationDefault() });
 const db = getFirestore(app);
+const auth = getAuth(app);
 
-// Var olan kullanıcı ID kümesi — hayalet dokümanları ayıklamanın tek ölçütü.
+// Var olan kullanıcı ID kümesi.
 let existingUsers = new Set();
-const isLive = (uid) => !!uid && existingUsers.has(uid);
+// Auth'ta var olduğu doğrulanmış ama users dokümanı olmayan uid'ler.
+const rescued = new Set();
+
+/**
+ * "Bu uid silinmiş mi?" sorusunu İKİ kaynağa sorar.
+ *
+ * users dokümanının yokluğu tek başına yeterli değil: kayıt sırasında Auth
+ * hesabı oluşup users yazımı başarısız olan kullanıcı da öyle görünür ve
+ * içeriği yanlışlıkla silinir. Script haftalık cron'da gözetimsiz çalıştığı
+ * için Auth'a da soruyoruz — silme geri alınamaz.
+ */
+async function isLive(uid) {
+  if (!uid) return false;
+  if (existingUsers.has(uid) || rescued.has(uid)) return true;
+  try {
+    await auth.getUser(uid);
+    console.log(`[uyarı] ${uid}: Auth'ta var ama users dokümanı yok — dokunulmuyor.`);
+    rescued.add(uid);
+    return true;
+  } catch {
+    return false; // auth/user-not-found → gerçekten silinmiş
+  }
+}
 
 async function fixIfDrifted(ref, field, actual, label) {
   const doc = await ref.get();
@@ -45,7 +69,7 @@ async function liveLikes(likesRef) {
   let live = 0;
   for (const d of snap.docs) {
     // Doküman id'si == beğenen kullanıcının uid'i (userId alanı da yazılır).
-    if (isLive(d.data()?.userId || d.id)) { live++; continue; }
+    if (await isLive(d.data()?.userId || d.id)) { live++; continue; }
     await prune(d.ref, 'silinmiş kullanıcı');
   }
   return live;
@@ -58,7 +82,10 @@ async function liveLikes(likesRef) {
  */
 async function liveComments(commentsRef) {
   const snap = await commentsRef.get();
-  const dead = new Set(snap.docs.filter((d) => !isLive(d.data()?.userId)).map((d) => d.id));
+  const dead = new Set();
+  for (const d of snap.docs) {
+    if (!(await isLive(d.data()?.userId))) dead.add(d.id);
+  }
   let live = 0;
   for (const d of snap.docs) {
     if (dead.has(d.id)) { await prune(d.ref, 'silinmiş kullanıcı'); continue; }
@@ -76,7 +103,7 @@ async function liveConversationComments(conversationId) {
     .get();
   let live = 0;
   for (const d of snap.docs) {
-    if (isLive(d.data()?.userId)) { live++; continue; }
+    if (await isLive(d.data()?.userId)) { live++; continue; }
     await prune(d.ref, 'silinmiş kullanıcı');
   }
   return live;
@@ -135,7 +162,7 @@ async function reconcileUsers(userDocs) {
       for (const rel of snap.docs) {
         // Doc id == karşı kullanıcının uid'i (followers/{takipçi},
         // following/{takip edilen}).
-        if (isLive(rel.id)) { live++; continue; }
+        if (await isLive(rel.id)) { live++; continue; }
         console.log(`[budama] ${doc.ref.path}/${sub}/${rel.id} (silinmiş kullanıcı)`);
         if (!DRY_RUN) await rel.ref.delete().catch(() => {});
       }
