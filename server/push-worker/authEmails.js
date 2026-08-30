@@ -10,6 +10,15 @@ const SUBJECTS = {
   reset: 'Bluma şifreni sıfırla',
 };
 
+/**
+ * Firebase'in barındırdığı işlem sayfası (bluma-dc10e.firebaseapp.com/__/auth/action)
+ * varsayılan olarak İngilizce açılır; dil parametresi eklenmezse kullanıcı
+ * Türkçe postadan İngilizce bir sayfaya düşüyor.
+ */
+function localized(link, lang = 'tr') {
+  return link.includes('lang=') ? link : `${link}&lang=${lang}`;
+}
+
 function readJson(req) {
   return new Promise((resolve, reject) => {
     let body = '';
@@ -60,7 +69,7 @@ export async function handleSendAuthEmail(auth, req, res) {
         template: 'email-change',
         to: newEmail,
         subject: SUBJECTS.change,
-        values: { LINK: link, DISPLAY_NAME: user.displayName || '', NEW_EMAIL: newEmail },
+        values: { LINK: localized(link), DISPLAY_NAME: user.displayName || '', NEW_EMAIL: newEmail },
       });
     } else if (kind === 'reset') {
       const link = await auth.generatePasswordResetLink(user.email);
@@ -68,7 +77,7 @@ export async function handleSendAuthEmail(auth, req, res) {
         template: 'password-reset',
         to: user.email,
         subject: SUBJECTS.reset,
-        values: { LINK: link, DISPLAY_NAME: user.displayName || '' },
+        values: { LINK: localized(link), DISPLAY_NAME: user.displayName || '' },
       });
     } else {
       if (user.emailVerified) return send(200, { success: true, alreadyVerified: true });
@@ -77,7 +86,7 @@ export async function handleSendAuthEmail(auth, req, res) {
         template: 'verify-email',
         to: user.email,
         subject: SUBJECTS.verify,
-        values: { LINK: link, DISPLAY_NAME: user.displayName || '' },
+        values: { LINK: localized(link), DISPLAY_NAME: user.displayName || '' },
       });
     }
 
