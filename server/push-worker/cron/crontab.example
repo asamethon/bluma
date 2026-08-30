@@ -1,0 +1,27 @@
+# Bluma zamanlanmış işleri.  Kurulum:
+#   crontab -e   ve aşağıdaki satırları yapıştır
+#
+# Günlükleri gör:  journalctl -t bluma-cron --since today
+#
+# Sunucu saati UTC olabilir; CRON_TZ ile yerel saate sabitliyoruz ki
+# bildirimler gece yarısı düşmesin.
+CRON_TZ=Europe/Istanbul
+
+# Süresi dolmak üzere olanlara son hatırlatma (uygulamayı açmasa bile ulaşır).
+0 11 * * *  /opt/bluma-push-worker/cron/bluma-cron.sh notify-unverified.js --grace-day 6 2>&1 | logger -t bluma-cron
+
+# Sayaç mutabakatı — haftada bir, gece trafiği düşükken.
+30 4 * * 0  /opt/bluma-push-worker/cron/bluma-cron.sh reconcile-counters.js 2>&1 | logger -t bluma-cron
+
+# ---------------------------------------------------------------------------
+# ASKIYA ALMA — HENÜZ AÇMA.
+#
+# Bu satır süresi dolmuş hesapları devre dışı bırakır. Şu sıra tamamlanmadan
+# açılmamalı:
+#   1) yeni build mağazada yayıldı,
+#   2) 81 kişilik geçmiş yığına hatırlatma gönderildi,
+#   3) firestore.rules içinde requireVerifiedEmail() true yapıldı,
+#   4) `deactivate-unverified.js --dry-run` çıktısı elle gözden geçirildi.
+# Aksi halde insanlar doğrulama fırsatı bulamadan hesapları kapanır.
+#
+# 0 12 * * *  /opt/bluma-push-worker/cron/bluma-cron.sh deactivate-unverified.js 2>&1 | logger -t bluma-cron

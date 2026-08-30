@@ -207,6 +207,24 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST 127.0.0.1:8789/send-auth-email
 # 401 → mailer yüklü ve çalışıyor    503 → anahtar okunamıyor
 ```
 
+## Zamanlanmış işler (cron)
+
+`cron/bluma-cron.sh` sarmalayıcısı ortam dosyasını yükler; cron'un boş
+ortamında `RESEND_API_KEY` ve `GOOGLE_APPLICATION_CREDENTIALS` aksi halde
+bulunmaz. Çıktı journald'a düşer.
+
+```bash
+# Servis hesabı yolunu ortam dosyasına ekle (sarmalayıcı oradan okur):
+echo 'GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/<servis-hesabi>.json' >> /etc/bluma/push-worker.env
+
+crontab -e   # cron/crontab.example içeriğini yapıştır
+journalctl -t bluma-cron --since today
+```
+
+Kurulan işler: günlük son hatırlatma (`--grace-day 6`) ve haftalık sayaç
+mutabakatı. **Askıya alma satırı bilinçli olarak kapalı** — açma koşulları
+`crontab.example` içinde yazılı.
+
 ## Yönetim komutları
 
 ```bash
