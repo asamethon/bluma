@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import i18n from '@/i18n';
 import { useAppSelector } from '@/store/hooks';
+import { logger } from '@/utils/logger';
 import { GRACE_DAYS, ensureGraceStarted } from '../services/emailGrace';
 import {
   needsEmailVerification,
@@ -10,17 +12,28 @@ import {
 } from '../services/emailVerification';
 
 /**
- * Açılışta bir kez: e-postası doğrulanmamış kullanıcıyı uyarır ve 7 günlük
- * sayacı BURADA başlatır — kayıt tarihinde değil. Uygulamayı aylardır
- * açmamış birinin süresi, haberi olmadan dolmuş olmasın diye.
+ * Doğrulama uyarısının takvimi.
+ *
+ * Her açılışta uyarmak 7 gün boyunca dırdır olur ve kullanıcıyı uygulamayı
+ * silmeye iter. Bunun yerine iki kez gösteriyoruz — ilk görüşte ve 2 gün
+ * sonra — süre dolmadan hemen önceki hatırlatma ise sunucudan bildirim
+ * olarak gidiyor (notify-unverified.js --grace-day).
  */
+const SHOW_AT_DAYS = [0, 2];
+const STORAGE_KEY = 'bluma.emailAlertShownCount';
+
+/** Kaçıncı gösterimdeyiz ve şimdi göstermeli miyiz? */
+function shouldShow(shownCount: number, daysSinceStart: number) {
+  return shownCount < SHOW_AT_DAYS.length && daysSinceStart >= SHOW_AT_DAYS[shownCount];
+}
+
 export function useEmailVerificationAlert() {
   const userId = useAppSelector(s => s.auth.user?.id);
-  const shown = useRef(false);
+  const handled = useRef(false);
 
   useEffect(() => {
-    if (!userId || shown.current || !needsEmailVerification()) return;
-    shown.current = true;
+    if (!userId || handled.current || !needsEmailVerification()) return;
+    handled.current = true;
 
     let cancelled = false;
     // Açılış animasyonuyla çakışmasın.
@@ -30,9 +43,18 @@ export function useEmailVerificationAlert() {
       if (cancelled) return;
 
       const grace = await ensureGraceStarted();
+      if (!grace || cancelled) return;
+
+      const shownCount = Number(await AsyncStorage.getItem(STORAGE_KEY).catch(() => null)) || 0;
+      const daysSinceStart = Math.floor((Date.now() - grace.startedAt.getTime()) / 86400_000);
+      if (!shouldShow(shownCount, daysSinceStart)) return;
+
+      await AsyncStorage.setItem(STORAGE_KEY, String(shownCount + 1))
+        .catch(e => logger.error('Email alert counter error:', e));
+
       Alert.alert(
         i18n.t('emailVerify.alertTitle'),
-        i18n.t('emailVerify.alertBody', { days: grace?.daysLeft ?? GRACE_DAYS }),
+        i18n.t('emailVerify.alertBody', { days: grace.daysLeft ?? GRACE_DAYS }),
         [
           { text: i18n.t('emailVerify.alertLater'), style: 'cancel' },
           {

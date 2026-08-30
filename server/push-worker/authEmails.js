@@ -9,18 +9,31 @@ import { mailerReady, sendTemplateMail } from './mailer.js';
 
 const TEMPLATE_DIR = join(dirname(fileURLToPath(import.meta.url)), 'templates');
 
+// Yalnızca iki dil tutuluyor: Türkçe ve İngilizce. Türkçe olmayan her
+// kullanıcı İngilizce alır — dokuz dile ayrı şablon bakımı yapmaktansa
+// anlaşılır tek bir yedek dil daha sağlıklı.
 const SUBJECTS = {
-  verify: 'Bluma hesabını doğrula',
-  change: 'Bluma e-posta adresini onayla',
-  reset: 'Bluma şifreni sıfırla',
+  tr: {
+    verify: 'Bluma hesabını doğrula',
+    change: 'Bluma e-posta adresini onayla',
+    reset: 'Bluma şifreni sıfırla',
+  },
+  en: {
+    verify: 'Verify your Bluma account',
+    change: 'Confirm your new Bluma email address',
+    reset: 'Reset your Bluma password',
+  },
 };
+
+/** İstemcinin gönderdiği yerel ayardan şablon dili. */
+const pickLang = (locale) => (String(locale || '').toLowerCase().startsWith('tr') ? 'tr' : 'en');
 
 /**
  * Firebase'in barındırdığı işlem sayfası (bluma-dc10e.firebaseapp.com/__/auth/action)
  * varsayılan olarak İngilizce açılır; dil parametresi eklenmezse kullanıcı
  * Türkçe postadan İngilizce bir sayfaya düşüyor.
  */
-function localized(link, lang = 'tr') {
+function localized(link, lang) {
   return link.includes('lang=') ? link : `${link}&lang=${lang}`;
 }
 
@@ -48,7 +61,7 @@ function toOwnActionPage(link) {
   }
 }
 
-const actionLink = (link) => toOwnActionPage(localized(link));
+const actionLink = (link, lang) => toOwnActionPage(localized(link, lang));
 
 function readJson(req) {
   return new Promise((resolve, reject) => {
@@ -90,7 +103,8 @@ export async function handleSendAuthEmail(auth, req, res) {
     const user = await auth.getUser(decoded.uid);
     if (!user.email) return send(400, { success: false, error: 'Hesapta e-posta yok' });
 
-    const { kind = 'verify', newEmail } = await readJson(req);
+    const { kind = 'verify', newEmail, locale } = await readJson(req);
+    const lang = pickLang(locale);
 
     if (kind === 'change') {
       if (!newEmail) return send(400, { success: false, error: 'newEmail gerekli' });
@@ -98,26 +112,29 @@ export async function handleSendAuthEmail(auth, req, res) {
       const link = await auth.generateVerifyAndChangeEmailLink(user.email, newEmail);
       await sendTemplateMail({
         template: 'email-change',
+        lang,
         to: newEmail,
-        subject: SUBJECTS.change,
-        values: { LINK: actionLink(link), DISPLAY_NAME: user.displayName || '', NEW_EMAIL: newEmail },
+        subject: SUBJECTS[lang].change,
+        values: { LINK: actionLink(link, lang), DISPLAY_NAME: user.displayName || '', NEW_EMAIL: newEmail },
       });
     } else if (kind === 'reset') {
       const link = await auth.generatePasswordResetLink(user.email);
       await sendTemplateMail({
         template: 'password-reset',
+        lang,
         to: user.email,
-        subject: SUBJECTS.reset,
-        values: { LINK: actionLink(link), DISPLAY_NAME: user.displayName || '' },
+        subject: SUBJECTS[lang].reset,
+        values: { LINK: actionLink(link, lang), DISPLAY_NAME: user.displayName || '' },
       });
     } else {
       if (user.emailVerified) return send(200, { success: true, alreadyVerified: true });
       const link = await auth.generateEmailVerificationLink(user.email);
       await sendTemplateMail({
         template: 'verify-email',
+        lang,
         to: user.email,
-        subject: SUBJECTS.verify,
-        values: { LINK: actionLink(link), DISPLAY_NAME: user.displayName || '' },
+        subject: SUBJECTS[lang].verify,
+        values: { LINK: actionLink(link, lang), DISPLAY_NAME: user.displayName || '' },
       });
     }
 

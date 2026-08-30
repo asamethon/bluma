@@ -20,11 +20,12 @@ const REPLY_TO = process.env.MAIL_REPLY_TO || '';
 
 const cache = new Map();
 
-async function template(name) {
-  if (!cache.has(name)) {
-    cache.set(name, await readFile(join(TEMPLATE_DIR, `${name}.html`), 'utf8'));
+async function template(name, lang) {
+  const key = `${lang}/${name}`;
+  if (!cache.has(key)) {
+    cache.set(key, await readFile(join(TEMPLATE_DIR, lang, `${name}.html`), 'utf8'));
   }
-  return cache.get(name);
+  return cache.get(key);
 }
 
 /** %LINK% gibi yer tutucuları doldurur. */
@@ -94,8 +95,8 @@ async function deliver({ to, subject, html }) {
 /** Kendi gönderimimiz yapılandırılmış mı? İstemci buna göre yedeğe düşer. */
 export const mailerReady = () => !!API_KEY;
 
-export async function sendTemplateMail({ template: name, to, subject, values }) {
-  const html = fill(await template(name), { EMAIL: to, ...values });
+export async function sendTemplateMail({ template: name, lang = 'tr', to, subject, values }) {
+  const html = fill(await template(name, lang), { EMAIL: to, ...values });
   await deliver({ to, subject, html });
-  console.log(`[mail] gönderildi: ${name} -> ${to}`);
+  console.log(`[mail] gönderildi: ${lang}/${name} -> ${to}`);
 }

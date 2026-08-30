@@ -1,5 +1,6 @@
 import { getAuth, getIdToken } from '@react-native-firebase/auth';
 import { API_SERVER_URL } from '@/constants/config';
+import i18n from '@/i18n';
 import { logger } from '@/utils/logger';
 
 /**
@@ -28,7 +29,8 @@ export async function sendAuthEmailViaServer(
         Authorization: `Bearer ${idToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ kind, ...(newEmail ? { newEmail } : {}) }),
+      // Şablon dili sunucuda seçiliyor: Türkçe ya da İngilizce.
+      body: JSON.stringify({ kind, locale: i18n.language, ...(newEmail ? { newEmail } : {}) }),
     });
     if (res.ok) return true;
     // Yedeğe düşüş sessiz olmamalı: Firebase'in sade postası gitse bile

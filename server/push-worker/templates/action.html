@@ -50,18 +50,61 @@
     <div class="brand">Bluma<span></span></div>
     <div id="view">
       <div class="icon">⏳</div>
-      <h1>Bir saniye…</h1>
-      <p>İsteğin işleniyor.</p>
+      <h1 id="w1">Bir saniye…</h1>
+      <p id="w2">İsteğin işleniyor.</p>
     </div>
   </main>
 
 <script>
 (function () {
   var q = new URLSearchParams(location.search);
+  // Bağlantıdaki lang parametresi postanın diliyle aynı gelir.
+  var L = (q.get('lang') || 'tr').toLowerCase().indexOf('tr') === 0 ? 'tr' : 'en';
+  document.documentElement.lang = L;
+  var T = {
+    tr: {
+      wait: ['Bir saniye…', 'İsteğin işleniyor.'],
+      back: 'Uygulamaya dön',
+      failTitle: 'Bağlantı işe yaramadı',
+      failBody: 'Bağlantının süresi dolmuş ya da daha önce kullanılmış olabilir. Uygulamadan yeni bir bağlantı iste.',
+      failMissing: 'Bağlantı eksik görünüyor. E-postadaki adresin tamamını kopyaladığından emin ol.',
+      failMode: 'Bu bağlantı türü desteklenmiyor.',
+      pwTitle: 'Yeni şifreni belirle',
+      pwBody: function (mail) { return mail + ' için yeni bir şifre gir.'; },
+      pw1: 'Yeni şifre', pw2: 'Yeni şifre (tekrar)', pwSave: 'Şifreyi kaydet',
+      pwRule: 'En az 8 karakter, en az bir harf ve bir rakam.',
+      pwWeak: 'Şifre en az 8 karakter olmalı, en az bir harf ve bir rakam içermeli.',
+      pwMismatch: 'Şifreler birbirini tutmuyor.',
+      pwDone: ['Şifren güncellendi', 'Yeni şifrenle giriş yapabilirsin.'],
+      verifyEmail: ['E-postan doğrulandı', 'Hesabın hazır. Uygulamaya dönebilirsin.'],
+      verifyAndChangeEmail: ['Yeni adresin onaylandı', 'Hesabın artık bu e-posta adresini kullanıyor.'],
+      recoverEmail: ['Adresin geri alındı', 'Hesabın eski e-posta adresine döndürüldü.']
+    },
+    en: {
+      wait: ['One moment…', 'We are processing your request.'],
+      back: 'Back to the app',
+      failTitle: "That link didn't work",
+      failBody: 'The link may have expired or already been used. Request a new one from the app.',
+      failMissing: 'The link looks incomplete. Make sure you copied the whole address from the email.',
+      failMode: 'This link type is not supported.',
+      pwTitle: 'Set a new password',
+      pwBody: function (mail) { return 'Enter a new password for ' + mail + '.'; },
+      pw1: 'New password', pw2: 'New password (again)', pwSave: 'Save password',
+      pwRule: 'At least 8 characters, with one letter and one number.',
+      pwWeak: 'Password must be at least 8 characters and include a letter and a number.',
+      pwMismatch: "Passwords don't match.",
+      pwDone: ['Your password is updated', 'You can sign in with your new password.'],
+      verifyEmail: ['Your email is verified', 'Your account is ready. You can go back to the app.'],
+      verifyAndChangeEmail: ['Your new address is confirmed', 'Your account now uses this email address.'],
+      recoverEmail: ['Your address is restored', 'Your account was reverted to the previous email address.']
+    }
+  }[L];
   var mode = q.get('mode');
   var oobCode = q.get('oobCode');
   var apiKey = q.get('apiKey');
   var view = document.getElementById('view');
+  document.getElementById('w1').textContent = T.wait[0];
+  document.getElementById('w2').textContent = T.wait[1];
 
   var API = 'https://identitytoolkit.googleapis.com/v1/accounts:';
 
@@ -73,10 +116,10 @@
       + '<p>' + esc(text) + '</p>' + (extra || '');
   }
 
-  var APP_LINK = '<a class="link" href="bluma://">Uygulamaya dön</a>';
+  var APP_LINK = '<a class="link" href="bluma://">' + T.back + '</a>';
 
   function fail(text) {
-    render('⚠️', 'Bağlantı işe yaramadı', text || 'Bağlantının süresi dolmuş ya da daha önce kullanılmış olabilir. Uygulamadan yeni bir bağlantı iste.', APP_LINK);
+    render('⚠️', T.failTitle, text || T.failBody, APP_LINK);
   }
 
   function post(path, body) {
@@ -92,30 +135,30 @@
     });
   }
 
-  if (!mode || !oobCode || !apiKey) return fail('Bağlantı eksik görünüyor. E-postadaki adresin tamamını kopyaladığından emin ol.');
+  if (!mode || !oobCode || !apiKey) return fail(T.failMissing);
 
   // Şifre sıfırlama: önce kodu doğrula, sonra formu göster.
   if (mode === 'resetPassword') {
     post('resetPassword', { oobCode: oobCode }).then(function (data) {
-      render('🔑', 'Yeni şifreni belirle', (data.email || '') + ' için yeni bir şifre gir.',
+      render('🔑', T.pwTitle, T.pwBody(data.email || ''),
         '<div class="error" id="err"></div>'
-        + '<input id="pw" type="password" autocomplete="new-password" placeholder="Yeni şifre" />'
-        + '<input id="pw2" type="password" autocomplete="new-password" placeholder="Yeni şifre (tekrar)" />'
-        + '<button id="go">Şifreyi kaydet</button>'
-        + '<p class="hint" style="margin-top:12px">En az 8 karakter, en az bir harf ve bir rakam.</p>');
+        + '<input id="pw" type="password" autocomplete="new-password" placeholder="' + T.pw1 + '" />'
+        + '<input id="pw2" type="password" autocomplete="new-password" placeholder="' + T.pw2 + '" />'
+        + '<button id="go">' + T.pwSave + '</button>'
+        + '<p class="hint" style="margin-top:12px">' + T.pwRule + '</p>');
 
       var err = document.getElementById('err');
       document.getElementById('go').addEventListener('click', function () {
         var pw = document.getElementById('pw').value;
         var pw2 = document.getElementById('pw2').value;
         if (pw.length < 8 || !/[a-z]/i.test(pw) || !/[0-9]/.test(pw)) {
-          err.textContent = 'Şifre en az 8 karakter olmalı, en az bir harf ve bir rakam içermeli.'; return;
+          err.textContent = T.pwWeak; return;
         }
-        if (pw !== pw2) { err.textContent = 'Şifreler birbirini tutmuyor.'; return; }
+        if (pw !== pw2) { err.textContent = T.pwMismatch; return; }
         err.textContent = '';
         this.disabled = true;
         post('resetPassword', { oobCode: oobCode, newPassword: pw }).then(function () {
-          render('✅', 'Şifren güncellendi', 'Yeni şifrenle giriş yapabilirsin.', APP_LINK);
+          render('✅', T.pwDone[0], T.pwDone[1], APP_LINK);
         }).catch(function () { fail(); });
       });
     }).catch(function () { fail(); });
@@ -123,16 +166,10 @@
   }
 
   // Doğrulama, adres değişikliği ve adres geri alma aynı uç noktayı kullanır.
-  var DONE = {
-    verifyEmail: ['✅', 'E-postan doğrulandı', 'Hesabın hazır. Uygulamaya dönebilirsin.'],
-    verifyAndChangeEmail: ['✅', 'Yeni adresin onaylandı', 'Hesabın artık bu e-posta adresini kullanıyor.'],
-    recoverEmail: ['✅', 'Adresin geri alındı', 'Hesabın eski e-posta adresine döndürüldü.']
-  };
-  if (!DONE[mode]) return fail('Bu bağlantı türü desteklenmiyor.');
+  if (!T[mode]) return fail(T.failMode);
 
   post('update', { oobCode: oobCode }).then(function () {
-    var d = DONE[mode];
-    render(d[0], d[1], d[2], APP_LINK);
+    render('✅', T[mode][0], T[mode][1], APP_LINK);
   }).catch(function () { fail(); });
 })();
 </script>

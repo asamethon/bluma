@@ -6,8 +6,13 @@
 // kullanıcı push'u kaçırsa bile görür.
 //
 //   node notify-unverified.js --dry-run     kimlere gideceğini göster
-//   node notify-unverified.js               gönder
+//   node notify-unverified.js               gönder (geçmiş yığın için)
+//   node notify-unverified.js --grace-day 6 süresi dolmak üzere olanlara
 //   node notify-unverified.js --min-age-hours 48 --cooldown-days 14
+//
+// --grace-day N: yalnızca doğrulama süresi N gün önce BAŞLAMIŞ kullanıcılara
+// gönderir (emailGrace/{uid}). İstemcideki uyarı 0. ve 2. günlerde çıkıyor;
+// bu, süre dolmadan hemen önceki son hatırlatma için (günlük cron).
 //
 // GOOGLE_APPLICATION_CREDENTIALS ayarlı olmalı.
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
@@ -29,6 +34,8 @@ const argValue = (name, fallback) => {
 const MIN_AGE_HOURS = argValue('min-age-hours', 24);
 // Aynı kişiye tekrar tekrar hatırlatmamak için.
 const COOLDOWN_DAYS = argValue('cooldown-days', 7);
+// Verilmişse yalnızca süresi bu kadar gün önce başlamış kullanıcılar.
+const GRACE_DAY = argValue('grace-day', null);
 
 /** Parola ile açılmış ve e-postası doğrulanmamış hesaplar. */
 async function unverifiedUsers() {
@@ -60,6 +67,25 @@ async function recentlyNotified(uid) {
   return !snap.empty;
 }
 
+/**
+ * Süresi `GRACE_DAY` gün önce başlamış kullanıcılar. Uyarıyı hiç görmemiş
+ * (kaydı olmayan) kullanıcı bu listede yer almaz — onların sayacı hiç
+ * başlamadı, süreleri de dolmuyor.
+ */
+async function inGraceWindow(uids) {
+  const start = Date.now() - (GRACE_DAY + 1) * 86400_000;
+  const end = Date.now() - GRACE_DAY * 86400_000;
+  const matched = new Set();
+  for (const uid of uids) {
+    const snap = await db.collection('emailGrace').doc(uid).get();
+    const startedAt = snap.exists ? snap.data().startedAt?.toDate?.() : null;
+    if (startedAt && startedAt.getTime() > start && startedAt.getTime() <= end) {
+      matched.add(uid);
+    }
+  }
+  return matched;
+}
+
 async function notify(user) {
   await db.collection('notifications').add({
     userId: user.uid,
@@ -85,11 +111,18 @@ async function notify(user) {
 }
 
 async function main() {
-  const users = await unverifiedUsers();
-  console.log(
-    `${users.length} doğrulanmamış hesap (kayıt üstünden ${MIN_AGE_HOURS} saat geçmiş).` +
-    (DRY_RUN ? ' DRY RUN — hiçbir şey yazılmayacak.' : '')
-  );
+  let users = await unverifiedUsers();
+  if (GRACE_DAY !== null) {
+    const window = await inGraceWindow(users.map((u) => u.uid));
+    users = users.filter((u) => window.has(u.uid));
+    console.log(`Süresi ${GRACE_DAY} gün önce başlamış ${users.length} hesap.` +
+      (DRY_RUN ? ' DRY RUN — hiçbir şey yazılmayacak.' : ''));
+  } else {
+    console.log(
+      `${users.length} doğrulanmamış hesap (kayıt üstünden ${MIN_AGE_HOURS} saat geçmiş).` +
+      (DRY_RUN ? ' DRY RUN — hiçbir şey yazılmayacak.' : '')
+    );
+  }
 
   let sent = 0;
   let skipped = 0;
