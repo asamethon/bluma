@@ -63,6 +63,45 @@ function toOwnActionPage(link) {
 
 const actionLink = (link, lang) => toOwnActionPage(localized(link, lang));
 
+/**
+ * Postayı üretip gönderir. Hem HTTP uç noktası hem de send-auth-mail.js
+ * bunu kullanır — test komutunun gerçek yolu sınaması için tek kaynak şart.
+ */
+export async function sendAuthMailFor(auth, user, { kind = 'verify', lang = 'tr', newEmail } = {}) {
+  if (kind === 'change') {
+    if (!newEmail) throw new Error('newEmail gerekli');
+    // Bağlantı YENİ adrese gider; adres ancak tıklanınca değişir.
+    const link = await auth.generateVerifyAndChangeEmailLink(user.email, newEmail);
+    return sendTemplateMail({
+      template: 'email-change',
+      lang,
+      to: newEmail,
+      subject: SUBJECTS[lang].change,
+      values: { LINK: actionLink(link, lang), DISPLAY_NAME: user.displayName || '', NEW_EMAIL: newEmail },
+    });
+  }
+
+  if (kind === 'reset') {
+    const link = await auth.generatePasswordResetLink(user.email);
+    return sendTemplateMail({
+      template: 'password-reset',
+      lang,
+      to: user.email,
+      subject: SUBJECTS[lang].reset,
+      values: { LINK: actionLink(link, lang), DISPLAY_NAME: user.displayName || '' },
+    });
+  }
+
+  const link = await auth.generateEmailVerificationLink(user.email);
+  return sendTemplateMail({
+    template: 'verify-email',
+    lang,
+    to: user.email,
+    subject: SUBJECTS[lang].verify,
+    values: { LINK: actionLink(link, lang), DISPLAY_NAME: user.displayName || '' },
+  });
+}
+
 function readJson(req) {
   return new Promise((resolve, reject) => {
     let body = '';
@@ -106,37 +145,10 @@ export async function handleSendAuthEmail(auth, req, res) {
     const { kind = 'verify', newEmail, locale } = await readJson(req);
     const lang = pickLang(locale);
 
-    if (kind === 'change') {
-      if (!newEmail) return send(400, { success: false, error: 'newEmail gerekli' });
-      // Bağlantı YENİ adrese gider; adres ancak tıklanınca değişir.
-      const link = await auth.generateVerifyAndChangeEmailLink(user.email, newEmail);
-      await sendTemplateMail({
-        template: 'email-change',
-        lang,
-        to: newEmail,
-        subject: SUBJECTS[lang].change,
-        values: { LINK: actionLink(link, lang), DISPLAY_NAME: user.displayName || '', NEW_EMAIL: newEmail },
-      });
-    } else if (kind === 'reset') {
-      const link = await auth.generatePasswordResetLink(user.email);
-      await sendTemplateMail({
-        template: 'password-reset',
-        lang,
-        to: user.email,
-        subject: SUBJECTS[lang].reset,
-        values: { LINK: actionLink(link, lang), DISPLAY_NAME: user.displayName || '' },
-      });
-    } else {
-      if (user.emailVerified) return send(200, { success: true, alreadyVerified: true });
-      const link = await auth.generateEmailVerificationLink(user.email);
-      await sendTemplateMail({
-        template: 'verify-email',
-        lang,
-        to: user.email,
-        subject: SUBJECTS[lang].verify,
-        values: { LINK: actionLink(link, lang), DISPLAY_NAME: user.displayName || '' },
-      });
+    if (kind === 'verify' && user.emailVerified) {
+      return send(200, { success: true, alreadyVerified: true });
     }
+    await sendAuthMailFor(auth, user, { kind, lang, newEmail });
 
     send(200, { success: true });
   } catch (error) {
