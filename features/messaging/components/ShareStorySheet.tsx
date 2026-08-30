@@ -5,10 +5,14 @@ import { useAppSelector } from '@/store/hooks';
 import { messagingActions } from '@/store/messagingStore';
 import { SharedStory, User } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
+
+/** Avatar (44) + satırın dikey iç boşluğu (2×10). Liste yüksekliği bundan hesaplanır. */
+const ROW_HEIGHT = 64;
+const MAX_LIST_HEIGHT = 320;
 
 export function ShareStorySheet({
   visible,
@@ -28,6 +32,28 @@ export function ShareStorySheet({
   const currentUserId = useAppSelector((s) => s.auth.user?.id);
   const { recipients, loading } = useShareRecipients();
   const [sentTo, setSentTo] = useState<Record<string, boolean>>({});
+  const shareAfterDismiss = useRef(false);
+
+  /**
+   * iOS'ta sistem paylaşım sayfası (UIActivityViewController), kapanmakta olan
+   * bir modalın üstünden açılamaz — çağrı sessizce düşer. Bu yüzden önce sheet
+   * kapatılır, paylaşım modal tamamen kapandıktan sonra tetiklenir.
+   */
+  const handleShareLinkPress = useCallback(() => {
+    if (Platform.OS === 'ios') {
+      shareAfterDismiss.current = true;
+      onClose();
+      return;
+    }
+    onClose();
+    onShareLink();
+  }, [onClose, onShareLink]);
+
+  const handleDismissed = useCallback(() => {
+    if (!shareAfterDismiss.current) return;
+    shareAfterDismiss.current = false;
+    onShareLink();
+  }, [onShareLink]);
 
   const sendToUser = useCallback(
     (user: User) => {
@@ -85,7 +111,14 @@ export function ShareStorySheet({
   );
 
   return (
-    <Modal visible={visible} transparent animationType="slide" statusBarTranslucent onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      statusBarTranslucent
+      onRequestClose={onClose}
+      onDismiss={handleDismissed}
+    >
       <View style={s.root}>
         <Pressable style={s.backdrop} onPress={onClose} />
         <View style={[s.content, { backgroundColor: colors.surface, paddingBottom: safeBottom + 16 }]}>
@@ -93,7 +126,7 @@ export function ShareStorySheet({
           <Text variant="subheading" style={{ textAlign: 'center', marginBottom: 14 }}>{t('messages.share')}</Text>
 
           <Pressable
-            onPress={() => { onClose(); onShareLink(); }}
+            onPress={handleShareLinkPress}
             style={[s.linkRow, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}
           >
             <View style={[s.linkIcon, { backgroundColor: colors.primarySoft }]}>
@@ -114,13 +147,17 @@ export function ShareStorySheet({
               {t('messages.noFollowingYet')}
             </Text>
           ) : (
-            <FlashList
-              data={recipients}
-              keyExtractor={(u) => u.id}
-              renderItem={renderItem}
-              style={{ maxHeight: 320 }}
-              showsVerticalScrollIndicator={false}
-            />
+            // FlashList kendi yüksekliğini ölçmez; sarmalayıcıya KESİN bir
+            // yükseklik verilmezse sıfır yükseklikle çizilir ve liste hiç
+            // görünmez. Satır sayısından hesaplanır, tavanla sınırlanır.
+            <View style={{ height: Math.min(recipients.length * ROW_HEIGHT, MAX_LIST_HEIGHT) }}>
+              <FlashList
+                data={recipients}
+                keyExtractor={(u) => u.id}
+                renderItem={renderItem}
+                showsVerticalScrollIndicator={false}
+              />
+            </View>
           )}
         </View>
       </View>

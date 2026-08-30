@@ -2,7 +2,7 @@
   "expo": {
     "name": "bluma",
     "slug": "bluma",
-    "version": "2.0.2",
+    "version": "2.0.4",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "bluma",
@@ -11,7 +11,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.asamethon.bluma",
       "usesAppleSignIn": true,
-      "buildNumber": "10",
+      "buildNumber": "11",
       "googleServicesFile": "./GoogleService-Info.plist",
       "associatedDomains": [
         "applinks:bluma-dc10e.web.app"
@@ -33,7 +33,7 @@
       },
       "googleServicesFile": "./google-services.json",
       "package": "com.d4tecompany.bluma",
-      "versionCode": 10,
+      "versionCode": 12,
       "playStoreUrl": "https://play.google.com/store/apps/details?id=com.d4tecompany.bluma"
     },
     "web": {

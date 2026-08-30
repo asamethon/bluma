@@ -10,7 +10,7 @@ const STORAGE_KEY = 'reviewPrompt.state.v1';
 // istenir; sistem diyaloğu yılda sınırlı sayıda gösterildiği için "ucuz"
 // anlarda harcanmamalı.
 const MIN_POSITIVE_EVENTS = 3;
-const MIN_DAYS_SINCE_FIRST_USE = 2;
+const MIN_DAYS_SINCE_FIRST_USE = 1;
 const COOLDOWN_DAYS = 120;
 const MAX_PROMPTS = 3;
 
@@ -19,6 +19,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export type PositiveMoment =
   | 'storyPublished'
   | 'storyFinished'
+  | 'chapterFinished'
   | 'challengeCompleted';
 
 type ReviewState = {
@@ -90,8 +91,20 @@ function shouldPrompt(state: ReviewState, immediate = false): boolean {
  * Olumlu bir anı kaydeder ve eşikler tutuyorsa sistem değerlendirme
  * diyaloğunu ister. Sessizdir: gösterilip gösterilmediğini iOS/Android
  * belirler, kullanıcı akışı asla bloklanmaz.
+ *
+ * Çağrılar sıraya alınır: durum AsyncStorage'da oku-değiştir-yaz ile
+ * tutulduğu için aynı anda gelen iki mutlu an (ör. bölüm bitişi + o bölümle
+ * tamamlanan görev) sayacın birini yutabilir ve diyaloğu iki kez isteyebilirdi.
  */
-async function recordMoment(moment: PositiveMoment, options?: { immediate?: boolean }) {
+let queue: Promise<unknown> = Promise.resolve();
+
+function recordMoment(moment: PositiveMoment, options?: { immediate?: boolean }) {
+  const run = queue.then(() => performRecord(moment, options));
+  queue = run.catch(() => {});
+  return run;
+}
+
+async function performRecord(moment: PositiveMoment, options?: { immediate?: boolean }) {
   try {
     const state = await readState();
     const next: ReviewState = { ...state, positiveEvents: state.positiveEvents + 1 };

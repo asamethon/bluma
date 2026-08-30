@@ -1,57 +1,66 @@
 # E-posta şablonları
 
-Firebase Authentication'ın gönderdiği üç e-postanın Türkçe, tasarlanmış
-sürümleri. Firebase Console → **Authentication → Templates** altındaki
-`Message` alanına yapıştırılır.
+Doğrulama, adres değişikliği ve şifre sıfırlama postalarının tasarımları.
 
-| Dosya | Console'daki şablon |
+| Dosya | Ne zaman gider |
 | --- | --- |
-| `verify-email.html` | Email address verification |
-| `email-change.html` | Email address change |
-| `password-reset.html` | Password reset |
+| `verify-email.html` | Kayıt sonrası ve "Doğrula" düğmesinde |
+| `email-change.html` | Kullanıcı adresini değiştirdiğinde (bağlantı YENİ adrese gider) |
+| `password-reset.html` | Şifre sıfırlama |
 
-## Yapıştırma
+**Çalışan kopyalar `server/push-worker/templates/` altındadır** — worker onları
+okur. Buradakiler tasarım referansıdır; birini değiştirirsen ikisini de
+güncelle.
 
-1. Şablonu seç → kalem ikonu → `Message` alanının içeriğini dosyayla değiştir.
-2. `Sender name` alanını **Bluma** yap (şu an `noreply` yazıyor — gelen kutusunda
-   gönderen adı olarak bu görünüyor).
-3. `Subject` alanları:
-   - Doğrulama: `Bluma hesabını doğrula`
-   - Adres değişikliği: `Bluma e-posta adresini onayla`
-   - Şifre sıfırlama: `Bluma şifreni sıfırla`
-4. Altta **Template language** = Türkçe. Her dil ayrı şablondur; İngilizce için
-   de bir sürüm bırakmak istersen aynı HTML'i çevirip o dile ekle. İstemci
-   `applyAuthLanguage()` ile kullanıcının dilini Firebase'e bildiriyor
-   (`features/auth/services/emailVerification.ts`), yani doğru şablon seçilir.
+## Neden Firebase'in şablonunu kullanmıyoruz
 
-## Neden bu biçimde yazıldı
+Firebase Console'da şablon düzenleme bu proje için kilitli:
 
-E-posta istemcileri tarayıcı değildir; şablonlar buna göre kısıtlı tutuldu:
+> Email template updates are currently unavailable for this project.
 
-- **Tablo düzeni + satır içi stil.** `<style>` bloğu, flexbox ve grid birçok
-  istemcide (özellikle Outlook) çalışmaz.
-- **Görsel yok.** Çoğu istemci uzak görselleri varsayılan olarak engeller;
-  logo bir `<img>` olsaydı e-posta kırık görünürdü. Marka, tipografiyle ve
-  Bluma mor/pembe renkleriyle kuruluyor. Logo istersen VPS'teki görsel
-  sunucusuna koyup `<img>` ekleyebiliriz, ama `alt` metni iyi olmalı.
-- **"Bulletproof" düğme.** Arka plan rengi hem `bgcolor` niteliğinde hem
-  `style` içinde; düğme render edilmezse bağlantı metni yedek olarak duruyor.
-- **Önizleme metni** (preheader) en başta gizli `div` olarak — gelen kutusunda
-  konu satırının yanında görünür.
-- **Ham bağlantı da yazılı.** Düğmeyi tıklayamayan kullanıcı adresi
-  kopyalayabiliyor.
+Aynı kilit "Customize action URL" ayarını da reddediyor. Deneme yapıldı,
+sunucu her ikisini de reddetti — Console üzerinden çözülemiyor.
 
-Yer tutucular Firebase tarafından doldurulur: `%DISPLAY_NAME%`, `%LINK%`,
-`%EMAIL%`, `%APP_NAME%` ve yalnızca adres değişikliği şablonunda `%NEW_EMAIL%`.
+Ayrıca Firebase'in gönderen adresi `noreply@bluma-dc10e.firebaseapp.com`:
+binlerce projenin paylaştığı, itibarı bizde olmayan bir alan adı. Gmail bu
+postaları spam'e atıyordu.
 
-## Asıl profesyonellik sorunu: gönderen alan adı
+## Mimari
 
-Şu an e-postalar `noreply@bluma-dc10e.firebaseapp.com` adresinden çıkıyor.
-Tasarımdan bağımsız olarak bu hem güvensiz görünüyor hem de spam'e düşme
-ihtimalini artırıyor. Console'daki **Customize domain** ile kendi alan adına
-geçilebilir (SPF/DKIM DNS kayıtları gerekir; alan adı zaten Cloudflare'da).
+Postayı Firebase'e hiç göndertmiyoruz. Admin SDK yalnızca **bağlantıyı**
+üretiyor; tasarım, gönderen ve işlem sayfası bizde:
 
-Daha ileri adım: doğrulama bağlantısını VPS'teki worker'da Admin SDK ile
-üretip (`generateEmailVerificationLink`) postayı kendi SMTP/e-posta servisinle
-göndermek. O zaman şablon tamamen senin kontrolünde olur ve Firebase'in
-kısıtları kalkar. Şu anki ihtiyaç için gerekli değil.
+```
+İstemci  →  POST /send-auth-email        (Bearer idToken; yalnızca kendi hesabına)
+Worker   →  generateEmailVerificationLink()      bağlantıyı üretir
+         →  bağlantıyı kendi işlem sayfamıza çevirir (ACTION_PAGE_URL)
+         →  şablonu doldurup Resend ile gönderir   (kendi alan adımızdan)
+Kullanıcı →  GET /auth/action            oobCode'u alır, işlemi tamamlar
+```
+
+İstemci sunucuya ulaşamazsa Firebase'in sade postasına düşer — posta hiç
+gitmemesindense tasarımsız gitsin (`features/auth/services/authEmailApi.ts`).
+
+Kurulum ve ortam değişkenleri: `server/push-worker/README.md`.
+
+## Şablonlar neden bu biçimde yazıldı
+
+E-posta istemcileri tarayıcı değildir:
+
+- **Tablo düzeni + satır içi stil.** `<style>`, flexbox ve grid Outlook'ta
+  çalışmaz.
+- **Görsel yok.** Çoğu istemci uzak görselleri engeller; logo `<img>` olsaydı
+  posta kırık görünürdü. Marka tipografiyle kuruluyor.
+- **"Bulletproof" düğme** ve altında ham bağlantı yedeği.
+- **Önizleme metni** en başta gizli `div` olarak.
+- **Düz metin alternatifi** HTML'den otomatik türetiliyor (`mailer.js`);
+  yalnızca-HTML postalar spam puanı alır.
+
+Yer tutucular: `%LINK%`, `%DISPLAY_NAME%`, `%EMAIL%` ve adres değişikliğinde
+`%NEW_EMAIL%`.
+
+## Bilinen boşluk
+
+"Şifremi unuttum" akışı bunun dışında: kullanıcı giriş yapmamış olduğu için
+`/send-auth-email` kimlik doğrulayamıyor ve posta Firebase tarafından
+gönderiliyor. Çalışır, ama sade ve İngilizce işlem sayfasına düşer.

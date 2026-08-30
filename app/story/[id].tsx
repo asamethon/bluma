@@ -29,7 +29,8 @@ import { challengeActions } from "@/store/challengeStore";
 import { moderationActions } from "@/store/moderationStore";
 import { storyActions } from "@/store/storyStore";
 import { readingProgressActions } from "@/features/story/services/readingProgress";
-import { reviewPromptActions } from "@/features/review/services/reviewPrompt";
+import { useReadingReviewMoments } from "@/features/review/hooks/useReadingReviewMoments";
+import { NextReadsSection } from "@/features/story/components/NextReadsSection";
 import { useProfileAccess } from "@/features/privacy/hooks/useProfileAccess";
 import { PrivateProfileNotice } from "@/features/privacy/components/PrivateProfileNotice";
 import {
@@ -155,9 +156,13 @@ export default function ReaderScreen() {
   const [chromeVisible, setChromeVisible] = useState(true);
   const scrollRef = useRef<any>(null);
   const lastScrollSaveRef = useRef(0);
-  // Hikâye başına tek kez sayılır.
-  const finishedRef = useRef(false);
   const pendingScrollRatioRef = useRef<number | null>(null);
+
+  const trackReviewMoment = useReadingReviewMoments({
+    storyId: id ? String(id) : undefined,
+    chapterCount: story?.chapterTitles?.length || story?.chaptersCount || 1,
+    enabled: !isGuest,
+  });
 
   const handleScroll = (e: any) => {
     if (isGuest || !id) return;
@@ -175,15 +180,7 @@ export default function ReaderScreen() {
       currentChapterIndex,
       ratio,
     );
-
-    // Son bölümün sonuna gelindi: hikâye bitti — değerlendirme için mutlu an.
-    const chapterCount =
-      story?.chapterTitles?.length || story?.chaptersCount || 1;
-    const atLastChapter = currentChapterIndex >= chapterCount - 1;
-    if (atLastChapter && ratio > 0.95 && !finishedRef.current) {
-      finishedRef.current = true;
-      reviewPromptActions.recordMoment("storyFinished").catch(() => {});
-    }
+    trackReviewMoment(currentChapterIndex, ratio);
   };
 
   const toggleChrome = () => {
@@ -1265,6 +1262,10 @@ export default function ReaderScreen() {
                     : ""}
                 </Text>
               </TouchableOpacity>
+            )}
+
+            {!gated && currentChapterIndex >= totalChapters - 1 && (
+              <NextReadsSection finished={story} />
             )}
 
             <View style={{ height: 120 }} />

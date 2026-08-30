@@ -13,7 +13,13 @@ export function useShareRecipients() {
 
   useEffect(() => {
     let alive = true;
-    if (!currentUserId) return;
+    // Kullanıcı yoksa erken çıkılır ama yükleniyor bayrağı MUTLAKA düşer;
+    // aksi halde sayfa sonsuza kadar spinner'da kalıyordu.
+    if (!currentUserId) {
+      setRecipients([]);
+      setLoading(false);
+      return;
+    }
 
     (async () => {
       setLoading(true);

@@ -1,6 +1,16 @@
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import {
+  GoogleSignin,
+  isCancelledResponse,
+  isErrorWithCode,
+  statusCodes,
+  type SignInSuccessResponse,
+} from '@react-native-google-signin/google-signin';
 import i18n from '@/i18n';
 import { logger } from '@/utils/logger';
+
+type GoogleSignInResult =
+  | { success: true; idToken: string; userInfo: SignInSuccessResponse }
+  | { success: false; error: string };
 
 export const configureGoogleSignIn = () => {
   GoogleSignin.configure({
@@ -12,21 +22,35 @@ export const configureGoogleSignIn = () => {
   });
 };
 
-export const signInWithGoogle = async () => {
+export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
   try {
-    await GoogleSignin.hasPlayServices();
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
     const userInfo = await GoogleSignin.signIn();
-    logger.debug('Google Sign-In successful:', userInfo);
-    return { success: true, userInfo };
-  } catch (error: any) {
-    logger.error('Google Sign-In error:', error);
-    if (error.code === 'SIGN_IN_CANCELLED') {
+
+    if (isCancelledResponse(userInfo)) {
       return { success: false, error: i18n.t('authErrors.signInCancelled') };
-    } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
-      return { success: false, error: i18n.t('authErrors.playServicesUnavailable') };
-    } else {
+    }
+
+    const idToken = userInfo.data.idToken;
+    if (!idToken) {
+      logger.error('Google Sign-In did not return an ID token');
       return { success: false, error: i18n.t('authErrors.googleSignInFailed') };
     }
+
+    logger.debug('Google Sign-In successful:', userInfo);
+    return { success: true, idToken, userInfo };
+  } catch (error: unknown) {
+    logger.error('Google Sign-In error:', error);
+
+    if (isErrorWithCode(error) && error.code === statusCodes.SIGN_IN_CANCELLED) {
+      return { success: false, error: i18n.t('authErrors.signInCancelled') };
+    }
+
+    if (isErrorWithCode(error) && error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+      return { success: false, error: i18n.t('authErrors.playServicesUnavailable') };
+    }
+
+    return { success: false, error: i18n.t('authErrors.googleSignInFailed') };
   }
 };
 
@@ -47,4 +71,4 @@ export const getCurrentUser = async () => {
     logger.error('Get current user error:', error);
     return null;
   }
-}; 
+};

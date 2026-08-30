@@ -161,3 +161,57 @@ Authorization: Bearer <idToken>
 **Önemli:** ban, kullanıcının cihaz kaydına (`userDevices/{uid}`) dayanır. Hesap
 silinince bu kayıt da gider — yani tacizciyi **hesabını silmeden önce** banla,
 sonra sil.
+
+## E-posta gönderimi (doğrulama, adres değişikliği, şifre sıfırlama)
+
+Firebase'in şablon düzenlemesi bu projede kilitli ve gönderen adresi
+paylaşımlı `firebaseapp.com` — Gmail spam'e atıyordu. Bu yüzden postayı
+kendimiz gönderiyoruz: Admin SDK yalnızca bağlantıyı üretir, tasarım ve
+gönderim bizde (bkz. `docs/email-templates/README.md`).
+
+Uç noktalar:
+
+```
+POST /send-auth-email    { kind: verify | change | reset, newEmail? }
+                         Bearer idToken şart; posta YALNIZCA çağıranın
+                         kendi hesabına gider.
+GET  /auth/action        Kendi işlem sayfamız (templates/action.html).
+```
+
+`/etc/bluma/push-worker.env` içeriği (systemd drop-in ile bağlanır:
+`/etc/systemd/system/bluma-push-worker.service.d/mail.conf` →
+`EnvironmentFile=/etc/bluma/push-worker.env`):
+
+```
+RESEND_API_KEY=re_...
+MAIL_FROM="Bluma <bluma@d4tecompany.com>"
+MAIL_REPLY_TO=destek@d4tecompany.com
+ACTION_PAGE_URL=https://bluma-api.d4tecompany.com/auth/action
+```
+
+Dosya `bluma-push` kullanıcısına ait ve `600` olmalı. systemd ortam dosyasını
+YALNIZCA servis başlarken okur — değiştirdiğinde `systemctl restart` şart.
+
+`RESEND_API_KEY` tanımsızsa uç nokta `503` döner ve istemci Firebase'in kendi
+gönderimine düşer; yani anahtarsız da güvenle deploy edilebilir.
+
+Sağlık kontrolü (token'sız çağrı):
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' -X POST 127.0.0.1:8789/send-auth-email
+# 401 → mailer yüklü ve çalışıyor    503 → anahtar okunamıyor
+```
+
+## Yönetim komutları
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/firebase-service-account.json
+
+node reconcile-counters.js --dry-run        # sayaç mutabakatı (haftalık)
+node notify-unverified.js --dry-run         # doğrulama hatırlatması
+node announce.js --tag v2.1 --title "..." --message "..." --dry-run
+node deactivate-unverified.js --dry-run     # süresi dolanları askıya al
+node ban-device.js --devices                # cihaz banı
+```
+
+Hepsi `--dry-run` destekler; önce onunla çalıştır.

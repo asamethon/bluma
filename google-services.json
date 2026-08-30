@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "626165614889-e2u2s10n8a4h0bi8v4bb61ud3plphflm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.d4tecompany.bluma",
+            "certificate_hash": "dc0385861f86586dab51ada6e07afb3677bee69d"
+          }
+        },
+        {
           "client_id": "626165614889-crsvdlrp4oommq6eiu14ltn372l10al7.apps.googleusercontent.com",
           "client_type": 3
         }
