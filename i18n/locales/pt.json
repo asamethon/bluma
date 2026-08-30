@@ -404,7 +404,9 @@
     "followAcceptedMessage": "{{name}} aceitou sua solicitação",
     "mentionTitle": "Você foi mencionado",
     "mentionMessage": "{{name}} mencionou você em “{{story}}”",
-    "newChapterMessageNumbered": "{{author}} adicionou um novo capítulo a “{{story}}” (capítulo {{chapter}})"
+    "newChapterMessageNumbered": "{{author}} adicionou um novo capítulo a “{{story}}” (capítulo {{chapter}})",
+    "verifyEmailTitle": "Verifica o teu e-mail",
+    "verifyEmailMessage": "Verifica o teu e-mail para continuares a usar a conta. Se o escreveste mal, podes corrigir aqui."
   },
   "comments": {
     "writeOrAttach": "Escreve um comentário ou anexa uma imagem.",

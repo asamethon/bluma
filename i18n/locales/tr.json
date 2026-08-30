@@ -404,7 +404,9 @@
     "followAcceptedMessage": "{{name}} takip isteğini onayladı",
     "mentionTitle": "Seni etiketledi",
     "mentionMessage": "{{name}}, \"{{story}}\" hikâyesinde senden bahsetti",
-    "newChapterMessageNumbered": "{{author}}, \"{{story}}\" hikâyesine yeni bir bölüm ekledi ({{chapter}}. bölüm)"
+    "newChapterMessageNumbered": "{{author}}, \"{{story}}\" hikâyesine yeni bir bölüm ekledi ({{chapter}}. bölüm)",
+    "verifyEmailTitle": "E-postanı doğrula",
+    "verifyEmailMessage": "Hesabını kullanmaya devam etmek için e-posta adresini doğrulaman gerekiyor. Yanlış yazdıysan buradan düzeltebilirsin."
   },
   "comments": {
     "writeOrAttach": "Lütfen yorum yazın veya resim ekleyin.",

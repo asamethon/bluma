@@ -404,7 +404,9 @@
     "followAcceptedMessage": "{{name}} hat deine Anfrage bestätigt",
     "mentionTitle": "Du wurdest erwähnt",
     "mentionMessage": "{{name}} hat dich in „{{story}}“ erwähnt",
-    "newChapterMessageNumbered": "{{author}} hat ein neues Kapitel zu „{{story}}“ hinzugefügt (Kapitel {{chapter}})"
+    "newChapterMessageNumbered": "{{author}} hat ein neues Kapitel zu „{{story}}“ hinzugefügt (Kapitel {{chapter}})",
+    "verifyEmailTitle": "Bestätige deine E-Mail",
+    "verifyEmailMessage": "Bestätige deine E-Mail-Adresse, um dein Konto weiter zu nutzen. Falsch getippt? Hier korrigieren."
   },
   "comments": {
     "writeOrAttach": "Bitte schreibe einen Kommentar oder füge ein Bild an.",

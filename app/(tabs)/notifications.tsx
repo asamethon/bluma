@@ -288,6 +288,9 @@ export default function NotificationsScreen() {
           if (item.data?.storyId)
             router.push(`/story/${item.data.storyId}/preview`);
           break;
+        case "verify_email":
+          router.push("/profile/verify-email" as any);
+          break;
         case "new_chapter":
           if (item.data?.storyId) {
             const ch = item.data?.chapterNumber

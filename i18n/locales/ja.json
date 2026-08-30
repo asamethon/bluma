@@ -404,7 +404,9 @@
     "followAcceptedMessage": "{{name}} がフォローリクエストを承認しました",
     "mentionTitle": "メンションされました",
     "mentionMessage": "{{name}} が「{{story}}」であなたにメンションしました",
-    "newChapterMessageNumbered": "{{author}} が「{{story}}」に新しい章を追加しました（第{{chapter}}章）"
+    "newChapterMessageNumbered": "{{author}} が「{{story}}」に新しい章を追加しました（第{{chapter}}章）",
+    "verifyEmailTitle": "メールアドレスの確認",
+    "verifyEmailMessage": "アカウントを引き続きご利用いただくには、メールアドレスの確認が必要です。入力を誤った場合はここで修正できます。"
   },
   "comments": {
     "writeOrAttach": "コメントを入力するか、画像を添付してください。",

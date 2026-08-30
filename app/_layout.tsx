@@ -14,6 +14,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import { SplashAnimation } from '@/components/ui';
 import { DeviceBannedScreen } from '@/features/moderation/components/DeviceBannedScreen';
 import { useDeviceBan } from '@/features/moderation/hooks/useDeviceBan';
+import { setupNotificationListeners } from '@/utils/notification';
 import { GuestProvider } from '@/contexts/GuestContext';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import {
@@ -21,6 +22,7 @@ import {
   DefaultTheme,
   ThemeProvider,
   Stack,
+  router,
   usePathname,
 } from "expo-router";
 import { Provider } from 'react-redux';
@@ -95,6 +97,13 @@ function RootLayoutInner() {
     logEvent(getAnalytics(), 'screen_view', { screen_name: pathname, screen_class: pathname })
       .catch(() => {});
   }, [pathname]);
+
+  // Push bildirimine tıklanınca ilgili ekrana git. Dinleyici hiç
+  // kurulmadığı için tıklama şimdiye kadar yalnızca uygulamayı açıyordu.
+  useEffect(() => setupNotificationListeners(undefined, (response) => {
+    const route = response.notification.request.content.data?.route;
+    if (typeof route === 'string' && route.startsWith('/')) router.push(route as any);
+  }), []);
 
   useEffect(() => {
     authActions.initializeAuth();
