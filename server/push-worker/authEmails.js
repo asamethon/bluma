@@ -24,6 +24,32 @@ function localized(link, lang = 'tr') {
   return link.includes('lang=') ? link : `${link}&lang=${lang}`;
 }
 
+/**
+ * Bağlantıyı kendi işlem sayfamıza çevirir.
+ *
+ * Console'daki "Customize action URL" ayarı bu projede kilitli (şablon
+ * kilidiyle aynı kısıt). Ama bağlantıyı BİZ ürettiğimiz için postaya koymadan
+ * önce adresini değiştirebiliyoruz: sorgu dizesi (mode, oobCode, apiKey)
+ * olduğu gibi taşınıyor ve sayfamız Identity Toolkit'e doğrudan kendisi
+ * gidiyor — Firebase'in bir şey yönlendirmesine gerek yok.
+ *
+ * ACTION_PAGE_URL tanımsızsa Firebase'in kendi sayfası kullanılır.
+ */
+function toOwnActionPage(link) {
+  const target = process.env.ACTION_PAGE_URL;
+  if (!target) return link;
+  try {
+    const own = new URL(target);
+    own.search = new URL(link).search;
+    return own.toString();
+  } catch (error) {
+    console.error('[auth-email] işlem sayfası adresi geçersiz:', error.message);
+    return link;
+  }
+}
+
+const actionLink = (link) => toOwnActionPage(actionLink(link));
+
 function readJson(req) {
   return new Promise((resolve, reject) => {
     let body = '';
@@ -74,7 +100,7 @@ export async function handleSendAuthEmail(auth, req, res) {
         template: 'email-change',
         to: newEmail,
         subject: SUBJECTS.change,
-        values: { LINK: localized(link), DISPLAY_NAME: user.displayName || '', NEW_EMAIL: newEmail },
+        values: { LINK: actionLink(link), DISPLAY_NAME: user.displayName || '', NEW_EMAIL: newEmail },
       });
     } else if (kind === 'reset') {
       const link = await auth.generatePasswordResetLink(user.email);
@@ -82,7 +108,7 @@ export async function handleSendAuthEmail(auth, req, res) {
         template: 'password-reset',
         to: user.email,
         subject: SUBJECTS.reset,
-        values: { LINK: localized(link), DISPLAY_NAME: user.displayName || '' },
+        values: { LINK: actionLink(link), DISPLAY_NAME: user.displayName || '' },
       });
     } else {
       if (user.emailVerified) return send(200, { success: true, alreadyVerified: true });
@@ -91,7 +117,7 @@ export async function handleSendAuthEmail(auth, req, res) {
         template: 'verify-email',
         to: user.email,
         subject: SUBJECTS.verify,
-        values: { LINK: localized(link), DISPLAY_NAME: user.displayName || '' },
+        values: { LINK: actionLink(link), DISPLAY_NAME: user.displayName || '' },
       });
     }
 
