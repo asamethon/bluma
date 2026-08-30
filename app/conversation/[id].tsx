@@ -109,9 +109,8 @@ export default function ConversationDetailScreen() {
         logger.debug('Comment added successfully, clearing input');
         setCommentText('');
         setSelectedImage(null);
-        if (id) {
-          conversationActions.getConversationComments(id);
-        }
+        // Yeniden abone OLMA: yukarıdaki realtime dinleyici yeni yorumu zaten
+        // getirir; burada tekrar çağırmak kapatılmayan ikinci bir listener bırakır.
       } else {
         Alert.alert(t('common.error'), result.error || t('conversations.commentFailed'));
       }

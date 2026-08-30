@@ -103,7 +103,14 @@ export default function UserProfileScreen() {
         orderBy('createdAt', 'desc')
       );
       const snap = await getDocs(q);
-      const stories: Story[] = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Story));
+      // Yazar bilgisi hikâye dokümanında tutulmaz; iliştirilmezse kartlar
+      // yazarı "Anonim" gösterir. Profil sahibi zaten bu ekranın yazarıdır.
+      const author = await authActions.getUserById(userId);
+      const stories: Story[] = snap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        ...(author ? { author } : {}),
+      } as Story));
       setUserStories(stories);
     } catch {}
   };

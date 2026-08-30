@@ -54,3 +54,9 @@ package-lock.json
 
 # Bluma görsel servisi — yerel veri ve bağımlılıklar
 server/data/
+
+# Build çıktıları ve emülatör logları
+*.aab
+*.apk
+*.ipa
+firestore-debug.log

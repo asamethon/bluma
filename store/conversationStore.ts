@@ -17,6 +17,7 @@ import {
   updateDoc,
   where
 } from '@react-native-firebase/firestore';
+import { assertEmailVerified } from '@/features/auth/services/emailVerification';
 import { authActions } from './authStore';
 import { notificationActions } from './notificationStore';
 import i18n from '@/i18n';
@@ -160,6 +161,9 @@ export const conversationActions = {
   async createConversation(conversation: Omit<Conversation, 'id' | 'createdAt' | 'updatedAt' | 'likesCount' | 'commentsCount' | 'viewsCount'>) {
     try {
       logger.debug('Creating conversation:', conversation);
+      const verified = await assertEmailVerified();
+      if (!verified.ok) return { success: false, error: verified.error };
+
       const db = getFirestore();
       const conversationsRef = collection(db, 'conversations');
       
@@ -224,27 +228,35 @@ export const conversationActions = {
         orderBy('createdAt', 'asc')
       );
       
-      const unsubscribe = onSnapshot(q, async (snapshot) => {
-        const comments: ConversationComment[] = [];
-        
-        if (snapshot && !snapshot.empty) {
-          for (const doc of snapshot.docs) {
-            const commentData = { id: doc.id, ...doc.data() } as ConversationComment;
-            
-            if (commentData.userId) {
-              const user = await authActions.getUserById(commentData.userId);
-              if (user) {
-                commentData.user = user;
+      const unsubscribe = onSnapshot(
+        q,
+        async (snapshot) => {
+          const comments: ConversationComment[] = [];
+
+          if (snapshot && !snapshot.empty) {
+            for (const doc of snapshot.docs) {
+              const commentData = { id: doc.id, ...doc.data() } as ConversationComment;
+
+              if (commentData.userId) {
+                const user = await authActions.getUserById(commentData.userId);
+                if (user) {
+                  commentData.user = user;
+                }
               }
+
+              comments.push(commentData);
             }
-            
-            comments.push(commentData);
           }
+
+          store.dispatch(patchConversation({ currentConversationComments: comments }));
+        },
+        // Dinleyici hatası (eksik index, kural reddi) sessizce yutulmamalı —
+        // aksi halde yorum sayacı artar ama liste boş kalır.
+        (error) => {
+          logger.error('Conversation comments listener error:', error);
         }
-        
-        store.dispatch(patchConversation({ currentConversationComments: comments }));
-      });
-      
+      );
+
       return unsubscribe;
     } catch (error) {
       logger.error('Get conversation comments error:', error);
@@ -257,6 +269,9 @@ export const conversationActions = {
       if (!currentUser) {
         return { success: false, error: i18n.t('errors.userNotFound') };
       }
+
+      const verified = await assertEmailVerified();
+      if (!verified.ok) return { success: false, error: verified.error };
 
       const db = getFirestore();
       const commentsRef = collection(db, 'conversationComments');
