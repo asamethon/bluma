@@ -1,6 +1,10 @@
-# Bluma zamanlanmış işleri.  Kurulum:
-#   crontab -e   ve aşağıdaki satırları yapıştır
+# Bluma zamanlanmış işleri.
 #
+# ELLE YAPIŞTIRMA — cron/install.sh kullan. O, mevcut crontab'ı yedekler ve
+# yalnızca işaretlenmiş bloğu değiştirir; başka işlerin silinmez.
+#
+# Loglama ve hata bildirimi bluma-cron.sh içinde: iş başarısız olursa
+# yöneticiye e-posta gider (ADMIN_EMAIL / MAIL_REPLY_TO).
 # Günlükleri gör:  journalctl -t bluma-cron --since today
 #
 # Sunucu saati UTC olabilir; CRON_TZ ile yerel saate sabitliyoruz ki
@@ -8,10 +12,10 @@
 CRON_TZ=Europe/Istanbul
 
 # Süresi dolmak üzere olanlara son hatırlatma (uygulamayı açmasa bile ulaşır).
-0 11 * * *  /opt/bluma-push-worker/cron/bluma-cron.sh notify-unverified.js --grace-day 6 2>&1 | logger -t bluma-cron
+0 11 * * *  /opt/bluma-push-worker/cron/bluma-cron.sh notify-unverified.js --grace-day 6
 
 # Sayaç mutabakatı — haftada bir, gece trafiği düşükken.
-30 4 * * 0  /opt/bluma-push-worker/cron/bluma-cron.sh reconcile-counters.js 2>&1 | logger -t bluma-cron
+30 4 * * 0  /opt/bluma-push-worker/cron/bluma-cron.sh reconcile-counters.js
 
 # ---------------------------------------------------------------------------
 # ASKIYA ALMA — HENÜZ AÇMA.
@@ -24,4 +28,4 @@ CRON_TZ=Europe/Istanbul
 #   4) `deactivate-unverified.js --dry-run` çıktısı elle gözden geçirildi.
 # Aksi halde insanlar doğrulama fırsatı bulamadan hesapları kapanır.
 #
-# 0 12 * * *  /opt/bluma-push-worker/cron/bluma-cron.sh deactivate-unverified.js 2>&1 | logger -t bluma-cron
+# 0 12 * * *  /opt/bluma-push-worker/cron/bluma-cron.sh deactivate-unverified.js

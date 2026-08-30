@@ -95,6 +95,20 @@ async function deliver({ to, subject, html }) {
 /** Kendi gönderimimiz yapılandırılmış mı? İstemci buna göre yedeğe düşer. */
 export const mailerReady = () => !!API_KEY;
 
+/**
+ * Şablonsuz düz uyarı postası (cron hatası gibi işletim mesajları için).
+ * Kullanıcıya değil, yöneticiye gider.
+ */
+export async function sendPlainMail({ to, subject, text }) {
+  const escaped = String(text).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+  await deliver({
+    to,
+    subject,
+    html: `<pre style="font:13px/1.5 ui-monospace,Menlo,monospace;white-space:pre-wrap">${escaped}</pre>`,
+  });
+  console.log(`[mail] uyarı gönderildi -> ${to}`);
+}
+
 export async function sendTemplateMail({ template: name, lang = 'tr', to, subject, values }) {
   const html = fill(await template(name, lang), { EMAIL: to, ...values });
   await deliver({ to, subject, html });

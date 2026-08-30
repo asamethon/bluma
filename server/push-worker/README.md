@@ -214,12 +214,22 @@ ortamında `RESEND_API_KEY` ve `GOOGLE_APPLICATION_CREDENTIALS` aksi halde
 bulunmaz. Çıktı journald'a düşer.
 
 ```bash
-# Servis hesabı yolunu ortam dosyasına ekle (sarmalayıcı oradan okur):
+# Servis hesabı yolu + uyarı adresi (sarmalayıcı ortam dosyasından okur):
 echo 'GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/<servis-hesabi>.json' >> /etc/bluma/push-worker.env
+echo 'ADMIN_EMAIL=destek@d4tecompany.com' >> /etc/bluma/push-worker.env
 
-crontab -e   # cron/crontab.example içeriğini yapıştır
+/opt/bluma-push-worker/cron/install.sh      # kur veya güncelle
+/opt/bluma-push-worker/cron/install.sh --remove   # geri al
 journalctl -t bluma-cron --since today
 ```
+
+`install.sh` mevcut crontab'ı `/etc/bluma/crontab.<tarih>.bak` olarak yedekler
+ve yalnızca işaretlenmiş bloğu değiştirir — `crontab -` gibi her şeyi silmez,
+tekrar tekrar çalıştırılabilir.
+
+**İş başarısız olursa yöneticiye e-posta gider.** Sarmalayıcı çıkış kodunu
+boruya kurban etmeden yakalar (`node ... | logger` yazılsaydı cron her zaman
+başarı görürdü) ve hata çıktısını `cron/alert.js` ile postalar.
 
 Kurulan işler: günlük son hatırlatma (`--grace-day 6`) ve haftalık sayaç
 mutabakatı. **Askıya alma satırı bilinçli olarak kapalı** — açma koşulları
