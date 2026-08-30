@@ -43,6 +43,36 @@ service cloud.firestore {
     function priorValue(field) {
       return resource == null ? 0 : resource.data.get(field, 0);
     }
+    // Cihaz banı (bkz. features/moderation/). `userDevices/{uid}` hesabı cihaza
+    // bağlar; ban listesi `bannedDevices/{deviceId}`. Kural içi get/exists
+    // okuma kurallarına tabi olmadığı için userDevices gizli kalabiliyor.
+    //
+    // NOT: cihaz kaydı OLMAYAN çağıran engellenmez — App Store'daki eski
+    // sürüm bu kaydı yazmıyor ve zorunlu kılmak onları tümden kilitlerdi.
+    // Herkes yeni sürüme geçtiğinde `!hasDeviceRecord()` da reddedilmeli.
+    function hasDeviceRecord() {
+      return exists(/databases/$(database)/documents/userDevices/$(request.auth.uid));
+    }
+    function onBannedDevice() {
+      return isSignedIn() && hasDeviceRecord() && exists(
+        /databases/$(database)/documents/bannedDevices/$(
+          get(/databases/$(database)/documents/userDevices/$(request.auth.uid)).data.deviceId));
+    }
+    // Sahte e-posta engeli: parola ile açılan hesap, adresini doğrulamadan
+    // içerik üretemez. Google/Apple girişleri sağlayıcı tarafından zaten
+    // doğrulanmıştır (Apple "E-postamı Gizle" adresi de gerçektir), onlar
+    // muaftır. NOT: kullanıcı bağlantıya tıkladıktan sonra istemci token'ı
+    // ZORLA tazelemeli — eski token'da claim hâlâ false görünür.
+    function emailVerified() {
+      return request.auth.token.get('email_verified', false) == true
+        || request.auth.token.firebase.sign_in_provider != 'password';
+    }
+    // İçerik üretimi için kısayol: oturumlu, banlı cihazda değil, e-postası
+    // doğrulanmış.
+    function canPublish() {
+      return isSignedIn() && !onBannedDevice() && emailVerified();
+    }
+
     // True when the caller is NOT blocked by `ownerId`. Engellenen bir
     // kullanıcının, kurbana ULAŞACAK (push tetikleyen) bildirim/DM yazmasını
     // kaynağında engeller — worker'daki kontrol savunma derinliği içindir.
@@ -169,10 +199,10 @@ service cloud.firestore {
       // Public stories are readable by anyone; drafts only by their author.
       allow read: if resource.data.isPublished == true
         || (isSignedIn() && resource.data.authorId == request.auth.uid);
-      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow create: if canPublish() && request.resource.data.authorId == request.auth.uid;
       allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
       allow update: if isSignedIn() && (
-        resource.data.authorId == request.auth.uid
+        (resource.data.authorId == request.auth.uid && !onBannedDevice())
         || isCounterBump('likesCount')
         || isCounterBump('commentsCount')
         || isCounterBump('viewsCount')
@@ -211,7 +241,7 @@ service cloud.firestore {
       // also delete (moderation/cleanup); others may only bump the like counter.
       match /comments/{commentId} {
         allow read: if true;
-        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow create: if canPublish() && request.resource.data.userId == request.auth.uid;
         allow delete: if (isSignedIn() && resource.data.userId == request.auth.uid) || isStoryAuthor();
         allow update: if isSignedIn() && (
           resource.data.userId == request.auth.uid
@@ -240,7 +270,7 @@ service cloud.firestore {
     // Conversations — same ownership model as stories.
     match /conversations/{conversationId} {
       allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow create: if canPublish() && request.resource.data.authorId == request.auth.uid;
       allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
       // updatedAt is included because commenting bumps it alongside the counter.
       allow update: if isSignedIn() && (
@@ -262,7 +292,7 @@ service cloud.firestore {
 
     match /conversationComments/{commentId} {
       allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow create: if canPublish() && request.resource.data.userId == request.auth.uid;
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow update: if isSignedIn() && (
         resource.data.userId == request.auth.uid
@@ -305,6 +335,28 @@ service cloud.firestore {
     // push-worker'da (Admin SDK ile, bu kurala tabi değil).
     match /userPushTokens/{userId} {
       allow read, write: if isOwner(userId);
+    }
+
+    // Hesap → cihaz eşlemesi. Cihaz kimliği kişisel veridir: herkese açık
+    // users dokümanına YAZILMAZ, burada durur ve yalnızca admin okur.
+    // Banlı cihaz yeni hesabını buraya kaydedemez (ban zinciri kopmasın).
+    match /userDevices/{userId} {
+      allow read: if isAdmin();
+      allow create, update: if isOwner(userId)
+        && request.resource.data.userId == userId
+        && request.resource.data.deviceId is string
+        && !exists(/databases/$(database)/documents/bannedDevices/$(request.resource.data.deviceId));
+      // Silme yalnızca hesap silme akışında (Admin SDK, kurallara tabi değil).
+      allow delete: if false;
+    }
+
+    // Cihaz ban listesi. `get` herkese açık — istemci YALNIZCA kendi cihaz
+    // id'sini sorup sebebi gösterebilsin diye. `list` kapalı: kimse listeyi
+    // tarayamaz. Yazma yalnızca admin (pratikte VPS'teki ban uç noktası).
+    match /bannedDevices/{deviceId} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow write: if isAdmin();
     }
 
     // Content reports — a signed-in user may file a report for themselves.
@@ -355,7 +407,7 @@ service cloud.firestore {
         allow read: if isSignedIn() && request.auth.uid in threadParticipants();
         // Engellenen kullanıcı DM (dolayısıyla DM push'u) gönderemez; metin
         // makul bir üst sınırla kısıtlanır (anti-spam).
-        allow create: if isSignedIn()
+        allow create: if canPublish()
           && request.resource.data.senderId == request.auth.uid
           && request.auth.uid in threadParticipants()
           && notBlockedBy(otherParticipant())

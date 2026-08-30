@@ -23,6 +23,8 @@ import { store } from '@/store';
 import i18n from '@/i18n';
 import { authError, AuthResult } from './authErrors';
 import { buildSignupContext, trackSignupContext } from './signupContext';
+import { isDisposableEmail } from './disposableEmails';
+import { applyAuthLanguage, sendVerificationEmail } from './emailVerification';
 import { logger } from '@/utils/logger';
 
 // Klavye/otomatik doldurma kaynaklı boşluk ve büyük harf, Firebase'de
@@ -99,6 +101,10 @@ async function signUpWithEmail(email: string, password: string, displayName: str
   try {
     store.dispatch(patchAuth({ isLoading: true }));
 
+    if (isDisposableEmail(email)) {
+      return { success: false, error: i18n.t('authErrors.disposableEmail') };
+    }
+
     const authInstance = getAuth();
     const userCredential = await createUserWithEmailAndPassword(authInstance, normalizeEmail(email), password);
     const firebaseUser = userCredential.user;
@@ -141,6 +147,10 @@ async function signUpWithEmail(email: string, password: string, displayName: str
       logger.debug('Push token kaydedilirken hata (non-critical):', error);
     }
 
+    // Doğrulama postası beklenmez — hesap açılışını yavaşlatmasın; kullanıcı
+    // içerik üretmeye kalkınca zaten doğrulama isteniyor (bkz. useEmailGate).
+    sendVerificationEmail().catch((e) => logger.error('Verification mail error:', e));
+
     trackSignupContext(signupContext);
     logEvent(getAnalytics(), 'sign_up', { method: 'email' }).catch(() => {});
 
@@ -160,6 +170,7 @@ async function resetPassword(email: string): Promise<AuthResult> {
   try {
     store.dispatch(patchAuth({ isLoading: true }));
 
+    await applyAuthLanguage();
     await sendPasswordResetEmail(getAuth(), normalizeEmail(email));
 
     logger.debug('Password reset email sent successfully');

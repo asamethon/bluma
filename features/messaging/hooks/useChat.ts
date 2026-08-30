@@ -1,4 +1,5 @@
 import { MOCK_CHAT_MESSAGES, SHOW_MOCK_DATA } from '@/constants/mockData';
+import { assertEmailVerified } from '@/features/auth/services/emailVerification';
 import {
   listenMessages,
   listenThreadDoc,
@@ -14,6 +15,8 @@ import { useAppSelector } from '@/store/hooks';
 import { messagingActions } from '@/store/messagingStore';
 import { DirectMessage, User } from '@/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert } from 'react-native';
+import i18n from '@/i18n';
 
 const TYPING_WRITE_THROTTLE_MS = 3000;
 const TYPING_FRESH_WINDOW_MS = 5000;
@@ -142,6 +145,15 @@ export function useChat(otherUserId?: string) {
   const send = async () => {
     const text = draft.trim();
     if ((!text && !selectedImage) || !currentUserId || !otherUserId || messagingBlocked) return;
+
+    // İyimser eklemeden ÖNCE: doğrulanmamış hesapta kurallar yazmayı reddeder
+    // ve mesaj sebepsizce kaybolmuş gibi görünürdü.
+    const verified = await assertEmailVerified();
+    if (!verified.ok) {
+      Alert.alert(i18n.t('common.error'), verified.error);
+      return;
+    }
+
     const imageUri = selectedImage;
     setDraft('');
     setSelectedImage(null);

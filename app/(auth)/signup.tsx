@@ -1,5 +1,6 @@
 import {
   Screen, Button, Text } from '@/components/ui';
+import { suggestEmailFix } from '@/features/auth/utils/emailTypos';
 import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
 import { authActions } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
@@ -105,8 +106,25 @@ export default function SignUpScreen() {
     return true;
   };
 
+  // Yazım hatası olan adrese kaydolan kullanıcı doğrulama postasını hiç
+  // alamaz; hesap açılmadan ÖNCE soruyoruz.
+  const confirmEmailTypo = () => {
+    const suggestion = suggestEmailFix(formData.email);
+    if (!suggestion) return Promise.resolve(true);
+    return new Promise<boolean>(resolve => {
+      Alert.alert(t('emailVerify.typoTitle'), t('emailVerify.typoBody', { suggestion }), [
+        { text: t('emailVerify.typoKeep'), style: 'cancel', onPress: () => resolve(true) },
+        {
+          text: t('emailVerify.typoUse'),
+          onPress: () => { updateField('email', suggestion); resolve(false); },
+        },
+      ]);
+    });
+  };
+
   const handleEmailSignUp = async () => {
     if (!validateForm()) return;
+    if (!(await confirmEmailTypo())) return;
     try {
       const result = await authActions.signUpWithEmail(formData.email, formData.password, formData.name);
       if (!result.success) Alert.alert(t('common.error'), result.error || t('authErrors.signUpFailed'));

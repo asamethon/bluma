@@ -12,6 +12,8 @@ import * as Sentry from '@sentry/react-native';
 import { AuthGateSheet } from '@/components/AuthGateSheet';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { SplashAnimation } from '@/components/ui';
+import { DeviceBannedScreen } from '@/features/moderation/components/DeviceBannedScreen';
+import { useDeviceBan } from '@/features/moderation/hooks/useDeviceBan';
 import { GuestProvider } from '@/contexts/GuestContext';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import {
@@ -82,6 +84,7 @@ function RootLayoutInner() {
   const continueReadingLoaded = useAppSelector(s => s.story.continueReadingLoaded);
   const stories = useAppSelector(s => s.story.stories);
   const continueReading = useAppSelector(s => s.story.continueReading);
+  const deviceBan = useDeviceBan();
   const [splashTimedOut, setSplashTimedOut] = useState(false);
   const [imagesReady, setImagesReady] = useState(false);
   const [introFinished, setIntroFinished] = useState(false);
@@ -136,6 +139,12 @@ function RootLayoutInner() {
 
   if (!loaded) {
     return null;
+  }
+
+  // Banlı cihazda uygulama hiç açılmaz; kurallar yazmayı zaten reddediyor,
+  // buradaki ekran kullanıcıya sebebini söyler.
+  if (deviceBan.ban) {
+    return <DeviceBannedScreen reason={deviceBan.ban.reason} />;
   }
 
   return (

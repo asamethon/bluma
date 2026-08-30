@@ -176,7 +176,9 @@
     "benefitContinue": "Pick up where you left off",
     "benefitOffline": "Offline",
     "readMore": "Keep Reading",
-    "nextChapter": "Next Chapter"
+    "nextChapter": "Next Chapter",
+    "nextReadsTitle": "What's next?",
+    "nextReadsSubtitle": "If you liked this story, you might enjoy these too."
   },
   "commentsScreen": {
     "title": "Comments ({{count}})",
@@ -756,7 +758,8 @@
     "googleSignOutFailed": "Something went wrong while signing out of Google.",
     "googleSessionMissing": "Google session not found.",
     "appleUserIdMissing": "Apple user ID not found.",
-    "appleRefreshFailed": "Apple authentication couldn't be refreshed."
+    "appleRefreshFailed": "Apple authentication couldn't be refreshed.",
+    "disposableEmail": "Disposable email addresses can't be used to sign up. Please use a permanent address."
   },
   "account": {
     "usernameTaken": "This username is already taken.",
@@ -977,5 +980,39 @@
     "pendingCount_one": "{{count}} person wants to follow you",
     "pendingCount_other": "{{count}} people want to follow you",
     "sent": "Follow request sent. You’ll see their content once it’s approved."
+  },
+  "deviceBan": {
+    "title": "This device is blocked",
+    "body": "Bluma can't be used from this device due to behavior that violates our community rules.",
+    "contact": "To appeal: {{email}}"
+  },
+  "emailVerify": {
+    "required": "Verify your email address to continue. Look for the link in your inbox — if you typed the address wrong, fix it in Settings → Email verification.",
+    "requiredResent": "Verify your email address to continue. We sent the link to {{email}} again. If that address is wrong, fix it in Settings → Email verification.",
+    "sendFailed": "Couldn't send the verification email. Please try again later.",
+    "screenTitle": "Email verification",
+    "pendingBody": "We sent a verification link to {{email}}. Tap the link, then choose \"I verified\".",
+    "checkNow": "I verified, check now",
+    "resend": "Send the link again",
+    "verifiedTitle": "Verified",
+    "verifiedBody": "Your email is verified. You're all set.",
+    "notYetTitle": "Not verified yet",
+    "notYetBody": "Make sure you tapped the verification link. If it never arrived, fix your address or resend the link.",
+    "sentTitle": "Sent",
+    "sentBody": "We sent the verification link to {{email}}.",
+    "wrongAddressTitle": "Typed the wrong address?",
+    "wrongAddressBody": "Enter the correct address and we'll send the link there. Your address changes only after you tap the link.",
+    "newEmailPlaceholder": "New email address",
+    "passwordPlaceholder": "Your password",
+    "changeSubmit": "Send link to the new address",
+    "changeSentTitle": "Link sent",
+    "changeSentBody": "We sent a verification link to {{email}}. Your address updates once you tap it.",
+    "sameAddress": "That's already your current address.",
+    "needsPassword": "Enter your password for security.",
+    "changeFailed": "Couldn't change the email address. Please try again later.",
+    "typoTitle": "Check the address",
+    "typoBody": "Did you mean {{suggestion}}?",
+    "typoUse": "Yes, fix it",
+    "typoKeep": "No, keep mine"
   }
 }

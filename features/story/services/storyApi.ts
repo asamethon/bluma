@@ -18,6 +18,7 @@ import {
 import { notificationActions } from '../../../store/notificationStore';
 import { getUserById } from './userCache';
 import { patchStory } from '@/store/slices/storySlice';
+import { assertEmailVerified } from '@/features/auth/services/emailVerification';
 import { store } from '@/store';
 import i18n from '@/i18n';
 import { logger } from '@/utils/logger';
@@ -29,6 +30,13 @@ export async function createStory(storyData: Omit<Story, 'id' | 'createdAt' | 'u
 
     if (!user?.id) {
       throw new Error(i18n.t('errors.loginRequired'));
+    }
+
+    // Sahte e-postayla açılan hesap içerik üretemez (bkz. emailVerification.ts).
+    const verified = await assertEmailVerified();
+    if (!verified.ok) {
+      store.dispatch(patchStory({ isLoading: false }));
+      return { success: false, error: verified.error };
     }
 
     const firestore = getFirestore();

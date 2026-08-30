@@ -176,7 +176,9 @@
     "benefitContinue": "Lanjutkan dari terakhir kamu berhenti",
     "benefitOffline": "Mode luring",
     "readMore": "Lanjutkan membaca",
-    "nextChapter": "Bab berikutnya"
+    "nextChapter": "Bab berikutnya",
+    "nextReadsTitle": "Selanjutnya apa?",
+    "nextReadsSubtitle": "Jika kamu menyukai cerita ini, kamu mungkin juga suka yang ini."
   },
   "commentsScreen": {
     "title": "Komentar ({{count}})",
@@ -756,7 +758,8 @@
     "googleSignOutFailed": "Terjadi kesalahan saat keluar dari Google.",
     "googleSessionMissing": "Sesi Google tidak ditemukan.",
     "appleUserIdMissing": "ID pengguna Apple tidak ditemukan.",
-    "appleRefreshFailed": "Autentikasi Apple tidak dapat diperbarui."
+    "appleRefreshFailed": "Autentikasi Apple tidak dapat diperbarui.",
+    "disposableEmail": "Email sekali pakai tidak bisa digunakan untuk mendaftar. Gunakan alamat permanen."
   },
   "account": {
     "usernameTaken": "Nama pengguna ini sudah digunakan.",
@@ -977,5 +980,39 @@
     "pendingCount_one": "{{count}} orang ingin mengikutimu",
     "pendingCount_other": "{{count}} orang ingin mengikutimu",
     "sent": "Permintaan terkirim. Kontennya bisa dilihat setelah disetujui."
+  },
+  "deviceBan": {
+    "title": "Perangkat ini diblokir",
+    "body": "Bluma tidak dapat digunakan dari perangkat ini karena melanggar aturan komunitas.",
+    "contact": "Untuk mengajukan banding: {{email}}"
+  },
+  "emailVerify": {
+    "required": "Verify your email address to continue. Look for the link in your inbox — if you typed the address wrong, fix it in Settings → Email verification.",
+    "requiredResent": "Verify your email address to continue. We sent the link to {{email}} again. If that address is wrong, fix it in Settings → Email verification.",
+    "sendFailed": "Email verifikasi gagal dikirim. Coba lagi nanti.",
+    "screenTitle": "Email verification",
+    "pendingBody": "We sent a verification link to {{email}}. Tap the link, then choose \"I verified\".",
+    "checkNow": "I verified, check now",
+    "resend": "Send the link again",
+    "verifiedTitle": "Verified",
+    "verifiedBody": "Your email is verified. You're all set.",
+    "notYetTitle": "Not verified yet",
+    "notYetBody": "Make sure you tapped the verification link. If it never arrived, fix your address or resend the link.",
+    "sentTitle": "Sent",
+    "sentBody": "We sent the verification link to {{email}}.",
+    "wrongAddressTitle": "Typed the wrong address?",
+    "wrongAddressBody": "Enter the correct address and we'll send the link there. Your address changes only after you tap the link.",
+    "newEmailPlaceholder": "New email address",
+    "passwordPlaceholder": "Your password",
+    "changeSubmit": "Send link to the new address",
+    "changeSentTitle": "Link sent",
+    "changeSentBody": "We sent a verification link to {{email}}. Your address updates once you tap it.",
+    "sameAddress": "That's already your current address.",
+    "needsPassword": "Enter your password for security.",
+    "changeFailed": "Couldn't change the email address. Please try again later.",
+    "typoTitle": "Check the address",
+    "typoBody": "Did you mean {{suggestion}}?",
+    "typoUse": "Yes, fix it",
+    "typoKeep": "No, keep mine"
   }
 }

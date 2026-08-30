@@ -1,3 +1,4 @@
+import { SUPPORT_EMAIL } from '@/constants/config';
 import { authActions } from "@/store/authStore";
 import { useTheme } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
@@ -41,7 +42,7 @@ export default function HelpScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const openMail = async () => {
-    const email = "asamethon@gmail.com";
+    const email = SUPPORT_EMAIL;
     const subject = encodeURIComponent(t('help.supportSubject'));
     const url = `mailto:${email}?subject=${subject}`;
     const supported = await Linking.canOpenURL(url);

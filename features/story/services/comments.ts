@@ -22,6 +22,7 @@ import { notificationActions } from '../../../store/notificationStore';
 import { getStoryById } from './storyApi';
 import { getUserById } from './userCache';
 import { patchStory } from '@/store/slices/storySlice';
+import { assertEmailVerified } from '@/features/auth/services/emailVerification';
 import { store } from '@/store';
 import { logger } from '@/utils/logger';
 
@@ -31,6 +32,9 @@ export async function addComment(storyId: string, content: string, parentId?: st
     if (!user?.id) {
       throw new Error(i18n.t('errors.loginRequired'));
     }
+
+    const verified = await assertEmailVerified();
+    if (!verified.ok) return { success: false, error: verified.error };
 
     const firestore = getFirestore();
     const commentsRef = collection(firestore, 'stories', storyId, 'comments');

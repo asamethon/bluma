@@ -40,6 +40,9 @@ export default function SettingsScreen() {
   const router = useRouter();
 
   const matureEnabled = useAppSelector(s => s.preferences.showMatureContent);
+  // Doğrulama yalnızca parola ile açılan hesaplar için anlamlı; Google/Apple
+  // adresleri sağlayıcı tarafından doğrulanmış gelir.
+  const isEmailAccount = useAppSelector(s => s.auth.user?.authProvider) === 'email';
 
   useEffect(() => {
     preferencesActions.load();
@@ -107,6 +110,19 @@ export default function SettingsScreen() {
                 color={colors.textSecondary}
               />
             </TouchableOpacity>
+
+            {isEmailAccount && (
+              <TouchableOpacity
+                style={styles.row}
+                onPress={() => router.push("/profile/verify-email" as any)}
+              >
+                <View style={styles.rowLeft}>
+                  <Ionicons name="mail-outline" size={20} color={colors.primary} />
+                  <Text style={styles.rowTitle}>{t('emailVerify.screenTitle')}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={[styles.row, styles.rowNoBorder]}

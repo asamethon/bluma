@@ -176,7 +176,9 @@
     "benefitContinue": "Weiterlesen, wo du aufgehört hast",
     "benefitOffline": "Offline",
     "readMore": "Weiterlesen",
-    "nextChapter": "Nächstes Kapitel"
+    "nextChapter": "Nächstes Kapitel",
+    "nextReadsTitle": "Was kommt als Nächstes?",
+    "nextReadsSubtitle": "Wenn dir diese Geschichte gefallen hat, magst du vielleicht auch diese."
   },
   "commentsScreen": {
     "title": "Kommentare ({{count}})",
@@ -756,7 +758,8 @@
     "googleSignOutFailed": "Beim Abmelden von Google ist etwas schiefgelaufen.",
     "googleSessionMissing": "Google-Sitzung nicht gefunden.",
     "appleUserIdMissing": "Apple-Nutzer-ID nicht gefunden.",
-    "appleRefreshFailed": "Die Apple-Authentifizierung konnte nicht erneuert werden."
+    "appleRefreshFailed": "Die Apple-Authentifizierung konnte nicht erneuert werden.",
+    "disposableEmail": "Mit Wegwerf-E-Mail-Adressen kann kein Konto erstellt werden. Bitte nutze eine dauerhafte Adresse."
   },
   "account": {
     "usernameTaken": "Dieser Nutzername ist bereits vergeben.",
@@ -977,5 +980,39 @@
     "pendingCount_one": "{{count}} Person möchte dir folgen",
     "pendingCount_other": "{{count}} Personen möchten dir folgen",
     "sent": "Anfrage gesendet. Nach der Bestätigung siehst du die Inhalte."
+  },
+  "deviceBan": {
+    "title": "Dieses Gerät ist gesperrt",
+    "body": "Bluma kann auf diesem Gerät wegen eines Verstoßes gegen unsere Community-Regeln nicht genutzt werden.",
+    "contact": "Einspruch: {{email}}"
+  },
+  "emailVerify": {
+    "required": "Verify your email address to continue. Look for the link in your inbox — if you typed the address wrong, fix it in Settings → Email verification.",
+    "requiredResent": "Verify your email address to continue. We sent the link to {{email}} again. If that address is wrong, fix it in Settings → Email verification.",
+    "sendFailed": "Bestätigungs-E-Mail konnte nicht gesendet werden. Versuche es später erneut.",
+    "screenTitle": "Email verification",
+    "pendingBody": "We sent a verification link to {{email}}. Tap the link, then choose \"I verified\".",
+    "checkNow": "I verified, check now",
+    "resend": "Send the link again",
+    "verifiedTitle": "Verified",
+    "verifiedBody": "Your email is verified. You're all set.",
+    "notYetTitle": "Not verified yet",
+    "notYetBody": "Make sure you tapped the verification link. If it never arrived, fix your address or resend the link.",
+    "sentTitle": "Sent",
+    "sentBody": "We sent the verification link to {{email}}.",
+    "wrongAddressTitle": "Typed the wrong address?",
+    "wrongAddressBody": "Enter the correct address and we'll send the link there. Your address changes only after you tap the link.",
+    "newEmailPlaceholder": "New email address",
+    "passwordPlaceholder": "Your password",
+    "changeSubmit": "Send link to the new address",
+    "changeSentTitle": "Link sent",
+    "changeSentBody": "We sent a verification link to {{email}}. Your address updates once you tap it.",
+    "sameAddress": "That's already your current address.",
+    "needsPassword": "Enter your password for security.",
+    "changeFailed": "Couldn't change the email address. Please try again later.",
+    "typoTitle": "Check the address",
+    "typoBody": "Did you mean {{suggestion}}?",
+    "typoUse": "Yes, fix it",
+    "typoKeep": "No, keep mine"
   }
 }

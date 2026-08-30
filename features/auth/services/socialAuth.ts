@@ -34,10 +34,11 @@ async function signInWithGoogle(): Promise<AuthResult> {
       return { success: false, error: result.error };
     }
 
-    const userInfo = result.userInfo as any;
+    const userInfo = result.userInfo;
+    const googleUser = userInfo.data.user;
     logger.debug('Google Sign-In userInfo:', userInfo);
 
-    const credential = GoogleAuthProvider.credential(userInfo.data.idToken);
+    const credential = GoogleAuthProvider.credential(result.idToken);
     logger.debug('Google credential created');
 
     const authInstance = getAuth();
@@ -56,8 +57,8 @@ async function signInWithGoogle(): Promise<AuthResult> {
         const signupContext = buildSignupContext();
         userData = {
           id: firebaseUser.uid,
-          email: userInfo.data.user.email,
-          displayName: userInfo.data.user.name,
+          email: googleUser.email,
+          displayName: googleUser.name ?? googleUser.email,
           authProvider: 'google' as const,
           ...signupContext,
           createdAt: serverTimestamp(),
@@ -72,16 +73,16 @@ async function signInWithGoogle(): Promise<AuthResult> {
         userData = {
           ...existingUserData,
           id: firebaseUser.uid,
-          email: userInfo.data.user.email,
-          displayName: userInfo.data.user.name,
+          email: googleUser.email,
+          displayName: googleUser.name ?? googleUser.email,
           authProvider: 'google' as const,
           updatedAt: serverTimestamp(),
         };
 
         await setDoc(userDocRef, {
           id: firebaseUser.uid,
-          email: userInfo.data.user.email,
-          displayName: userInfo.data.user.name,
+          email: googleUser.email,
+          displayName: googleUser.name ?? googleUser.email,
           authProvider: 'google' as const,
           updatedAt: serverTimestamp(),
         }, { merge: true });
@@ -94,8 +95,8 @@ async function signInWithGoogle(): Promise<AuthResult> {
         logger.debug('Firestore permission denied, creating basic user object');
         userData = {
           id: firebaseUser.uid,
-          email: userInfo.data.user.email,
-          displayName: userInfo.data.user.name,
+          email: googleUser.email,
+          displayName: googleUser.name ?? googleUser.email,
           authProvider: 'google' as const,
           createdAt: new Date(),
           updatedAt: new Date(),

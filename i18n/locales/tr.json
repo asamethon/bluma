@@ -176,7 +176,9 @@
     "benefitContinue": "Kaldığın yerden devam",
     "benefitOffline": "Çevrimdışı",
     "readMore": "Devamını Oku",
-    "nextChapter": "Sonraki Bölüm"
+    "nextChapter": "Sonraki Bölüm",
+    "nextReadsTitle": "Sırada ne var?",
+    "nextReadsSubtitle": "Bu hikâyeyi sevdiysen bunlar da hoşuna gidebilir."
   },
   "commentsScreen": {
     "title": "Yorumlar ({{count}})",
@@ -756,7 +758,8 @@
     "googleSignOutFailed": "Google hesabından çıkış yapılırken bir hata oluştu.",
     "googleSessionMissing": "Google oturumu bulunamadı.",
     "appleUserIdMissing": "Apple kullanıcı kimliği bulunamadı.",
-    "appleRefreshFailed": "Apple kimlik doğrulaması yenilenemedi."
+    "appleRefreshFailed": "Apple kimlik doğrulaması yenilenemedi.",
+    "disposableEmail": "Tek kullanımlık e-posta adresleriyle hesap açılamıyor. Kalıcı bir adres kullan."
   },
   "account": {
     "usernameTaken": "Bu kullanıcı adı zaten kullanımda.",
@@ -977,5 +980,39 @@
     "pendingCount_one": "{{count}} kişi seni takip etmek istiyor",
     "pendingCount_other": "{{count}} kişi seni takip etmek istiyor",
     "sent": "Takip isteğin gönderildi. Onaylanınca içeriklerini görebileceksin."
+  },
+  "deviceBan": {
+    "title": "Bu cihaz engellendi",
+    "body": "Topluluk kurallarını ihlal eden davranış nedeniyle bu cihazdan Bluma kullanılamıyor.",
+    "contact": "İtiraz için: {{email}}"
+  },
+  "emailVerify": {
+    "required": "Devam etmek için e-posta adresini doğrulaman gerekiyor. Bağlantıyı gelen kutunda ara; adresini yanlış yazdıysan Ayarlar → E-posta doğrulama'dan düzeltebilirsin.",
+    "requiredResent": "Devam etmek için e-posta adresini doğrulaman gerekiyor. Bağlantıyı {{email}} adresine yeniden gönderdik. Adres yanlışsa Ayarlar → E-posta doğrulama'dan düzeltebilirsin.",
+    "sendFailed": "Doğrulama e-postası gönderilemedi. Daha sonra tekrar dene.",
+    "screenTitle": "E-posta doğrulama",
+    "pendingBody": "{{email}} adresine bir doğrulama bağlantısı gönderdik. Bağlantıya tıkladıktan sonra \"Doğruladım\" de.",
+    "checkNow": "Doğruladım, kontrol et",
+    "resend": "Bağlantıyı tekrar gönder",
+    "verifiedTitle": "Doğrulandı",
+    "verifiedBody": "E-posta adresin doğrulandı. Artık her şeyi yapabilirsin.",
+    "notYetTitle": "Henüz doğrulanmadı",
+    "notYetBody": "Doğrulama bağlantısına tıkladığından emin ol. Posta gelmediyse adresini düzeltebilir veya bağlantıyı tekrar gönderebilirsin.",
+    "sentTitle": "Gönderildi",
+    "sentBody": "Doğrulama bağlantısını {{email}} adresine gönderdik.",
+    "wrongAddressTitle": "Adresi yanlış mı yazdın?",
+    "wrongAddressBody": "Doğru adresini yaz; bağlantıyı oraya göndereceğiz. Adres ancak sen bağlantıya tıklayınca değişir.",
+    "newEmailPlaceholder": "Yeni e-posta adresi",
+    "passwordPlaceholder": "Şifren",
+    "changeSubmit": "Yeni adrese bağlantı gönder",
+    "changeSentTitle": "Bağlantı gönderildi",
+    "changeSentBody": "{{email}} adresine bir doğrulama bağlantısı gönderdik. Tıkladığında adresin güncellenecek.",
+    "sameAddress": "Bu zaten mevcut adresin.",
+    "needsPassword": "Güvenlik için şifreni gir.",
+    "changeFailed": "E-posta adresi değiştirilemedi. Daha sonra tekrar dene.",
+    "typoTitle": "Adresi kontrol et",
+    "typoBody": "Bunu mu demek istedin: {{suggestion}}?",
+    "typoUse": "Evet, düzelt",
+    "typoKeep": "Hayır, böyle kalsın"
   }
 }

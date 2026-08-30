@@ -176,7 +176,9 @@
     "benefitContinue": "続きから読める",
     "benefitOffline": "オフライン対応",
     "readMore": "続きを読む",
-    "nextChapter": "次の章"
+    "nextChapter": "次の章",
+    "nextReadsTitle": "次はこれ",
+    "nextReadsSubtitle": "この物語が気に入ったら、こちらもおすすめです。"
   },
   "commentsScreen": {
     "title": "コメント({{count}})",
@@ -756,7 +758,8 @@
     "googleSignOutFailed": "Googleからのログアウト中に問題が発生しました。",
     "googleSessionMissing": "Googleセッションが見つかりません。",
     "appleUserIdMissing": "Appleのユーザー IDが見つかりません。",
-    "appleRefreshFailed": "Apple認証を更新できませんでした。"
+    "appleRefreshFailed": "Apple認証を更新できませんでした。",
+    "disposableEmail": "使い捨てメールアドレスでは登録できません。恒久的なアドレスをご利用ください。"
   },
   "account": {
     "usernameTaken": "このユーザー名はすでに使用されています。",
@@ -977,5 +980,39 @@
     "pendingCount_one": "{{count}} 人があなたをフォローしたがっています",
     "pendingCount_other": "{{count}} 人があなたをフォローしたがっています",
     "sent": "フォローリクエストを送信しました。承認されると閲覧できます。"
+  },
+  "deviceBan": {
+    "title": "この端末はブロックされています",
+    "body": "コミュニティルールに違反する行為があったため、この端末では Bluma を利用できません。",
+    "contact": "異議申し立て: {{email}}"
+  },
+  "emailVerify": {
+    "required": "Verify your email address to continue. Look for the link in your inbox — if you typed the address wrong, fix it in Settings → Email verification.",
+    "requiredResent": "Verify your email address to continue. We sent the link to {{email}} again. If that address is wrong, fix it in Settings → Email verification.",
+    "sendFailed": "確認メールを送信できませんでした。しばらくしてからお試しください。",
+    "screenTitle": "Email verification",
+    "pendingBody": "We sent a verification link to {{email}}. Tap the link, then choose \"I verified\".",
+    "checkNow": "I verified, check now",
+    "resend": "Send the link again",
+    "verifiedTitle": "Verified",
+    "verifiedBody": "Your email is verified. You're all set.",
+    "notYetTitle": "Not verified yet",
+    "notYetBody": "Make sure you tapped the verification link. If it never arrived, fix your address or resend the link.",
+    "sentTitle": "Sent",
+    "sentBody": "We sent the verification link to {{email}}.",
+    "wrongAddressTitle": "Typed the wrong address?",
+    "wrongAddressBody": "Enter the correct address and we'll send the link there. Your address changes only after you tap the link.",
+    "newEmailPlaceholder": "New email address",
+    "passwordPlaceholder": "Your password",
+    "changeSubmit": "Send link to the new address",
+    "changeSentTitle": "Link sent",
+    "changeSentBody": "We sent a verification link to {{email}}. Your address updates once you tap it.",
+    "sameAddress": "That's already your current address.",
+    "needsPassword": "Enter your password for security.",
+    "changeFailed": "Couldn't change the email address. Please try again later.",
+    "typoTitle": "Check the address",
+    "typoBody": "Did you mean {{suggestion}}?",
+    "typoUse": "Yes, fix it",
+    "typoKeep": "No, keep mine"
   }
 }

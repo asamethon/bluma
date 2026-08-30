@@ -176,7 +176,9 @@
     "benefitContinue": "从上次停下的地方继续",
     "benefitOffline": "离线阅读",
     "readMore": "继续阅读",
-    "nextChapter": "下一章"
+    "nextChapter": "下一章",
+    "nextReadsTitle": "接下来读什么？",
+    "nextReadsSubtitle": "如果你喜欢这个故事，也许也会喜欢这些。"
   },
   "commentsScreen": {
     "title": "评论（{{count}}）",
@@ -756,7 +758,8 @@
     "googleSignOutFailed": "退出 Google 登录时出错。",
     "googleSessionMissing": "未找到 Google 会话。",
     "appleUserIdMissing": "未找到 Apple 用户 ID。",
-    "appleRefreshFailed": "无法刷新 Apple 身份验证。"
+    "appleRefreshFailed": "无法刷新 Apple 身份验证。",
+    "disposableEmail": "无法使用一次性邮箱注册，请使用长期有效的邮箱地址。"
   },
   "account": {
     "usernameTaken": "此用户名已被占用。",
@@ -977,5 +980,39 @@
     "pendingCount_one": "{{count}} 人想关注你",
     "pendingCount_other": "{{count}} 人想关注你",
     "sent": "关注请求已发送，通过后即可查看内容。"
+  },
+  "deviceBan": {
+    "title": "此设备已被封禁",
+    "body": "由于违反社区规则，此设备无法使用 Bluma。",
+    "contact": "申诉请联系：{{email}}"
+  },
+  "emailVerify": {
+    "required": "Verify your email address to continue. Look for the link in your inbox — if you typed the address wrong, fix it in Settings → Email verification.",
+    "requiredResent": "Verify your email address to continue. We sent the link to {{email}} again. If that address is wrong, fix it in Settings → Email verification.",
+    "sendFailed": "验证邮件发送失败，请稍后再试。",
+    "screenTitle": "Email verification",
+    "pendingBody": "We sent a verification link to {{email}}. Tap the link, then choose \"I verified\".",
+    "checkNow": "I verified, check now",
+    "resend": "Send the link again",
+    "verifiedTitle": "Verified",
+    "verifiedBody": "Your email is verified. You're all set.",
+    "notYetTitle": "Not verified yet",
+    "notYetBody": "Make sure you tapped the verification link. If it never arrived, fix your address or resend the link.",
+    "sentTitle": "Sent",
+    "sentBody": "We sent the verification link to {{email}}.",
+    "wrongAddressTitle": "Typed the wrong address?",
+    "wrongAddressBody": "Enter the correct address and we'll send the link there. Your address changes only after you tap the link.",
+    "newEmailPlaceholder": "New email address",
+    "passwordPlaceholder": "Your password",
+    "changeSubmit": "Send link to the new address",
+    "changeSentTitle": "Link sent",
+    "changeSentBody": "We sent a verification link to {{email}}. Your address updates once you tap it.",
+    "sameAddress": "That's already your current address.",
+    "needsPassword": "Enter your password for security.",
+    "changeFailed": "Couldn't change the email address. Please try again later.",
+    "typoTitle": "Check the address",
+    "typoBody": "Did you mean {{suggestion}}?",
+    "typoUse": "Yes, fix it",
+    "typoKeep": "No, keep mine"
   }
 }
