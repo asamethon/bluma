@@ -10,37 +10,24 @@
 // tek çağrıda siler — stories/conversations/messageThreads ve users/{uid}
 // (altındaki followers/following/likedStories/savedStories/
 // likedConversations/readingLists/readingProgress/blocked dahil) için bunu
-// kullanıyoruz.
-import { FieldValue } from 'firebase-admin/firestore';
-
-// Silinen kullanıcının takip ilişkilerini KARŞI taraflardan da temizle.
-// recursiveDelete(users/uid) yalnızca bu kullanıcının kendi alt
-// koleksiyonlarını siler; başka kullanıcılardaki followers/following
-// dokümanları ve followersCount/followingCount sayaçları olduğu gibi kalıp
-// "hayalet takipçi/takip" oluşturuyordu (sayaç şişik kalır, liste ise
-// silinmiş profili çözemeyip gizler → tutarsızlık).
-async function cleanupFollowRelations(db, uid) {
-  // uid'in TAKİP ETTİKLERİ: her biri için followers/{uid} sil + followersCount--
-  const following = await db.collection('users').doc(uid).collection('following').get();
-  for (const d of following.docs) {
-    const followedId = d.id; // following doc id == takip edilen kullanıcının uid'i
-    await db.collection('users').doc(followedId).collection('followers').doc(uid).delete().catch(() => {});
-    await db.collection('users').doc(followedId).update({ followersCount: FieldValue.increment(-1) }).catch(() => {});
-  }
-  // uid'i TAKİP EDENLER: her biri için following/{uid} sil + followingCount--
-  const followers = await db.collection('users').doc(uid).collection('followers').get();
-  for (const d of followers.docs) {
-    const followerId = d.id; // followers doc id == takip eden kullanıcının uid'i
-    await db.collection('users').doc(followerId).collection('following').doc(uid).delete().catch(() => {});
-    await db.collection('users').doc(followerId).update({ followingCount: FieldValue.increment(-1) }).catch(() => {});
-  }
-}
+// kullanıyoruz. Başkalarının verisindeki izler cleanupUserTraces.js'te.
+import { TRACE_CLEANUPS } from './cleanupUserTraces.js';
 
 export async function deleteAllUserData(auth, db, uid) {
-  // Takip ilişkileri karşı taraflardan temizlenmeli — recursiveDelete(users/uid)
-  // bunları görmez. Kullanıcı dokümanını silmeden ÖNCE (following/followers alt
-  // koleksiyonları hâlâ okunabilirken) yap.
-  await cleanupFollowRelations(db, uid);
+  // İzler kullanıcı dokümanı silinmeden ÖNCE temizlenmeli: following/followers
+  // alt koleksiyonları hangi sayaçların düşeceğini söyleyen tek kayıt.
+  //
+  // Bu adımlar hesabın silinmesini ENGELLEMEMELİ: eksik index gibi bir hata
+  // tüm akışı yarıda bırakırsa kullanıcı hesabını hiç silemez (App Store
+  // gerekliliği). Hata loglanır, sayaç sapması haftalık reconcile-counters.js
+  // koşusunda kapanır.
+  for (const cleanup of TRACE_CLEANUPS) {
+    try {
+      await cleanup(db, uid);
+    } catch (error) {
+      console.error(`[delete-account] ${cleanup.name} başarısız (${uid}):`, error.message);
+    }
+  }
 
   const stories = await db.collection('stories').where('authorId', '==', uid).get();
   for (const doc of stories.docs) {
@@ -69,6 +56,9 @@ export async function deleteAllUserData(auth, db, uid) {
 
   await db.collection('userPushTokens').doc(uid).delete().catch(() => {});
   await db.collection('notificationSettings').doc(uid).delete().catch(() => {});
+  // Cihaz kaydı gider; cihaz BANI (bannedDevices/{deviceId}) kalır — ban
+  // cihaza bağlıdır, hesabı silmek banı kaldırmaz.
+  await db.collection('userDevices').doc(uid).delete().catch(() => {});
 
   // Kullanıcı dokümanı + tüm alt koleksiyonları.
   await db.recursiveDelete(db.collection('users').doc(uid));

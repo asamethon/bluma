@@ -18,6 +18,13 @@ kullanır — güvenlik kurallarına tabi değildir, token'ı yalnızca burada o
 
 ## 2. Sunucuya kur
 
+> **Tek dizin:** kurulum dizini ve servis adı artık aynı —
+> `/opt/bluma-push-worker` + `bluma-push-worker.service`. (Eskiden servis
+> `/opt/push-worker`'dan koşuyordu ve yanlış kopyaya deploy edilme riski
+> vardı; 2026-08 itibarıyla birleştirildi.) Şüphelenirsen canlıyı
+> `systemctl show bluma-push-worker -p WorkingDirectory` ile doğrula.
+
+
 ```bash
 sudo mkdir -p /opt/bluma-push-worker
 # server/push-worker/ klasörünü sunucuya kopyala (node_modules HARİÇ):
@@ -118,3 +125,39 @@ GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/firebase-service-account.json \
 0 4 * * 0 GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/firebase-service-account.json \
   node /opt/bluma-push-worker/reconcile-counters.js >> /var/log/bluma-reconcile.log 2>&1
 ```
+
+## Cihaz banı (moderasyon)
+
+Hesabı silinen tacizci yeni bir Apple/Google hesabıyla geri dönebiliyordu. Ban
+artık hesaba değil **cihaza** yazılır (`bannedDevices/{deviceId}`), yani hesap
+silinse de durur.
+
+Cihaz kimliği istemcide üretilir (`features/moderation/services/deviceId.ts`):
+iOS'ta Keychain kaydı uygulama silinse bile kalır, Android'de ANDROID_ID imza
+anahtarı başına sabittir — ikisi de "sil-kur" ile sıfırlanmaz.
+
+```bash
+cd /opt/bluma-push-worker
+export GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/firebase-service-account.json
+
+node ban-device.js --devices                       # hesap → cihaz eşlemesi
+node ban-device.js --uid <uid> --reason "hakaret"  # o hesabın cihazını banla
+node ban-device.js --list                          # aktif banlar
+node ban-device.js --unban --device <deviceId>     # banı kaldır
+```
+
+Ban iki katmanda uygulanır: cihaza bağlı Firebase Auth hesapları **devre dışı**
+bırakılır (token anında geçersiz) ve güvenlik kuralları o cihazdan gelen yeni
+içeriği/yeni hesap kaydını reddeder.
+
+Uygulama içinden (admin custom claim'i olan hesapla) aynı işlem:
+
+```
+POST /admin/ban-device    { "uid": "...", "reason": "..." }
+POST /admin/unban-device  { "deviceId": "..." }
+Authorization: Bearer <idToken>
+```
+
+**Önemli:** ban, kullanıcının cihaz kaydına (`userDevices/{uid}`) dayanır. Hesap
+silinince bu kayıt da gider — yani tacizciyi **hesabını silmeden önce** banla,
+sonra sil.

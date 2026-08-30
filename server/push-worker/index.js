@@ -22,6 +22,7 @@ import { initializeApp, applicationDefault } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { handleDeleteAccount } from './deleteAccount.js';
+import { handleBanDevice } from './banDevice.js';
 
 const PORT = Number(process.env.PORT || 8789);
 const HOST = process.env.HOST || '127.0.0.1';
@@ -279,6 +280,15 @@ http.createServer((req, res) => {
   }
   if (req.url === '/delete-account' && req.method === 'POST') {
     handleDeleteAccount(auth, db, req, res);
+    return;
+  }
+  // Cihaz banı — admin custom claim'i olan hesap çağırabilir (bkz. banDevice.js).
+  if (req.url === '/admin/ban-device' && req.method === 'POST') {
+    handleBanDevice(auth, db, req, res);
+    return;
+  }
+  if (req.url === '/admin/unban-device' && req.method === 'POST') {
+    handleBanDevice(auth, db, req, res, { unban: true });
     return;
   }
   res.writeHead(404);
