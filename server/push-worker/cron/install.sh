@@ -31,7 +31,9 @@ if [[ "${1:-}" == "--remove" ]]; then
   exit 0
 fi
 
-block=$(sed -e "1i${BEGIN}" -e "\$a${END}" "$DIR/crontab.example")
+# Blok her zaman SONA eklenir. crontab'ta CRON_TZ kendisinden sonraki
+# satırları etkiler; sonda durduğu için yalnızca bizim işlerimizi etkiler.
+block=$(printf '%s\n%s\n%s\n' "$BEGIN" "$(cat "$DIR/crontab.example")" "$END")
 
 printf '%s\n%s\n' "$without_block" "$block" | sed '/^$/N;/^\n$/D' | crontab -
 echo "Kuruldu. Aktif bluma işleri:"
