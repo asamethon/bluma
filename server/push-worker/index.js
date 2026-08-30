@@ -24,7 +24,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { handleDeleteAccount } from './deleteAccount.js';
 import { handleBanDevice } from './banDevice.js';
 import { sendExpoPush } from './expoPush.js';
-import { handleSendAuthEmail } from './authEmails.js';
+import { handleSendAuthEmail, handleActionPage } from './authEmails.js';
 
 const PORT = Number(process.env.PORT || 8789);
 const HOST = process.env.HOST || '127.0.0.1';
@@ -267,6 +267,11 @@ http.createServer((req, res) => {
   }
   if (req.url === '/delete-account' && req.method === 'POST') {
     handleDeleteAccount(auth, db, req, res);
+    return;
+  }
+  // Kendi işlem sayfamız — e-postadaki bağlantı buraya düşer.
+  if (req.url.startsWith('/auth/action') && req.method === 'GET') {
+    handleActionPage(req, res);
     return;
   }
   // Doğrulama/şifre postaları — Firebase'in kilitli şablonu yerine kendi

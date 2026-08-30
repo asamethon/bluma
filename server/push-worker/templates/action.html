@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<!-- oobCode adres çubuğunda taşınıyor; hiçbir dış isteğe Referer olarak sızmamalı. -->
+<meta name="referrer" content="no-referrer" />
+<title>Bluma</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 24px; background: #FBF8F3; color: #241F2E;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .card {
+    width: 100%; max-width: 420px; background: #fff; border: 1px solid #EDE7DC;
+    border-radius: 18px; padding: 36px 32px; text-align: center;
+  }
+  .brand { font-size: 24px; font-weight: 700; color: #7C5CD0; letter-spacing: -.5px; margin-bottom: 24px; }
+  .brand span { display: inline-block; width: 7px; height: 7px; border-radius: 7px; background: #FF5C8A; margin-left: 3px; vertical-align: 6px; }
+  h1 { font-size: 20px; line-height: 27px; margin: 0 0 10px; }
+  p { font-size: 15px; line-height: 23px; color: #6B6478; margin: 0 0 18px; }
+  .icon { font-size: 40px; line-height: 1; margin-bottom: 14px; }
+  input {
+    width: 100%; padding: 13px 14px; font-size: 16px; border: 1px solid #EDE7DC;
+    border-radius: 12px; margin-bottom: 10px; background: #fff; color: #241F2E;
+  }
+  input:focus { outline: 2px solid #7C5CD0; outline-offset: -1px; }
+  button {
+    width: 100%; padding: 14px; font-size: 16px; font-weight: 700; color: #fff;
+    background: #7C5CD0; border: 0; border-radius: 12px; cursor: pointer;
+  }
+  button:disabled { opacity: .5; cursor: default; }
+  .link { display: inline-block; margin-top: 18px; color: #7C5CD0; font-size: 15px; font-weight: 600; text-decoration: none; }
+  .error { color: #E5604F; font-size: 14px; margin-bottom: 12px; min-height: 20px; }
+  .hint { font-size: 13px; color: #9A93A8; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #17131F; color: #F3EFFA; }
+    .card { background: #211B2C; border-color: #322A42; }
+    p { color: #ADA4BD; }
+    input { background: #17131F; color: #F3EFFA; border-color: #322A42; }
+  }
+</style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand">Bluma<span></span></div>
+    <div id="view">
+      <div class="icon">⏳</div>
+      <h1>Bir saniye…</h1>
+      <p>İsteğin işleniyor.</p>
+    </div>
+  </main>
+
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var mode = q.get('mode');
+  var oobCode = q.get('oobCode');
+  var apiKey = q.get('apiKey');
+  var view = document.getElementById('view');
+
+  var API = 'https://identitytoolkit.googleapis.com/v1/accounts:';
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) {
+    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+
+  function render(icon, title, text, extra) {
+    view.innerHTML = '<div class="icon">' + icon + '</div><h1>' + esc(title) + '</h1>'
+      + '<p>' + esc(text) + '</p>' + (extra || '');
+  }
+
+  var APP_LINK = '<a class="link" href="bluma://">Uygulamaya dön</a>';
+
+  function fail(text) {
+    render('⚠️', 'Bağlantı işe yaramadı', text || 'Bağlantının süresi dolmuş ya da daha önce kullanılmış olabilir. Uygulamadan yeni bir bağlantı iste.', APP_LINK);
+  }
+
+  function post(path, body) {
+    return fetch(API + path + '?key=' + encodeURIComponent(apiKey), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(function (res) {
+      return res.json().then(function (data) {
+        if (!res.ok) throw new Error((data.error && data.error.message) || 'HATA');
+        return data;
+      });
+    });
+  }
+
+  if (!mode || !oobCode || !apiKey) return fail('Bağlantı eksik görünüyor. E-postadaki adresin tamamını kopyaladığından emin ol.');
+
+  // Şifre sıfırlama: önce kodu doğrula, sonra formu göster.
+  if (mode === 'resetPassword') {
+    post('resetPassword', { oobCode: oobCode }).then(function (data) {
+      render('🔑', 'Yeni şifreni belirle', (data.email || '') + ' için yeni bir şifre gir.',
+        '<div class="error" id="err"></div>'
+        + '<input id="pw" type="password" autocomplete="new-password" placeholder="Yeni şifre" />'
+        + '<input id="pw2" type="password" autocomplete="new-password" placeholder="Yeni şifre (tekrar)" />'
+        + '<button id="go">Şifreyi kaydet</button>'
+        + '<p class="hint" style="margin-top:12px">En az 8 karakter, en az bir harf ve bir rakam.</p>');
+
+      var err = document.getElementById('err');
+      document.getElementById('go').addEventListener('click', function () {
+        var pw = document.getElementById('pw').value;
+        var pw2 = document.getElementById('pw2').value;
+        if (pw.length < 8 || !/[a-z]/i.test(pw) || !/[0-9]/.test(pw)) {
+          err.textContent = 'Şifre en az 8 karakter olmalı, en az bir harf ve bir rakam içermeli.'; return;
+        }
+        if (pw !== pw2) { err.textContent = 'Şifreler birbirini tutmuyor.'; return; }
+        err.textContent = '';
+        this.disabled = true;
+        post('resetPassword', { oobCode: oobCode, newPassword: pw }).then(function () {
+          render('✅', 'Şifren güncellendi', 'Yeni şifrenle giriş yapabilirsin.', APP_LINK);
+        }).catch(function () { fail(); });
+      });
+    }).catch(function () { fail(); });
+    return;
+  }
+
+  // Doğrulama, adres değişikliği ve adres geri alma aynı uç noktayı kullanır.
+  var DONE = {
+    verifyEmail: ['✅', 'E-postan doğrulandı', 'Hesabın hazır. Uygulamaya dönebilirsin.'],
+    verifyAndChangeEmail: ['✅', 'Yeni adresin onaylandı', 'Hesabın artık bu e-posta adresini kullanıyor.'],
+    recoverEmail: ['✅', 'Adresin geri alındı', 'Hesabın eski e-posta adresine döndürüldü.']
+  };
+  if (!DONE[mode]) return fail('Bu bağlantı türü desteklenmiyor.');
+
+  post('update', { oobCode: oobCode }).then(function () {
+    var d = DONE[mode];
+    render(d[0], d[1], d[2], APP_LINK);
+  }).catch(function () { fail(); });
+})();
+</script>
+</body>
+</html>

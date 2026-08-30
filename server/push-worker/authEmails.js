@@ -2,7 +2,12 @@
 // göndeririz: Admin SDK yalnızca bağlantıyı üretir (kullanıcıya posta atmaz),
 // tasarım ve gönderim bizde olur. Böylece Firebase'in kilitli şablonu ve
 // paylaşımlı gönderen adresi devreden çıkar.
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { mailerReady, sendTemplateMail } from './mailer.js';
+
+const TEMPLATE_DIR = join(dirname(fileURLToPath(import.meta.url)), 'templates');
 
 const SUBJECTS = {
   verify: 'Bluma hesabını doğrula',
@@ -94,5 +99,30 @@ export async function handleSendAuthEmail(auth, req, res) {
   } catch (error) {
     console.error('[send-auth-email] hata:', error.message);
     send(500, { success: false, error: error.message });
+  }
+}
+
+/**
+ * Kendi işlem sayfamız (Console → Customize action URL buraya bakar).
+ *
+ * Firebase'in barındırdığı sayfa İngilizce, markasız ve fazladan bir onay
+ * tıklaması istiyordu. Bu sayfa oobCode'u alıp işlemi kendisi tamamlıyor.
+ * Sayfa statiktir; oobCode adres çubuğunda kalır ve dışarı sızmasın diye
+ * referrer kapatılmıştır (bkz. templates/action.html).
+ */
+export async function handleActionPage(req, res) {
+  try {
+    const html = await readFile(join(TEMPLATE_DIR, 'action.html'), 'utf8');
+    res.writeHead(200, {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'Referrer-Policy': 'no-referrer',
+      'X-Content-Type-Options': 'nosniff',
+    });
+    res.end(html);
+  } catch (error) {
+    console.error('[auth/action] sayfa okunamadı:', error.message);
+    res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('Sayfa yüklenemedi');
   }
 }
