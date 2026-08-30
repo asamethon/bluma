@@ -48,7 +48,7 @@ function toOwnActionPage(link) {
   }
 }
 
-const actionLink = (link) => toOwnActionPage(actionLink(link));
+const actionLink = (link) => toOwnActionPage(localized(link));
 
 function readJson(req) {
   return new Promise((resolve, reject) => {
