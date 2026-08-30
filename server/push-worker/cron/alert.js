@@ -4,6 +4,7 @@
 // Alıcı: ADMIN_EMAIL, yoksa MAIL_REPLY_TO.
 //
 //   echo "hata metni" | node cron/alert.js "notify-unverified.js --grace-day 6"
+import { hostname } from 'node:os';
 import { sendPlainMail, mailerReady } from '../mailer.js';
 
 const TO = process.env.ADMIN_EMAIL || process.env.MAIL_REPLY_TO;
@@ -31,7 +32,8 @@ async function main() {
   await sendPlainMail({
     to: TO,
     subject: `Bluma cron hatası: ${job}`,
-    text: `Sunucu: ${process.env.HOSTNAME || 'bilinmiyor'}\nZaman: ${new Date().toISOString()}\nİş: ${job}\n\n--- çıktı ---\n${tail}`,
+    // HOSTNAME bir kabuk değişkeni; dışa aktarılmadığı için Node göremiyordu.
+    text: `Sunucu: ${hostname()}\nZaman: ${new Date().toISOString()}\nİş: ${job}\n\n--- çıktı ---\n${tail}`,
   });
 }
 
