@@ -7,6 +7,7 @@ import {
 import i18n from '@/i18n';
 import { logger } from '@/utils/logger';
 import { syncEmailFromAuth } from './emailChange';
+import { sendAuthEmailViaServer } from './authEmailApi';
 
 /**
  * E-posta doğrulaması — sahte adresle hesap açmanın asıl kapısı.
@@ -35,6 +36,10 @@ export async function sendVerificationEmail() {
   if (user.emailVerified) return { success: true };
 
   try {
+    // Önce kendi sunucumuz (tasarlanmış şablon, kendi alan adımız); o
+    // çalışmazsa Firebase'in sade postası gitsin — hiç gitmemesinden iyi.
+    if (await sendAuthEmailViaServer('verify')) return { success: true };
+
     await applyAuthLanguage();
     await sendEmailVerification(user);
     return { success: true };

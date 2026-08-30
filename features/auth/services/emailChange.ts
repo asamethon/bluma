@@ -11,6 +11,7 @@ import { store } from '@/store';
 import { logger } from '@/utils/logger';
 import { isDisposableEmail } from './disposableEmails';
 import { applyAuthLanguage } from './emailVerification';
+import { sendAuthEmailViaServer } from './authEmailApi';
 
 /**
  * Doğrulanmamış adresi düzeltme — kayıtta e-postasını yanlış yazan kullanıcı
@@ -45,6 +46,9 @@ export async function changeUnverifiedEmail(
   }
 
   try {
+    // Kendi sunucumuz aynı bağlantıyı üretip tasarlanmış şablonla gönderir.
+    if (await sendAuthEmailViaServer('change', email)) return { success: true };
+
     await applyAuthLanguage();
     await verifyBeforeUpdateEmail(user, email);
     return { success: true };
