@@ -2,15 +2,19 @@
 
 Doğrulama, adres değişikliği ve şifre sıfırlama postalarının tasarımları.
 
-| Dosya | Ne zaman gider |
-| --- | --- |
-| `verify-email.html` | Kayıt sonrası ve "Doğrula" düğmesinde |
-| `email-change.html` | Kullanıcı adresini değiştirdiğinde (bağlantı YENİ adrese gider) |
-| `password-reset.html` | Şifre sıfırlama |
+**Şablonların tek adresi: `server/push-worker/templates/`**
 
-**Çalışan kopyalar `server/push-worker/templates/` altındadır** — worker onları
-okur. Buradakiler tasarım referansıdır; birini değiştirirsen ikisini de
-güncelle.
+```
+templates/tr/verify-email.html      Kayıt sonrası ve "Doğrula" düğmesinde
+templates/tr/email-change.html      Adres değişikliği (bağlantı YENİ adrese gider)
+templates/tr/password-reset.html    Şifre sıfırlama
+templates/en/...                    Türkçe olmayan her kullanıcı için
+templates/action.html               Bağlantıya tıklanınca açılan sayfa (iki dilli)
+```
+
+Daha önce burada birer kopya duruyordu; iki yerde tutmak er geç ayrışmaya yol
+açacağı için kaldırıldı. Bu dosya yalnızca *neden* öyle yazıldıklarını
+anlatır.
 
 ## Neden Firebase'in şablonunu kullanmıyoruz
 

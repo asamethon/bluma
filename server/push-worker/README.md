@@ -78,6 +78,13 @@ sudo systemctl status bluma-push-worker
 curl http://127.0.0.1:8789/health   # { "ok": true }
 ```
 
+> **Node sürümü:** `firebase-admin` 14.3.0 `engines` alanında Node ≥22 istiyor,
+> sunucu 20'de. Şu an çalışıyor ama desteklenen bir kombinasyon değil. Bu
+> yüzden sürüm `^14.1.0` yerine **tam olarak sabitlendi**: bir sonraki
+> `npm install` sessizce daha yeni bir sürüm çekip worker'ı açılışta
+> öldüremesin. Kalıcı çözüm sunucuyu Node 22 LTS'e almak — build yayınlandıktan
+> sonra yapılmalı, aynı makinedeki görsel servisini de etkiliyor.
+
 ## 4. Güncelleme
 
 > **`--delete` kullanacaksan dikkat:** repo yarn kullandığı için

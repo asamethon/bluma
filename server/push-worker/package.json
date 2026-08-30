@@ -12,6 +12,6 @@
     "node": ">=20"
   },
   "dependencies": {
-    "firebase-admin": "^14.1.0"
+    "firebase-admin": "14.3.0"
   }
 }
