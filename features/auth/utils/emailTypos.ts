@@ -8,8 +8,12 @@ const POPULAR_DOMAINS = [
   'gmail.com', 'googlemail.com', 'hotmail.com', 'outlook.com', 'live.com',
   'msn.com', 'yahoo.com', 'yahoo.co.uk', 'icloud.com', 'me.com', 'mac.com',
   'aol.com', 'gmx.com', 'gmx.net', 'proton.me', 'protonmail.com',
-  'yandex.com', 'yandex.ru', 'mail.ru', 'mynet.com', 'superonline.com',
-  'windowslive.com', 'hey.com', 'zoho.com',
+  'yandex.com', 'yandex.com.tr', 'yandex.ru', 'mail.ru', 'mynet.com',
+  'superonline.com', 'windowslive.com', 'hey.com', 'zoho.com',
+  // Popüler alanlara 1 karakter uzaklıktaki GERÇEK sağlayıcılar. Listede
+  // olmasalar yazım hatası sanılıp kullanıcıya yanlış öneri gösterilirdi
+  // (mail.com → gmail.com gibi).
+  'mail.com', 'email.com', 'web.de', 'gmail.com.tr', 'inbox.com',
 ];
 
 /**
