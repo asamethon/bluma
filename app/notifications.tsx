@@ -1,4 +1,4 @@
-import { Screen, Avatar, Text } from "@/components/ui";
+import { Avatar, IconButton, Screen, Text } from '@/components/ui';
 import { ContentMaxWidth, Radius, Spacing, useTheme } from "@/constants/theme";
 import { useGuestGate } from "@/contexts/GuestContext";
 import { useAppSelector } from "@/store/hooks";
@@ -337,6 +337,7 @@ export default function NotificationsScreen() {
         maxContentWidth={ContentMaxWidth.content}
       >
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <IconButton icon="chevron-back" iconSize={24} glass onPress={() => router.back()} />
           <Text
             style={[
               styles.heading,
@@ -357,6 +358,7 @@ export default function NotificationsScreen() {
       maxContentWidth={ContentMaxWidth.content}
     >
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
+        <IconButton icon="chevron-back" iconSize={24} glass onPress={() => router.back()} />
         <Text
           style={[
             styles.heading,
@@ -456,6 +458,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   heading: {
+    flex: 1,
     fontSize: 26,
     fontWeight: "700",
     letterSpacing: -0.4,

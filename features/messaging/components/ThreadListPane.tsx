@@ -10,10 +10,12 @@ import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TextInput, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function ThreadListPane() {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const { top } = useSafeAreaInsets();
   const router = useRouter();
   const currentUserId = useAppSelector((s) => s.auth.user?.id);
   const { threads, query, setQuery, totalUnread, confirmDelete } = useMessageThreads();
@@ -36,9 +38,9 @@ export function ThreadListPane() {
   );
 
   return (
-    <Screen style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: Spacing.screenX, paddingVertical: 12 }}>
-        <IconButton icon="arrow-back" onPress={() => router.back()} />
+    <Screen edges={["bottom"]} style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: Spacing.screenX, paddingVertical: 12, paddingTop: top + 12 }}>
+        <IconButton icon="arrow-back" glass onPress={() => router.back()} />
         <View style={{ flex: 1 }}>
           <Text variant="heading">{t('messages.title')}</Text>
           <Text variant="caption" tone="textLight">

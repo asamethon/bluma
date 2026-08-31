@@ -249,6 +249,7 @@ export default function UserProfileScreen() {
                 icon="chevron-back"
                 color="#fff"
                 size={38}
+                glass
                 onPress={() => router.back()}
               />
               {currentUser?.id !== user.id && (

@@ -1,4 +1,4 @@
-import { Screen, StoryRow, Text } from '@/components/ui';
+import { IconButton, Screen, StoryRow, Text } from '@/components/ui';
 import { Spacing, useTheme } from '@/constants/theme';
 import { store } from '@/store';
 import { useAppSelector } from '@/store/hooks';
@@ -13,7 +13,6 @@ import {
   Alert,
   RefreshControl,
   StyleSheet,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
@@ -79,9 +78,7 @@ export default function ReadingListDetailScreen() {
   return (
     <Screen style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <IconButton icon="arrow-back" iconSize={24} glass onPress={() => router.back()} />
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text variant="subheading" numberOfLines={1} style={{ fontWeight: '700' }}>
             {list?.name || t('lists.list')}
@@ -123,6 +120,5 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
   },
-  headerBtn: { padding: 6, width: 40, alignItems: 'center' },
   empty: { alignItems: 'center', paddingVertical: 60, paddingHorizontal: 32 },
 });

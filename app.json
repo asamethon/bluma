@@ -65,6 +65,7 @@
         }
       ],
       "./plugins/withAndroidSplashBackgroundFix",
+      "./plugins/withWriteTabIcon",
       "@sentry/react-native",
       "expo-font",
       "expo-image",

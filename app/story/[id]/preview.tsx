@@ -16,7 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Screen } from "@/components/ui";
+import { IconButton, Screen } from '@/components/ui';
 import { useProfileAccess } from "@/features/privacy/hooks/useProfileAccess";
 import { PrivateProfileNotice } from "@/features/privacy/components/PrivateProfileNotice";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -27,6 +27,7 @@ const H_GAP = 16;
 export default function StoryPreviewScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const {top} = useSafeAreaInsets();
   const { t } = useTranslation();
   const router = useRouter();
   const { bottom } = useSafeAreaInsets();
@@ -169,14 +170,12 @@ export default function StoryPreviewScreen() {
 
   if (isLoading) {
     return (
-      <Screen style={styles.container}>
+      <Screen edges={["bottom"]} style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
-        <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.back} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={26} color={colors.text} />
-          </TouchableOpacity>
+        <View style={[styles.headerRow, {paddingTop: top }]}>
+          <IconButton icon="chevron-back" iconSize={26} glass onPress={() => router.back()} />
           <Text style={styles.headerTitle}>{t("tabs.discover")}</Text>
-          <View style={{ width: 26 }} />
+          <View style={{ width: 40 }} />
         </View>
 
         <View style={styles.loadingContainer}>
@@ -189,14 +188,12 @@ export default function StoryPreviewScreen() {
 
   if (access.locked || access.checking) {
     return (
-      <Screen style={styles.container}>
+      <Screen edges={["bottom"]} style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
-        <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.back} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={26} color={colors.text} />
-          </TouchableOpacity>
+        <View style={[styles.headerRow, {paddingTop: top }]}>
+          <IconButton icon="chevron-back" iconSize={26} glass onPress={() => router.back()} />
           <Text style={styles.headerTitle}>{t("tabs.discover")}</Text>
-          <View style={{ width: 26 }} />
+          <View style={{ width: 40 }} />
         </View>
         {access.locked && (
           <View style={{ marginTop: 40 }}>
@@ -208,14 +205,12 @@ export default function StoryPreviewScreen() {
   }
 
   return (
-    <Screen style={styles.container}>
+    <Screen edges={["bottom"]} style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={styles.headerRow}>
-        <TouchableOpacity style={styles.back} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={26} color={colors.text} />
-        </TouchableOpacity>
+      <View style={[styles.headerRow, {paddingTop: top }]}>
+        <IconButton icon="chevron-back" iconSize={26} glass onPress={() => router.back()} />
         <Text style={styles.headerTitle}>{getSectionTitle()}</Text>
-        <View style={{ width: 26 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       {carouselData.length > 0 ? (
@@ -371,7 +366,6 @@ const createStyles = (colors: any, CARD_WIDTH: number, CARD_HEIGHT: number) =>
       paddingBottom: 6,
       gap: 8,
     },
-    back: { padding: 6 },
     headerTitle: {
       flex: 1,
       textAlign: "left",

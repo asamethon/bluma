@@ -1,5 +1,4 @@
-import {
-  Screen, Button, Text } from "@/components/ui";
+import { Button, IconButton, Screen, Text } from '@/components/ui';
 import { Fonts, Radius, Spacing, useTheme } from "@/constants/theme";
 import { authActions } from "@/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
@@ -150,15 +149,10 @@ export default function SignInScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <TouchableOpacity
-            style={[s.backBtn, { backgroundColor: colors.surfaceVariant }]}
-            onPress={() => {
+          <IconButton icon="chevron-back" variant="sunk" size={42} iconSize={22} style={s.backBtn} glass onPress={() => {
               if (router.canGoBack()) router.back();
               else router.navigate("/(auth)/walkthrough");
-            }}
-          >
-            <Ionicons name="chevron-back" size={22} color={colors.text} />
-          </TouchableOpacity>
+            }} />
 
           <Text style={[s.heading, { fontFamily: fonts.serif, color: colors.text }]}>
             {t('auth.welcomeBack')}

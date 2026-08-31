@@ -10,11 +10,10 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import { Screen } from '@/components/ui';
+import { IconButton, Screen } from '@/components/ui';
 import { useAppSelector } from '@/store/hooks';
 import { logger } from '@/utils/logger';
 
@@ -66,9 +65,7 @@ export default function SavedStoriesScreen() {
 
   const header = (
     <View style={styles.header}>
-      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={24} color={colors.text} />
-      </TouchableOpacity>
+      <IconButton icon="arrow-back" iconSize={24} glass onPress={() => router.back()} />
       <Text style={styles.headerTitle}>{t('saved.title')}</Text>
       <View style={styles.backButton} />
     </View>

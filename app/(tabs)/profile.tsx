@@ -45,11 +45,13 @@ import {
 } from "react-native";
 import { FlashList } from '@shopify/flash-list';
 import { logger } from '@/utils/logger';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const router = useRouter();
+  const { top: topInset } = useSafeAreaInsets();
   const currentUser = useAppSelector((s) => s.auth.user);
   const isGuest = useAppSelector((s) => s.auth.isGuest);
   const isLoading = useAppSelector((s) => s.story.isLoading);
@@ -400,6 +402,7 @@ export default function ProfileScreen() {
       <ProfileGradientHero
           avatarUri={currentUser.profileImage}
           avatarName={currentUser.displayName}
+          topInset={topInset}
           actions={
             <View
               style={{
@@ -624,7 +627,11 @@ export default function ProfileScreen() {
   );
 
   return (
-    <Screen style={{ flex: 1, backgroundColor: colors.background }} maxContentWidth={ContentMaxWidth.content}>
+    <Screen
+      edges={[]}
+      style={{ flex: 1, backgroundColor: colors.background }}
+      maxContentWidth={ContentMaxWidth.content}
+    >
       <FlashList
         data={activeTab === "stories" ? publishedUserStories : userConversations}
         keyExtractor={(item: any) => item.id}

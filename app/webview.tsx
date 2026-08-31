@@ -1,9 +1,8 @@
-import { Screen } from '@/components/ui';
+import { IconButton, Screen } from '@/components/ui';
 import { useTheme } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 export default function WebViewScreen() {
@@ -17,9 +16,7 @@ export default function WebViewScreen() {
     <Screen style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.headerIcon} onPress={() => router.back()} hitSlop={8}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <IconButton icon="chevron-back" iconSize={24} glass onPress={() => router.back()} />
         <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
           {title}
         </Text>
@@ -54,7 +51,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  headerIcon: { width: 24 },
+  headerIcon: { width: 40 },
   headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '600' },
   body: { flex: 1 },
   webview: { flex: 1, backgroundColor: 'transparent' },

@@ -1,4 +1,4 @@
-import { Avatar, Button, Screen, Text } from '@/components/ui';
+import { Avatar, Button, IconButton, Screen, Text } from '@/components/ui';
 import { EmailVerifyField } from '@/features/auth/components/EmailVerifyField';
 import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
 import { imageUploadService } from '@/services/imageUploadService';
@@ -212,11 +212,9 @@ export default function EditProfileScreen() {
   return (
     <Screen style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerIcon} hitSlop={8}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <IconButton icon="chevron-back" iconSize={24} glass onPress={() => router.back()} />
         <Text variant="subheading">{t('profileScreen.editProfile')}</Text>
-        <View style={{ width: 36 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
@@ -504,7 +502,6 @@ const createStyles = (colors: any) =>
       paddingHorizontal: Spacing.lg,
       paddingVertical: Spacing.md,
     },
-    headerIcon: { width: 36, height: 36, alignItems: 'flex-start', justifyContent: 'center' },
     photoSection: {
       alignItems: 'center',
       paddingTop: Spacing.sm,

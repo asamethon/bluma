@@ -1,4 +1,4 @@
-import { Screen, Text } from '@/components/ui';
+import { IconButton, Screen, Text } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { useAppSelector } from '@/store/hooks';
 import { readingListActions } from '@/store/readingListStore';
@@ -56,9 +56,7 @@ export default function ReadingListsScreen() {
   return (
     <Screen style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <IconButton icon="arrow-back" iconSize={24} glass onPress={() => router.back()} />
         <Text variant="subheading" style={{ fontWeight: '700' }}>{t('lists.myLists')}</Text>
         <TouchableOpacity onPress={() => setCreating(c => !c)} style={styles.headerBtn}>
           <Ionicons name={creating ? 'close' : 'add'} size={24} color={colors.primary} />

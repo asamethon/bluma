@@ -1,4 +1,4 @@
-import { Button, Screen, Text } from '@/components/ui';
+import { Button, IconButton, Screen, Text } from '@/components/ui';
 import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
 import { authActions } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
@@ -65,11 +65,9 @@ export default function ChangePasswordScreen() {
   return (
     <Screen style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerIcon} hitSlop={8}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <IconButton icon="chevron-back" iconSize={24} glass onPress={() => router.back()} />
         <Text variant="subheading">{t('changePassword.title')}</Text>
-        <View style={{ width: 36 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
@@ -215,7 +213,6 @@ const createStyles = (colors: any) =>
       paddingHorizontal: Spacing.lg,
       paddingVertical: Spacing.md,
     },
-    headerIcon: { width: 36, height: 36, alignItems: 'flex-start', justifyContent: 'center' },
     iconHero: {
       width: 64,
       height: 64,

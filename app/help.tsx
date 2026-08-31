@@ -16,7 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Screen } from '@/components/ui';
+import { IconButton, Screen } from '@/components/ui';
 import { useAppSelector } from '@/store/hooks';
 import { openPrivacyPolicy, openTermsOfService } from '@/utils/legal';
 import { logger } from '@/utils/logger';
@@ -109,14 +109,9 @@ export default function HelpScreen() {
     <Screen style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.headerIcon}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <IconButton icon="chevron-back" iconSize={24} glass onPress={() => router.back()} />
         <Text style={styles.headerTitle}>{t('help.title')}</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
@@ -329,7 +324,6 @@ const createStyles = (colors: any) =>
       paddingTop: 12,
       paddingBottom: 8,
     },
-    headerIcon: { padding: 6 },
     headerTitle: {
       flex: 1,
       textAlign: "left",

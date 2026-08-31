@@ -43,7 +43,7 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
       />
       <Animated.View style={[{ flex: 1 }, containerAnimStyle]}>
         <View style={styles.header}>
-          <IconButton icon="chevron-back" onPress={form.cancel} />
+          <IconButton icon="chevron-back" glass onPress={form.cancel} />
           <Text variant="heading" style={{ fontSize: 18 }}>
             {form.isNew ? t('studio.newStory') : t('studio.editStoryInfo')}
           </Text>

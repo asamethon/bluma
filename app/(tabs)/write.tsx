@@ -13,7 +13,7 @@ export default function WriteScreen() {
 
   return (
     <Screen
-      edges={["top"]}
+      edges={[]}
       style={{ flex: 1, backgroundColor: colors.background }}
     >
       <StudioHub

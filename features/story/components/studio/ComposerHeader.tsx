@@ -14,7 +14,7 @@ export function ComposerHeader({ c, topInset }: { c: ReturnType<typeof useCompos
   return (
     <View>
       <View style={styles.row}>
-        <IconButton icon="chevron-back" onPress={c.back} />
+        <IconButton icon="chevron-back" glass onPress={c.back} />
         <Pressable
           onPress={() => c.setSheet(true)}
           style={[styles.pill, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}

@@ -19,7 +19,7 @@ import {
   View,
 } from "react-native";
 import { FlashList } from '@shopify/flash-list';
-import { Screen } from "@/components/ui";
+import { IconButton, Screen } from '@/components/ui';
 import { useTheme } from "@/constants/theme";
 import Animated, {
   useAnimatedStyle,
@@ -27,6 +27,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { logger } from '@/utils/logger';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function CommentsScreen() {
   const { id, chapter } = useLocalSearchParams<{
@@ -36,6 +37,7 @@ export default function CommentsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const {top} = useSafeAreaInsets();
   const currentUser = useAppSelector((s) => s.auth.user);
   const storyComments = useAppSelector((s) => s.story.storyComments) ?? [];
   const hasMoreComments = useAppSelector((s) => s.story.storyCommentsHasMore);
@@ -321,11 +323,9 @@ export default function CommentsScreen() {
   );
 
   return (
-    <Screen style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+    <Screen edges={["bottom"]} style={styles.container}>
+      <View style={[styles.header, {paddingTop: top }]}>
+        <IconButton icon="arrow-back" iconSize={24} glass onPress={handleBack} />
         <Text style={styles.headerTitle}>
           {t("commentsScreen.title", { count: visibleComments?.length || 0 })}
         </Text>
@@ -521,6 +521,7 @@ const createStyles = (colors: any) =>
       gap: 8,
       paddingHorizontal: 20,
       paddingBottom: 12,
+      marginTop: 8,
     },
     chapterFilterChip: {
       paddingHorizontal: 12,

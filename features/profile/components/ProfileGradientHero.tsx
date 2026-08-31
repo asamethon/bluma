@@ -12,6 +12,7 @@ interface ProfileGradientHeroProps {
   height?: number;
   watermarkSize?: number;
   avatarTop?: number;
+  topInset?: number;
 }
 
 export function ProfileGradientHero({
@@ -22,20 +23,24 @@ export function ProfileGradientHero({
   height = 108,
   watermarkSize = 132,
   avatarTop = 56,
+  topInset = 0,
 }: ProfileGradientHeroProps) {
   const [viewerVisible, setViewerVisible] = useState(false);
+  const extendedHeight = height + topInset;
 
   return (
     <View>
-      <View style={[styles.hero, { height }]}>
+      <View style={[styles.hero, { paddingTop: extendedHeight }]}> 
         <View pointerEvents="none" style={styles.baseBlob} />
         <View pointerEvents="none" style={[styles.accentBlob, { backgroundColor: accentColor }]} />
         <View style={[styles.heroWatermark, { right: -14, top: -14 }]} pointerEvents="none">
           <BloomMark size={watermarkSize} color="#fff" coreColor="#fff" />
         </View>
-        {actions && <View style={styles.heroActions}>{actions}</View>}
+        {actions && (
+          <View style={[styles.heroActions, { top: topInset + Spacing.sm }]}>{actions}</View>
+        )}
       </View>
-      <View style={[styles.heroAvatarWrap, { top: avatarTop }]}>
+      <View style={[styles.heroAvatarWrap, { top: avatarTop + topInset }]}> 
         <Pressable
           onLongPress={() => avatarUri && setViewerVisible(true)}
           style={({ pressed }) => pressed && avatarUri ? { opacity: 0.85 } : undefined}
@@ -58,6 +63,7 @@ const styles = StyleSheet.create({
   hero: {
     overflow: 'hidden',
     backgroundColor: '#6644C0',
+    paddingTop: 50,
   },
   baseBlob: {
     position: 'absolute',
@@ -84,7 +90,6 @@ const styles = StyleSheet.create({
   },
   heroActions: {
     position: 'absolute',
-    top: 10,
     left: Spacing.screenX,
     right: Spacing.screenX,
     flexDirection: 'row',

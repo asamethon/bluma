@@ -1,4 +1,4 @@
-import { Screen, Switch, Text } from '@/components/ui';
+import { IconButton, Screen, Switch, Text } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { usePrivacySettings } from '@/features/privacy/hooks/usePrivacySettings';
 import { PrivacySettings } from '@/features/privacy/types';
@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 const ROWS: { key: keyof PrivacySettings; icon: keyof typeof Ionicons.glyphMap; title: string; caption: string }[] = [
   { key: 'privateAccount', icon: 'lock-closed-outline', title: 'privacy.privateAccount', caption: 'privacy.privateAccountSub' },
@@ -25,11 +25,9 @@ export default function PrivacyScreen() {
   return (
     <Screen style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerIcon} hitSlop={8}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <IconButton icon="chevron-back" iconSize={24} glass onPress={() => router.back()} />
         <Text variant="subheading">{t('privacy.title')}</Text>
-        <View style={{ width: 36 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
@@ -93,7 +91,6 @@ const createStyles = (colors: any) =>
       paddingHorizontal: Spacing.lg,
       paddingVertical: Spacing.md,
     },
-    headerIcon: { width: 36, height: 36, alignItems: 'flex-start', justifyContent: 'center' },
     card: {
       backgroundColor: colors.surface,
       borderRadius: Radius.lg,

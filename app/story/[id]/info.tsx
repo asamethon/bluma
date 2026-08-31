@@ -18,7 +18,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { Screen } from '@/components/ui';
+import { IconButton, Screen } from '@/components/ui';
 import { useTheme } from '@/constants/theme';
 import { ShareStorySheet } from '@/features/messaging/components/ShareStorySheet';
 import { store } from '@/store';
@@ -32,6 +32,7 @@ export default function StoryInfoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const {top} = useSafeAreaInsets();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -149,12 +150,10 @@ export default function StoryInfoScreen() {
 
   if (authorAccess.locked || authorAccess.checking) {
     return (
-      <Screen style={styles.container}>
+      <Screen edges={["bottom"]} style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
-        <View style={styles.headerBar}>
-          <TouchableOpacity style={styles.headerIcon} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={26} color={colors.text} />
-          </TouchableOpacity>
+        <View style={[styles.headerBar, {paddingTop: top }]}>
+          <IconButton icon="chevron-back" iconSize={26} glass onPress={() => router.back()} />
         </View>
         {authorAccess.locked && (
           <View style={{ marginTop: 40 }}>
@@ -166,14 +165,12 @@ export default function StoryInfoScreen() {
   }
 
   return (
-    <Screen style={styles.container}>
+    <Screen edges={["bottom"]} style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <OfflineIndicator showWhenOnline={true} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 80 }}>
-        <View style={styles.headerBar}>
-          <TouchableOpacity style={styles.headerIcon} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={26} color={colors.text} />
-          </TouchableOpacity>
+        <View style={[styles.headerBar, {paddingTop: top }]}>
+          <IconButton icon="chevron-back" iconSize={26} glass onPress={() => router.back()} />
         </View>
 
         <View style={styles.hero}>
@@ -285,10 +282,6 @@ const createStyles = (colors: any) =>
       paddingHorizontal: 12,
       paddingTop: 6,
       paddingBottom: 4,
-    },
-    headerIcon: {
-      padding: 6,
-      alignSelf: 'flex-start',
     },
     hero: {
       flexDirection: 'row',

@@ -638,6 +638,8 @@ export default function ReaderScreen() {
           icon="chevron-back"
           size={40}
           color={rc.text}
+          glass
+          glassColorScheme={readingTheme === "dark" || readingTheme === "black" ? "dark" : "light"}
           onPress={() => router.back()}
         />
         <View style={{ flex: 1, minWidth: 0 }}>

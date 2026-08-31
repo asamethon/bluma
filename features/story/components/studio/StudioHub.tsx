@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { FlashList } from '@shopify/flash-list';
 import { StudioStoryCard } from "./StudioStoryCard";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Props = {
   stories: Story[];
@@ -46,6 +47,7 @@ export function StudioHub({
   const { colors, shadows } = useTheme();
   const { t } = useTranslation();
   const { numColumns } = useResponsiveGrid();
+  const {top} = useSafeAreaInsets();
 
   const renderItem = useCallback(
     ({ item }: { item: Story }) => (
@@ -71,7 +73,7 @@ export function StudioHub({
   );
 
   const header = (
-    <View>
+    <View style={{paddingTop: top}}>
       <Text variant="title" style={{ marginBottom: 4 }}>
         {t('studio.hubTitle')}
       </Text>

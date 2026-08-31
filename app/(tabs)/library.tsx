@@ -29,6 +29,7 @@ interface LibrarySection {
 export default function LibraryScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const { top } = useSafeAreaInsets();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const currentUser = useAppSelector(s => s.auth.user);
@@ -95,8 +96,8 @@ export default function LibraryScreen() {
 
   if (isGuest) {
     return (
-      <View style={[styles.root, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-        <View style={styles.header}>
+      <View style={[styles.root, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { paddingTop: top }]}>
           <Text variant="title">{t('library.title')}</Text>
         </View>
         <GuestState kind="library" />
@@ -105,7 +106,7 @@ export default function LibraryScreen() {
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <SectionList
         sections={sections}
         keyExtractor={(story) => story.id}
@@ -120,19 +121,28 @@ export default function LibraryScreen() {
           />
         }
         ListHeaderComponent={
-          <View style={styles.header}>
-            <Text variant="title">{t('library.title')}</Text>
+          <View style={[styles.header, { paddingTop: top }]}>
+            <Text variant="title">{t("library.title")}</Text>
           </View>
         }
         ListEmptyComponent={
           isEmpty ? (
             <View style={styles.empty}>
-              <BloomMark size={64} color={colors.primaryLight} coreColor={colors.bloomLight} />
+              <BloomMark
+                size={64}
+                color={colors.primaryLight}
+                coreColor={colors.bloomLight}
+              />
               <Text variant="heading" center style={{ marginTop: Spacing.xl }}>
-                {t('guest.library.title')}
+                {t("guest.library.title")}
               </Text>
-              <Text variant="body" tone="textSecondary" center style={{ marginTop: Spacing.sm, maxWidth: 280 }}>
-                {t('library.emptySub')}
+              <Text
+                variant="body"
+                tone="textSecondary"
+                center
+                style={{ marginTop: Spacing.sm, maxWidth: 280 }}
+              >
+                {t("library.emptySub")}
               </Text>
             </View>
           ) : null
@@ -150,7 +160,6 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   header: {
     paddingHorizontal: Spacing.screenX,
-    paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
   },
   section: { marginTop: Spacing.xl },

@@ -40,6 +40,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const CATEGORY_RAIL = [
   "romance",
@@ -56,6 +57,7 @@ const CATEGORY_RAIL = [
 export default function HomeScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const {top} = useSafeAreaInsets();
   const router = useRouter();
   const networkStatus = useNetworkStatus();
   const currentUser = useAppSelector(s => s.auth.user);
@@ -313,7 +315,7 @@ export default function HomeScreen() {
 
   const commonHeader = (
     <>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: top }]}>
         <BloomMark size={30} />
         <View style={{ flex: 1, marginLeft: 10 }}>
           <Text variant="caption" tone="textLight">{greeting}</Text>
@@ -334,20 +336,23 @@ export default function HomeScreen() {
                   icon="cloud-offline"
                   onPress={() => router.push("/profile/offline")}
                   color={colors.primary}
+                  glass
                 />
               )}
               <IconButton
                 icon="mail-outline"
                 onPress={() => router.push("/messages" as any)}
                 variant="sunk"
+                glass
                 size={42}
                 badge={dmUnread}
               />
               <View style={{ position: 'relative' }}>
                 <IconButton
                   icon="notifications-outline"
-                  onPress={() => router.push("/(tabs)/notifications" as any)}
+                  onPress={() => router.push("/notifications" as any)}
                   variant="sunk"
+                  glass
                   size={42}
                 />
                 {unreadCount > 0 && (
@@ -494,7 +499,7 @@ export default function HomeScreen() {
   );
 
   return (
-    <Screen style={styles.container}>
+    <Screen edges={[]} style={styles.container}>
       <OfflineIndicator showWhenOnline={true} />
 
       <FlashList
@@ -541,7 +546,6 @@ const createStyles = (colors: any) =>
       flexDirection: "row",
       alignItems: "center",
       paddingHorizontal: Spacing.screenX,
-      paddingTop: Spacing.md,
       paddingBottom: Spacing.lg,
     },
     headerActions: { flexDirection: "row", alignItems: "center", gap: 2 },

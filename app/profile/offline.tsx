@@ -16,7 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Screen } from '@/components/ui';
+import { IconButton, Screen } from '@/components/ui';
 import { useAppSelector } from '@/store/hooks';
 
 export default function OfflineLibraryScreen() {
@@ -160,12 +160,7 @@ export default function OfflineLibraryScreen() {
   return (
     <Screen style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <IconButton icon="arrow-back" iconSize={24} glass onPress={() => router.back()} />
         <Text style={styles.headerTitle}>{t('profileScreen.offlineLibrary')}</Text>
         <TouchableOpacity 
           style={styles.clearAllButton}
@@ -259,9 +254,6 @@ const createStyles = (colors: any) =>
       paddingVertical: 16,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
-    },
-    backButton: {
-      padding: 4,
     },
     headerTitle: {
       fontSize: 20, lineHeight: 26,

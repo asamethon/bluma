@@ -1,4 +1,4 @@
-import { Screen, Text } from '@/components/ui';
+import { IconButton, Screen, Text } from '@/components/ui';
 import { Spacing, useTheme } from '@/constants/theme';
 import { FollowRequestRow } from '@/features/social/components/FollowRequestRow';
 import { useFollowRequests } from '@/features/social/hooks/useFollowRequests';
@@ -7,7 +7,7 @@ import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 export default function FollowRequestsScreen() {
   const router = useRouter();
@@ -32,11 +32,9 @@ export default function FollowRequestsScreen() {
   return (
     <Screen style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerIcon} hitSlop={8}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <IconButton icon="chevron-back" iconSize={24} glass onPress={() => router.back()} />
         <Text variant="subheading">{t('followRequests.title')}</Text>
-        <View style={{ width: 36 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       {loading ? (
@@ -73,7 +71,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
   },
-  headerIcon: { width: 36, height: 36, alignItems: 'flex-start', justifyContent: 'center' },
   divider: { height: StyleSheet.hairlineWidth, marginLeft: 62 },
   empty: { alignItems: 'center', paddingVertical: 56, paddingHorizontal: 32 },
 });

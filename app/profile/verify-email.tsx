@@ -1,4 +1,4 @@
-import { Screen, Text } from '@/components/ui';
+import { IconButton, Screen, Text } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { EmailVerifyField } from '@/features/auth/components/EmailVerifyField';
 import { GRACE_DAYS } from '@/features/auth/services/emailGrace';
@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
@@ -17,11 +17,9 @@ export default function VerifyEmailScreen() {
   return (
     <Screen style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <IconButton icon="arrow-back" iconSize={24} glass onPress={() => router.back()} />
         <Text variant="subheading">{t('emailVerify.screenTitle')}</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">

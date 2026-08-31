@@ -1,5 +1,4 @@
-import {
-  Screen, Avatar, Text } from '@/components/ui';
+import { Avatar, IconButton, Screen, Text } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { authActions, User } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
@@ -148,9 +147,7 @@ export default function FollowingScreen() {
   return (
     <Screen style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={22} color={colors.text} />
-        </TouchableOpacity>
+        <IconButton icon="chevron-back" iconSize={22} glass onPress={() => router.back()} />
         <View style={{ flex: 1 }}>
           <Text variant="subheading" style={{ fontWeight: '700' }}>{profileUser?.displayName || '…'}</Text>
           <Text variant="caption" tone="textLight">@{profileUser?.username || '…'}</Text>
@@ -236,13 +233,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     minHeight: 52,
-  },
-  backBtn: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 19,
   },
   tabBar: {
     flexDirection: 'row',

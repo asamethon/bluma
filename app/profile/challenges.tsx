@@ -1,5 +1,4 @@
-import {
-  Screen, BloomMark } from '@/components/ui';
+import { BloomMark, IconButton, Screen } from '@/components/ui';
 import { Fonts, Spacing, useTheme } from '@/constants/theme';
 import {
   CHALLENGE_DEFS,
@@ -85,9 +84,7 @@ export default function ChallengesScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={22} color={colors.text} />
-        </TouchableOpacity>
+        <IconButton icon="chevron-back" iconSize={22} glass onPress={() => router.back()} />
         <View style={{ flex: 1 }}>
           <Text style={[styles.headerTitle, { color: colors.text, fontFamily: Fonts.serif }]}>{t('challengesScreen.title')}</Text>
           <Text style={[styles.headerSub, { color: colors.textLight }]}>
@@ -347,10 +344,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     gap: 12,
-  },
-  backBtn: {
-    width: 38, height: 38,
-    alignItems: 'center', justifyContent: 'center',
   },
   headerTitle: { fontSize: 20, lineHeight: 26, fontWeight: '700' },
   headerSub: { fontSize: 12, lineHeight: 16, marginTop: 1 },

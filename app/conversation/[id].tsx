@@ -21,7 +21,7 @@ import {
   View,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import { Screen } from '@/components/ui';
+import { IconButton, Screen } from '@/components/ui';
 import { ContentMaxWidth, useTheme } from '@/constants/theme';
 import { logger } from '@/utils/logger';
 
@@ -265,9 +265,7 @@ export default function ConversationDetailScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.header}>
-          <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
+          <IconButton icon="arrow-back" iconSize={24} glass onPress={() => router.back()} />
           <Text style={styles.headerTitle}>{t('conversations.conversation')}</Text>
           <TouchableOpacity style={styles.headerButton}>
             <Ionicons name="share-outline" size={24} color={colors.text} />

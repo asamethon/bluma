@@ -1,4 +1,4 @@
-import { Screen, Switch, Text } from '@/components/ui';
+import { IconButton, Screen, Switch, Text } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { pushNotificationService } from '@/services/pushNotificationService';
 import { notificationActions } from '@/store/notificationStore';
@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 const DEFAULTS: Omit<NotificationSettings, 'userId' | 'updatedAt'> = {
   pushNotifications: true,
@@ -75,11 +75,9 @@ export default function NotificationSettingsScreen() {
   return (
     <Screen style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerIcon} hitSlop={8}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <IconButton icon="chevron-back" iconSize={24} glass onPress={() => router.back()} />
         <Text variant="subheading">{t('notifications.title')}</Text>
-        <View style={{ width: 36 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
@@ -132,7 +130,6 @@ const createStyles = (colors: any) =>
       paddingHorizontal: Spacing.lg,
       paddingVertical: Spacing.md,
     },
-    headerIcon: { width: 36, height: 36, alignItems: 'flex-start', justifyContent: 'center' },
     sectionLabel: { marginBottom: Spacing.sm, marginLeft: Spacing.xs },
     card: {
       backgroundColor: colors.surface,

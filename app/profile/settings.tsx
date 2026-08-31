@@ -17,7 +17,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { Screen } from '@/components/ui';
+import { IconButton, Screen } from '@/components/ui';
 
 const LANGUAGE_NAMES: Record<AppLanguage, string> = {
   en: 'English',
@@ -75,14 +75,9 @@ export default function SettingsScreen() {
     <Screen style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.headerIcon}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <IconButton icon="chevron-back" iconSize={24} glass onPress={() => router.back()} />
         <Text style={styles.headerTitle}>{t('settings.title')}</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
@@ -285,7 +280,6 @@ const createStyles = (colors: any) =>
       paddingTop: 12,
       paddingBottom: 8,
     },
-    headerIcon: { padding: 6 },
     headerTitle: {
       flex: 1,
       textAlign: "left",

@@ -17,10 +17,12 @@ import { Platform, Pressable, TextInput, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import type { FlashListRef } from '@shopify/flash-list';
 import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ChatScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const { top } = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const {
@@ -76,7 +78,7 @@ export default function ChatScreen() {
   );
 
   return (
-    <Screen style={{ flex: 1, backgroundColor: colors.background }}>
+    <Screen edges={["bottom"]} style={{ flex: 1, backgroundColor: colors.background }}>
       <View
         style={{
           flexDirection: 'row',
@@ -86,9 +88,10 @@ export default function ChatScreen() {
           paddingVertical: 10,
           borderBottomWidth: 1,
           borderBottomColor: colors.border,
+          paddingTop: top,
         }}
       >
-        <IconButton icon="arrow-back" onPress={() => router.back()} />
+        <IconButton icon="arrow-back" glass onPress={() => router.back()} />
         <Pressable
           style={{ flex: 1 }}
           onPress={() => otherUser && router.push(`/user/${otherUser.id}` as any)}

@@ -29,6 +29,7 @@ import {
   View,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const GENRE_KEYS = [
   'romance', 'fantasy', 'sci_fi', 'mystery',
@@ -49,6 +50,7 @@ interface SearchHistoryItem {
 export default function SearchScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const { top } = useSafeAreaInsets();
   const router = useRouter();
   const currentUserId = useAppSelector(s => s.auth.user?.id);
   const { numColumns } = useResponsiveGrid();
@@ -224,7 +226,7 @@ export default function SearchScreen() {
 
   const listHeader = (
     <>
-      <View style={styles.headerRow}>
+      <View style={[styles.headerRow, { paddingTop: top }]}>
         <Text variant="title" style={{ fontSize: 26, fontWeight: "700" }}>
           {t('tabs.discover')}
         </Text>
@@ -455,7 +457,7 @@ export default function SearchScreen() {
   );
 
   return (
-    <Screen style={{ flex: 1, backgroundColor: colors.background }}>
+    <Screen edges={[]} style={{ flex: 1, backgroundColor: colors.background }}>
       <FlashList
         key={`grid-${numColumns}`}
         data={busy ? [] : filteredStories}
@@ -487,7 +489,6 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   headerRow: {
     paddingHorizontal: Spacing.screenX,
-    paddingTop: Spacing.lg,
     paddingBottom: Spacing.sm,
   },
   searchBar: {
