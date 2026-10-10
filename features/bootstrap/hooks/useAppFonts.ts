@@ -13,6 +13,9 @@ import {
   Spectral_700Bold_Italic,
   useFonts,
 } from '@expo-google-fonts/spectral';
+import { useEffect, useState } from 'react';
+
+const FONT_TIMEOUT_MS = 3000;
 
 /**
  * Uygulamanın tüm yazı tipleri; yüklenene kadar hiçbir ekran çizilmez.
@@ -22,7 +25,8 @@ import {
  * tek tek "beliriyordu". Önden yüklenince ilk karede yerlerindeler.
  */
 export function useAppFonts(): boolean {
-  const [loaded] = useFonts({
+  const [timedOut, setTimedOut] = useState(false);
+  const [loaded, error] = useFonts({
     ...Ionicons.font,
     SpaceMono: require('../../../assets/fonts/SpaceMono-Regular.ttf'),
     Spectral_400Regular,
@@ -35,5 +39,13 @@ export function useAppFonts(): boolean {
     HankenGrotesk_700Bold,
     HankenGrotesk_800ExtraBold,
   });
-  return loaded;
+
+  useEffect(() => {
+    if (loaded || error) return;
+    const timer = setTimeout(() => setTimedOut(true), FONT_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [loaded, error]);
+
+  // Font hata verirse veya native yükleme takılırsa sistem fontuyla devam et.
+  return loaded || !!error || timedOut;
 }

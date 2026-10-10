@@ -6,6 +6,7 @@ import { useAppSelector } from '@/store/hooks';
 import { storyActions } from '@/store/storyStore';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useState } from 'react';
+import { canRevealApp } from '../utils/bootReadiness';
 
 /** Açılış ekranının en fazla bekleyeceği süre. */
 const SPLASH_TIMEOUT_MS = 3000;
@@ -57,9 +58,13 @@ export function useBootSequence(fontsLoaded: boolean) {
     uris.forEach(uri => { void Image.prefetch(uri).catch(() => false); });
   }, [storiesLoaded, continueReadingReady, stories, continueReading]);
 
-  const dataReady =
-    fontsLoaded && !isLoading &&
-    (splashTimedOut || (storiesLoaded && continueReadingReady));
+  const dataReady = canRevealApp({
+    fontsLoaded,
+    authLoading: isLoading,
+    storiesLoaded,
+    continueReadingReady,
+    timedOut: splashTimedOut,
+  });
 
   // Hazır olma durumu tek yönlüdür: sonradan gelen bir yükleme (ör. çıkış)
   // uygulamayı açılış ekranına geri döndürüp ağacı remount etmemeli.

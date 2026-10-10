@@ -24,11 +24,12 @@ function providerOf(firebaseUser: FirebaseAuthTypes.User): User['authProvider'] 
  */
 export async function hydrateSession(firebaseUser: FirebaseAuthTypes.User) {
   const cached = await readCachedSession();
+  const cachedMatches = cached?.user.id === firebaseUser.uid;
 
   // Oturum, onboarding durumu BİLİNMEDEN açılmaz. Aksi halde giriş anında
   // hasCompletedOnboarding=false görünür ve profil gelene kadar onboarding
   // ekranı bir kaç saniyeliğine açılıp kapanırdı.
-  if (cached && cached.user.id === firebaseUser.uid) {
+  if (cached && cachedMatches) {
     store.dispatch(patchAuth({
       isAuthenticated: true,
       isGuest: false,
@@ -39,8 +40,12 @@ export async function hydrateSession(firebaseUser: FirebaseAuthTypes.User) {
 
   // Token arka planda tazelenir; açılış akışını bloklamaz.
   void refreshIdToken(firebaseUser);
-  await syncProfile(firebaseUser);
-  await startSessionServices(firebaseUser.uid);
+  // Kayıtlı oturumla ekran hemen açılır; Firestore profili gelince yenilenir.
+  if (cachedMatches) void syncProfile(firebaseUser);
+  else await syncProfile(firebaseUser);
+  // Push token ve yardımcı servisler ağ bekleyebilir; açılışı geciktirmez.
+  void startSessionServices(firebaseUser.uid)
+    .catch(error => logger.debug('Oturum servisleri başlatılamadı:', error));
 }
 
 async function syncProfile(firebaseUser: FirebaseAuthTypes.User) {
