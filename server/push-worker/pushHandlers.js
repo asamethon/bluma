@@ -13,7 +13,12 @@ export function createPushHandlers(db, repository) {
       if (!settings.pushNotifications || (category && settings[category] === false)) return;
       const token = await repository.token(notification.userId);
       if (!token) return;
-      await sendExpoPush(token, notification.title || 'Bluma', notification.message || '', notification.data || {});
+      await sendExpoPush(token, notification.title || 'Bluma', notification.message || '', {
+        ...(notification.data || {}),
+        type: notification.type,
+        senderId: notification.senderId,
+        notificationId: document.id,
+      });
     },
     async message(document) {
       const message = document.data();

@@ -28,7 +28,7 @@ const TAG = arg('tag');
 const TITLE = arg('title');
 const MESSAGE = arg('message');
 const URL = arg('url');       // mağaza bağlantısı — harici açılır
-const ROUTE = arg('route');   // uygulama içi ekran
+const ROUTE = arg('route') || (!URL ? '/notifications' : null); // varsayılan: duyuru listesi
 
 /** Bu duyuruyu zaten alan kullanıcılar (etikete göre). */
 async function alreadyNotified() {
