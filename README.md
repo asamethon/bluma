@@ -23,7 +23,7 @@ yarn android
 Her değişiklikten önce teslimat kontrolünü çalıştırın:
 
 ```bash
-yarn check
+yarn run check
 ```
 
 Bu komut sırasıyla strict TypeScript kontrolünü, sıfır uyarılı ESLint denetimini
@@ -41,6 +41,7 @@ Ayrıntılı kurallar için [mimari rehberini](docs/ARCHITECTURE.md) okuyun.
 
 ## Operasyon
 
+- OTA yayınları, aday testi ve rollback: [EAS OTA rehberi](docs/EAS-OTA.md)
 - Firestore kuralı değiştiğinde: `firebase deploy --only firestore:rules`
 - Görsel sunucusu değiştiğinde: [sunucu kurulum rehberi](server/README.md)
 - Bölüm alt koleksiyon migrasyonu: `yarn migrate:chapters:dry-run`

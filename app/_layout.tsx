@@ -14,6 +14,7 @@ import { useBootSequence } from '@/features/bootstrap/hooks/useBootSequence';
 import { useNavigationTheme } from '@/features/bootstrap/hooks/useNavigationTheme';
 import { useNotificationRouting } from '@/features/bootstrap/hooks/useNotificationRouting';
 import { useScreenTracking } from '@/features/bootstrap/hooks/useScreenTracking';
+import { useOtaUpdates } from '@/features/updates/hooks/useOtaUpdates';
 import { DeviceBannedScreen } from '@/features/moderation/components/DeviceBannedScreen';
 import { useDeviceBan } from '@/features/moderation/hooks/useDeviceBan';
 import { store } from '@/store';
@@ -52,6 +53,7 @@ function RootLayoutInner() {
   useEmailVerificationAlert();
   useScreenTracking();
   useNotificationRouting(appReady);
+  useOtaUpdates(appReady);
 
   const onLayoutRootView = useCallback(() => {
     if (fontsLoaded) SplashScreen.hideAsync();

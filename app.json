@@ -3,6 +3,14 @@
     "name": "bluma",
     "slug": "bluma",
     "version": "3.0.0",
+    "runtimeVersion": { "policy": "fingerprint" },
+    "updates": {
+      "url": "https://u.expo.dev/48225aed-f559-49db-af13-d65c9d2518f0",
+      "enabled": true,
+      "checkAutomatically": "ON_ERROR_RECOVERY",
+      "fallbackToCacheTimeout": 0,
+      "useEmbeddedUpdate": true
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "bluma",
@@ -84,7 +92,14 @@
       ],
       "./plugins/withAndroidSplashBackgroundFix",
       "./plugins/withWriteTabIcon",
-      "@sentry/react-native",
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "asamethon",
+          "project": "react-native",
+          "url": "https://sentry.io"
+        }
+      ],
       "expo-font",
       "expo-image",
       "expo-status-bar",

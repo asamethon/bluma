@@ -1,5 +1,5 @@
 export { threadIdFor } from './thread/refs';
-export { listenMessages, listenThreads } from './thread/listeners';
+export { listenThreads } from './thread/listeners';
 export { hideThreadForUser, listenThreadDoc, markThreadRead, setTypingStatus } from './thread/marks';
 export {
   EDIT_WINDOW_MS,

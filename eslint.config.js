@@ -27,6 +27,8 @@ module.exports = defineConfig([
   },
   {
     files: ['scripts/**/*.{js,cjs}', 'plugins/**/*.js'],
+    // Node operasyon betikleri Metro tarafından dönüştürülmez; env dinamik okunabilir.
+    rules: { 'expo/no-dynamic-env-var': 'off' },
     languageOptions: {
       globals: {
         __dirname: 'readonly',

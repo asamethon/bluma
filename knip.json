@@ -3,11 +3,11 @@
   "entry": [
     "app/**/*.{ts,tsx}",
     "plugins/**/*.js",
+    "goldie/*.config.ts",
     "scripts/**/*.{js,cjs}"
   ],
   "project": [
     "**/*.{ts,tsx,js,cjs}",
     "!server/**"
-  ],
-  "ignoreDependencies": ["expo-updates"]
+  ]
 }

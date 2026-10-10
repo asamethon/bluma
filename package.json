@@ -13,7 +13,15 @@
     "check": "yarn typecheck && yarn lint && yarn deadcode",
     "migrate:chapters": "node ./scripts/migrateChaptersToSubcollection.js",
     "migrate:chapters:dry-run": "node ./scripts/migrateChaptersToSubcollection.js --dry-run",
-    "test": "jest"
+    "test": "jest",
+    "ota:check": "node scripts/ota/check-config.cjs",
+    "ota:publish": "node scripts/ota/release.cjs publish",
+    "ota:promote": "node scripts/ota/release.cjs promote",
+    "ota:rollout": "node scripts/ota/release.cjs rollout",
+    "ota:rollback": "node scripts/ota/release.cjs rollback",
+    "ota:embedded": "node scripts/ota/release.cjs embedded",
+    "ota:setup": "node scripts/ota/setup.cjs",
+    "ota:setup-sentry": "node scripts/ota/setup-sentry.cjs"
   },
   "dependencies": {
     "@expo-google-fonts/hanken-grotesk": "^0.4.3",
@@ -56,6 +64,7 @@
     "expo-status-bar": "~56.0.4",
     "expo-store-review": "~56.0.3",
     "expo-system-ui": "~56.0.5",
+    "expo-updates": "~56.0.28",
     "expo-web-browser": "~56.0.5",
     "i18next": "^26.3.6",
     "react": "19.2.3",

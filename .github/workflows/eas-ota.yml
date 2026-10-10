@@ -1,0 +1,97 @@
+name: EAS OTA
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: İşlem
+        type: choice
+        options: [publish, promote, rollout, rollback, embedded]
+        required: true
+      channel:
+        description: Publish hedefi (diğer işlemler production kullanır)
+        type: choice
+        options: [preview, production-candidate]
+        required: true
+      group:
+        description: Promote / rollout / rollback için grup UUID
+        type: string
+      percentage:
+        description: Promote / rollout yüzdesi
+        type: choice
+        options: ['10', '25', '50', '100']
+        default: '10'
+      runtime:
+        description: Embedded rollback için tek runtime fingerprint
+        type: string
+      platform:
+        description: Hedef platform (rollout için all)
+        type: choice
+        options: [all, ios, android]
+        default: all
+      message:
+        description: Yayın / geri alma açıklaması
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+# Aday/üretim ve rollback işleri birbirinin üstüne yayın yapamaz.
+concurrency:
+  group: eas-ota-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: ${{ inputs.action != 'publish' && 'ota-production' || inputs.channel == 'production-candidate' && 'ota-candidate' || 'ota-preview' }}
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+      EXPO_NO_DOTENV: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.15.1'
+          cache: yarn
+      - run: corepack enable
+      - run: yarn install --frozen-lockfile --non-interactive
+      - name: EAS token kontrolü
+        run: test -n "$EXPO_TOKEN"
+      - name: OTA işlemi
+        env:
+          OTA_ACTION: ${{ inputs.action }}
+          OTA_CHANNEL: ${{ inputs.channel }}
+          OTA_GROUP: ${{ inputs.group }}
+          OTA_PERCENTAGE: ${{ inputs.percentage }}
+          OTA_RUNTIME: ${{ inputs.runtime }}
+          OTA_PLATFORM: ${{ inputs.platform }}
+          OTA_MESSAGE: ${{ inputs.message }}
+        shell: bash
+        run: |
+          args=("$OTA_ACTION" --channel "$OTA_CHANNEL" --percentage "$OTA_PERCENTAGE" --platform "$OTA_PLATFORM" --message "$OTA_MESSAGE")
+          if [ -n "$OTA_GROUP" ]; then args+=(--group "$OTA_GROUP"); fi
+          if [ -n "$OTA_RUNTIME" ]; then args+=(--runtime "$OTA_RUNTIME"); fi
+          node scripts/ota/release.cjs "${args[@]}"
+      - name: Yayın kaydı
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ota-release-${{ github.run_id }}
+          path: |
+            .ota/release.json
+            dist/eas-update-metadata.json
+          if-no-files-found: ignore
+          retention-days: 90
+      - name: Yayın özeti
+        if: success()
+        run: |
+          echo 'OTA işlemi tamamlandı. Grup ve runtime bilgileri yayın kaydında bulunur.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Rollout artışı için EAS ve Sentry ölçümlerini kontrol edin.' >> "$GITHUB_STEP_SUMMARY"

@@ -43,6 +43,7 @@ app-example
 # göz ardı edilir ve yerel Expo modüllerinin native kodu build'e hiç gitmez.
 /ios/
 /android/
+/.ota/
 # env dosyaları (Sentry token vb. gizli bilgiler)
 .env
 .env.*

@@ -1,25 +1,30 @@
 {
   "cli": {
-    "version": ">= 5.9.1"
+    "version": ">= 24.12.1",
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "development",
+      "environment": "development"
     },
     "preview": {
       "distribution": "internal",
-      "env": {
-        "EXPO_PUBLIC_KLIPY_API_KEY": "7xS2yDwqM5xucuuGm3Pm4eJx8lvg1hbRwEF6OEJ9HvpCZhAcYe9l5EoDmK5Coi2x",
-        "EXPO_PUBLIC_META_APP_ID": "1151197474111080"
-      }
+      "channel": "preview",
+      "environment": "preview"
     },
     "production": {
-      "env": {
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true",
-        "EXPO_PUBLIC_KLIPY_API_KEY": "7xS2yDwqM5xucuuGm3Pm4eJx8lvg1hbRwEF6OEJ9HvpCZhAcYe9l5EoDmK5Coi2x",
-        "EXPO_PUBLIC_META_APP_ID": "1151197474111080"
-      }
+      "channel": "production",
+      "environment": "production",
+      "autoIncrement": true
+    },
+    "production-candidate": {
+      "extends": "production",
+      "distribution": "internal",
+      "channel": "production-candidate",
+      "autoIncrement": false
     }
   },
   "submit": {
