@@ -1,0 +1,22 @@
+# Sahne 1: Kesfet ana akisi. Magaza sirasinda ilk kare, kurulum sayfasinda da gorunur.
+steps:
+  - echo: "Akislar giris YAPMAZ. Firebase oturumu iOS Keychain'de duruyor ve goldie'nin reinstall-app'inden sag cikiyor, yani ilk akis giris yapsa bile sonrakiler walkthrough'u hic gormez. Cihaz demo hesabina bir kez giriyor: store-00-login. Keychain sifirlanirsa asagidaki await patlar; store-00-login'i tekrar kosun."
+  - launch: com.asamethon.bluma
+  - await:
+      visible:
+        text: Ana Sayfa
+  - await:
+      idle: true
+  - echo: Ana akis zaten acik. Rafların yuklenmesini bekle.
+  - echo: "ONKOSUL: demo hesabinin okuma ilerlemesi TEMIZ olmali. Ilerleme varsa feed'e 'Okumaya Devam Et' rafi eklenir, Editörün Seçimi'nin buyuk kapagi asagi itilir (0.245 -> 0.838) ve bu kare degerini kaybeder. store-02-reader okuyucuyu actigi icin HER capture turu ilerleme uretir; magaza icin cekmeden once Firestore'da temizleyin."
+  - echo: "ONKOSUL 2 (Ekim 2026): Editörün Seçimi artik populerlikten DEGIL, elle isaretlenen hikayeden gelir. Firestore'da en az bir yayindaki hikayede isEditorsPick true olmali; yoksa bolum hic cizilmez ve asagidaki await patlar."
+  - await:
+      visible:
+        text: Editörün Seçimi
+  - echo: "Kapi olarak Editörün Seçimi kullaniliyor, 'Bu Hafta Öne Çıkanlar' DEGIL: o raf yalnizca ilerleme temizken kadraja giriyor, ilerleme varsa ekran disina dusup akisi patlatiyor. Kapinin her iki durumda da gecmesi gerek; kadrajin kalitesini onkosul saglar, kapi degil."
+  - await:
+      idle: true
+  - wait: 800
+  - wait: 800
+  - await:
+      idle: true

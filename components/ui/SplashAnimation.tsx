@@ -1,5 +1,5 @@
 import { Fonts } from "@/constants/theme";
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import {
   Animated,
   Dimensions,
@@ -12,9 +12,13 @@ import { BloomMark } from "./BloomMark";
 
 const { height: H } = Dimensions.get("window");
 
-export const SPLASH_MIN_MS = 2600;
+const SPLASH_MIN_MS = 2600;
 
 export function SplashAnimation({ onFinish }: { onFinish?: () => void }) {
+  // Geri çağrı ref'te tutulur: ebeveyn her render ettiğinde efekt yeniden
+  // kurulup sayaç sıfırlanırsa açılış ekranı dakikalarca açık kalabilir.
+  const finish = useRef(onFinish);
+  finish.current = onFinish;
   const word = useRef(new Animated.Value(0)).current;
   const tag = useRef(new Animated.Value(0)).current;
   const dot0 = useRef(new Animated.Value(0)).current;
@@ -50,12 +54,12 @@ export function SplashAnimation({ onFinish }: { onFinish?: () => void }) {
     dotAnims.forEach(a => a.start());
     ringAnims.forEach(a => a.start());
 
-    const t = setTimeout(() => onFinish?.(), SPLASH_MIN_MS);
+    const t = setTimeout(() => finish.current?.(), SPLASH_MIN_MS);
     return () => {
       clearTimeout(t);
       [...dotAnims, ...ringAnims].forEach(a => a.stop());
     };
-  }, [dot0, dot1, dot2, onFinish, ring1, ring2, tag, word]);
+  }, [dot0, dot1, dot2, ring1, ring2, tag, word]);
 
   const wordY = word.interpolate({ inputRange: [0, 1], outputRange: [14, 0] });
   const tagY = tag.interpolate({ inputRange: [0, 1], outputRange: [14, 0] });
@@ -65,8 +69,8 @@ export function SplashAnimation({ onFinish }: { onFinish?: () => void }) {
   return (
     <View style={styles.splash}>
       <StatusBar barStyle="light-content" />
-      <View pointerEvents="none" style={[styles.gradLayer, { backgroundColor: "#7C5CD0", opacity: 0.6, borderRadius: H * 0.5, top: -H * 0.3, left: -80, right: -80 }]} />
-      <View pointerEvents="none" style={[styles.gradLayer, { backgroundColor: "#FF5C8A", opacity: 0.35, borderRadius: H * 0.5, bottom: -H * 0.35, left: -80, right: -80 }]} />
+      <View pointerEvents="none" style={[styles.gradLayer, { backgroundColor: "#7057D9", opacity: 0.6, borderRadius: H * 0.5, top: -H * 0.3, left: -80, right: -80 }]} />
+      <View pointerEvents="none" style={[styles.gradLayer, { backgroundColor: "#DE5B88", opacity: 0.35, borderRadius: H * 0.5, bottom: -H * 0.35, left: -80, right: -80 }]} />
 
       <View style={{ alignItems: "center", justifyContent: "center", marginBottom: 30 }}>
         <Animated.View pointerEvents="none" style={[styles.ring, { opacity: ring1.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0.55, 0.4, 0] }), transform: [{ scale: ring1Scale }] }]} />

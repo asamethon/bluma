@@ -4,6 +4,12 @@ Uygulamanın profil fotoğrafı / kapak / yorum görsellerini barındıran küç
 Firebase ID token doğrular (service account gerekmez), görseli webp'e çevirip
 diske yazar, 1 yıl cache ile sunar.
 
+**Sesli mesajlar (`POST /upload-voice`):** DM'lerdeki ses kayıtları da buraya
+gider (multipart alan adı `file`, m4a/AAC, en fazla 6 MB). Görsel hattından
+geçmez: sharp ve NSFW kontrolü uygulanmaz, dosya `data/voice/` altına olduğu
+gibi yazılır ve `/i/voice/<id>.m4a` adresinden sunulur. Tür kontrolü uzantıya
+değil MPEG-4 kutu imzasına (`ftyp`) bakar.
+
 **NSFW moderasyonu ([nsfw.js](nsfw.js)):** Her yükleme, diske yazılmadan önce
 `nsfwjs` (TensorFlow.js) ile YEREL olarak sınıflandırılır — dış API yok, ücretsiz.
 Explicit (Porn/Hentai/Sexy eşik üstü) görsel `HTTP 451` ile reddedilir; client bunu

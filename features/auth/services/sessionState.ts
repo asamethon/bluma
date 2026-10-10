@@ -6,7 +6,7 @@ import { store } from '@/store';
 import { logger } from '@/utils/logger';
 import { clearCachedSession, writeCachedSession } from './sessionStorage';
 
-let userUnsubscribe: (() => void) | null = null;
+const listener = { unsubscribe: null as (() => void) | null };
 
 export function isOnboarded(user: User | null): boolean {
   return !!(user?.username && user?.interests);
@@ -38,7 +38,7 @@ export function setupUserListener(userId: string) {
 
     const userDocRef = doc(getFirestore(), 'users', userId);
 
-    userUnsubscribe = onSnapshot(userDocRef, docSnap => {
+    listener.unsubscribe = onSnapshot(userDocRef, docSnap => {
       if (!docSnap.exists()) return;
       const userData = { id: docSnap.id, ...docSnap.data() } as User;
       const onboarded = isOnboarded(userData);
@@ -57,8 +57,8 @@ export function setupUserListener(userId: string) {
 
 export function cleanupUserListener() {
   try {
-    userUnsubscribe?.();
-    userUnsubscribe = null;
+    listener.unsubscribe?.();
+    listener.unsubscribe = null;
   } catch (error) {
     logger.error('Error cleaning up user listener:', error);
   }

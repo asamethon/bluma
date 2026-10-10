@@ -4,6 +4,7 @@ import { formatClock } from '@/features/messaging/utils/time';
 import { MessageStatus } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 const ICON: Record<MessageStatus, 'time-outline' | 'checkmark' | 'checkmark-done'> = {
@@ -20,14 +21,17 @@ function MessageMetaBase({
   createdAt,
   status,
   mine,
+  edited,
   onBubble = true,
 }: {
   createdAt: any;
   status?: MessageStatus;
   mine: boolean;
+  edited?: boolean;
   onBubble?: boolean;
 }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const time = formatClock(createdAt);
   const onOwnBubble = onBubble && mine;
   const base = onOwnBubble ? colors.onPrimary : colors.textLight;
@@ -48,7 +52,7 @@ function MessageMetaBase({
         color={base}
         style={{ fontSize: 10.5, lineHeight: 14, opacity: onOwnBubble ? 0.75 : 1 }}
       >
-        {time}
+        {edited ? `${t('messages.edited')} · ${time}` : time}
       </Text>
       {!!status && (
         <Ionicons

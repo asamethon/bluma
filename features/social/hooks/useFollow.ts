@@ -1,3 +1,5 @@
+import type { FollowSource } from '@/features/discovery/constants';
+import { trackFollow } from '@/features/discovery/services/feedEvents';
 import { authActions } from '@/store/authStore';
 import { useCallback, useEffect, useState } from 'react';
 import { useAppSelector } from '@/store/hooks';
@@ -13,13 +15,17 @@ import { useIsFollower } from './useIsFollower';
  * `live`: profil gibi tek kişilik ekranlarda takipçi dokümanı canlı dinlenir
  * (istek onaylanınca ekran kendiliğinden açılır). Listelerde kapalıdır —
  * satır başına dinleyici açmamak için.
+ *
+ * `source`: başarılı takip, butonun bulunduğu yerle birlikte ölçülür
+ * (yazar önerilerinin işe yarayıp yaramadığını görmek için).
  */
 export function useFollow(
   targetUserId: string | undefined,
   onCountChange?: (delta: number) => void,
-  options?: { live?: boolean }
+  options?: { live?: boolean; source?: FollowSource }
 ) {
   const live = !!options?.live;
+  const source = options?.source;
   const currentUserId = useAppSelector(s => s.auth.user?.id);
   const isSelf = !!targetUserId && targetUserId === currentUserId;
 
@@ -39,29 +45,29 @@ export function useFollow(
 
   useEffect(() => {
     if (!targetUserId || !currentUserId || isSelf) return;
-    let alive = true;
+    const lifecycle = { active: true };
 
     (async () => {
       // Canlı modda takip durumu dinleyiciden gelir, tekrar okunmaz.
       const following = live
         ? false
         : await authActions.isFollowingUser(targetUserId).catch(() => false);
-      if (!alive) return;
+      if (!lifecycle.active) return;
       if (!live) setIsFollowing(following);
 
       const target = await getUserById(targetUserId).catch(() => null);
-      if (!alive) return;
+      if (!lifecycle.active) return;
       const priv = isPrivateAccount(target);
       setIsPrivate(priv);
 
       if (!following && priv) {
         const pending = await followRequestActions.hasPendingRequest(targetUserId);
-        if (alive) setIsRequested(pending);
+        if (lifecycle.active) setIsRequested(pending);
       }
     })();
 
     return () => {
-      alive = false;
+      lifecycle.active = false;
     };
   }, [targetUserId, currentUserId, isSelf, live]);
 
@@ -116,11 +122,13 @@ export function useFollow(
           undoOptimisticFollow();
           setIsPrivate(true);
           setIsRequested(true);
+          return;
         }
+        if (source) trackFollow(source);
       })
       .catch(undoOptimisticFollow)
       .finally(() => setBusy(false));
-  }, [targetUserId, busy, isSelf, isFollowing, isRequested, isPrivate, onCountChange]);
+  }, [targetUserId, busy, isSelf, isFollowing, isRequested, isPrivate, onCountChange, source]);
 
   return { isFollowing, isRequested, isPrivate, isSelf, busy, toggle };
 }

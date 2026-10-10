@@ -8,11 +8,8 @@ import { listenersActions } from '@/features/story/services/listeners';
 import { offlineActions } from '@/features/story/services/offline';
 import { savesActions } from '@/features/story/services/saves';
 import { storyApiActions } from '@/features/story/services/storyApi';
-import { invalidateUserCache, userCacheActions } from '@/features/story/services/userCache';
+import { userCacheActions } from '@/features/story/services/userCache';
 import { viewsActions } from '@/features/story/services/views';
-
-export { invalidateUserCache };
-export type { StoryState } from './slices/storySlice';
 
 export const storyActions = {
   ...userCacheActions,

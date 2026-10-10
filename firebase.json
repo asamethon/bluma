@@ -18,6 +18,7 @@
       }
     ],
     "rewrites": [
+      { "source": "/app", "destination": "/download.html" },
       { "source": "/user/**", "destination": "/link.html" },
       { "source": "/story/**", "destination": "/link.html" }
     ]

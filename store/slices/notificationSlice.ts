@@ -1,7 +1,7 @@
 import { Notification, NotificationSettings } from '@/types';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface NotificationState {
+interface NotificationState {
   notifications: Notification[];
   unreadCount: number;
   isLoading: boolean;

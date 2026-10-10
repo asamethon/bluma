@@ -17,7 +17,7 @@ import { patchStory } from '@/store/slices/storySlice';
 import { store } from '@/store';
 import { logger } from '@/utils/logger';
 
-export async function saveStory(storyId: string) {
+async function saveStory(storyId: string) {
   try {
     const { user } = store.getState().auth;
     if (!user?.id) {
@@ -45,7 +45,7 @@ export async function saveStory(storyId: string) {
   }
 }
 
-export async function performSaveStoryFirebaseOperation(storyId: string, userId: string) {
+async function performSaveStoryFirebaseOperation(storyId: string, userId: string) {
   try {
     const firestore = getFirestore();
     const savesRef = collection(firestore, 'users', userId, 'savedStories');
@@ -67,7 +67,7 @@ export async function performSaveStoryFirebaseOperation(storyId: string, userId:
   }
 }
 
-export function revertSaveStoryUI(storyId: string) {
+function revertSaveStoryUI(storyId: string) {
   const isCurrentlySaved = store.getState().story.savedStories.some(s => s.id === storyId);
   const currentStories = store.getState().story.stories;
   const story = currentStories.find(s => s.id === storyId);
@@ -81,7 +81,7 @@ export function revertSaveStoryUI(storyId: string) {
   }
 }
 
-export async function isStorySaved(storyId: string): Promise<boolean> {
+async function isStorySaved(storyId: string): Promise<boolean> {
   try {
     const { user } = store.getState().auth;
     if (!user?.id) return false;
@@ -107,7 +107,7 @@ export async function isStorySaved(storyId: string): Promise<boolean> {
   }
 }
 
-export async function loadSavedStories() {
+async function loadSavedStories() {
   try {
     const { user } = store.getState().auth;
     if (!user?.id) return;

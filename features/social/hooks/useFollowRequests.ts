@@ -18,12 +18,12 @@ export function useFollowRequests() {
       setLoading(false);
       return;
     }
-    let alive = true;
+    const lifecycle = { active: true };
     setLoading(true);
 
     const unsub = followRequestActions.listenPendingRequests(myId, async docs => {
       const users = await Promise.all(docs.map(d => getUserById(d.id).catch(() => null)));
-      if (!alive) return;
+      if (!lifecycle.active) return;
       const resolved: PendingRequest[] = [];
       docs.forEach((d, i) => {
         const user = users[i];
@@ -34,7 +34,7 @@ export function useFollowRequests() {
     });
 
     return () => {
-      alive = false;
+      lifecycle.active = false;
       unsub();
     };
   }, [myId]);

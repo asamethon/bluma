@@ -16,7 +16,7 @@ import { logger } from '@/utils/logger';
 
 const inFlightViewIncrements = new Set<string>();
 
-export async function incrementStoryViews(storyId: string) {
+async function incrementStoryViews(storyId: string) {
   const { user } = store.getState().auth;
   if (!user?.id) return;
   const dedupeKey = `${storyId}_${user.id}`;
@@ -68,7 +68,7 @@ export async function incrementStoryViews(storyId: string) {
   }
 }
 
-export async function getUniqueReadersCount(storyId: string): Promise<number> {
+async function getUniqueReadersCount(storyId: string): Promise<number> {
   try {
     const firestore = getFirestore();
     const countSnap = await getCountFromServer(collection(firestore, 'stories', storyId, 'views'));

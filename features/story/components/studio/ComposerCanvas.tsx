@@ -1,11 +1,10 @@
 import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
-import type { useComposer } from '../../hooks/useComposer';
+import type { ComposerModel } from '../../hooks/useComposer';
 import { renderWithRanges } from '../../utils/richText';
 
-export function ComposerCanvas({ c }: { c: ReturnType<typeof useComposer> }) {
+export function ComposerCanvas({ c }: { c: ComposerModel }) {
   const { colors, shadows } = useTheme();
   const { t } = useTranslation();
 

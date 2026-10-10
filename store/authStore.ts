@@ -4,8 +4,6 @@ import { sessionActions } from '@/features/auth/services/session';
 import { socialAuthActions } from '@/features/auth/services/socialAuth';
 import { userProfileActions } from '@/features/auth/services/userProfile';
 
-export type { AuthState, User } from './slices/authSlice';
-
 export const authActions = {
   ...sessionActions,
   ...emailAuthActions,

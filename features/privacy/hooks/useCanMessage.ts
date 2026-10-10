@@ -15,13 +15,13 @@ export function useCanMessage(targetUserId?: string) {
       setAllowed(null);
       return;
     }
-    let alive = true;
+    const lifecycle = { active: true };
     privacyActions
       .canSendMessageTo(targetUserId)
-      .then(v => alive && setAllowed(v))
-      .catch(() => alive && setAllowed(true));
+      .then(v => lifecycle.active && setAllowed(v))
+      .catch(() => lifecycle.active && setAllowed(true));
     return () => {
-      alive = false;
+      lifecycle.active = false;
     };
   }, [targetUserId, myId]);
 

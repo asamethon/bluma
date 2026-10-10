@@ -14,8 +14,10 @@ import { privacyOf } from '../types';
 const HEARTBEAT_MS = 5 * 60 * 1000;
 export const ONLINE_WINDOW_MS = 6 * 60 * 1000;
 
-let lastWriteAt = 0;
-let appStateSubscription: { remove: () => void } | null = null;
+const heartbeat = {
+  lastWriteAt: 0,
+  appStateSubscription: null as { remove: () => void } | null,
+};
 
 /** Son görülme damgasını tazeler; etkinlik durumu kapalıysa hiçbir şey yazmaz. */
 async function touch(force = false) {
@@ -23,8 +25,8 @@ async function touch(force = false) {
   if (!user?.id || !privacyOf(user).showActivity) return;
 
   const now = Date.now();
-  if (!force && now - lastWriteAt < HEARTBEAT_MS) return;
-  lastWriteAt = now;
+  if (!force && now - heartbeat.lastWriteAt < HEARTBEAT_MS) return;
+  heartbeat.lastWriteAt = now;
 
   try {
     await setDoc(
@@ -33,14 +35,14 @@ async function touch(force = false) {
       { merge: true }
     );
   } catch (error) {
-    lastWriteAt = 0;
+    heartbeat.lastWriteAt = 0;
     logger.debug('Son görülme yazılamadı:', error);
   }
 }
 
 /** Etkinlik durumu kapatıldığında damga tamamen silinir. */
 async function clearLastActive(userId: string) {
-  lastWriteAt = 0;
+  heartbeat.lastWriteAt = 0;
   try {
     await setDoc(doc(getFirestore(), 'users', userId), { lastActiveAt: deleteField() }, { merge: true });
   } catch (error) {
@@ -51,16 +53,16 @@ async function clearLastActive(userId: string) {
 /** Uygulama öne geldikçe damgayı tazeler (idempotent). */
 function start() {
   touch(true);
-  if (appStateSubscription) return;
-  appStateSubscription = AppState.addEventListener('change', next => {
+  if (heartbeat.appStateSubscription) return;
+  heartbeat.appStateSubscription = AppState.addEventListener('change', next => {
     if (next === 'active') touch();
   });
 }
 
 function stop() {
-  appStateSubscription?.remove();
-  appStateSubscription = null;
-  lastWriteAt = 0;
+  heartbeat.appStateSubscription?.remove();
+  heartbeat.appStateSubscription = null;
+  heartbeat.lastWriteAt = 0;
 }
 
 export const presenceActions = { touch, clearLastActive, start, stop };

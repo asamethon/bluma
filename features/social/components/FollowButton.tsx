@@ -1,21 +1,22 @@
 import { Text } from '@/components/ui';
 import { Radius, useTheme } from '@/constants/theme';
+import type { FollowSource } from '@/features/discovery/constants';
 import { useGuestGate } from '@/contexts/GuestContext';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleProp, StyleSheet, ViewStyle } from 'react-native';
 import { useFollow } from '../hooks/useFollow';
 
 interface FollowButtonProps {
   userId: string | undefined;
+  source: FollowSource;
   style?: StyleProp<ViewStyle>;
 }
 
-export function FollowButton({ userId, style }: FollowButtonProps) {
+export function FollowButton({ userId, source, style }: FollowButtonProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { requireAuth } = useGuestGate();
-  const follow = useFollow(userId);
+  const follow = useFollow(userId, undefined, { source });
 
   if (!userId || follow.isSelf) return null;
 

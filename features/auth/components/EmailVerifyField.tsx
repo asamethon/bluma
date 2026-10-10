@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -28,7 +28,7 @@ export function EmailVerifyField() {
         <View style={[styles.box, styles.locked]}>
           <Ionicons name="mail-outline" size={18} color={colors.textLight} />
           <Text variant="body" tone="textSecondary" style={styles.value} numberOfLines={1}>
-            {v.currentEmail || '—'}
+            {v.currentEmail || '-'}
           </Text>
           <Ionicons name="checkmark-circle" size={16} color={colors.success} />
         </View>
@@ -115,7 +115,7 @@ const createStyles = (colors: any) =>
       minHeight: 46,
       paddingHorizontal: Spacing.md,
       borderWidth: 1,
-      borderRadius: Radius.md,
+      borderRadius: Radius.lg,
       borderColor: colors.border,
     },
     locked: { backgroundColor: colors.surfaceVariant },

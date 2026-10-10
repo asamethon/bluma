@@ -8,11 +8,17 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_KLIPY_API_KEY": "7xS2yDwqM5xucuuGm3Pm4eJx8lvg1hbRwEF6OEJ9HvpCZhAcYe9l5EoDmK5Coi2x",
+        "EXPO_PUBLIC_META_APP_ID": "1151197474111080"
+      }
     },
     "production": {
       "env": {
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true",
+        "EXPO_PUBLIC_KLIPY_API_KEY": "7xS2yDwqM5xucuuGm3Pm4eJx8lvg1hbRwEF6OEJ9HvpCZhAcYe9l5EoDmK5Coi2x",
+        "EXPO_PUBLIC_META_APP_ID": "1151197474111080"
       }
     }
   },

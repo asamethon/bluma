@@ -38,8 +38,11 @@ yarn-error.*
 
 app-example
 
-ios/
-android/
+# Yalnızca KÖKTEKİ prebuild çıktıları. Sondaki eğik çizgiyle başlayan desen
+# şart: `ios/` yazılırsa her seviyedeki ios klasörü — `modules/*/ios` dahil —
+# göz ardı edilir ve yerel Expo modüllerinin native kodu build'e hiç gitmez.
+/ios/
+/android/
 # env dosyaları (Sentry token vb. gizli bilgiler)
 .env
 .env.*
@@ -60,3 +63,14 @@ server/data/
 *.apk
 *.ipa
 firestore-debug.log
+
+# goldie magaza gorselleri (uretilen ciktilar)
+goldie/out/
+goldie/goldie.design.json
+
+# argent demo hesap kimlik bilgileri ({{secret:...}} yer tutucularinin kaynagi)
+.argent/secrets.env
+/.argent/recordings/
+
+# goldie capture icin sabitlenen release simulator build'i
+goldie/build/

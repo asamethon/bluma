@@ -17,9 +17,13 @@ features/                 # İş mantığının evi
     hooks/useStory.ts
     services/storyApi.ts  #   Firestore erişimi SADECE services katmanında
     components/ChapterNav.tsx
+  discovery/              #   vitrin ölçümü + sıralama (bkz. docs/KESFET-ALGORITMASI.md)
   library/  auth/  notifications/  conversation/  profile/
 components/ui/            # Atomlar + moleküller (Button, Text, Avatar, StoryRow...)
 store/                    # Redux Toolkit store (slices/ + alan-başına servis aksiyonları)
+modules/                  # Yerel native modüller (Expo Modules API)
+  bluma-context-menu/     #   iOS bağlam menüsü: baloncuğu kaldırıp büyüten
+                          #   UIContextMenuInteraction sarmalayıcısı
 lib/                      # Firebase yardımcıları, ortak util'ler
 constants/                # theme, config
 types/                    # Paylaşılan tipler
@@ -91,6 +95,20 @@ const filtered = useMemo(() => stories.filter(s => s.category === cat), [stories
 `features/social/hooks/useFollow.ts` referans implementasyondur:
 state'i anında çevir → servisi arka planda çağır → hatada geri al → `busy` ile çift tıklamayı engelle. Spinner gösterme.
 
+### Sheet'ten sistem ekranı açma (galeri, kamera, paylaşım)
+iOS'ta sistem ekranı, kapanmakta olan bir modalın üstünde açılamaz: çağrı sessizce
+düşer ya da açılan ekran modalla birlikte yok edilir. Bu yüzden `Sheet` içindeki
+düğme aksiyonu **doğrudan çağrılmaz**; `useSheetAction` ile kuyruğa alınır ve
+`Sheet`'in `onClosed`'ında çalışır.
+
+```tsx
+const after = useSheetAction(onClose);
+<Sheet visible={visible} onClose={onClose} onClosed={after.run}>
+  <Pressable onPress={() => after.schedule(onPickGallery)} />
+</Sheet>
+```
+`onClose(); onPickGallery();` biçimindeki sıralı çağrı YASAK.
+
 ### Firestore servis fonksiyonu
 - Sayaç: `increment(±1)`, asla koleksiyon sayma.
 - Tekil ilişki dokümanı: deterministik ID (`likes/{userId}`).
@@ -120,5 +138,27 @@ Büyük dosyalar big-bang bölünmez; önce hook/servis çıkarılır, ekran en 
   arama ekranında filtre sonucu artık `useMemo` ile render'da hesaplanıyor
 - [x] Liste performansı: ana sayfa / arama `FlatList`, kütüphane `SectionList`'e
   taşındı; sabit sayıda öğe gösteren yatay raflar (`.slice`) olduğu gibi kaldı
+
+- [x] Ölü kod temizliği: eski sekme çubuğu ağacı, `constants/mockData.ts`,
+  kullanılmayan export/asset/bağımlılıklar silindi; `yarn deadcode` (knip) ile
+  kalıcı kapı kuruldu (kök + `server/` + `server/push-worker`).
+- [x] 200 satır sınırı tüm kaynak dosyalarda sağlanıyor; `app/` rotaları yalnızca
+  `export { default }` ya da ince kompozisyon (`app/` toplamı ~400 satır).
+- [x] Oturum kurulumu tek yerde: `features/auth/services/providerSession.ts`
+  (Google/Apple/e-posta aynı yoldan geçer; çıkışta Google oturumu da kapanır).
+- [x] Çevrimdışı katman `features/story/services/offline/` altında yeniden yazıldı
+  (AsyncStorage yoklamalı ilerleme döngüsü kaldırıldı).
+- [x] `let` kullanımı yalnızca gerçek algoritmalarda kaldı; effect yaşam döngüsü
+  bayrakları ve modül düzeyi tekiller `const` tutucu nesnelere taşındı.
+- [x] Zaman damgaları `types/firestore.ts` içindeki `FirestoreDate` ile tiplendi.
+
+- [x] Ölü çeviri anahtarları temizlendi (19 anahtar × 11 dil); sunucunun
+  kullandığı `notifications.verifyEmail*` bilinçli olarak korundu.
+- [x] Tüm kaynak dosyalar 200 satırın altında; 150 üstünde kalan 8 dosyanın
+  tamamı tek sorumluluklu stil tablosu (bölmek okunabilirliği düşürürdü).
+- [x] İlk test paketi: `yarn test` (jest + babel-jest, saf mantık). Bu paket
+  görev takvimindeki UTC kaymasını yakaladı — gün/hafta anahtarları artık
+  YEREL takvime göre üretiliyor.
+- [ ] RN bileşen testleri (react-native-testing-library) — ayrı bir oturum.
 
 Bir maddeyi bitirince işaretle ve commit mesajında belirt.

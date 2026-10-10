@@ -1,0 +1,13 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "announce.js",
+    "ban-device.js",
+    "deactivate-unverified.js",
+    "notify-unverified.js",
+    "reconcile-counters.js",
+    "send-auth-mail.js",
+    "cron/alert.js"
+  ],
+  "project": ["**/*.js"]
+}

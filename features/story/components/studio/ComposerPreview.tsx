@@ -1,15 +1,13 @@
-import { Text } from '@/components/ui';
+import { IconButton, Text } from '@/components/ui';
 import { Fonts, Spacing, useTheme } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import type { useComposer } from '../../hooks/useComposer';
+import { Modal, ScrollView, StyleSheet, View } from 'react-native';
+import type { ComposerModel } from '../../hooks/useComposer';
 import { parseImageToken } from '../../utils/imageToken';
 import { renderInlineFormatting } from '../../utils/richText';
 import { StoryImage } from '../StoryImage';
 
-export function ComposerPreview({ c, topInset }: { c: ReturnType<typeof useComposer>; topInset: number }) {
+export function ComposerPreview({ c, topInset }: { c: ComposerModel; topInset: number }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const chapter = c.cur;
@@ -20,9 +18,14 @@ export function ComposerPreview({ c, topInset }: { c: ReturnType<typeof useCompo
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <View style={[styles.header, { paddingTop: topInset + 12, borderBottomColor: colors.border }]}>
           <Text variant="overline" tone="textLight">{t('studio.readerPreview')}</Text>
-          <Pressable onPress={() => c.setPreview(false)} hitSlop={8} style={[styles.close, { backgroundColor: colors.surfaceVariant }]}>
-            <Ionicons name="close" size={17} color={colors.text} />
-          </Pressable>
+          <IconButton
+            icon="close"
+            variant="sunk"
+            size={34}
+            iconSize={17}
+            accessibilityLabel={t('common.cancel')}
+            onPress={() => c.setPreview(false)}
+          />
         </View>
         <ScrollView contentContainerStyle={{ padding: Spacing.screenX, paddingBottom: 48 }}>
           <Text variant="overline" color={colors.primary} style={{ marginBottom: Spacing.sm }}>
@@ -57,6 +60,5 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.sm,
     borderBottomWidth: 1,
   },
-  close: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   body: { fontFamily: Fonts.serifRegular, fontSize: 18, lineHeight: 31, marginBottom: Spacing.md + 2 },
 });

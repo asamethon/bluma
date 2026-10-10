@@ -4,7 +4,16 @@ export type StudioChapter = { id: string; title: string; content: string };
 
 export const defaultChapterTitle = (number: number) => i18n.t('story.chapterN', { number });
 
-export const CHAPTER_SEP = '\n§§\n';
+const CHAPTER_SEP = '\n§§\n';
+
+/** Ayraç yoksa metin, bölüm sayısına eşit paragraf öbeklerine bölünür. */
+function splitByParagraphs(raw: string, count: number): string[] {
+  const paragraphs = raw.split('\n\n').filter(paragraph => paragraph.trim().length > 0);
+  const perChapter = Math.ceil(paragraphs.length / count) || 1;
+  return Array.from({ length: count }, (_, index) =>
+    paragraphs.slice(index * perChapter, (index + 1) * perChapter).join('\n\n'),
+  );
+}
 
 export function splitChapters(content?: string, chapterTitles?: string[]): StudioChapter[] {
   const raw = content ?? '';
@@ -15,16 +24,7 @@ export function splitChapters(content?: string, chapterTitles?: string[]): Studi
   }
 
   const count = Math.max(titles.length, 1);
-  let bodies: string[];
-  if (raw.includes(CHAPTER_SEP)) {
-    bodies = raw.split(CHAPTER_SEP);
-  } else {
-    const paras = raw.split('\n\n').filter(p => p.trim().length > 0);
-    const perChap = Math.ceil(paras.length / count) || 1;
-    bodies = Array.from({ length: count }, (_, i) =>
-      paras.slice(i * perChap, (i + 1) * perChap).join('\n\n'),
-    );
-  }
+  const bodies = raw.includes(CHAPTER_SEP) ? raw.split(CHAPTER_SEP) : splitByParagraphs(raw, count);
 
   const n = Math.max(count, bodies.length);
   return Array.from({ length: n }, (_, i) => ({

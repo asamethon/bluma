@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 // Kullanıcının kendi tercihleri `auth.user.privacy` içinde yaşar; burada
 // yalnızca ondan türetilemeyen yardımcı durum tutulur.
-export interface PrivacyState {
+interface PrivacyState {
   // Takip edilenler: gizli hesapların içeriğini akışta filtrelemek için.
   followingIds: string[];
   loaded: boolean;

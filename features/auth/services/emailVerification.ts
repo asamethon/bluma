@@ -105,10 +105,3 @@ export async function assertEmailVerified(): Promise<{ ok: true } | { ok: false;
       : i18n.t('emailVerify.required'),
   };
 }
-
-export const emailVerificationActions = {
-  assertEmailVerified,
-  sendVerificationEmail,
-  refreshVerificationState,
-  needsEmailVerification,
-};

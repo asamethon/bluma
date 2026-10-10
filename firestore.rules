@@ -437,7 +437,48 @@ service cloud.firestore {
           && notBlockedBy(otherParticipant())
           && acceptsDMFrom(otherParticipant())
           && request.resource.data.get('text', '').size() <= 5000;
-        allow update, delete: if false;
+        function changed() {
+          return request.resource.data.diff(resource.data).affectedKeys();
+        }
+        function isSender() {
+          return request.auth.uid == resource.data.senderId;
+        }
+        // Tek seferlik fotoğrafın "açıldı" damgası: yalnızca ALICI, yalnızca
+        // openedAt alanına ve yalnızca bir kez yazabilir.
+        function marksViewOnceOpened() {
+          return !isSender()
+            && resource.data.get('viewOnce', false) == true
+            && resource.data.get('openedAt', null) == null
+            && changed().hasOnly(['openedAt']);
+        }
+        // Metin düzenleme: yalnızca gönderen, yalnızca metin mesajında ve
+        // yalnızca gönderimden sonraki 15 dakika içinde.
+        function editsOwnText() {
+          return isSender()
+            && changed().hasOnly(['text', 'editedAt'])
+            && request.resource.data.text is string
+            && request.resource.data.text.size() > 0
+            && request.resource.data.text.size() <= 5000
+            && resource.data.get('deletedAt', null) == null
+            && request.time < resource.data.createdAt + duration.value(15, 'm');
+        }
+        // "Herkesten sil": yalnızca gönderen; içerik alanları temizlenir.
+        function deletesOwnMessage() {
+          return isSender()
+            && request.resource.data.get('deletedAt', null) != null
+            && changed().hasOnly(['deletedAt', 'text', 'image', 'voice', 'gif', 'story']);
+        }
+        // "Benden sil": her iki taraf da yalnızca KENDİ anahtarını yazabilir.
+        function hidesForSelf() {
+          return changed().hasOnly(['hiddenFor'])
+            && request.resource.data.hiddenFor
+              .diff(resource.data.get('hiddenFor', {}))
+              .affectedKeys().hasOnly([request.auth.uid]);
+        }
+        allow update: if isSignedIn()
+          && request.auth.uid in threadParticipants()
+          && (marksViewOnceOpened() || editsOwnText() || deletesOwnMessage() || hidesForSelf());
+        allow delete: if false;
       }
     }
   }

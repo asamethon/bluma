@@ -38,7 +38,6 @@ export function useWriteStudio() {
 
   const { starting, startQuickDraft } = useQuickDraft();
   const newStory = useCallback(() => { void startQuickDraft(); }, [startQuickDraft]);
-  const importStory = useCallback(() => router.push('/story/import' as any), [router]);
 
   const editInfo = useCallback(
     (id: string) => router.push(`/story/edit/${id}`),
@@ -52,6 +51,11 @@ export function useWriteStudio() {
 
   const addChapter = useCallback(
     (id: string) => router.push(`/story/compose/${id}?ch=new`),
+    [router],
+  );
+
+  const launchStory = useCallback(
+    (id: string) => router.push(`/story/${id}/launch` as never),
     [router],
   );
 
@@ -86,10 +90,10 @@ export function useWriteStudio() {
     toggleExpand,
     newStory,
     starting,
-    importStory,
     editInfo,
     openChapter,
     addChapter,
+    launchStory,
     deleteStory,
   };
 }

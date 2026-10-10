@@ -1,74 +1,57 @@
 import i18n from '@/i18n';
-import { imageUploadService } from '@/services/imageUploadService';
 import { useAppSelector } from '@/store/hooks';
 import { storyActions } from '@/store/storyStore';
-import { StoryCategory } from '@/types';
-import { defaultChapterTitle } from '../utils/chapterContent';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer } from 'react';
 import { Alert } from 'react-native';
+import { saveStoryInfo, type StoryInfoDraft } from '../services/storyInfo';
+import { pickCoverImage } from '../services/coverImage';
 
+type FormState = StoryInfoDraft & {
+  loadingStory: boolean;
+  saving: boolean;
+  coverSheet: boolean;
+  titleError: boolean;
+};
+
+const EMPTY: StoryInfoDraft = { title: '', category: 'other', description: '', coverImage: null };
+
+/** Hikâye bilgi formu: alanlar, kapak seçimi ve kaydetme/silme akışı. */
 export function useStoryInfoForm(id?: string) {
   const router = useRouter();
-  const uid = useAppSelector(s => s.auth.user?.id);
+  const uid = useAppSelector(state => state.auth.user?.id);
   const isNew = !id;
 
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<StoryCategory>('other');
-  const [description, setDescription] = useState('');
-  const [coverImage, setCoverImage] = useState<string | null>(null);
-
-  const [loadingStory, setLoadingStory] = useState(!isNew);
-  const [saving, setSaving] = useState(false);
-  const [coverSheet, setCoverSheet] = useState(false);
-  const [titleError, setTitleError] = useState(false);
+  const [state, patch] = useReducer(
+    (current: FormState, next: Partial<FormState>) => ({ ...current, ...next }),
+    { ...EMPTY, loadingStory: !isNew, saving: false, coverSheet: false, titleError: false },
+  );
 
   useEffect(() => {
     if (isNew || !id) return;
-    let alive = true;
-    (async () => {
-      const story = await storyActions.getStoryById(id);
-      if (!alive) return;
+    const lifecycle = { active: true };
+    void storyActions.getStoryById(id).then(story => {
+      if (!lifecycle.active) return;
       if (!story) {
         Alert.alert(i18n.t('common.error'), i18n.t('story.notFound'));
         router.back();
         return;
       }
-      setTitle(story.title || '');
-      setCategory(story.category || 'other');
-      setDescription(story.description || '');
-      setCoverImage(story.coverImage || null);
-      setLoadingStory(false);
-    })();
-    return () => { alive = false; };
+      patch({
+        title: story.title || '',
+        category: story.category || 'other',
+        description: story.description || '',
+        coverImage: story.coverImage || null,
+        loadingStory: false,
+      });
+    });
+    return () => { lifecycle.active = false; };
   }, [id, isNew, router]);
 
-  const pickCover = async () => {
-    try {
-      const uri = await imageUploadService.pickImageFromGallery();
-      if (uri) setCoverImage(uri);
-    } catch (e) {
-      Alert.alert(i18n.t('common.error'), e instanceof Error ? e.message : i18n.t('imageUpload.pickError'));
-    }
-  };
-
-  const takePhoto = async () => {
-    try {
-      const uri = await imageUploadService.takePhotoWithCamera();
-      if (uri) setCoverImage(uri);
-    } catch (e) {
-      Alert.alert(i18n.t('common.error'), e instanceof Error ? e.message : i18n.t('imageUpload.captureError'));
-    }
-  };
-
-  const resolveCover = async (storyId: string): Promise<string | undefined> => {
-    if (!coverImage) return undefined;
-    if (coverImage.startsWith('http')) return coverImage;
-    try {
-      return await imageUploadService.uploadBookCover(storyId, coverImage);
-    } catch {
-      return undefined;
-    }
+  const chooseCover = (source: 'gallery' | 'camera') => {
+    void pickCoverImage(source).then(uri => {
+      if (uri) patch({ coverImage: uri });
+    });
   };
 
   const save = async () => {
@@ -76,86 +59,55 @@ export function useStoryInfoForm(id?: string) {
       Alert.alert(i18n.t('studio.loginRequiredTitle'), i18n.t('studio.loginRequiredMessage'));
       return;
     }
-    if (title.trim().length < 3) {
-      setTitleError(true);
+    if (state.title.trim().length < 3) {
+      patch({ titleError: true });
       Alert.alert(i18n.t('studio.titleMissingTitle'), i18n.t('studio.titleMissingMessage'));
       return;
     }
 
-    setSaving(true);
+    patch({ saving: true });
     try {
-      if (isNew) {
-        const result = await storyActions.createStory({
-          title: title.trim(),
-          description: description.trim(),
-          content: '',
-          category,
-          tags: [],
-          isCompleted: false,
-          isPublished: false,
-          chaptersCount: 1,
-          chapterTitles: [defaultChapterTitle(1)],
-          readingTime: 1,
-          isPremium: false,
-          authorId: uid,
-          isBook: false,
-        } as any);
-        if (result.success && result.storyId) {
-          const cover = await resolveCover(result.storyId);
-          if (cover) await storyActions.updateStory(result.storyId, { coverImage: cover });
-          router.replace(`/story/compose/${result.storyId}?ch=0`);
-        } else {
-          Alert.alert(i18n.t('common.error'), result.error || i18n.t('story.createFailed'));
-        }
-      } else {
-        const cover = await resolveCover(id!);
-        const updates: any = {
-          title: title.trim(),
-          description: description.trim(),
-          category,
-        };
-        if (cover) updates.coverImage = cover;
-        const result = await storyActions.updateStory(id!, updates);
-        if (result.success) router.back();
-        else Alert.alert(i18n.t('common.error'), result.error || i18n.t('story.updateFailed'));
+      const result = await saveStoryInfo({ storyId: id, authorId: uid, draft: state });
+      if (!result.success) {
+        Alert.alert(i18n.t('common.error'), result.error ?? i18n.t('story.updateFailed'));
+        return;
       }
+      if (result.createdStoryId) router.replace(`/story/compose/${result.createdStoryId}?ch=0`);
+      else router.back();
     } finally {
-      setSaving(false);
+      patch({ saving: false });
     }
   };
 
   const remove = () => {
     if (isNew || !id) return;
-    Alert.alert(
-      i18n.t('studio.deleteStoryTitle'),
-      i18n.t('studio.deleteStoryMessage'),
-      [
-        { text: i18n.t('common.cancel'), style: 'cancel' },
-        {
-          text: i18n.t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            const result = await storyActions.deleteStory(id);
+    Alert.alert(i18n.t('studio.deleteStoryTitle'), i18n.t('studio.deleteStoryMessage'), [
+      { text: i18n.t('common.cancel'), style: 'cancel' },
+      {
+        text: i18n.t('common.delete'),
+        style: 'destructive',
+        onPress: () => {
+          void storyActions.deleteStory(id).then(result => {
             if (result.success) router.replace('/(tabs)/write');
             else Alert.alert(i18n.t('common.error'), result.error || i18n.t('story.deleteFailed'));
-          },
+          });
         },
-      ],
-    );
+      },
+    ]);
   };
 
   return {
+    ...state,
     isNew,
-    loadingStory,
-    saving,
-    title, setTitle,
-    category, setCategory,
-    description, setDescription,
-    coverImage, setCoverImage,
-    coverSheet, setCoverSheet,
-    titleError, setTitleError,
-    pickCover, takePhoto,
-    save, remove,
+    setTitle: (title: string) => patch({ title, titleError: false }),
+    setCategory: (category: StoryInfoDraft['category']) => patch({ category }),
+    setDescription: (description: string) => patch({ description }),
+    setCoverImage: (coverImage: string | null) => patch({ coverImage }),
+    setCoverSheet: (coverSheet: boolean) => patch({ coverSheet }),
+    pickCover: () => chooseCover('gallery'),
+    takePhoto: () => chooseCover('camera'),
+    save,
+    remove,
     cancel: () => router.back(),
   };
 }

@@ -1,0 +1,56 @@
+# Kurulum akisi: cihazi demo hesabina bir kez sokar.
+#
+# Neden ayri: Firebase oturumu iOS Keychain'de tutuluyor ve uygulama
+# kaldirilinca silinmiyor. goldie her capture oncesi reinstall-app yapiyor,
+# bu app verisini temizliyor ama oturumu temizlemiyor. Sonuc: giris blogu
+# akislarin icindeyken sadece ILK akista calisiyor, kalan sekizi walkthrough
+# yerine ana ekranla acilip "Hesap Oluştur" bulamadigi icin patliyordu.
+#
+# Ne zaman kosulur: cihaz yeniyse, `xcrun simctl keychain <udid> reset`
+# yapildiysa ya da simulator silindiyse. Kontrol: uygulamayi ac, ana ekran
+# geliyorsa gerek yok.
+#
+#   argent flow run store-00-login --device <udid>
+#
+# Kimlik bilgileri .argent/secrets.env icinde (gitignore'lu).
+
+steps:
+  - echo: Walkthrough acilir. Uygulama her akis oncesi temiz veriyle kurulur.
+  - launch: com.asamethon.bluma
+  - await:
+      visible:
+        text: Hesap Oluştur
+  - echo: "Walkthrough giris animasyonu bitmeden dokunmak sessizce yutuluyor: tap basarili doner, ekran degismez. Once oturt."
+  - await:
+      idle: true
+  - wait: 900
+  - echo: Walkthrough'daki ikincil dugme dogrudan giris ekranina goturur.
+  - tap:
+      text: Giriş Yap
+  - await:
+      visible:
+        text: Tekrar hoş geldin
+  - await:
+      idle: true
+  - tap:
+      text: isim@örnek.com
+  - tool: keyboard
+    args:
+      text: "{{secret:BLUMA_DEMO_EMAIL}}"
+  - echo: "Giris ekraninin sifre placeholder'i i18n'den gelmiyor: SignInScreen.tsx icinde sabit yazilmis. auth.passwordPlaceholder (En az 6 karakter) KAYIT ekraninin, burada degil."
+  - tap:
+      text: "••••••••"
+  - tool: keyboard
+    args:
+      text: "{{secret:BLUMA_DEMO_PASSWORD}}"
+  - echo: Buradaki Giriş Yap walkthrough'daki degil, formun gonder dugmesi.
+  - tap:
+      text: Giriş Yap
+  - await:
+      hidden:
+        text: Tekrar hoş geldin
+  - await:
+      visible:
+        text: Ana Sayfa
+  - await:
+      idle: true

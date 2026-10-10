@@ -2,7 +2,6 @@ import { useTheme } from '@/constants/theme';
 import { ThreadListPane } from '@/features/messaging/components/ThreadListPane';
 import { useResponsive } from '@/hooks/useResponsive';
 import { Slot, Stack } from 'expo-router';
-import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
 const RAIL_WIDTH = 360;

@@ -3,8 +3,11 @@ import { useState } from 'react';
 import { Alert, Linking } from 'react-native';
 import i18n from '@/i18n';
 
-export function useAvatarPicker(initial: string | null = null) {
+type ProfileImageKind = 'avatar' | 'cover';
+
+function useProfileImagePicker(initial: string | null, kind: ProfileImageKind) {
   const [image, setImage] = useState<string | null>(initial);
+  const aspect: [number, number] = kind === 'cover' ? [3, 1] : [1, 1];
 
   const pickFromLibrary = async () => {
     try {
@@ -16,7 +19,7 @@ export function useAvatarPicker(initial: string | null = null) {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: true,
-        aspect: [1, 1],
+        aspect,
         quality: 0.8,
       });
       if (!result.canceled && result.assets[0]) setImage(result.assets[0].uri);
@@ -34,7 +37,7 @@ export function useAvatarPicker(initial: string | null = null) {
       }
       const result = await ImagePicker.launchCameraAsync({
         allowsEditing: true,
-        aspect: [1, 1],
+        aspect,
         quality: 0.8,
       });
       if (!result.canceled && result.assets[0]) setImage(result.assets[0].uri);
@@ -44,10 +47,13 @@ export function useAvatarPicker(initial: string | null = null) {
   };
 
   const showOptions = () => {
-    Alert.alert(i18n.t('avatarPicker.title'), i18n.t('avatarPicker.subtitle'), [
+    const title = kind === 'cover' ? i18n.t('coverPicker.title') : i18n.t('avatarPicker.title');
+    const camera = kind === 'cover' ? i18n.t('coverPicker.camera') : i18n.t('avatarPicker.takePhoto');
+    const gallery = kind === 'cover' ? i18n.t('coverPicker.gallery') : i18n.t('avatarPicker.pickFromGallery');
+    Alert.alert(title, i18n.t('avatarPicker.subtitle'), [
       { text: i18n.t('common.cancel'), style: 'cancel' },
-      { text: i18n.t('avatarPicker.takePhoto'), onPress: takePhoto },
-      { text: i18n.t('avatarPicker.pickFromGallery'), onPress: pickFromLibrary },
+      { text: camera, onPress: takePhoto },
+      { text: gallery, onPress: pickFromLibrary },
       ...(image
         ? [{ text: i18n.t('avatarPicker.removePhoto'), style: 'destructive' as const, onPress: () => setImage(null) }]
         : []),
@@ -56,6 +62,12 @@ export function useAvatarPicker(initial: string | null = null) {
 
   return { image, setImage, showOptions };
 }
+
+export const useAvatarPicker = (initial: string | null = null) =>
+  useProfileImagePicker(initial, 'avatar');
+
+export const useProfileCoverPicker = (initial: string | null = null) =>
+  useProfileImagePicker(initial, 'cover');
 
 function promptSettings(message: string) {
   Alert.alert(i18n.t('avatarPicker.permissionRequired'), message, [

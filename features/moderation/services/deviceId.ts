@@ -21,7 +21,7 @@ import { logger } from '@/utils/logger';
 
 const STORAGE_KEY = 'bluma.deviceId';
 
-let cached: string | null = null;
+const memo = { deviceId: null as string | null };
 
 function randomId() {
   return Array.from({ length: 4 }, () =>
@@ -41,11 +41,11 @@ async function nativeId(): Promise<string | null> {
 
 /** Doküman id'si olarak kullanılır: `ios:<uuid>` / `android:<hex>`. */
 export async function getDeviceId(): Promise<string> {
-  if (cached) return cached;
+  if (memo.deviceId) return memo.deviceId;
 
   const stored = await SecureStore.getItemAsync(STORAGE_KEY).catch(() => null);
   if (stored) {
-    cached = stored;
+    memo.deviceId = stored;
     return stored;
   }
 
@@ -54,11 +54,6 @@ export async function getDeviceId(): Promise<string> {
     keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
   }).catch((error) => logger.error('Device id persist error:', error));
 
-  cached = id;
+  memo.deviceId = id;
   return id;
-}
-
-/** Ban kaydına iliştirilen, hangi cihaz olduğunu insanın anlaması için bilgi. */
-export function deviceLabel() {
-  return `${Application.applicationName || 'Bluma'} · ${Platform.OS} ${Platform.Version}`;
 }

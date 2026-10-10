@@ -44,21 +44,17 @@ function popularity(story: Story): number {
   return Math.log10(1 + engagement);
 }
 
-export function scoreNextRead(candidate: Story, finished: Story, viewerId?: string): number {
+function scoreNextRead(candidate: Story, finished: Story, viewerId?: string): number {
   if (candidate.id === finished.id) return 0;
   if (!candidate.isPublished || candidate.isHidden) return 0;
   if (viewerId && candidate.authorId === viewerId) return 0;
 
-  let affinity = 0;
-  if (candidate.authorId && candidate.authorId === finished.authorId) affinity += SAME_AUTHOR;
-  if (candidate.category && candidate.category === finished.category) affinity += SAME_CATEGORY;
-
   const finishedTags = normalizeTags(finished.tags);
-  if (finishedTags.size) {
-    for (const tag of normalizeTags(candidate.tags)) {
-      if (finishedTags.has(tag)) affinity += PER_SHARED_TAG;
-    }
-  }
+  const sharedTags = [...normalizeTags(candidate.tags)].filter(tag => finishedTags.has(tag)).length;
+  const affinity =
+    (candidate.authorId && candidate.authorId === finished.authorId ? SAME_AUTHOR : 0) +
+    (candidate.category && candidate.category === finished.category ? SAME_CATEGORY : 0) +
+    sharedTags * PER_SHARED_TAG;
 
   // Hiçbir ortak nokta yoksa öneri değil, doldurmadır — gösterme.
   if (affinity <= 0) return 0;

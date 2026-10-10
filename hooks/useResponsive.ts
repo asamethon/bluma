@@ -1,7 +1,7 @@
 import { useWindowDimensions } from 'react-native';
 import { Breakpoints, ContentMaxWidth, Spacing } from '@/constants/theme';
 
-export type SizeClass = 'compact' | 'medium' | 'expanded';
+type SizeClass = 'compact' | 'medium' | 'expanded';
 
 export function useResponsive() {
   const { width, height } = useWindowDimensions();

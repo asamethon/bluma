@@ -5,12 +5,16 @@ import { patchPreferences } from './slices/preferencesSlice';
 import type { ReadingFont, ReadingLineSpacing, ReadingTheme } from './slices/preferencesSlice';
 import { logger } from '@/utils/logger';
 
-export type { PreferencesState, ReadingFont, ReadingLineSpacing, ReadingTheme } from './slices/preferencesSlice';
+export type {  ReadingFont, ReadingLineSpacing, ReadingTheme } from './slices/preferencesSlice';
 
 const MATURE_KEY = 'pref_showMatureContent';
 const READING_THEME_KEY = 'pref_readingTheme';
 const READING_FONT_KEY = 'pref_readingFont';
 const READING_LINE_SPACING_KEY = 'pref_readingLineSpacing';
+const READING_FONT_SIZE_KEY = 'pref_readingFontSize';
+
+/** Okuma puntosu sınırları — altında satır kırılıyor, üstünde sayfa kırpıyor. */
+export const READING_FONT_SIZE = { min: 15, max: 26, step: 1, default: 19 } as const;
 
 export function getReadingPalette(theme: ReadingTheme) {
   switch (theme) {
@@ -32,20 +36,27 @@ export const READING_LINE_HEIGHT_MULTIPLIER: Record<ReadingLineSpacing, number> 
   relaxed: 2.0,
 };
 
+const clampFontSize = (value: number) => Math.max(
+  READING_FONT_SIZE.min,
+  Math.min(READING_FONT_SIZE.max, Math.round(value)),
+);
+
 export const preferencesActions = {
   async load() {
     try {
-      const [mature, readingTheme, readingFont, readingLineSpacing] = await Promise.all([
+      const [mature, readingTheme, readingFont, readingLineSpacing, readingFontSize] = await Promise.all([
         AsyncStorage.getItem(MATURE_KEY),
         AsyncStorage.getItem(READING_THEME_KEY),
         AsyncStorage.getItem(READING_FONT_KEY),
         AsyncStorage.getItem(READING_LINE_SPACING_KEY),
+        AsyncStorage.getItem(READING_FONT_SIZE_KEY),
       ]);
       store.dispatch(patchPreferences({
         showMatureContent: mature === 'true',
         readingTheme: (readingTheme as ReadingTheme) || 'light',
         readingFont: (readingFont as ReadingFont) || 'serif',
         readingLineSpacing: (readingLineSpacing as ReadingLineSpacing) || 'normal',
+        readingFontSize: clampFontSize(Number(readingFontSize) || READING_FONT_SIZE.default),
       }));
     } catch (e) {
       logger.error('Preferences load error:', e);
@@ -79,6 +90,14 @@ export const preferencesActions = {
     store.dispatch(patchPreferences({ readingLineSpacing: value }));
     try {
       await AsyncStorage.setItem(READING_LINE_SPACING_KEY, value);
+    } catch {}
+  },
+
+  async setReadingFontSize(value: number) {
+    const size = clampFontSize(value);
+    store.dispatch(patchPreferences({ readingFontSize: size }));
+    try {
+      await AsyncStorage.setItem(READING_FONT_SIZE_KEY, String(size));
     } catch {}
   },
 

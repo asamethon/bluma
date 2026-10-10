@@ -18,14 +18,14 @@ export function useProfileUser(userId?: string) {
       setIsLoading(false);
       return;
     }
-    let alive = true;
+    const lifecycle = { active: true };
     setIsLoading(true);
     setUser(null);
 
     getUserById(userId)
       .then(cached => {
         // Dinleyici henüz cevap vermediyse önbellekle boş ekranı doldur.
-        if (!alive || !cached) return;
+        if (!lifecycle.active || !cached) return;
         setUser(prev => prev ?? cached);
         setIsLoading(false);
       })
@@ -34,15 +34,15 @@ export function useProfileUser(userId?: string) {
     const unsub = onSnapshot(
       doc(getFirestore(), 'users', userId),
       snap => {
-        if (!alive) return;
+        if (!lifecycle.active) return;
         setUser(snap && snap.exists() ? ({ id: snap.id, ...(snap.data() as any) } as User) : null);
         setIsLoading(false);
       },
-      () => alive && setIsLoading(false)
+      () => lifecycle.active && setIsLoading(false)
     );
 
     return () => {
-      alive = false;
+      lifecycle.active = false;
       unsub();
     };
   }, [userId]);

@@ -1,0 +1,14 @@
+executionPrerequisite: >-
+  Ana akis acik ve kaydirilmamis durumda.
+steps:
+  - echo: "Okumaya Devam Et rafinin ilk karti okuyucuyu DOGRUDAN acar, detay sayfasi atlanir. Cerceve (0.045, 0.296, 0.909, 0.151), merkezi 0.5/0.372."
+  - echo: "Neden bu raf: feed'in en ustunde oldugu icin konumu sabit. Editörün Seçimi'ni hedeflemeyin, devam kartlarinin sayisina gore 0.497 ile 0.85 arasinda kayiyor. Ve bu raf preview aninda HER ZAMAN dolu: onizleme segmentleri capture sirasinda store-02-reader'dan SONRA kosuyor, o da okuyucuyu acip ilerleme uretiyor."
+  - tap:
+      x: 0.5
+      y: 0.372
+  - await:
+      visible:
+        text: Okuma Ayarları
+  - await:
+      idle: true
+  - wait: 1000

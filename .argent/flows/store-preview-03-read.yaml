@@ -1,0 +1,13 @@
+executionPrerequisite: >-
+  Okuma ekrani acik, bolumun basinda.
+steps:
+  - echo: Metin aksin; okuma anini satan tek sey bu.
+  - wait: 900
+  - tool: gesture-swipe
+    args: { fromX: 0.5, fromY: 0.75, toX: 0.5, toY: 0.35, durationMs: 500 }
+  - wait: 800
+  - tool: gesture-swipe
+    args: { fromX: 0.5, fromY: 0.75, toX: 0.5, toY: 0.35, durationMs: 500 }
+  - wait: 1000
+  - await:
+      idle: true

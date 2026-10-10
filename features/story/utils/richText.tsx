@@ -49,10 +49,6 @@ export function normalizeRanges(ranges: ItalicRange[]): ItalicRange[] {
   return out;
 }
 
-export function stripItalicMarkers(content: string): string {
-  return content.replace(ITALIC_RE, '$1');
-}
-
 export function renderInlineFormatting(
   text: string,
   italicStyle: TextStyle = { fontFamily: Fonts.serifItalic }

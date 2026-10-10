@@ -1,0 +1,29 @@
+# Sahne 5: Hikaye detay sayfasi. Bolumler, yazar ve takip.
+steps:
+  - echo: "Akislar giris YAPMAZ. Firebase oturumu iOS Keychain'de duruyor ve goldie'nin reinstall-app'inden sag cikiyor, yani ilk akis giris yapsa bile sonrakiler walkthrough'u hic gormez. Cihaz demo hesabina bir kez giriyor: store-00-login. Keychain sifirlanirsa asagidaki await patlar; store-00-login'i tekrar kosun."
+  - launch: com.asamethon.bluma
+  - await:
+      visible:
+        text: Ana Sayfa
+  - await:
+      idle: true
+  - tap:
+      text: Ara
+  - await:
+      visible:
+        text: Türler
+  - echo: Turlerden Romantik secilir; sonuc listesi her zaman doludur.
+  - tap:
+      text: Romantik
+  - await:
+      idle: true
+  - echo: "Sonuc listesinin ilk satiri. Ekran duzeni: tur cipleri 0.298-0.390 bandinda, sonuc basligi (Romantik / 9 hikâye) 0.449'da, liste 0.508'de basliyor. Ilk satirin cercevesi (0.045, 0.508, 0.909, 0.151), merkezi 0.5/0.583. Eski 0.34 degeri cip satirina dusuyordu, o yuzden hikaye acilmiyordu."
+  - tap:
+      x: 0.5
+      y: 0.583
+  - await:
+      visible:
+        text: Okumaya Başla
+  - wait: 700
+  - await:
+      idle: true

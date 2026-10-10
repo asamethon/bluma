@@ -1,6 +1,5 @@
 import { BloomMark, Text } from '@/components/ui';
 import { useTheme } from '@/constants/theme';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

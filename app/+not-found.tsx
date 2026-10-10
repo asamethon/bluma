@@ -1,7 +1,6 @@
 import { BloomMark, Button, Text } from '@/components/ui';
 import { useTheme } from '@/constants/theme';
 import { useRouter } from 'expo-router';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 

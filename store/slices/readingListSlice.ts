@@ -10,7 +10,7 @@ export interface ReadingListMeta {
   updatedAt?: any;
 }
 
-export interface ReadingListState {
+interface ReadingListState {
   lists: ReadingListMeta[];
   loaded: boolean;
 }

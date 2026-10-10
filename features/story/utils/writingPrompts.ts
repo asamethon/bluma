@@ -1,4 +1,4 @@
-export const PROMPT_COUNT = 10;
+const PROMPT_COUNT = 10;
 
 export function dailyPromptKey(date: Date = new Date()): string {
   const startOfYear = Date.UTC(date.getFullYear(), 0, 0);

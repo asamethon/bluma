@@ -16,6 +16,7 @@ export interface User {
   followingCount?: number;
   storiesCount?: number;
   profileImage?: string;
+  coverImage?: string | null;
   privacy?: PrivacySettings;
   lastActiveAt?: any;
   createdAt?: any;
@@ -29,7 +30,7 @@ export interface User {
   signupRegion?: string;
 }
 
-export interface AuthState {
+interface AuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
   hasCompletedOnboarding: boolean;
@@ -57,11 +58,8 @@ const authSlice = createSlice({
     patchUser(state, action: PayloadAction<Partial<User>>) {
       if (state.user) Object.assign(state.user, action.payload);
     },
-    resetAuth() {
-      return { ...initialState, isLoading: false };
-    },
   },
 });
 
-export const { patchAuth, patchUser, resetAuth } = authSlice.actions;
+export const { patchAuth, patchUser } = authSlice.actions;
 export default authSlice.reducer;

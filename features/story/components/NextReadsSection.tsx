@@ -3,7 +3,7 @@ import { Spacing, useTheme } from '@/constants/theme';
 import { useNextReads } from '@/features/story/hooks/useNextReads';
 import { Story } from '@/types';
 import { useRouter } from 'expo-router';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, View } from 'react-native';
 

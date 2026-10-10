@@ -1,11 +1,16 @@
-import { Avatar, Text } from '@/components/ui';
-import { useTheme } from '@/constants/theme';
+import { Avatar, CountBadge, Divider, Text } from '@/components/ui';
+import { Fonts, Motion, Spacing, useTheme } from '@/constants/theme';
 import { formatThreadTime } from '@/features/messaging/utils/time';
+import { useThreadPreview } from '@/features/messaging/hooks/useThreadPreview';
 import { MessageThread } from '@/types';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+/**
+ * Sohbet satırı. Kart değil: hairline ayraçla dizilen editoryal liste öğesi.
+ * Okunmamışlık kutu/renk yerine tipografik ağırlıkla belli edilir.
+ */
 function ThreadRowBase({
   thread,
   currentUserId,
@@ -22,59 +27,65 @@ function ThreadRowBase({
   const other = thread.otherUser;
   const otherId = thread.participants.find((p) => p !== currentUserId);
   const unread = thread.unread > 0;
-  const fromMe = thread.lastMessage?.senderId === currentUserId;
+  const preview = useThreadPreview(thread, currentUserId);
+  const fromMe = preview?.senderId === currentUserId;
 
   return (
-    <Pressable
-      onPress={() => otherId && onPress(otherId)}
-      onLongPress={onLongPress ? () => onLongPress(thread) : undefined}
-      delayLongPress={350}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 2 }}
-      android_ripple={{ color: colors.surfaceVariant }}
-    >
-      <Avatar uri={other?.profileImage} name={other?.displayName} size={52} />
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <Text
-            variant="bodyStrong"
-            numberOfLines={1}
-            style={{ flex: 1, fontWeight: unread ? '800' : '700' }}
-          >
-            {other?.displayName || t('common.user')}
-          </Text>
-          <Text variant="caption" color={unread ? colors.primary : colors.textLight} style={{ fontWeight: '600' }}>
-            {formatThreadTime(thread.lastMessage?.createdAt)}
-          </Text>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
-          <Text
-            variant="body"
-            numberOfLines={1}
-            color={unread ? colors.text : colors.textLight}
-            style={{ flex: 1, fontSize: 13, fontWeight: unread ? '600' : '400' }}
-          >
-            {fromMe ? t('messages.youPrefix') : ''}
-            {thread.lastMessage?.text || t('messages.startConversation')}
-          </Text>
-          {unread && (
-            <View
-              style={{
-                minWidth: 18,
-                height: 18,
-                paddingHorizontal: 5,
-                borderRadius: 9,
-                backgroundColor: colors.bloom,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+    <View>
+      <Pressable
+        onPress={() => otherId && onPress(otherId)}
+        onLongPress={onLongPress ? () => onLongPress(thread) : undefined}
+        delayLongPress={350}
+        style={({ pressed }) => [styles.row, { opacity: pressed ? Motion.pressOpacity : 1 }]}
+        android_ripple={{ color: colors.surfaceVariant }}
+      >
+        <Avatar uri={other?.profileImage} name={other?.displayName} size={48} />
+
+        <View style={styles.body}>
+          <View style={styles.topRow}>
+            <Text
+              variant="bodyStrong"
+              numberOfLines={1}
+              style={[styles.name, unread && { fontFamily: Fonts.sansBold }]}
             >
-              <Text style={{ color: '#fff', fontSize: 10.5, lineHeight: 14, fontWeight: '800' }}>{thread.unread}</Text>
-            </View>
-          )}
+              {other?.displayName || t('common.user')}
+            </Text>
+            <Text variant="caption" color={unread ? colors.primary : colors.textLight}>
+              {formatThreadTime(preview?.createdAt)}
+            </Text>
+          </View>
+
+          <View style={styles.bottomRow}>
+            <Text
+              variant="caption"
+              numberOfLines={1}
+              color={unread ? colors.text : colors.textLight}
+              style={styles.preview}
+            >
+              {fromMe ? t('messages.youPrefix') : ''}
+              {preview?.text || t('messages.startConversation')}
+            </Text>
+            {unread && <CountBadge count={thread.unread} />}
+          </View>
         </View>
-      </View>
-    </Pressable>
+      </Pressable>
+      <Divider inset={48 + Spacing.md} />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingVertical: Spacing.md,
+  },
+  body: { flex: 1, minWidth: 0, gap: 3 },
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.sm },
+  name: { flex: 1 },
+  bottomRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  preview: { flex: 1 },
+});
 
 export const ThreadRow = React.memo(ThreadRowBase);

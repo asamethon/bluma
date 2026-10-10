@@ -1,20 +1,18 @@
-import { IconButton, Text } from '@/components/ui';
+import { IconButton, MenuButton, Text } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
-import type { useComposer } from '../../hooks/useComposer';
-import { OverflowMenu } from './OverflowMenu';
+import type { ComposerModel } from '../../hooks/useComposer';
 
-export function ComposerHeader({ c, topInset }: { c: ReturnType<typeof useComposer>; topInset: number }) {
+export function ComposerHeader({ c }: { c: ComposerModel }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
   return (
     <View>
       <View style={styles.row}>
-        <IconButton icon="chevron-back" glass onPress={c.back} />
+        <IconButton icon="arrow-back" onPress={c.back} />
         <Pressable
           onPress={() => c.setSheet(true)}
           style={[styles.pill, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}
@@ -38,9 +36,15 @@ export function ComposerHeader({ c, topInset }: { c: ReturnType<typeof useCompos
         <IconButton
           icon={c.focus ? 'contract-outline' : 'scan-outline'}
           variant="sunk"
-          onPress={() => c.setFocus(f => !f)}
+          onPress={c.toggleFocus}
         />
-        <IconButton icon="ellipsis-horizontal" onPress={() => c.setMenu(true)} />
+        <MenuButton
+          accessibilityLabel={t('common.more')}
+          items={[
+            { id: 'info', label: t('studio.editStoryInfo'), symbol: 'square.and.pencil', onPress: c.editInfo },
+            { id: 'delete', label: t('studio.deleteChapterTitle'), symbol: 'trash', destructive: true, onPress: c.deleteChapter },
+          ]}
+        />
       </View>
 
       {!c.focus && (
@@ -48,16 +52,6 @@ export function ComposerHeader({ c, topInset }: { c: ReturnType<typeof useCompos
           {c.story?.title || t('studio.untitled')}
         </Text>
       )}
-
-      <OverflowMenu
-        visible={c.menu}
-        onClose={() => c.setMenu(false)}
-        top={topInset + 52}
-        items={[
-          { icon: 'create-outline', label: t('studio.editStoryInfo'), onPress: c.editInfo },
-          { icon: 'trash-outline', label: t('studio.deleteChapterTitle'), danger: true, onPress: c.deleteChapter },
-        ]}
-      />
     </View>
   );
 }

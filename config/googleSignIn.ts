@@ -63,12 +63,3 @@ export const signOutFromGoogle = async () => {
     return { success: false, error: i18n.t('authErrors.googleSignOutFailed') };
   }
 };
-
-export const getCurrentUser = async () => {
-  try {
-    return await GoogleSignin.getCurrentUser();
-  } catch (error) {
-    logger.error('Get current user error:', error);
-    return null;
-  }
-};

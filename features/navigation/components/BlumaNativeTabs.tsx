@@ -2,12 +2,7 @@ import { useTheme } from "@/constants/theme";
 import { useNativeTabGate } from "@/features/navigation/hooks/useNativeTabGate";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
 import { useTranslation } from "react-i18next";
-
-/** Android ikonu. iOS'ta bu kaynak kullanılmaz (bkz. WRITE_TAB_NATIVE_PROPS). */
-const WRITE_TAB_ICONS = {
-  light: require("../../../assets/images/write-tab-light.png"),
-  dark: require("../../../assets/images/write-tab-dark.png"),
-};
+import { Platform } from "react-native";
 
 /**
  * iOS: ikon asset catalog'dan SENKRON okunur.
@@ -29,6 +24,26 @@ const WRITE_TAB_NATIVE_PROPS = {
   },
 } as const;
 
+type WriteTabTriggerProps = {
+  disabled: boolean;
+  label: string;
+};
+
+function WriteTabTrigger({ disabled, label }: WriteTabTriggerProps) {
+  return (
+    <NativeTabs.Trigger
+      name="write"
+      role={Platform.OS === "ios" ? "search" : undefined}
+      disabled={disabled}
+      accessibilityLabel={label}
+      unstable_nativeProps={WRITE_TAB_NATIVE_PROPS}
+    >
+      <NativeTabs.Trigger.Icon sf="square.and.pencil" md="edit_square" />
+      <NativeTabs.Trigger.Label>{label}</NativeTabs.Trigger.Label>
+    </NativeTabs.Trigger>
+  );
+}
+
 /**
  * Sistem tab bar'ı iOS 26'da sürüklenebilir Liquid Glass indicator'ı sağlar.
  * `search` rolü, Yaz sekmesini sağdaki ayrık cam aksiyon olarak yerleştirir;
@@ -41,14 +56,35 @@ const WRITE_TAB_NATIVE_PROPS = {
  * düzelmesinin sebebi budur).
  */
 export function BlumaNativeTabs() {
-  const { colors, scheme } = useTheme();
+  const { colors, typography, alpha } = useTheme();
   const { t } = useTranslation();
   const { isWriteDisabled, screenListeners } = useNativeTabGate();
+  const isAndroid = Platform.OS === "android";
 
   return (
     <NativeTabs
       tintColor={colors.primary}
       iconColor={{ default: colors.textSecondary, selected: colors.primary }}
+      labelStyle={
+        isAndroid
+          ? {
+              default: {
+                color: colors.textSecondary,
+                fontFamily: typography.labelSm.fontFamily,
+                fontSize: 11,
+              },
+              selected: {
+                color: colors.primary,
+                fontFamily: typography.label.fontFamily,
+                fontSize: 11,
+              },
+            }
+          : undefined
+      }
+      backgroundColor={isAndroid ? colors.surface : undefined}
+      indicatorColor={isAndroid ? colors.primarySoft : undefined}
+      rippleColor={isAndroid ? alpha(colors.primary, 0.14) : undefined}
+      labelVisibilityMode={isAndroid ? "labeled" : undefined}
       badgeBackgroundColor={colors.bloom}
       disableTransparentOnScrollEdge
       minimizeBehavior="never"
@@ -59,13 +95,17 @@ export function BlumaNativeTabs() {
           sf={{ default: "house", selected: "house.fill" }}
           md={{ default: "home", selected: "home_filled" }}
         />
-        <NativeTabs.Trigger.Label>{t("tabs.discover")}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t("tabs.home")}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="search">
         <NativeTabs.Trigger.Icon sf="magnifyingglass" md="search" />
         <NativeTabs.Trigger.Label>{t("tabs.search")}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
+
+      {isAndroid ? (
+        <WriteTabTrigger disabled={isWriteDisabled} label={t("tabs.write")} />
+      ) : null}
 
       <NativeTabs.Trigger name="library">
         <NativeTabs.Trigger.Icon
@@ -83,17 +123,9 @@ export function BlumaNativeTabs() {
         <NativeTabs.Trigger.Label>{t("tabs.profile")}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger
-        name="write"
-        role="search"
-        disabled={isWriteDisabled}
-        accessibilityLabel={t("tabs.write")}
-        unstable_nativeProps={WRITE_TAB_NATIVE_PROPS}
-      >
-        {/* `src` yalnızca Android'de kullanılır; iOS ikonu yukarıdaki native prop'tan gelir. */}
-        <NativeTabs.Trigger.Icon src={WRITE_TAB_ICONS[scheme]} renderingMode="original" />
-        <NativeTabs.Trigger.Label>{t("tabs.write")}</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
+      {isAndroid ? null : (
+        <WriteTabTrigger disabled={isWriteDisabled} label={t("tabs.write")} />
+      )}
     </NativeTabs>
   );
 }

@@ -1,7 +1,6 @@
 import { Button, Text } from '@/components/ui';
-import { Radius, Spacing, useTheme } from '@/constants/theme';
+import { Radius, Spacing, alpha, useTheme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -13,17 +12,17 @@ type Props = {
 };
 
 export function WriterNudgeCard({ prompt, starting, onStart, onStartWithPrompt }: Props) {
-  const { colors, shadows } = useTheme();
+  const { colors } = useTheme();
   const { t } = useTranslation();
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.primarySoft, borderColor: colors.primary }]}>
+    <View style={[styles.card, { backgroundColor: alpha(colors.primary, 0.06), borderLeftColor: colors.primary }]}>
       <View style={styles.headRow}>
-        <View style={[styles.icon, shadows.bloom, { backgroundColor: colors.bloom }]}>
-          <Ionicons name="create" size={22} color="#fff" />
+        <View style={[styles.icon, { backgroundColor: alpha(colors.bloom, 0.14) }]}>
+          <Ionicons name="create-outline" size={20} color={colors.bloom} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text variant="heading" style={{ fontSize: 16.5 }}>
+          <Text variant="heading">
             {t('writerNudge.title')}
           </Text>
           <Text variant="caption" tone="textSecondary" style={{ marginTop: 2 }}>
@@ -65,9 +64,9 @@ export function WriterNudgeCard({ prompt, starting, onStart, onStartWithPrompt }
 const styles = StyleSheet.create({
   card: {
     padding: Spacing.lg,
-    borderRadius: Radius.xl,
-    borderWidth: 1.5,
-    gap: Spacing.md + 2,
+    borderRadius: Radius.md,
+    borderLeftWidth: 2,
+    gap: Spacing.lg,
   },
   headRow: {
     flexDirection: 'row',
@@ -75,15 +74,15 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   icon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: Radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
   promptBox: {
-    padding: Spacing.md + 2,
-    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    borderRadius: Radius.sm,
     borderWidth: 1,
   },
   promptCtaRow: {

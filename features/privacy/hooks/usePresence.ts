@@ -42,17 +42,18 @@ export function usePresence(userId?: string): Presence {
   return presence;
 }
 
+function elapsedLabel(diffMin: number): string {
+  if (diffMin < 1) return i18n.t('time.justNow');
+  if (diffMin < 60) return i18n.t('time.minutesAgo', { count: diffMin });
+  if (diffMin < 1440) return i18n.t('time.hoursAgo', { count: Math.floor(diffMin / 60) });
+  return i18n.t('time.daysAgo', { count: Math.floor(diffMin / 1440) });
+}
+
 /** "çevrimiçi" / "son görülme 5 dk önce" satırı; bilgi yoksa boş metin. */
 export function formatPresence(presence: Presence): string {
   if (presence.online) return i18n.t('messages.online');
   if (!presence.lastActiveAt) return '';
 
   const diffMin = Math.floor((Date.now() - presence.lastActiveAt) / 60000);
-  let when: string;
-  if (diffMin < 1) when = i18n.t('time.justNow');
-  else if (diffMin < 60) when = i18n.t('time.minutesAgo', { count: diffMin });
-  else if (diffMin < 1440) when = i18n.t('time.hoursAgo', { count: Math.floor(diffMin / 60) });
-  else when = i18n.t('time.daysAgo', { count: Math.floor(diffMin / 1440) });
-
-  return i18n.t('messages.lastSeen', { when });
+  return i18n.t('messages.lastSeen', { when: elapsedLabel(diffMin) });
 }

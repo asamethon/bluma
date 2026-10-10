@@ -5,7 +5,7 @@ import {
 } from '@/features/auth/services/userCache';
 
 
-export const invalidateUserCache = (userId?: string) => invalidateCachedUser(userId);
+const invalidateUserCache = (userId?: string) => invalidateCachedUser(userId);
 
 export async function getUserById(userId: string): Promise<User | null> {
   return (await getUserByIdShared(userId)) as User | null;

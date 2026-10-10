@@ -1,4 +1,4 @@
-import NetInfo from '@react-native-community/netinfo';
+import NetInfo, { type NetInfoState } from '@react-native-community/netinfo';
 import { useSyncExternalStore } from 'react';
 
 export interface NetworkState {
@@ -6,57 +6,67 @@ export interface NetworkState {
   isInternetReachable: boolean;
   type: string;
   isOffline: boolean;
+  /** İlk gerçek NetInfo okuması geldi mi? Açılışta false. */
+  isResolved: boolean;
 }
 
+// Açılışta ağ durumu henüz bilinmiyor. İyimser davranıp "online" kabul
+// ediyoruz: aksi halde splash sonrası bir an offline arayüzü görünüp hemen
+// online'a dönüyordu (kullanıcı bağlıyken bile "çevrimdışı" çakması).
 const INITIAL: NetworkState = {
-  isConnected: false,
-  isInternetReachable: false,
+  isConnected: true,
+  isInternetReachable: true,
   type: 'unknown',
-  isOffline: true,
+  isOffline: false,
+  isResolved: false,
 };
 
-let current: NetworkState = INITIAL;
 const listeners = new Set<() => void>();
-let netInfoUnsub: (() => void) | null = null;
+const source = {
+  current: INITIAL,
+  unsubscribe: null as (() => void) | null,
+};
+
+const sameState = (a: NetworkState, b: NetworkState) =>
+  a.isConnected === b.isConnected &&
+  a.isInternetReachable === b.isInternetReachable &&
+  a.type === b.type &&
+  a.isOffline === b.isOffline &&
+  a.isResolved === b.isResolved;
 
 function publish(next: NetworkState) {
-  if (
-    next.isConnected === current.isConnected &&
-    next.isInternetReachable === current.isInternetReachable &&
-    next.type === current.type &&
-    next.isOffline === current.isOffline
-  ) {
-    return;
-  }
-  current = next;
-  listeners.forEach(l => l());
+  if (sameState(next, source.current)) return;
+  source.current = next;
+  listeners.forEach(notify => notify());
 }
 
-function toState(state: { isConnected: boolean | null; isInternetReachable: boolean | null; type: string }): NetworkState {
+function toState(state: NetInfoState): NetworkState {
+  // `isInternetReachable` bir süre null kalır (ölçüm sürüyor). null = "henüz
+  // bilinmiyor" demektir, offline değil: yalnızca açıkça false ise çevrimdışıyız.
   return {
-    isConnected: state.isConnected ?? false,
-    isInternetReachable: state.isInternetReachable ?? false,
+    isConnected: state.isConnected ?? true,
+    isInternetReachable: state.isInternetReachable ?? true,
     type: state.type,
-    isOffline: !state.isConnected || !state.isInternetReachable,
+    isOffline: state.isConnected === false || state.isInternetReachable === false,
+    isResolved: true,
   };
+}
+
+/**
+ * Ağ dinleyicisini başlatır. Açılışta (splash sırasında) çağrılır ki gerçek
+ * durum, arayüz görünmeden önce hazır olsun. Idempotent'tir.
+ */
+export function initNetworkStatus() {
+  if (source.unsubscribe) return;
+  source.unsubscribe = NetInfo.addEventListener(state => publish(toState(state)));
+  NetInfo.fetch().then(state => publish(toState(state))).catch(() => {});
 }
 
 function subscribe(onStoreChange: () => void) {
   listeners.add(onStoreChange);
-
-  if (!netInfoUnsub) {
-    NetInfo.fetch().then(s => publish(toState(s)));
-    netInfoUnsub = NetInfo.addEventListener(s => publish(toState(s)));
-  }
-
-  return () => {
-    listeners.delete(onStoreChange);
-    if (listeners.size === 0 && netInfoUnsub) {
-      netInfoUnsub();
-      netInfoUnsub = null;
-    }
-  };
+  initNetworkStatus();
+  return () => { listeners.delete(onStoreChange); };
 }
 
 export const useNetworkStatus = (): NetworkState =>
-  useSyncExternalStore(subscribe, () => current);
+  useSyncExternalStore(subscribe, () => source.current);

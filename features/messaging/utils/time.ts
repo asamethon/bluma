@@ -54,6 +54,12 @@ export function formatMessageStamp(ts: any): string {
   return `${dateLabel} ${clock(d)}`;
 }
 
+/** Sesli mesaj sayacı: 0:07 / 1:42 (saat gerekmez, kayıt 2 dakikayla sınırlı). */
+export function formatVoiceDuration(ms: number): string {
+  const total = Math.max(0, Math.round(ms / 1000));
+  return `${Math.floor(total / 60)}:${pad(total % 60)}`;
+}
+
 export function shouldShowStamp(prev: any, curr: any): boolean {
   const a = toDate(prev);
   const b = toDate(curr);

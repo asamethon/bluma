@@ -1,103 +1,105 @@
-// Bluma — "where stories bloom"
-// Bloom palette: a confident lavender-violet heritage, a signature warm "petal"
-// rose accent, and warm paper/ink neutrals for a literary reading feel.
+// Bluma — editoryal lila sistemi.
+// Düz (gölgesiz) tasarım dilinde derinliği KENARLIK taşır; bu yüzden
+// border/divider tonları yüzeyden net ayrılacak şekilde ayarlanmıştır.
+// Lavanta marka kimliği korunur; arayüz yüzeyleri daha nötr, daha net ve daha
+// az gölgeli tutulur. Böylece mor renk vurgu olarak kalır, tüm ekranı boyamaz.
 //
 // NOTE: every key that existed before is preserved (so existing screens keep
 // working) — values are retuned and new bloom tokens are added on top.
 export const Colors = {
   light: {
     // Primary — deepened, more confident violet (bloom heart)
-    primary: '#7C5CD0', // bloom violet
-    primaryDark: '#5E3FB0', // pressed / deep violet
-    primaryLight: '#C9BCF2', // soft violet wash
-    primarySoft: '#EFEAFB', // tint surface for violet chips/fills
+    primary: '#7057D9',
+    primaryDark: '#5138B5',
+    primaryLight: '#B9AAED',
+    primarySoft: '#EEEAFB',
 
     // Secondary — warm honey gold (highlights, premium)
-    secondary: '#E6B95C', // honey gold
-    secondaryDark: '#C99A3F',
-    secondaryLight: '#F6E6B8',
+    secondary: '#E7B85C',
+    secondaryDark: '#B98228',
+    secondaryLight: '#FBEDC9',
 
     // Bloom accent — the signature warm "petal" rose (the recognizable pop)
-    bloom: '#FF5C8A', // petal rose
-    bloomDark: '#E03E70',
-    bloomLight: '#FFD3E0',
-    bloomSoft: '#FFEDF2',
+    bloom: '#DE5B88',
+    bloomDark: '#B83D69',
+    bloomLight: '#F5B8CD',
+    bloomSoft: '#FCECF2',
 
     // Neutrals — warm "paper & ink"
-    background: '#FBF8F3', // ivory paper
-    surface: '#FFFFFF', // raised card
-    surfaceVariant: '#F4EFE6', // sunk surface / wells
-    surfaceAlt: '#F0EAFA', // faint violet-tinted surface
+    background: '#F8F7FC',
+    surface: '#FFFEFF',
+    surfaceVariant: '#F1EFF7',
+    surfaceAlt: '#ECE7FA',
 
     // Text — ink tones
-    text: '#241F2E', // deep ink (slight violet)
-    textSecondary: '#6B6478', // muted ink
-    textLight: '#9A93A8', // faint ink
+    text: '#211D2C',
+    textSecondary: '#686171',
+    textLight: '#938B9F',
     onPrimary: '#FFFFFF',
 
     // Status
-    accent: '#FF5C8A', // alias of bloom (kept for back-compat)
+    accent: '#DE5B88',
     readTick: '#8FD9FF', // DM "okundu" mavi çift tik (koyu mor baloncuk üstünde)
-    success: '#46B98A',
-    warning: '#E6A455',
-    error: '#E5604F',
+    success: '#348D6A',
+    warning: '#C9822B',
+    error: '#CF5549',
 
     // Lines & overlays
-    border: '#ECE5DA',
-    borderStrong: '#DDD3C5',
-    divider: '#F0EAE0',
+    border: '#E4DFEC',
+    borderStrong: '#CFC7DD',
+    divider: '#EDE9F3',
     overlay: 'rgba(36, 31, 46, 0.45)', // scrim for media
     overlayStrong: 'rgba(20, 16, 28, 0.62)',
 
     // Special
     white: '#FFFFFF',
-    black: '#15121C',
-    shadow: 'rgba(60, 40, 100, 0.16)', // bloom-tinted shadow
-    scrim: 'rgba(124, 92, 208, 0.10)',
+    black: '#14111A',
+    shadow: 'rgba(49, 36, 83, 0.11)',
+    scrim: 'rgba(112, 87, 217, 0.09)',
   },
   dark: {
     // Primary — luminous violet for night reading
-    primary: '#B9A4F2',
-    primaryDark: '#9A82E0',
-    primaryLight: '#6D5AA0',
-    primarySoft: '#2A2440',
+    primary: '#BCAAF6',
+    primaryDark: '#9A84E7',
+    primaryLight: '#7867A6',
+    primarySoft: '#2A2540',
 
     secondary: '#E6C77E',
     secondaryDark: '#C9A95E',
     secondaryLight: '#403720',
 
-    bloom: '#FF85A8',
-    bloomDark: '#FF5C8A',
-    bloomLight: '#5C2A3C',
-    bloomSoft: '#33222B',
+    bloom: '#EF84A8',
+    bloomDark: '#DC628D',
+    bloomLight: '#663247',
+    bloomSoft: '#35242D',
 
     // Neutrals — warm near-black "night paper"
-    background: '#141119', // ink night
-    surface: '#1E1A26', // raised card
-    surfaceVariant: '#2A2533', // sunk surface
-    surfaceAlt: '#241F33',
+    background: '#121116',
+    surface: '#1B1921',
+    surfaceVariant: '#25222C',
+    surfaceAlt: '#272238',
 
-    text: '#F3EFF8',
-    textSecondary: '#BDB5CC',
-    textLight: '#857C96',
+    text: '#F4F1F7',
+    textSecondary: '#BBB4C5',
+    textLight: '#888091',
     onPrimary: '#1A1426',
 
-    accent: '#FF85A8',
+    accent: '#EF84A8',
     readTick: '#1B5E96', // açık lavanta baloncuk üstünde okunur koyu mavi
     success: '#5FCB9C',
     warning: '#E6B36A',
     error: '#F0796A',
 
-    border: '#332D40',
-    borderStrong: '#453E55',
-    divider: '#2A2533',
+    border: '#363143',
+    borderStrong: '#4C4658',
+    divider: '#2E2A38',
     overlay: 'rgba(10, 7, 16, 0.55)',
     overlayStrong: 'rgba(6, 4, 12, 0.72)',
 
     white: '#FFFFFF',
     black: '#000000',
-    shadow: 'rgba(0, 0, 0, 0.5)',
-    scrim: 'rgba(185, 164, 242, 0.10)',
+    shadow: 'rgba(0, 0, 0, 0.34)',
+    scrim: 'rgba(188, 170, 246, 0.10)',
   },
 };
 

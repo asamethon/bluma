@@ -1,6 +1,5 @@
 import { Radius } from '@/constants/theme';
 import { Image } from 'expo-image';
-import React from 'react';
 import { StyleSheet } from 'react-native';
 
 interface StoryImageProps {

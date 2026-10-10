@@ -1,0 +1,44 @@
+# Android yeniden kurulumda Firebase oturumunu da siler. Bu ilk kare once
+# demo hesabina girer; ayni capture turundaki kalan kareler oturumu devralir.
+steps:
+  - launch: com.d4tecompany.bluma
+  - await:
+      visible:
+        text: Hesap Oluştur
+  - await:
+      idle: true
+  - wait: 900
+  - tap:
+      text: Giriş Yap
+  - await:
+      visible:
+        text: Tekrar hoş geldin
+  - await:
+      idle: true
+  - tap:
+      text: isim@örnek.com
+  - tool: keyboard
+    args:
+      text: "{{secret:BLUMA_DEMO_EMAIL}}"
+  - echo: "Android parola alani devtools agacinda [password] olarak maskeleniyor; alan merkezi 0.50/0.434."
+  - tap:
+      x: 0.5
+      y: 0.434
+  - tool: keyboard
+    args:
+      text: "{{secret:BLUMA_DEMO_PASSWORD}}"
+  - tap:
+      text: Giriş Yap
+  - echo: "Android release build'inde Firebase oturumu ve ilk veri dinleyicileri gec kuruluyor."
+  - wait: 12000
+  - await:
+      visible:
+        text: Ana Sayfa
+  - await:
+      visible:
+        text: Editörün Seçimi
+  - await:
+      idle: true
+  - wait: 1600
+  - await:
+      idle: true

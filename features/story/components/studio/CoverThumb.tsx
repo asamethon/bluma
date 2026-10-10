@@ -1,7 +1,6 @@
 import { categoryColor, Radius, useTheme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
 export function CoverThumb({
@@ -23,7 +22,7 @@ export function CoverThumb({
         <Image source={{ uri: coverImage }} style={StyleSheet.absoluteFill} contentFit="cover" />
       ) : (
         <View style={styles.center}>
-          <Ionicons name="book" size={width * 0.42} color={tint} />
+          <Ionicons name="book-outline" size={width * 0.42} color={tint} />
         </View>
       )}
       <View style={[styles.spine, { backgroundColor: tint }]} />
@@ -33,10 +32,10 @@ export function CoverThumb({
 
 const styles = StyleSheet.create({
   wrap: {
-    borderRadius: Radius.sm,
+    borderRadius: Radius.xs,
     overflow: 'hidden',
     flexShrink: 0,
   },
   center: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
-  spine: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4 },
+  spine: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 3 },
 });

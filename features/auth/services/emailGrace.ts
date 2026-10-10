@@ -48,5 +48,3 @@ export async function ensureGraceStarted(): Promise<Grace | null> {
     return null;
   }
 }
-
-export const emailGraceActions = { ensureGraceStarted, GRACE_DAYS };

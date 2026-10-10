@@ -1,10 +1,14 @@
-import React from "react";
-import { View, Text } from "react-native";
+import { View, type StyleProp, type ViewStyle } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Radius, useTheme } from "@/constants/theme";
+import { Radius, alpha, useTheme } from "@/constants/theme";
+import { Text } from "./Text";
 
 type Tone = "primary" | "bloom" | "gold" | "success" | "warning" | "error" | "neutral";
 
+/**
+ * Durum rozeti. Editoryal dilde rozet kapsül değil, küçük ve keskin bir
+ * etikettir: tonlu zemin + aynı ailenin koyu metni, ya da tam dolgu.
+ */
 export function Badge({
   label,
   tone = "primary",
@@ -18,22 +22,22 @@ export function Badge({
   solid?: boolean;
   icon?: keyof typeof Ionicons.glyphMap;
   dot?: boolean;
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }) {
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
+  const tint = 0.13;
 
   const TONES: Record<Tone, { soft: [string, string]; solid: [string, string] }> = {
-    primary: { soft: [colors.primarySoft, colors.primary], solid: [colors.primary, "#fff"] },
-    bloom: { soft: [colors.bloomSoft, colors.bloomDark], solid: [colors.bloom, "#fff"] },
-    gold: { soft: [colors.secondaryLight, colors.secondaryDark], solid: [colors.secondary, "#3A2A06"] },
-    success: { soft: ["#E4F5EE", colors.success], solid: [colors.success, "#fff"] },
-    warning: { soft: ["#FBEEDC", colors.warning], solid: [colors.warning, "#fff"] },
-    error: { soft: ["#FBE6E2", colors.error], solid: [colors.error, "#fff"] },
-    neutral: { soft: [colors.surfaceVariant, colors.textSecondary], solid: [colors.textSecondary, "#fff"] },
+    primary: { soft: [alpha(colors.primary, tint), colors.primary], solid: [colors.primary, colors.onPrimary] },
+    bloom: { soft: [alpha(colors.bloom, tint), scheme === "dark" ? colors.bloom : colors.bloomDark], solid: [colors.bloom, "#fff"] },
+    gold: { soft: [alpha(colors.secondary, tint), colors.secondaryDark], solid: [colors.secondary, "#3A2A06"] },
+    success: { soft: [alpha(colors.success, tint), colors.success], solid: [colors.success, "#fff"] },
+    warning: { soft: [alpha(colors.warning, tint), colors.warning], solid: [colors.warning, "#fff"] },
+    error: { soft: [alpha(colors.error, tint), colors.error], solid: [colors.error, "#fff"] },
+    neutral: { soft: [colors.surfaceVariant, colors.textSecondary], solid: [colors.textSecondary, colors.surface] },
   };
 
-  const t = TONES[tone];
-  const [bg, fg] = solid ? t.solid : t.soft;
+  const [bg, fg] = solid ? TONES[tone].solid : TONES[tone].soft;
 
   return (
     <View
@@ -41,20 +45,43 @@ export function Badge({
         {
           flexDirection: "row",
           alignItems: "center",
-          paddingHorizontal: 10,
-          paddingVertical: 4,
-          borderRadius: Radius.pill,
-          backgroundColor: bg,
           alignSelf: "flex-start",
-          gap: 4,
+          gap: 5,
+          height: 22,
+          paddingHorizontal: 8,
+          borderRadius: Radius.xs,
+          backgroundColor: bg,
         },
         style,
       ]}
     >
-      {dot && <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: fg }} />}
-      {icon && <Ionicons name={icon} size={12} color={fg} />}
-      <Text style={{ fontSize: 11.5, fontWeight: "700", color: fg, letterSpacing: 0.1, lineHeight: 16 }}>
+      {dot && <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: fg }} />}
+      {icon && <Ionicons name={icon} size={11} color={fg} />}
+      <Text variant="labelSm" color={fg} numberOfLines={1}>
         {label}
+      </Text>
+    </View>
+  );
+}
+
+/** Sayaç baloncuğu (okunmamış bildirim, mesaj). Tek yerden ölçülenir. */
+export function CountBadge({ count, color }: { count: number; color?: string }) {
+  const { colors } = useTheme();
+  if (count <= 0) return null;
+  return (
+    <View
+      style={{
+        minWidth: 18,
+        height: 18,
+        paddingHorizontal: 5,
+        borderRadius: Radius.pill,
+        backgroundColor: color ?? colors.bloom,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Text variant="labelSm" color="#fff" style={{ fontSize: 10.5, lineHeight: 14 }}>
+        {count > 99 ? "99+" : count}
       </Text>
     </View>
   );

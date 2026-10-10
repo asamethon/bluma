@@ -52,7 +52,8 @@ ve [Firebase Hosting](https://console.firebase.google.com/project/bluma-dc10e/ho
    - `public/.well-known/assetlinks.json` içindeki `REPLACE_WITH_SHA256_FINGERPRINT`
      yerine üretim imza sertifikanın SHA-256'sını koy.
    - Bulmak için: Play Console → *App integrity* → *App signing key certificate*,
-     veya `eas credentials` (Android).
+     veya `eas credentials` (Android). `assetlinks.json` içindeki paket adı
+     canlı Android uygulamasıyla aynı olmalı: `com.d4tecompany.bluma`.
 
 2. `app.json` → `android.intentFilters` ekle (parmak izi hazır olunca):
    ```json
@@ -72,6 +73,19 @@ ve [Firebase Hosting](https://console.firebase.google.com/project/bluma-dc10e/ho
 3. `firebase deploy --only hosting` + yeni Android build.
 
 > Parmak izi girilmeden Android tarafında `link.html` yedeği kullanılır (sorun olmaz).
+
+## Instagram Story bağlantı etiketi
+
+Doğrudan Story aktarımı ve tıklanabilir bağlantı etiketi için Meta geliştirici
+panelindeki uygulama kimliğini yerel `.env` dosyasına ekle:
+
+```bash
+EXPO_PUBLIC_META_APP_ID=1234567890
+```
+
+Bu değer yoksa lansman görseli yine Instagram'a aktarılır; fakat bağlantı
+etiketini kullanıcı Instagram içinde elle ekler. Değer eklendikten sonra yeni
+bir native build gerekir.
 
 ---
 

@@ -4,12 +4,14 @@ export type ReadingTheme = 'light' | 'sepia' | 'dark' | 'black';
 export type ReadingFont = 'serif' | 'sans';
 export type ReadingLineSpacing = 'compact' | 'normal' | 'relaxed';
 
-export interface PreferencesState {
+interface PreferencesState {
   showMatureContent: boolean;
   loaded: boolean;
   readingTheme: ReadingTheme;
   readingFont: ReadingFont;
   readingLineSpacing: ReadingLineSpacing;
+  /** Okuma gövdesinin punto ölçüsü — okuyucu ayarlarından değiştirilir. */
+  readingFontSize: number;
 }
 
 const initialState: PreferencesState = {
@@ -18,6 +20,7 @@ const initialState: PreferencesState = {
   readingTheme: 'light',
   readingFont: 'serif',
   readingLineSpacing: 'normal',
+  readingFontSize: 19,
 };
 
 const preferencesSlice = createSlice({

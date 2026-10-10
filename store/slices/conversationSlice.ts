@@ -1,7 +1,7 @@
 import { Conversation, ConversationComment } from '@/types';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface ConversationState {
+interface ConversationState {
   conversations: Conversation[];
   userConversations: Conversation[];
   likedConversationIds: string[];

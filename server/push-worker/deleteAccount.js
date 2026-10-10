@@ -13,7 +13,7 @@
 // kullanıyoruz. Başkalarının verisindeki izler cleanupUserTraces.js'te.
 import { TRACE_CLEANUPS } from './cleanupUserTraces.js';
 
-export async function deleteAllUserData(auth, db, uid) {
+async function deleteAllUserData(auth, db, uid) {
   // İzler kullanıcı dokümanı silinmeden ÖNCE temizlenmeli: following/followers
   // alt koleksiyonları hangi sayaçların düşeceğini söyleyen tek kayıt.
   //

@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface ModerationState {
+interface ModerationState {
   blockedUserIds: string[];
   loaded: boolean;
 }

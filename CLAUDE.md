@@ -2,10 +2,13 @@
 
 Expo (SDK 56) + React Native Firebase hikâye okuma/yazma uygulaması.
 Mimari hedefler ve detaylı rehber: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — **yeni kod yazmadan önce oku.**
+Görsel dil: [docs/DESIGN.md](docs/DESIGN.md) — arayüz dokunuşlarından önce oku.
 
 ## Komutlar
 - Tip kontrolü: `npx tsc --noEmit` (her değişiklikten sonra ZORUNLU — 0 hata beklenir)
-- Lint: `npx eslint <dosyalar>`
+- Lint: `npx eslint <dosyalar>` (proje geneli: `yarn lint`, 0 uyarı beklenir)
+- Test: `yarn test` (saf mantık; RN bileşenleri kapsam dışı)
+- Ölü kod: `yarn deadcode` (knip — kök + `server/` + `server/push-worker`)
 - Çalıştırma: `npx expo start` (native modül eklendiyse `npx expo run:ios`)
 
 ## Mimari (zorunlu)

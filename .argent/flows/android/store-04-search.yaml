@@ -1,0 +1,27 @@
+steps:
+  - launch: com.d4tecompany.bluma
+  - wait: 12000
+  - await:
+      visible:
+        text: Ana Sayfa
+  - await:
+      idle: true
+  - tap:
+      text: Ara
+  - await:
+      visible:
+        text: Türler
+  - await:
+      idle: true
+  - tap:
+      text: Romantik
+  - await:
+      visible:
+        text: hikâye
+  - await:
+      idle: true
+  - tool: gesture-swipe
+    args: { fromX: 0.5, fromY: 0.62, toX: 0.5, toY: 0.47, durationMs: 850 }
+  - wait: 700
+  - await:
+      idle: true

@@ -25,8 +25,6 @@ Notifications.setNotificationHandler({
 });
 
 class PushNotificationService {
-  private expoPushToken: string | null = null;
-
   async getExpoPushToken(): Promise<string | null> {
     try {
       if (!Device.isDevice) {
@@ -35,14 +33,11 @@ class PushNotificationService {
       }
 
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
+      const { status } = existingStatus === 'granted'
+        ? { status: existingStatus }
+        : await Notifications.requestPermissionsAsync();
 
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-
-      if (finalStatus !== 'granted') {
+      if (status !== 'granted') {
         logger.debug('Push notification izni reddedildi');
         return null;
       }
@@ -51,7 +46,6 @@ class PushNotificationService {
         projectId: '48225aed-f559-49db-af13-d65c9d2518f0',
       });
 
-      this.expoPushToken = token.data;
       return token.data;
     } catch (error) {
       logger.error('Expo Push Token alınırken hata:', error);

@@ -25,4 +25,17 @@ module.exports = defineConfig([
       'react-hooks/preserve-manual-memoization': 'off',
     },
   },
+  {
+    files: ['scripts/**/*.{js,cjs}', 'plugins/**/*.js'],
+    languageOptions: {
+      globals: {
+        __dirname: 'readonly',
+        Buffer: 'readonly',
+        console: 'readonly',
+        module: 'readonly',
+        process: 'readonly',
+        require: 'readonly',
+      },
+    },
+  },
 ]);

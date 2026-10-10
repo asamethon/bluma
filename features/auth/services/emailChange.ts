@@ -97,5 +97,3 @@ export async function syncEmailFromAuth() {
     logger.error('Email sync error:', error);
   }
 }
-
-export const emailChangeActions = { changeUnverifiedEmail, syncEmailFromAuth };

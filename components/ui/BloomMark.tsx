@@ -1,6 +1,5 @@
-import React from "react";
-import { StyleSheet, Text, View, type ViewStyle } from "react-native";
-import { Fonts, useTheme } from "@/constants/theme";
+import { View, type ViewStyle } from "react-native";
+import { useTheme } from "@/constants/theme";
 
 export function BloomMark({
   size = 28,
@@ -62,37 +61,6 @@ export function BloomMark({
   );
 }
 
-export function BlumaWordmark({
-  size = 26,
-  color,
-  markColor,
-  showMark = true,
-}: {
-  size?: number;
-  color?: string;
-  markColor?: string;
-  showMark?: boolean;
-}) {
-  const { colors } = useTheme();
-  return (
-    <View style={styles.wordmark}>
-      {showMark && <BloomMark size={size * 1.15} color={markColor} />}
-      <Text
-        style={{
-          fontFamily: Fonts.serif,
-          fontSize: size,
-          lineHeight: size * 1.3,
-          fontWeight: "700",
-          letterSpacing: 0.5,
-          color: color ?? colors.text,
-        }}
-      >
-        bluma
-      </Text>
-    </View>
-  );
-}
-
 function shade(hex: string, amount: number): string {
   const m = hex.replace("#", "");
   if (m.length !== 6) return hex;
@@ -103,11 +71,3 @@ function shade(hex: string, amount: number): string {
   const b = clamp((num & 0xff) + 255 * amount);
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
 }
-
-const styles = StyleSheet.create({
-  wordmark: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-});

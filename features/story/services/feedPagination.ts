@@ -15,7 +15,7 @@ import { store } from '@/store';
 
 const PAGE_SIZE = 30;
 
-export async function loadMoreStories(): Promise<boolean> {
+async function loadMoreStories(): Promise<boolean> {
   const current = store.getState().story.stories;
   if (current.length === 0) return false;
 

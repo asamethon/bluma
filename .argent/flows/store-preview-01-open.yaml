@@ -1,0 +1,19 @@
+# Onizleme 1/4: ana akis acilis kadraji.
+executionPrerequisite: >-
+  Uygulama acik ve ana akis (Ana Sayfa) oturmus durumda.
+
+  Bu akista bilerek `launch:` YOK: goldie ilk segmentin kaydindan once zaten
+  restart-app + await-screen-idle yapiyor. Akisa ayrica launch koyulunca
+  splash animasyonu klibin icine giriyor ve segment 12 sn'ye cikiyordu.
+
+  Kaydirma da YOK: bir sonraki segment feed'in ust rafindaki karta sabit
+  koordinatla dokunuyor, kaydirma o koordinati bozar.
+steps:
+  - await:
+      visible:
+        text: Ana Sayfa
+  - await:
+      idle: true
+  - wait: 1400
+  - await:
+      idle: true

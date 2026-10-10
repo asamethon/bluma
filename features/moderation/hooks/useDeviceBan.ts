@@ -16,17 +16,17 @@ export function useDeviceBan() {
 
   // Dış sisteme (Firestore) tek seferlik sorgu — effect'in meşru kullanımı.
   useEffect(() => {
-    let cancelled = false;
+    const lifecycle = { cancelled: false };
     getDeviceBan()
       .then(result => {
-        if (cancelled) return;
+        if (lifecycle.cancelled) return;
         setBan(result);
         if (result) {
           authActions.signOut().catch((e: unknown) => logger.error('Ban sign-out error:', e));
         }
       })
-      .finally(() => { if (!cancelled) setChecking(false); });
-    return () => { cancelled = true; };
+      .finally(() => { if (!lifecycle.cancelled) setChecking(false); });
+    return () => { lifecycle.cancelled = true; };
   }, []);
 
   useEffect(() => {

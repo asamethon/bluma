@@ -18,15 +18,15 @@ export function useWriterActivation() {
 
   useEffect(() => {
     if (!uid) return;
-    let alive = true;
+    const lifecycle = { active: true };
     (async () => {
       await storyActions.loadUserStories(uid);
-      if (!alive) return;
+      if (!lifecycle.active) return;
       setLoaded(true);
       void syncWriterReminders(store.getState().story.userStories);
     })();
     return () => {
-      alive = false;
+      lifecycle.active = false;
     };
   }, [uid]);
 

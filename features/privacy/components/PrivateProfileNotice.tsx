@@ -1,7 +1,6 @@
 import { Text } from '@/components/ui';
 import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -51,7 +50,7 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },

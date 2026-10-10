@@ -1,4 +1,3 @@
-import { MOCK_THREADS, SHOW_MOCK_DATA } from '@/constants/mockData';
 import { useAppSelector } from '@/store/hooks';
 import { messagingActions } from '@/store/messagingStore';
 import { MessageThread } from '@/types';
@@ -18,29 +17,24 @@ export function useMessageThreads() {
     if (userId) messagingActions.startThreadsListener(userId);
   }, [userId]);
 
-  const withMock = useMemo(
-    () => (SHOW_MOCK_DATA ? [...MOCK_THREADS, ...threads] : threads),
-    [threads]
-  );
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return withMock;
-    return withMock.filter((t) =>
+    if (!q) return threads;
+    return threads.filter((t) =>
       (t.otherUser?.displayName || '').toLowerCase().includes(q)
     );
-  }, [withMock, query]);
+  }, [threads, query]);
 
   const totalUnread = useMemo(
-    () => withMock.reduce((n, t) => n + (t.unread || 0), 0),
-    [withMock]
+    () => threads.reduce((n, t) => n + (t.unread || 0), 0),
+    [threads]
   );
 
   // Uzun basınca: sohbetin silinebileceğini anlat, onay alınca yalnızca bu
   // kullanıcı için gizle (karşı tarafın geçmişi korunur).
   const confirmDelete = useCallback(
     (thread: MessageThread) => {
-      if (!userId || thread.id.startsWith('mock_')) return;
+      if (!userId) return;
       const name = thread.otherUser?.displayName || t('common.user');
       Alert.alert(
         t('messages.deleteThreadTitle', { name }),

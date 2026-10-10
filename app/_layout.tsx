@@ -1,61 +1,37 @@
 import '@/i18n';
-import { authActions } from '@/store/authStore';
-import { storyActions } from '@/store/storyStore';
-import { readingProgressActions } from '@/features/story/services/readingProgress';
-import { reviewPromptActions } from '@/features/review/services/reviewPrompt';
-import { store } from '@/store';
-import { useAppSelector } from '@/store/hooks';
-import { Image } from 'expo-image';
-import { configureGoogleSignIn } from '@/config/googleSignIn';
-import { initSentry } from '@/config/sentry';
-import * as Sentry from '@sentry/react-native';
-import { AuthGateSheet } from '@/components/AuthGateSheet';
-import ErrorBoundary from '@/components/ErrorBoundary';
-import { SplashAnimation } from '@/components/ui';
-import { DeviceBannedScreen } from '@/features/moderation/components/DeviceBannedScreen';
-import { useDeviceBan } from '@/features/moderation/hooks/useDeviceBan';
-import { Linking } from 'react-native';
-import { useEmailVerificationAlert } from '@/features/auth/hooks/useEmailVerificationAlert';
-import { setupNotificationListeners } from '@/utils/notification';
-import { GuestProvider } from '@/contexts/GuestContext';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-  Stack,
-  router,
-  usePathname,
-} from "expo-router";
-import { Provider } from 'react-redux';
-import {
-  useFonts,
-  Spectral_400Regular,
-  Spectral_400Regular_Italic,
-  Spectral_700Bold,
-  Spectral_700Bold_Italic,
-} from '@expo-google-fonts/spectral';
-import {
-  HankenGrotesk_400Regular,
-  HankenGrotesk_500Medium,
-  HankenGrotesk_600SemiBold,
-  HankenGrotesk_700Bold,
-  HankenGrotesk_800ExtraBold,
-} from '@expo-google-fonts/hanken-grotesk';
-import { getAnalytics, logEvent } from '@react-native-firebase/analytics';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import React, { useCallback, useEffect, useState } from 'react';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { AuthGateSheet } from '@/features/auth/components/AuthGateSheet';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { BootSplash } from '@/features/bootstrap/components/BootSplash';
+import { configureGoogleSignIn } from '@/config/googleSignIn';
+import { initSentry } from '@/config/sentry';
+import { GuestProvider } from '@/contexts/GuestContext';
+import { useEmailVerificationAlert } from '@/features/auth/hooks/useEmailVerificationAlert';
+import { useAppFonts } from '@/features/bootstrap/hooks/useAppFonts';
+import { useBootSequence } from '@/features/bootstrap/hooks/useBootSequence';
+import { useNavigationTheme } from '@/features/bootstrap/hooks/useNavigationTheme';
+import { useNotificationRouting } from '@/features/bootstrap/hooks/useNotificationRouting';
+import { useScreenTracking } from '@/features/bootstrap/hooks/useScreenTracking';
+import { DeviceBannedScreen } from '@/features/moderation/components/DeviceBannedScreen';
+import { useDeviceBan } from '@/features/moderation/hooks/useDeviceBan';
+import { store } from '@/store';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import * as Sentry from '@sentry/react-native';
+import { Stack, ThemeProvider } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
+import { useCallback } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Provider } from 'react-redux';
 
 SplashScreen.preventAutoHideAsync();
-
 configureGoogleSignIn();
 initSentry();
+
+/** Açılış ekranının arkasındaki koyu mor zemin (tema yüklenmeden önce görünür). */
+const BOOT_BACKGROUND = '#2A1B52';
 
 function RootLayout() {
   return (
@@ -68,123 +44,41 @@ function RootLayout() {
 export default Sentry.wrap(RootLayout);
 
 function RootLayoutInner() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    Spectral_400Regular,
-    Spectral_400Regular_Italic,
-    Spectral_700Bold,
-    Spectral_700Bold_Italic,
-    HankenGrotesk_400Regular,
-    HankenGrotesk_500Medium,
-    HankenGrotesk_600SemiBold,
-    HankenGrotesk_700Bold,
-    HankenGrotesk_800ExtraBold,
-  });
-  const isLoading = useAppSelector(s => s.auth.isLoading);
-  const isGuest = useAppSelector(s => s.auth.isGuest);
-  const userId = useAppSelector(s => s.auth.user?.id);
-  const storiesLoaded = useAppSelector(s => s.story.storiesLoaded);
-  const continueReadingLoaded = useAppSelector(s => s.story.continueReadingLoaded);
-  const stories = useAppSelector(s => s.story.stories);
-  const continueReading = useAppSelector(s => s.story.continueReading);
+  const navigationTheme = useNavigationTheme();
+  const fontsLoaded = useAppFonts();
+  const { appReady, onIntroFinished } = useBootSequence(fontsLoaded);
   const deviceBan = useDeviceBan();
   useEmailVerificationAlert();
-  const [splashTimedOut, setSplashTimedOut] = useState(false);
-  const [imagesReady, setImagesReady] = useState(false);
-  const [introFinished, setIntroFinished] = useState(false);
-  const pathname = usePathname();
-
-  useEffect(() => {
-    if (!pathname) return;
-    logEvent(getAnalytics(), 'screen_view', { screen_name: pathname, screen_class: pathname })
-      .catch(() => {});
-  }, [pathname]);
-
-  // Push bildirimine tıklanınca ilgili ekrana git. Dinleyici hiç
-  // kurulmadığı için tıklama şimdiye kadar yalnızca uygulamayı açıyordu.
-  useEffect(() => setupNotificationListeners(undefined, (response) => {
-    const data = response.notification.request.content.data ?? {};
-    if (typeof data.route === 'string' && data.route.startsWith('/')) {
-      router.push(data.route as any);
-    } else if (typeof data.url === 'string' && /^https?:\/\//.test(data.url)) {
-      // Duyurularda mağaza bağlantısı gelir; yalnızca http(s) açılır.
-      Linking.openURL(data.url).catch(() => {});
-    }
-  }), []);
-
-  useEffect(() => {
-    authActions.initializeAuth();
-    storyActions.setupStoriesListener();
-    // "Kaç gündür kullanıyor" ölçümünü başlatır (değerlendirme eşiği için).
-    reviewPromptActions.init().catch(() => {});
-    const t = setTimeout(() => setSplashTimedOut(true), 4000);
-    return () => clearTimeout(t);
-  }, []);
-
-  useEffect(() => {
-    if (userId && !isGuest) readingProgressActions.loadContinueReadingShelf();
-  }, [userId, isGuest]);
-  const continueReadingReady = isGuest || !userId || continueReadingLoaded;
-
-  useEffect(() => {
-    if (!storiesLoaded || !continueReadingReady) return;
-    const uris = Array.from(new Set([
-      ...continueReading.map(c => c.story.coverImage),
-      ...stories.slice(0, 12).map(s => s.coverImage),
-    ].filter((uri): uri is string => !!uri)));
-
-    let cancelled = false;
-    Promise.all(uris.map(uri => Image.prefetch(uri).catch(() => false)))
-      .finally(() => { if (!cancelled) setImagesReady(true); });
-    return () => { cancelled = true; };
-  }, [storiesLoaded, continueReadingReady, stories, continueReading]);
-
-  const dataReady = loaded && !isLoading &&
-    (splashTimedOut || (storiesLoaded && continueReadingReady && imagesReady));
-  const bootReady = dataReady && introFinished;
-  const [appReady, setAppReady] = useState(false);
-  useEffect(() => {
-    if (bootReady) setAppReady(true);
-  }, [bootReady]);
+  useScreenTracking();
+  useNotificationRouting();
 
   const onLayoutRootView = useCallback(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
+    if (fontsLoaded) SplashScreen.hideAsync();
+  }, [fontsLoaded]);
 
-  if (!loaded) {
-    return null;
-  }
+  if (!fontsLoaded) return null;
 
   // Banlı cihazda uygulama hiç açılmaz; kurallar yazmayı zaten reddediyor,
   // buradaki ekran kullanıcıya sebebini söyler.
-  if (deviceBan.ban) {
-    return <DeviceBannedScreen reason={deviceBan.ban.reason} />;
-  }
+  if (deviceBan.ban) return <DeviceBannedScreen reason={deviceBan.ban.reason} />;
 
   return (
-    <GestureHandlerRootView
-      style={{ flex: 1, backgroundColor: '#2A1B52' }}
-      onLayout={onLayoutRootView}
-    >
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: BOOT_BACKGROUND }} onLayout={onLayoutRootView}>
       <SafeAreaProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <ThemeProvider value={navigationTheme}>
           <BottomSheetModalProvider>
             <ErrorBoundary>
-              {appReady ? (
-                <GuestProvider>
-                  <Stack screenOptions={{ headerShown: false }}>
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                    <Stack.Screen name="+not-found" />
-                  </Stack>
-                  <StatusBar style="auto" />
-                  <AuthGateSheet />
-                </GuestProvider>
-              ) : (
-                <SplashAnimation onFinish={() => setIntroFinished(true)} />
-              )}
+              {/* Ağaç açılış perdesinin ARKASINDA kurulur: perde kalktığında
+                  ana ekran çizilmiş olur, arada boş bir kare kalmaz. */}
+              <GuestProvider>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen name="+not-found" />
+                </Stack>
+                <StatusBar style="auto" />
+                <AuthGateSheet />
+              </GuestProvider>
+              <BootSplash visible={!appReady} onIntroFinished={onIntroFinished} />
             </ErrorBoundary>
           </BottomSheetModalProvider>
         </ThemeProvider>

@@ -1,7 +1,6 @@
 import { Badge, Text } from '@/components/ui';
-import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
+import { Fonts, Radius, Spacing, alpha, useTheme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { StudioChapter } from '../../utils/chapterContent';
@@ -29,7 +28,7 @@ export function ChapterRow({
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.row, { backgroundColor: active ? colors.primarySoft : 'transparent' }]}
+      style={[styles.row, { backgroundColor: active ? alpha(colors.primary, 0.1) : 'transparent' }]}
     >
       <View
         style={[
@@ -64,15 +63,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
-    borderRadius: Radius.md,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.sm,
   },
   num: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: Radius.xs,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  numText: { fontFamily: Fonts.mono, fontSize: 12, lineHeight: 16, fontWeight: '700' },
+  numText: { fontFamily: Fonts.mono, fontSize: 12, lineHeight: 16 },
 });

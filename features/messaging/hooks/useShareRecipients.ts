@@ -12,7 +12,7 @@ export function useShareRecipients() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let alive = true;
+    const lifecycle = { active: true };
     // Kullanıcı yoksa erken çıkılır ama yükleniyor bayrağı MUTLAKA düşer;
     // aksi halde sayfa sonsuza kadar spinner'da kalıyordu.
     if (!currentUserId) {
@@ -40,16 +40,16 @@ export function useShareRecipients() {
         );
         const reachable = candidates.filter((_, i) => allowed[i]);
 
-        if (alive) setRecipients(reachable);
+        if (lifecycle.active) setRecipients(reachable);
       } catch {
-        if (alive) setRecipients([]);
+        if (lifecycle.active) setRecipients([]);
       } finally {
-        if (alive) setLoading(false);
+        if (lifecycle.active) setLoading(false);
       }
     })();
 
     return () => {
-      alive = false;
+      lifecycle.active = false;
     };
   }, [currentUserId, threads]);
 

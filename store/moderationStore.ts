@@ -13,7 +13,7 @@ import { store } from './index';
 import { addBlockedUser, patchModeration, removeBlockedUser } from './slices/moderationSlice';
 import { logger } from '@/utils/logger';
 
-export type { ModerationState } from './slices/moderationSlice';
+;
 
 export type ReportTargetType = 'story' | 'comment' | 'user' | 'conversation';
 

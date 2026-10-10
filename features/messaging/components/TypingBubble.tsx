@@ -1,5 +1,5 @@
-import { useTheme } from '@/constants/theme';
-import React, { useEffect } from 'react';
+import { Radius, useTheme } from '@/constants/theme';
+import { useEffect } from 'react';
 import { View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -53,10 +53,10 @@ export function TypingBubble() {
           paddingHorizontal: 14,
           marginBottom: 4,
           backgroundColor: colors.surfaceVariant,
-          borderTopLeftRadius: 18,
-          borderTopRightRadius: 18,
-          borderBottomLeftRadius: 4,
-          borderBottomRightRadius: 18,
+          borderTopLeftRadius: Radius.lg,
+          borderTopRightRadius: Radius.lg,
+          borderBottomLeftRadius: Radius.xs,
+          borderBottomRightRadius: Radius.lg,
           flexDirection: 'row',
           gap: 4,
           alignItems: 'center',

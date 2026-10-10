@@ -1,11 +1,10 @@
 import { Button, IconButton, Text } from '@/components/ui';
-import { Spacing, useTheme } from '@/constants/theme';
-import React from 'react';
+import { Radius, Spacing, useTheme } from '@/constants/theme';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
-import type { useComposer } from '../../hooks/useComposer';
+import type { ComposerModel } from '../../hooks/useComposer';
 
-export function ComposerBottomBar({ c, bottomInset }: { c: ReturnType<typeof useComposer>; bottomInset: number }) {
+export function ComposerBottomBar({ c, bottomInset }: { c: ComposerModel; bottomInset: number }) {
   const { colors, shadows } = useTheme();
   const { t, i18n } = useTranslation();
   const nf = (n: number) => n.toLocaleString(i18n.language);
@@ -77,7 +76,7 @@ const styles = StyleSheet.create({
   italicBtn: {
     width: 38,
     height: 38,
-    borderRadius: 999,
+    borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },

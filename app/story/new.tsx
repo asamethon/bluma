@@ -2,7 +2,6 @@ import { Screen } from '@/components/ui';
 import { useTheme } from '@/constants/theme';
 import { StoryInfoForm } from '@/features/story/components/studio/StoryInfoForm';
 import { useStoryInfoForm } from '@/features/story/hooks/useStoryInfoForm';
-import React from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function NewStoryScreen() {

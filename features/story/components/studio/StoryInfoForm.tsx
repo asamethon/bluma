@@ -1,13 +1,13 @@
+import { storyInfoFormStyles as styles } from '@/features/story/styles/storyInfoFormStyles';
 import { Button, CategoryChip, IconButton, Text } from '@/components/ui';
-import { categoryColor, Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
+import { Spacing, useTheme } from '@/constants/theme';
 import { StoryCategory } from '@/types';
-import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, ScrollView, TextInput, View } from 'react-native';
 import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
 import type { useStoryInfoForm } from '../../hooks/useStoryInfoForm';
+import { StoryCoverPicker } from './StoryCoverPicker';
 import { CoverPickerSheet } from '../CoverPickerSheet';
 
 const WRITE_GENRES: StoryCategory[] = [
@@ -43,7 +43,7 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
       />
       <Animated.View style={[{ flex: 1 }, containerAnimStyle]}>
         <View style={styles.header}>
-          <IconButton icon="chevron-back" glass onPress={form.cancel} />
+          <IconButton icon="arrow-back" onPress={form.cancel} />
           <Text variant="heading" style={{ fontSize: 18 }}>
             {form.isNew ? t('studio.newStory') : t('studio.editStoryInfo')}
           </Text>
@@ -56,27 +56,11 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={{ alignItems: 'center', paddingTop: Spacing.sm }}>
-            <View style={styles.coverWrap}>
-              <View
-                style={[styles.cover, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}
-              >
-                {form.coverImage ? (
-                  <Image source={{ uri: form.coverImage }} style={StyleSheet.absoluteFill} contentFit="cover" />
-                ) : (
-                  <Ionicons name="book-outline" size={34} color={categoryColor(form.category)} />
-                )}
-              </View>
-              <IconButton
-                icon="camera-outline"
-                variant="bloom"
-                size={34}
-                color="#fff"
-                onPress={() => form.setCoverSheet(true)}
-                style={[styles.coverBtn, { backgroundColor: colors.primary, borderColor: colors.background }]}
-              />
-            </View>
-          </View>
+          <StoryCoverPicker
+            coverImage={form.coverImage}
+            category={form.category}
+            onPick={() => form.setCoverSheet(true)}
+          />
 
           <View
             style={{ gap: Spacing.sm }}
@@ -85,14 +69,14 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
             <Text variant="label" tone="textSecondary">{t('studio.storyTitleLabel')}</Text>
             <TextInput
               value={form.title}
-              onChangeText={v => { form.setTitle(v); if (v.trim()) form.setTitleError(false); }}
+              onChangeText={form.setTitle}
               onFocus={() => scrollToField('title')}
               placeholder={t('studio.storyTitlePlaceholder')}
               placeholderTextColor={colors.textLight}
               maxLength={100}
               style={[
                 styles.input,
-                { color: colors.text, backgroundColor: colors.surface, borderColor: form.titleError ? colors.error : colors.border },
+                { color: colors.text, backgroundColor: colors.surfaceVariant, borderColor: form.titleError ? colors.error : colors.border },
               ]}
             />
             {form.titleError && <Text variant="caption" tone="error">{t('studio.titleTooShort')}</Text>}
@@ -105,6 +89,7 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
                 <CategoryChip
                   key={g}
                   category={g}
+                  shape="pill"
                   active={form.category === g}
                   onPress={() => form.setCategory(g)}
                 />
@@ -128,7 +113,7 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
               style={[
                 styles.input,
                 styles.multiline,
-                { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border },
+                { color: colors.text, backgroundColor: colors.surfaceVariant, borderColor: colors.border },
               ]}
             />
           </View>
@@ -155,42 +140,8 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
           onClose={() => form.setCoverSheet(false)}
           onPickGallery={form.pickCover}
           onTakePhoto={form.takePhoto}
-          safeBottom={safeBottom}
         />
       </Animated.View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingHorizontal: Spacing.screenX, paddingBottom: Spacing.sm },
-  coverWrap: { position: 'relative' },
-  cover: {
-    width: 108,
-    height: 152,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  coverBtn: { position: 'absolute', right: -6, bottom: -6, borderWidth: 3 },
-  input: {
-    fontFamily: Fonts.sans,
-    fontSize: 15, lineHeight: 20,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-  },
-  multiline: { minHeight: 88, textAlignVertical: 'top' },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  keyboardFiller: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: -1 },
-  footer: {
-    flexDirection: 'row',
-    gap: Spacing.sm + 2,
-    paddingHorizontal: Spacing.screenX,
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
-  },
-});

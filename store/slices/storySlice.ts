@@ -1,7 +1,7 @@
 import { Comment, Story } from '@/types';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface StoryState {
+interface StoryState {
   stories: Story[];
   discoverStories: Story[];
   followingStories: Story[];
@@ -54,12 +54,9 @@ const storySlice = createSlice({
     clearDownloadProgress(state, action: PayloadAction<string>) {
       delete state.isDownloading[action.payload];
     },
-    resetStory() {
-      return initialState;
-    },
   },
 });
 
-export const { patchStory, setDownloadProgress, clearDownloadProgress, resetStory } =
+export const { patchStory, setDownloadProgress, clearDownloadProgress } =
   storySlice.actions;
 export default storySlice.reducer;

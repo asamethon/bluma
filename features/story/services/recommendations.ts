@@ -1,6 +1,6 @@
 import { Story } from '@/types';
 
-export interface TasteProfile {
+interface TasteProfile {
   categoryWeights: Record<string, number>;
   tagWeights: Record<string, number>;
   authorWeights: Record<string, number>;
@@ -19,7 +19,7 @@ const LIKE_WEIGHT = 3;
 const READING_WEIGHT = 2;
 const INTEREST_WEIGHT = 1.5;
 
-export function buildTasteProfile(signals: TasteSignals): TasteProfile {
+function buildTasteProfile(signals: TasteSignals): TasteProfile {
   const categoryWeights: Record<string, number> = {};
   const tagWeights: Record<string, number> = {};
   const authorWeights: Record<string, number> = {};
@@ -53,7 +53,7 @@ export function buildTasteProfile(signals: TasteSignals): TasteProfile {
   return { categoryWeights, tagWeights, authorWeights, excludedIds, ownAuthorId: signals.userId };
 }
 
-export function hasSignals(profile: TasteProfile): boolean {
+function hasSignals(profile: TasteProfile): boolean {
   return (
     Object.keys(profile.categoryWeights).length > 0 ||
     Object.keys(profile.tagWeights).length > 0 ||
@@ -61,15 +61,15 @@ export function hasSignals(profile: TasteProfile): boolean {
   );
 }
 
-export function scoreStory(story: Story, profile: TasteProfile, appLanguage: string): number {
+function scoreStory(story: Story, profile: TasteProfile, appLanguage: string): number {
   if (story.authorId === profile.ownAuthorId) return 0;
   if (profile.excludedIds.has(story.id)) return 0;
 
   const categoryScore = (profile.categoryWeights[story.category] || 0) * 2;
-  let tagScore = 0;
-  for (const tag of story.tags || []) {
-    tagScore += profile.tagWeights[tag.trim().toLowerCase()] || 0;
-  }
+  const tagScore = (story.tags ?? []).reduce(
+    (total, tag) => total + (profile.tagWeights[tag.trim().toLowerCase()] || 0),
+    0,
+  );
   const authorScore = (profile.authorWeights[story.authorId] || 0) * 1.5;
 
   const affinity = categoryScore + tagScore + authorScore;

@@ -1,0 +1,45 @@
+steps:
+  - launch: com.d4tecompany.bluma
+  - wait: 12000
+  - await:
+      visible:
+        text: Ana Sayfa
+  - wait: 12000
+  - await:
+      visible:
+        text: Editörün Seçimi
+  - await:
+      idle: true
+  - wait: 1800
+  - tap:
+      text: Brooklyn
+      after:
+        text: Editörün Seçimi
+  - wait: 1800
+  - await:
+      visible:
+        text: Okumaya Başla
+  - await:
+      idle: true
+  - tap:
+      text: Okumaya Başla
+  - wait: 1600
+  - await:
+      visible:
+        text: Bölümler
+  - await:
+      idle: true
+  - echo: "Android'de Okumaya Basla bolum listesini acar; ilk bolum satiri merkezi 0.50/0.561 ile dogrudan okuyucuya girer."
+  - tap:
+      x: 0.5
+      y: 0.561
+  - await:
+      visible:
+        text: Okuma Ayarları
+  - await:
+      idle: true
+  - tool: gesture-swipe
+    args: { fromX: 0.5, fromY: 0.72, toX: 0.5, toY: 0.42, durationMs: 700 }
+  - wait: 900
+  - await:
+      idle: true

@@ -1,0 +1,16 @@
+# Sahne 3: Yazi studyosu. Bluma'yi salt okuma uygulamasindan ayiran ekran.
+steps:
+  - echo: "Akislar giris YAPMAZ. Firebase oturumu iOS Keychain'de duruyor ve goldie'nin reinstall-app'inden sag cikiyor, yani ilk akis giris yapsa bile sonrakiler walkthrough'u hic gormez. Cihaz demo hesabina bir kez giriyor: store-00-login. Keychain sifirlanirsa asagidaki await patlar; store-00-login'i tekrar kosun."
+  - launch: com.asamethon.bluma
+  - await:
+      visible:
+        text: Ana Sayfa
+  - await:
+      idle: true
+  - tap:
+      text: Yaz
+  - await:
+      idle: true
+  - wait: 800
+  - await:
+      idle: true

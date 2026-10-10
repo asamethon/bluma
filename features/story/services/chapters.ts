@@ -23,7 +23,7 @@ function chaptersRef(storyId: string) {
   return collection(getFirestore(), 'stories', storyId, 'chapters');
 }
 
-export async function saveChapters(storyId: string, chapters: StudioChapter[]) {
+async function saveChapters(storyId: string, chapters: StudioChapter[]) {
   const ref = chaptersRef(storyId);
   await Promise.all(
     chapters.map((c, i) =>

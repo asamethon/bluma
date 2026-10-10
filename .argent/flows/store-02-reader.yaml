@@ -1,0 +1,49 @@
+# Sahne 2: Okuma ekrani. Urunun cekirdek anı.
+#
+# ONKOSUL: demo hesabinin okuma ilerlemesi temiz olmali (bkz. store-01-discover).
+# Ilerleme varsa feed'in basina "Okumaya Devam Et" rafi girer ve asagidaki
+# Editörün Seçimi koordinati kayar.
+steps:
+  - echo: "Akislar giris YAPMAZ. Firebase oturumu iOS Keychain'de duruyor ve goldie'nin reinstall-app'inden sag cikiyor. Cihaz demo hesabina bir kez giriyor: store-00-login."
+  - launch: com.asamethon.bluma
+  - await:
+      visible:
+        text: Ana Sayfa
+  - await:
+      idle: true
+  - await:
+      visible:
+        text: Editörün Seçimi
+  - await:
+      idle: true
+  - echo: "Editörün Seçimi'nin buyuk kapak karti. Cerceve (0.000, 0.283, 1.000, 0.428), merkezi 0.5/0.497. Kart metni hesap verisiyle degistigi icin koordinat kullaniliyor."
+  - tap:
+      x: 0.5
+      y: 0.497
+  - await:
+      visible:
+        text: Okumaya Başla
+  - await:
+      idle: true
+  - echo: "Okuyucuya girmek IKI dokunus ister. 'Okumaya Başla' okuyucuyu ACMAZ, sayfayi bolum listesine kaydirir; okuyucuyu acan, listenin altindaki 'Baştan Oku'."
+  - tap:
+      text: Okumaya Başla
+  - await:
+      visible:
+        text: Baştan Oku
+  - await:
+      idle: true
+  - tap:
+      text: Baştan Oku
+  - echo: "Okuyucuya girildigini 'Okuma Ayarları' ile dogrula. 'Bölümler' ISE YARAMAZ: okuyucunun kendi araç çubugunda da ayni isimde bir dugme var."
+  - await:
+      visible:
+        text: Okuma Ayarları
+  - await:
+      idle: true
+  - echo: Metnin bir miktar akmasi icin asagi kaydir; bos ust bosluk yerine gercek paragraf gorunsun.
+  - tool: gesture-swipe
+    args: { fromX: 0.5, fromY: 0.72, toX: 0.5, toY: 0.42, durationMs: 700 }
+  - wait: 900
+  - await:
+      idle: true

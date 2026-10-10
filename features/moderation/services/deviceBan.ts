@@ -54,5 +54,3 @@ export async function getDeviceBan(): Promise<DeviceBan | null> {
     return null;
   }
 }
-
-export const deviceBanActions = { registerDevice, getDeviceBan };

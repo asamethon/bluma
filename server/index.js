@@ -9,6 +9,9 @@
 //   POST /upload?kind=profile|cover|comment|content   (Authorization: Bearer <idToken>,
 //                                              multipart alan adı: "image")
 //     → { "url": "https://.../i/cover/<id>.webp" }
+//   POST /upload-voice                         (Authorization: Bearer <idToken>,
+//                                              multipart alan adı: "file", m4a/AAC)
+//     → { "url": "https://.../i/voice/<id>.m4a" }
 //   GET  /i/<kind>/<file>                      (1 yıl immutable cache)
 //   GET  /health
 import crypto from 'node:crypto';
@@ -111,6 +114,37 @@ app.post('/upload', uploadLimiter, upload.single('image'), async (req, res) => {
   } catch (err) {
     console.error('upload error:', err);
     return res.status(422).json({ error: 'invalid image' });
+  }
+});
+
+// Sesli mesaj. Görsel hattından geçmez: sharp yok, NSFW kontrolü yok (ses),
+// dosya olduğu gibi saklanır. Tür kontrolü uzantıya değil, MPEG-4 kutu
+// imzasına ("ftyp", 4.-8. bayt) bakar — istemcinin bildirdiği mime'a güvenilmez.
+const VOICE_MAX_BYTES = 6 * 1024 * 1024; // ~2 dk / 64 kbps AAC
+
+const isMpeg4Audio = (buffer) =>
+  buffer.length > 12 && buffer.subarray(4, 8).toString('latin1') === 'ftyp';
+
+app.post('/upload-voice', uploadLimiter, upload.single('file'), async (req, res) => {
+  const uid = await verifyFirebaseToken(req);
+  if (!uid) return res.status(401).json({ error: 'unauthorized' });
+
+  const buffer = req.file?.buffer;
+  if (!buffer?.length) return res.status(400).json({ error: 'no audio' });
+  if (buffer.length > VOICE_MAX_BYTES) return res.status(413).json({ error: 'audio too large' });
+  if (!isMpeg4Audio(buffer)) return res.status(415).json({ error: 'unsupported audio type' });
+
+  try {
+    const name = `${Date.now()}-${crypto.randomBytes(8).toString('hex')}.m4a`;
+    const dir = path.join(DATA_DIR, 'voice');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, name), buffer);
+
+    console.log(`voice ok: uid=${uid} bytes=${buffer.length} → ${name}`);
+    return res.json({ url: `${PUBLIC_BASE_URL}/i/voice/${name}` });
+  } catch (err) {
+    console.error('voice upload error:', err);
+    return res.status(500).json({ error: 'write failed' });
   }
 });
 

@@ -17,6 +17,3 @@ export function privacyOf(subject: PrivacyCarrier): PrivacySettings {
 }
 
 export const isPrivateAccount = (subject: PrivacyCarrier) => privacyOf(subject).privateAccount;
-export const isDiscoverable = (subject: PrivacyCarrier) => privacyOf(subject).discoverable;
-export const allowsMessages = (subject: PrivacyCarrier) => privacyOf(subject).allowMessages;
-export const showsActivity = (subject: PrivacyCarrier) => privacyOf(subject).showActivity;

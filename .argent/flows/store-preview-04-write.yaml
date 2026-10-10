@@ -1,0 +1,22 @@
+executionPrerequisite: >-
+  Okuma ekrani acik, bolum icinde kaydirilmis durumda.
+steps:
+  - echo: "Okuyucudan feed'e TEK seviye geri var. Devam kartiyla girildigi icin detay sayfasi aradan cikiyor; onceki kurguda iki geri gerekiyordu ve detay sayfasinda kenar kaydirmasi belirsiz davraniyordu."
+  - tool: gesture-swipe
+    args: { fromX: 0.05, fromY: 0.5, toX: 0.7, toY: 0.5, durationMs: 500 }
+  - echo: Sekme cubugu yalnizca ana akista var; Yaz'in gorunmesi feed'e dondugumuzu dogrular.
+  - await:
+      visible:
+        text: Yaz
+  - await:
+      idle: true
+  - tap:
+      text: Yaz
+  - await:
+      visible:
+        text: Yazı Stüdyosu
+  - await:
+      idle: true
+  - wait: 1500
+  - await:
+      idle: true

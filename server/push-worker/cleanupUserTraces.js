@@ -10,7 +10,7 @@
 import { FieldValue } from 'firebase-admin/firestore';
 
 // Takip ilişkileri: her iki taraftaki doküman + sayaç.
-export async function cleanupFollowRelations(db, uid) {
+async function cleanupFollowRelations(db, uid) {
   // uid'in TAKİP ETTİKLERİ: her biri için followers/{uid} sil + followersCount--
   const following = await db.collection('users').doc(uid).collection('following').get();
   for (const d of following.docs) {
@@ -29,7 +29,7 @@ export async function cleanupFollowRelations(db, uid) {
 
 // Gönderilmiş takip istekleri: users/{hedef}/followRequests/{uid}. Kullanıcının
 // KENDİSİNE gelen istekler users/{uid} ile birlikte zaten gidiyor.
-export async function cleanupFollowRequests(db, uid) {
+async function cleanupFollowRequests(db, uid) {
   const requests = await db.collectionGroup('followRequests').where('userId', '==', uid).get();
   for (const d of requests.docs) {
     await d.ref.delete().catch(() => {});
@@ -39,7 +39,7 @@ export async function cleanupFollowRequests(db, uid) {
 // Tüm beğeniler tek sorguda: hikâye, bölüm, yorum ve konuşma beğenilerinin
 // hepsi `likes` alt koleksiyonunda `userId` alanıyla duruyor ve dördünde de
 // üst dokümanın sayacı `likesCount`.
-export async function cleanupLikes(db, uid) {
+async function cleanupLikes(db, uid) {
   const likes = await db.collectionGroup('likes').where('userId', '==', uid).get();
   for (const d of likes.docs) {
     const parent = d.ref.parent.parent; // likes koleksiyonunu taşıyan doküman
@@ -53,7 +53,7 @@ export async function cleanupLikes(db, uid) {
 // Hikâye yorumları. İstemcideki deleteComment ile aynı davranış: yorumun
 // altındaki yanıtlar da silinir (yetim yanıt arayüzde görünmez ama sayaçta
 // durur) ve commentsCount silinen toplam kadar düşer.
-export async function cleanupStoryComments(db, uid) {
+async function cleanupStoryComments(db, uid) {
   const comments = await db.collectionGroup('comments').where('userId', '==', uid).get();
   for (const commentDoc of comments.docs) {
     const commentsRef = commentDoc.ref.parent;
@@ -74,7 +74,7 @@ export async function cleanupStoryComments(db, uid) {
 }
 
 // Konuşma yorumları ayrı, top-level koleksiyonda tutulur.
-export async function cleanupConversationComments(db, uid) {
+async function cleanupConversationComments(db, uid) {
   const comments = await db.collection('conversationComments').where('userId', '==', uid).get();
   const perConversation = new Map();
   for (const d of comments.docs) {
@@ -94,7 +94,7 @@ export async function cleanupConversationComments(db, uid) {
 // Kullanıcının GÖNDERDİĞİ bildirimler. Aldıkları (userId == uid) ayrıca
 // siliniyor; gönderdikleri başkalarının akışında durur ve sadece bir id değil,
 // görünen adı ile profil fotoğrafı URL'ini de taşır.
-export async function cleanupSentNotifications(db, uid) {
+async function cleanupSentNotifications(db, uid) {
   const sent = await db.collection('notifications').where('senderId', '==', uid).get();
   if (sent.empty) return;
   const batch = db.batch();

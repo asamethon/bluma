@@ -1,0 +1,15 @@
+steps:
+  - launch: com.d4tecompany.bluma
+  - wait: 12000
+  - await:
+      visible:
+        text: Ana Sayfa
+  - await:
+      idle: true
+  - tap:
+      text: Yaz
+  - await:
+      idle: true
+  - wait: 800
+  - await:
+      idle: true

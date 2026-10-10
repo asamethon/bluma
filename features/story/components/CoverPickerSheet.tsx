@@ -1,92 +1,65 @@
-import { Fonts, Radius , useTheme } from '@/constants/theme';
+import { Sheet, useSheetAction } from '@/components/ui';
+import { Fonts, Radius, Spacing, useTheme } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface CoverPickerSheetProps {
   visible: boolean;
   onClose: () => void;
   onPickGallery: () => void;
   onTakePhoto: () => void;
-  safeBottom: number;
 }
 
-export function CoverPickerSheet({ visible, onClose, onPickGallery, onTakePhoto, safeBottom }: CoverPickerSheetProps) {
+export function CoverPickerSheet({ visible, onClose, onPickGallery, onTakePhoto }: CoverPickerSheetProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const s = createStyles();
+  // Galeri/kamera sayfa kapandıktan SONRA açılır; kapanmakta olan modalın
+  // üstünde açılan sistem ekranı iOS'ta modalla birlikte yok ediliyordu.
+  const after = useSheetAction(onClose);
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      <View style={s.sheetRoot}>
-        <Pressable style={s.sheetBackdrop} onPress={onClose} />
-        <View style={[s.sheetContent, { backgroundColor: colors.surface, paddingBottom: safeBottom + 16 }]}>
-          <View style={[s.sheetHandle, { backgroundColor: colors.border }]} />
-          <Text style={[s.modalTitle, { color: colors.text }]}>{t('coverPicker.title')}</Text>
-          <Text style={[s.modalSub, { color: colors.textSecondary }]}>{t('coverPicker.subtitle')}</Text>
+    <Sheet visible={visible} onClose={onClose} onClosed={after.run} contentStyle={s.sheetContent}>
+      <Text style={[s.modalTitle, { color: colors.text }]}>{t('coverPicker.title')}</Text>
+      <Text style={[s.modalSub, { color: colors.textSecondary }]}>{t('coverPicker.subtitle')}</Text>
 
-          <TouchableOpacity style={[s.modalBtn, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}
-            onPress={() => { onClose(); onPickGallery(); }}>
-            <View style={[s.modalIcon, { backgroundColor: colors.primarySoft }]}>
-              <Ionicons name="images" size={22} color={colors.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[s.modalBtnText, { color: colors.text }]}>{t('coverPicker.gallery')}</Text>
-              <Text style={[s.modalBtnSub, { color: colors.textSecondary }]}>{t('coverPicker.gallerySub')}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[s.modalBtn, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}
-            onPress={() => { onClose(); onTakePhoto(); }}>
-            <View style={[s.modalIcon, { backgroundColor: colors.primarySoft }]}>
-              <Ionicons name="camera" size={22} color={colors.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[s.modalBtnText, { color: colors.text }]}>{t('coverPicker.camera')}</Text>
-              <Text style={[s.modalBtnSub, { color: colors.textSecondary }]}>{t('coverPicker.cameraSub')}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={s.cancelBtn} onPress={onClose}>
-            <Text style={[s.cancelText, { color: colors.textSecondary }]}>{t('common.cancel')}</Text>
-          </TouchableOpacity>
+      <TouchableOpacity style={[s.modalBtn, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}
+        onPress={() => after.schedule(onPickGallery)}>
+        <View style={[s.modalIcon, { backgroundColor: colors.primarySoft }]}>
+          <Ionicons name="images" size={22} color={colors.primary} />
         </View>
-      </View>
-    </Modal>
+        <View style={{ flex: 1 }}>
+          <Text style={[s.modalBtnText, { color: colors.text }]}>{t('coverPicker.gallery')}</Text>
+          <Text style={[s.modalBtnSub, { color: colors.textSecondary }]}>{t('coverPicker.gallerySub')}</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
+      </TouchableOpacity>
+
+      <TouchableOpacity style={[s.modalBtn, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}
+        onPress={() => after.schedule(onTakePhoto)}>
+        <View style={[s.modalIcon, { backgroundColor: colors.primarySoft }]}>
+          <Ionicons name="camera" size={22} color={colors.primary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[s.modalBtnText, { color: colors.text }]}>{t('coverPicker.camera')}</Text>
+          <Text style={[s.modalBtnSub, { color: colors.textSecondary }]}>{t('coverPicker.cameraSub')}</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
+      </TouchableOpacity>
+
+      <TouchableOpacity style={s.cancelBtn} onPress={onClose}>
+        <Text style={[s.cancelText, { color: colors.textSecondary }]}>{t('common.cancel')}</Text>
+      </TouchableOpacity>
+    </Sheet>
   );
 }
 
 const createStyles = () =>
   StyleSheet.create({
-    sheetRoot: {
-      flex: 1,
-      justifyContent: 'flex-end',
-    },
-    sheetBackdrop: {
-      ...StyleSheet.absoluteFill,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-    },
     sheetContent: {
-      paddingHorizontal: 20,
-      paddingTop: 10,
-      borderTopLeftRadius: 28,
-      borderTopRightRadius: 28,
-    },
-    sheetHandle: {
-      alignSelf: 'center',
-      width: 38,
-      height: 4,
-      borderRadius: 2,
-      marginBottom: 14,
+      paddingHorizontal: Spacing.screenX,
+      paddingTop: Spacing.md,
     },
     modalTitle: {
       fontFamily: Fonts.serif,
@@ -113,7 +86,7 @@ const createStyles = () =>
     modalIcon: {
       width: 42,
       height: 42,
-      borderRadius: 21,
+      borderRadius: Radius.md,
       alignItems: 'center',
       justifyContent: 'center',
     },

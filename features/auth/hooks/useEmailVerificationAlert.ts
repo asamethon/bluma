@@ -35,15 +35,15 @@ export function useEmailVerificationAlert() {
     if (!userId || handled.current || !needsEmailVerification()) return;
     handled.current = true;
 
-    let cancelled = false;
+    const lifecycle = { cancelled: false };
     // Açılış animasyonuyla çakışmasın.
     const timer = setTimeout(async () => {
       // Başka bir cihazda doğrulamış olabilir; boş yere uyarma.
       if (await refreshVerificationState()) return;
-      if (cancelled) return;
+      if (lifecycle.cancelled) return;
 
       const grace = await ensureGraceStarted();
-      if (!grace || cancelled) return;
+      if (!grace || lifecycle.cancelled) return;
 
       const shownCount = Number(await AsyncStorage.getItem(STORAGE_KEY).catch(() => null)) || 0;
       const daysSinceStart = Math.floor((Date.now() - grace.startedAt.getTime()) / 86400_000);
@@ -65,6 +65,6 @@ export function useEmailVerificationAlert() {
       );
     }, 1500);
 
-    return () => { cancelled = true; clearTimeout(timer); };
+    return () => { lifecycle.cancelled = true; clearTimeout(timer); };
   }, [userId]);
 }

@@ -3,7 +3,6 @@ import { useTheme } from '@/constants/theme';
 import { StoryInfoForm } from '@/features/story/components/studio/StoryInfoForm';
 import { useStoryInfoForm } from '@/features/story/hooks/useStoryInfoForm';
 import { useLocalSearchParams } from 'expo-router';
-import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 

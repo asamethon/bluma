@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface ChallengeState {
+interface ChallengeState {
   xp: number;
   streak: number;
   challengeProgress: Record<string, number>;

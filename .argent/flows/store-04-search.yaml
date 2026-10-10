@@ -1,0 +1,30 @@
+# Sahne 4: Ara ve turler. Katalog genisligini satar.
+steps:
+  - echo: "Akislar giris YAPMAZ. Firebase oturumu iOS Keychain'de duruyor ve goldie'nin reinstall-app'inden sag cikiyor. Cihaz demo hesabina bir kez giriyor: store-00-login."
+  - launch: com.asamethon.bluma
+  - await:
+      visible:
+        text: Ana Sayfa
+  - await:
+      idle: true
+  - tap:
+      text: Ara
+  - await:
+      visible:
+        text: Türler
+  - await:
+      idle: true
+  - echo: "Bir tur cipine dokunmak TREND ARAMALAR bolumunu kaldirip Türler'i yukari cekiyor (0.460 -> 0.259) ve sonuc listesini aciyor. Bunu jestle kaydirarak yapmayin: bu ekranda kaydirma atalet yuzunden tutarsiz, ayni jest bazen 0.22 bazen 0.59 kaydiriyor."
+  - tap:
+      text: Romantik
+  - await:
+      visible:
+        text: hikâye
+  - await:
+      idle: true
+  - echo: "Kucuk ve YAVAS bir kaydirma bir kapak daha kadraja sokar. Yavas olmasi sart; hizli jest ataletle Türler basligini da ekran disina atiyor."
+  - tool: gesture-swipe
+    args: { fromX: 0.5, fromY: 0.62, toX: 0.5, toY: 0.47, durationMs: 850 }
+  - wait: 700
+  - await:
+      idle: true

@@ -19,14 +19,14 @@ function chapterRef(storyId: string, chapterIndex: number) {
   return doc(getFirestore(), 'stories', storyId, 'chapters', String(chapterIndex));
 }
 
-export async function isChapterLiked(storyId: string, chapterIndex: number): Promise<boolean> {
+async function isChapterLiked(storyId: string, chapterIndex: number): Promise<boolean> {
   const { user } = store.getState().auth;
   if (!user?.id) return false;
   const snap = await getDoc(doc(collection(chapterRef(storyId, chapterIndex), 'likes'), user.id));
   return snap.exists();
 }
 
-export async function toggleChapterLike(storyId: string, chapterIndex: number, wasLiked: boolean) {
+async function toggleChapterLike(storyId: string, chapterIndex: number, wasLiked: boolean) {
   const { user } = store.getState().auth;
   if (!user?.id) return { success: false };
 
