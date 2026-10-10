@@ -1,5 +1,6 @@
 import '@/i18n';
 import 'react-native-reanimated';
+import '@/features/notifications/services/foregroundNotifications';
 
 import { AuthGateSheet } from '@/features/auth/components/AuthGateSheet';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -50,7 +51,7 @@ function RootLayoutInner() {
   const deviceBan = useDeviceBan();
   useEmailVerificationAlert();
   useScreenTracking();
-  useNotificationRouting();
+  useNotificationRouting(appReady);
 
   const onLayoutRootView = useCallback(() => {
     if (fontsLoaded) SplashScreen.hideAsync();

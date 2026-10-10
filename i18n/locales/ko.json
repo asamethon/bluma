@@ -441,6 +441,8 @@
     "newCommentTitle": "새 댓글",
     "storyLikedMessage": "{{name}}님이 내 스토리 \"{{story}}\"를 좋아합니다",
     "storyCommentMessage": "{{name}}님이 내 스토리 \"{{story}}\"에 댓글을 남겼습니다",
+    "commentReplyTitle": "내 댓글에 답글",
+    "commentReplyMessage": "{{name}}님이 \"{{story}}\"의 내 댓글에 답글을 남겼습니다",
     "welcomeTitle": "Bluma에 오신 것을 환영합니다!",
     "welcomeMessage": "안녕하세요 {{name}}님! 이제 스토리를 공유해보세요.",
     "conversationLikedMessage": "{{name}}님이 내 대화 \"{{conversation}}\"를 좋아합니다",

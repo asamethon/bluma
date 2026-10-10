@@ -22,7 +22,7 @@ import {
 import { getCommentById } from './commentRecords';
 import { getStoryById } from './storyApi';
 
-async function notifyComment(storyId: string, parentId: string | undefined, content: string) {
+async function notifyComment(storyId: string, commentId: string, parentId: string | undefined, content: string, chapterIndex?: number) {
   const user = store.getState().auth.user;
   if (!user) return;
   const [story, parent] = await Promise.all([
@@ -38,6 +38,9 @@ async function notifyComment(storyId: string, parentId: string | undefined, cont
     story?.title || i18n.t('common.story'),
     storyId,
     content,
+    commentId,
+    parentId,
+    chapterIndex,
   );
 }
 
@@ -60,7 +63,8 @@ export async function addComment(storyId: string, content: string, parentId?: st
       ...(typeof chapterIndex === 'number' ? { chapterIndex } : {}),
     });
     await updateDoc(doc(db, 'stories', storyId), { commentsCount: increment(1) });
-    void notifyComment(storyId, parentId, content);
+    void notifyComment(storyId, reference.id, parentId, content, chapterIndex)
+      .catch(error => logger.error('Comment notification error:', error));
     if (!parentId) void challengeActions.trackAction(user.id, 'commentsPosted');
     return { success: true, commentId: reference.id };
   } catch (error) {

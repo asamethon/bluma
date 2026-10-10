@@ -441,6 +441,8 @@
     "newCommentTitle": "新しいコメント",
     "storyLikedMessage": "{{name}}があなたのストーリー「{{story}}」に「いいね」しました",
     "storyCommentMessage": "{{name}}があなたのストーリー「{{story}}」にコメントしました",
+    "commentReplyTitle": "コメントへの返信",
+    "commentReplyMessage": "{{name}}が「{{story}}」のあなたのコメントに返信しました",
     "welcomeTitle": "Blumaへようこそ!",
     "welcomeMessage": "こんにちは、{{name}}さん!さっそくストーリーの共有を始めましょう。",
     "conversationLikedMessage": "{{name}}があなたの会話「{{conversation}}」に「いいね」しました",

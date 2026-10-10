@@ -441,6 +441,8 @@
     "newCommentTitle": "Neuer Kommentar",
     "storyLikedMessage": "{{name}} gefällt deine Geschichte \"{{story}}\"",
     "storyCommentMessage": "{{name}} hat deine Geschichte \"{{story}}\" kommentiert",
+    "commentReplyTitle": "Antwort auf deinen Kommentar",
+    "commentReplyMessage": "{{name}} hat auf deinen Kommentar zu \"{{story}}\" geantwortet",
     "welcomeTitle": "Willkommen bei Bluma!",
     "welcomeMessage": "Hallo {{name}}! Du kannst jetzt deine Geschichten teilen.",
     "conversationLikedMessage": "{{name}} gefällt deine Unterhaltung \"{{conversation}}\"",

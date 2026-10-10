@@ -4,8 +4,13 @@ import { collection, doc, getDoc, getDocs, getFirestore } from '@react-native-fi
 import { createNotification } from './notificationRepository';
 
 async function profileImage(userId: string) {
-  const snapshot = await getDoc(doc(getFirestore(), 'users', userId));
-  return snapshot.exists() ? snapshot.data()?.profileImage : undefined;
+  try {
+    const snapshot = await getDoc(doc(getFirestore(), 'users', userId));
+    return snapshot.exists() ? snapshot.data()?.profileImage : undefined;
+  } catch {
+    // Profil görseli okunamasa da bildirim gönderilir.
+    return undefined;
+  }
 }
 
 export async function announceStoryToFollowers(
@@ -84,21 +89,29 @@ export async function createCommentNotification(
   storyTitle: string,
   storyId: string,
   commentText: string,
+  commentId: string,
+  parentId?: string,
+  chapterIndex?: number,
 ) {
   try {
+    const titleKey = parentId ? 'notifications.commentReplyTitle' : 'notifications.newCommentTitle';
+    const messageKey = parentId ? 'notifications.commentReplyMessage' : 'notifications.storyCommentMessage';
     const params = { name: commenterName, story: storyTitle };
     return createNotification({
       userId: storyOwnerId,
       senderId: commenterId,
       type: 'comment',
-      title: i18n.t('notifications.newCommentTitle'),
-      message: i18n.t('notifications.storyCommentMessage', params),
+      title: i18n.t(titleKey),
+      message: i18n.t(messageKey, params),
       data: {
         storyId,
         storyTitle,
         commentText,
+        commentId,
+        ...(parentId ? { parentId } : {}),
+        ...(chapterIndex !== undefined ? { chapterIndex: String(chapterIndex) } : {}),
         commenterProfileImage: await profileImage(commenterId),
-        i18n: { titleKey: 'notifications.newCommentTitle', messageKey: 'notifications.storyCommentMessage', params },
+        i18n: { titleKey, messageKey, params },
       },
       isRead: false,
     });

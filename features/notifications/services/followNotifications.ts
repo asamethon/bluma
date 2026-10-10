@@ -14,8 +14,9 @@ type FollowInput = {
 
 async function createFollowStyleNotification(input: FollowInput) {
   try {
-    const snapshot = await getDoc(doc(getFirestore(), 'users', input.senderId));
-    const profileImage = snapshot.exists() ? snapshot.data()?.profileImage : undefined;
+    const profileImage = await getDoc(doc(getFirestore(), 'users', input.senderId))
+      .then(snapshot => snapshot.exists() ? snapshot.data()?.profileImage : undefined)
+      .catch(() => undefined);
     return createNotification({
       userId: input.recipientId,
       senderId: input.senderId,

@@ -2,9 +2,11 @@ import { useFollowRequests } from '@/features/social/hooks/useFollowRequests';
 import { useAppSelector } from '@/store/hooks';
 import { notificationActions } from '@/store/notificationStore';
 import type { Notification } from '@/types';
+import { notificationTarget } from '../utils/notificationTarget';
+import { localizeNotification } from '../utils/localizeNotification';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect } from 'react';
-import { Linking } from 'react-native';
+import { Alert, Linking } from 'react-native';
 
 export function useNotifications() {
   const router = useRouter();
@@ -22,31 +24,14 @@ export function useNotifications() {
 
   const open = useCallback((item: Notification) => {
     void notificationActions.markAsRead(item.id);
-    const data = item.data;
-    if (item.type === 'follow_request') return router.push('/profile/follow-requests');
-    if (item.type === 'follow' || item.type === 'follow_accepted') {
-      if (data?.followerId) router.push(`/user/${data.followerId}` as never);
+    const target = notificationTarget(item);
+    if (item.type === 'announcement' && target?.kind === 'route' && target.value === '/notifications') {
+      const copy = localizeNotification(item);
+      Alert.alert(copy.title, copy.message);
       return;
     }
-    if (item.type === 'like' || item.type === 'comment' || item.type === 'mention' || item.type === 'conversation_announcement') {
-      if (data?.conversationId) router.push(`/conversation/${data.conversationId}` as never);
-      else if (data?.storyId) router.push(`/story/${data.storyId}` as never);
-      return;
-    }
-    if (item.type === 'story_published' && data?.storyId) {
-      router.push(`/story/${data.storyId}/preview` as never);
-      return;
-    }
-    if (item.type === 'announcement') {
-      if (data?.url) void Linking.openURL(data.url);
-      else if (data?.route) router.push(data.route as never);
-      return;
-    }
-    if (item.type === 'verify_email') return router.push('/profile/verify-email');
-    if (item.type === 'new_chapter' && data?.storyId) {
-      const chapter = data.chapterNumber ? Number(data.chapterNumber) - 1 : 0;
-      router.push(`/story/${data.storyId}?chapter=${chapter}` as never);
-    }
+    if (target?.kind === 'url') void Linking.openURL(target.value).catch(() => {});
+    else if (target) router.push(target.value as never);
   }, [router]);
 
   return {

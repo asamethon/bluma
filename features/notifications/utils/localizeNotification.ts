@@ -34,6 +34,9 @@ function legacyRecipe(item: Localizable): NotificationI18n | null {
     case 'follow_accepted':
       return recipe('notifications.followAcceptedTitle', 'notifications.followAcceptedMessage', { name });
     case 'like':
+      if (data.conversationId) return recipe('notifications.newLikeTitle', 'notifications.conversationLikedMessage', {
+        name, conversation: data.conversationTitle || '',
+      });
       // Bölüm beğenisinde bölüm indeksi taşınır.
       if (data.chapterIndex !== undefined) {
         return recipe('notifications.chapterLikedTitle', 'notifications.chapterLikedMessage', {
@@ -44,6 +47,10 @@ function legacyRecipe(item: Localizable): NotificationI18n | null {
       }
       return recipe('notifications.newLikeTitle', 'notifications.storyLikedMessage', { name, story });
     case 'comment':
+      if (data.conversationId) return recipe('notifications.newCommentTitle', 'notifications.conversationCommentMessage', {
+        name, conversation: data.conversationTitle || '',
+      });
+      if (data.parentId) return recipe('notifications.commentReplyTitle', 'notifications.commentReplyMessage', { name, story });
       return recipe('notifications.newCommentTitle', 'notifications.storyCommentMessage', { name, story });
     case 'mention':
       return recipe('notifications.mentionTitle', 'notifications.mentionMessage', { name, story });

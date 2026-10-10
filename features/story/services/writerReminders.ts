@@ -21,7 +21,7 @@ export async function syncWriterReminders(stories: Story[]) {
         content: {
           title: i18n.t('writerReminders.firstTitle'),
           body: i18n.t('writerReminders.firstBody'),
-          data: { type: 'writer_nudge' },
+          data: { type: 'writer_nudge', route: '/(tabs)/write' },
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
@@ -38,7 +38,7 @@ export async function syncWriterReminders(stories: Story[]) {
         content: {
           title: i18n.t('writerReminders.draftTitle'),
           body: i18n.t('writerReminders.draftBody', { title: draft.title }),
-          data: { type: 'writer_nudge' },
+          data: { type: 'writer_nudge', route: `/story/compose/${encodeURIComponent(draft.id)}?ch=0` },
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,

@@ -1,30 +1,13 @@
 import { deleteDoc, doc, getFirestore, setDoc } from '@react-native-firebase/firestore';
+import { getAuth } from '@react-native-firebase/auth';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { logger } from '@/utils/logger';
 
-Notifications.setNotificationHandler({
-  handleNotification: async (notification) => {
-    const type = (notification?.request?.content?.data as any)?.type;
-    if (type === 'message') {
-      return {
-        shouldShowBanner: false,
-        shouldShowList: false,
-        shouldPlaySound: false,
-        shouldSetBadge: false,
-      };
-    }
-    return {
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-    };
-  },
-});
-
 class PushNotificationService {
+  private registrationVersion = 0;
+
   async getExpoPushToken(): Promise<string | null> {
     try {
       if (!Device.isDevice) {
@@ -54,18 +37,28 @@ class PushNotificationService {
   }
 
   async saveUserPushToken(userId: string): Promise<boolean> {
+    const version = this.registrationVersion;
     try {
       const token = await this.getExpoPushToken();
       if (!token) return false;
+      // Çıkış sırasında başlamış eski kayıt yeni oturumun token'ını ele geçirmesin.
+      if (version !== this.registrationVersion || getAuth().currentUser?.uid !== userId) return false;
 
       const db = getFirestore();
-      await setDoc(doc(db, 'userPushTokens', userId), {
+      const tokenRef = doc(db, 'userPushTokens', userId);
+      await setDoc(tokenRef, {
         userId,
         expoPushToken: token,
         platform: Platform.OS,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
+
+      // Yazma çıkışla yarıştıysa eski hesabın kaydını sonradan temizle.
+      if (version !== this.registrationVersion && getAuth().currentUser?.uid !== userId) {
+        await deleteDoc(tokenRef);
+        return false;
+      }
 
       return true;
     } catch (error) {
@@ -75,6 +68,7 @@ class PushNotificationService {
   }
 
   async removeUserPushToken(userId: string): Promise<void> {
+    this.registrationVersion += 1;
     try {
       await deleteDoc(doc(getFirestore(), 'userPushTokens', userId));
     } catch (error) {

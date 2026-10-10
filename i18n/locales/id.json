@@ -441,6 +441,8 @@
     "newCommentTitle": "Komentar baru",
     "storyLikedMessage": "{{name}} menyukai ceritamu \"{{story}}\"",
     "storyCommentMessage": "{{name}} mengomentari ceritamu \"{{story}}\"",
+    "commentReplyTitle": "Balasan untuk Komentarmu",
+    "commentReplyMessage": "{{name}} membalas komentarmu di \"{{story}}\"",
     "welcomeTitle": "Selamat datang di Bluma!",
     "welcomeMessage": "Halo {{name}}! Kamu sekarang bisa mulai membagikan ceritamu.",
     "conversationLikedMessage": "{{name}} menyukai percakapanmu \"{{conversation}}\"",

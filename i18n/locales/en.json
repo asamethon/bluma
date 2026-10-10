@@ -463,6 +463,8 @@
     "newCommentTitle": "New Comment",
     "storyLikedMessage": "{{name}} liked your story \"{{story}}\"",
     "storyCommentMessage": "{{name}} commented on your story \"{{story}}\"",
+    "commentReplyTitle": "Reply to Your Comment",
+    "commentReplyMessage": "{{name}} replied to your comment on \"{{story}}\"",
     "welcomeTitle": "Welcome to Bluma!",
     "welcomeMessage": "Hi {{name}}! You can start sharing your stories.",
     "conversationLikedMessage": "{{name}} liked your conversation \"{{conversation}}\"",

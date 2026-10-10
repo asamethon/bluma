@@ -24,19 +24,21 @@ async function notifyEngagement(conversationId: string, actorId: string, kind: '
     if (!actor || !context || context.authorId === actorId) return;
     const name = actor.displayName || actor.username || i18n.t('notifications.someone');
     const like = kind === 'like';
+    const titleKey = like ? 'notifications.newLikeTitle' : 'notifications.newCommentTitle';
+    const messageKey = like ? 'notifications.conversationLikedMessage' : 'notifications.conversationCommentMessage';
+    const params = { name, conversation: context.title };
     const notification: NotificationInput = {
       userId: context.authorId,
       senderId: actorId,
       type: kind,
-      title: i18n.t(like ? 'notifications.newLikeTitle' : 'notifications.newCommentTitle'),
-      message: i18n.t(
-        like ? 'notifications.conversationLikedMessage' : 'notifications.conversationCommentMessage',
-        { name, conversation: context.title },
-      ),
+      title: i18n.t(titleKey),
+      message: i18n.t(messageKey, params),
       data: {
         conversationId,
+        conversationTitle: context.title,
         ...(commentText ? { commentText } : {}),
         ...(like ? { likerProfileImage: actor.profileImage } : { commenterProfileImage: actor.profileImage }),
+        i18n: { titleKey, messageKey, params },
       },
       isRead: false,
     };

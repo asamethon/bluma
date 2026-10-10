@@ -463,6 +463,8 @@
     "newCommentTitle": "Yeni Yorum",
     "storyLikedMessage": "{{name}} \"{{story}}\" hikayeni beğendi",
     "storyCommentMessage": "{{name}} \"{{story}}\" hikayene yorum yaptı",
+    "commentReplyTitle": "Yorumuna Yanıt",
+    "commentReplyMessage": "{{name}}, \"{{story}}\" hikâyesindeki yorumuna yanıt verdi",
     "welcomeTitle": "Bluma'ya Hoş Geldin!",
     "welcomeMessage": "Merhaba {{name}}! Hikayelerini paylaşmaya başlayabilirsin.",
     "conversationLikedMessage": "{{name}} \"{{conversation}}\" konuşmanızı beğendi",

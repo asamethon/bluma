@@ -441,6 +441,8 @@
     "newCommentTitle": "新评论",
     "storyLikedMessage": "{{name}} 点赞了你的故事“{{story}}”",
     "storyCommentMessage": "{{name}} 评论了你的故事“{{story}}”",
+    "commentReplyTitle": "回复了你的评论",
+    "commentReplyMessage": "{{name}} 回复了你在“{{story}}”中的评论",
     "welcomeTitle": "欢迎来到 Bluma！",
     "welcomeMessage": "你好，{{name}}！现在可以开始分享你的故事了。",
     "conversationLikedMessage": "{{name}} 点赞了你的对话“{{conversation}}”",

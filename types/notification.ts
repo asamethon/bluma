@@ -30,7 +30,9 @@ export interface Notification {
   data?: {
     storyId?: string;
     conversationId?: string;
+    conversationTitle?: string;
     commentId?: string;
+    parentId?: string;
     followerId?: string;
     storyTitle?: string;
     commentText?: string;
@@ -43,6 +45,7 @@ export interface Notification {
     authorName?: string;
     url?: string;
     route?: string;
+    tag?: string;
     i18n?: NotificationI18n;
   };
   isRead: boolean;

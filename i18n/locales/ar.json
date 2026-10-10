@@ -441,6 +441,8 @@
     "newCommentTitle": "تعليق جديد",
     "storyLikedMessage": "أعجب {{name}} بقصتك \"{{story}}\"",
     "storyCommentMessage": "علّق {{name}} على قصتك \"{{story}}\"",
+    "commentReplyTitle": "رد على تعليقك",
+    "commentReplyMessage": "ردّ {{name}} على تعليقك في \"{{story}}\"",
     "welcomeTitle": "مرحبًا بك في Bluma!",
     "welcomeMessage": "مرحبًا {{name}}! يمكنك الآن البدء في مشاركة قصصك.",
     "conversationLikedMessage": "أعجب {{name}} بمحادثتك \"{{conversation}}\"",
