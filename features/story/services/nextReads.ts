@@ -69,7 +69,7 @@ function scoreNextRead(candidate: Story, finished: Story, viewerId?: string): nu
 }
 
 /**
- * Adaylar zaten bellekteki `discoverStories` havuzudur — ek Firestore okuması
+ * Adaylar zaten bellekteki ana akıştır (`stories`): ek Firestore okuması
  * yapılmaz, yeni indeks gerekmez.
  */
 export function getNextReads(

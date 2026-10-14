@@ -9,11 +9,10 @@ const withDelta = (stories: Story[], storyId: string, delta: number) =>
 
 /** Aynı hikâyenin akıştaki tüm kopyalarında beğeni sayacını oynatır. */
 export function applyLikeDelta(storyId: string, delta: number) {
-  const { stories, discoverStories, followingStories, currentStory } = store.getState().story;
+  const { stories, followingStories, currentStory } = store.getState().story;
   store.dispatch(
     patchStory({
       stories: withDelta(stories, storyId, delta),
-      discoverStories: withDelta(discoverStories, storyId, delta),
       followingStories: withDelta(followingStories, storyId, delta),
       ...(currentStory?.id === storyId
         ? { currentStory: withDelta([currentStory], storyId, delta)[0] }
@@ -23,11 +22,10 @@ export function applyLikeDelta(storyId: string, delta: number) {
 }
 
 function findLoadedStory(storyId: string): Story | undefined {
-  const { stories, discoverStories, followingStories, currentStory } = store.getState().story;
+  const { stories, followingStories, currentStory } = store.getState().story;
   const match = (list: Story[]) => list.find(story => story.id === storyId);
   return (
     match(stories) ??
-    match(discoverStories) ??
     match(followingStories) ??
     (currentStory?.id === storyId ? currentStory : undefined)
   );

@@ -126,7 +126,9 @@ düşer (hiçbir şey kırılmaz).
 
 Beğeni/yorum/görüntülenme sayaçlarındaki zaman içinde oluşabilecek sapmayı
 (ağ kopması, yarım kalan işlem vb.) gerçek alt koleksiyon sayılarından
-yeniden hesaplayıp düzeltir. Haftada bir crontab ile çalıştır:
+yeniden hesaplayıp düzeltir. Ayda bir çalışır (tek çalıştırma on binlerce
+okuma yapar; Spark planda günlük kotayı tüketmesin diye haftalıktan aylığa
+alındı). Kurulum `cron/install.sh` ile; elle örnek:
 
 ```bash
 # Önce kontrol et (hiçbir şey yazmaz):
@@ -134,7 +136,7 @@ GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/firebase-service-account.json \
   node /opt/bluma-push-worker/reconcile-counters.js --dry-run
 
 # crontab -e (bluma-push kullanıcısı için):
-0 4 * * 0 GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/firebase-service-account.json \
+30 4 1 * * GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/firebase-service-account.json \
   node /opt/bluma-push-worker/reconcile-counters.js >> /var/log/bluma-reconcile.log 2>&1
 ```
 
@@ -238,7 +240,7 @@ tekrar tekrar çalıştırılabilir.
 boruya kurban etmeden yakalar (`node ... | logger` yazılsaydı cron her zaman
 başarı görürdü) ve hata çıktısını `cron/alert.js` ile postalar.
 
-Kurulan işler: günlük son hatırlatma (`--grace-day 6`) ve haftalık sayaç
+Kurulan işler: günlük son hatırlatma (`--grace-day 6`) ve aylık sayaç
 mutabakatı. **Askıya alma satırı bilinçli olarak kapalı** — açma koşulları
 `crontab.example` içinde yazılı.
 
@@ -247,7 +249,7 @@ mutabakatı. **Askıya alma satırı bilinçli olarak kapalı** — açma koşul
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/firebase-service-account.json
 
-node reconcile-counters.js --dry-run        # sayaç mutabakatı (haftalık)
+node reconcile-counters.js --dry-run        # sayaç mutabakatı (aylık)
 node notify-unverified.js --dry-run         # doğrulama hatırlatması
 node announce.js --tag v2.1 --title "..." --message "..." --dry-run
 node deactivate-unverified.js --dry-run     # süresi dolanları askıya al

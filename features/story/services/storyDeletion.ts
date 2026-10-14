@@ -3,6 +3,8 @@ import { store } from '@/store';
 import type { Story } from '@/types';
 import { logger } from '@/utils/logger';
 import { collection, deleteDoc, doc, getDoc, getDocs, getFirestore, writeBatch } from '@react-native-firebase/firestore';
+import { applyStoryChange } from './listeners/storyFeedListeners';
+import { forgetStory } from './storyCache';
 import { updateUserStoriesCount } from './storyMutations';
 
 async function nestedReferences(storyId: string, group: 'chapters' | 'comments') {
@@ -47,6 +49,8 @@ export async function deleteStory(storyId: string) {
       ...comments.flat(),
     ]);
     await deleteDoc(reference);
+    forgetStory(storyId);
+    applyStoryChange(storyId, null);
     if ((story.data() as Story).isPublished) await updateUserStoriesCount(userId, -1);
     return { success: true };
   } catch (error) {

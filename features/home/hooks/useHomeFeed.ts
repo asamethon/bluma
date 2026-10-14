@@ -31,8 +31,7 @@ export function useHomeFeed() {
       void privacyActions.load();
       messagingActions.startThreadsListener(userId);
     } else if (isGuest) {
-      storyActions.setupStoriesListener();
-      void storyActions.loadDiscoverStories();
+      void storyActions.loadStoriesFeed();
     }
     return () => {
       storyActions.cleanupRealTimeListeners();
@@ -40,9 +39,12 @@ export function useHomeFeed() {
     };
   }, [isGuest, userId]);
 
+  // Sekmeye her dönüşte çağrılır ama ucuzdur: akış 10 dk, raf 5 dk içinde
+  // (ya da okuyucuda bölüm değişmediyse) tekrar okunmaz. Beğeniler zaten
+  // canlı dinleniyor.
   useFocusEffect(useCallback(() => {
+    void storyActions.loadStoriesFeed();
     if (!userId) return;
-    void storyActions.refreshLikedStoriesState();
     void storyActions.loadOfflineStories();
     void readingProgressActions.loadContinueReadingShelf();
   }, [userId]));
@@ -62,18 +64,19 @@ export function useHomeFeed() {
   const stories = useMemo(() => visible(rawStories), [rawStories, visible]);
   const following = useMemo(() => visible(rawFollowing), [rawFollowing, visible]);
 
-  // Hikâye akışı canlı dinleniyor; yenileme dinleyicinin kapsamadığı rafları
-  // (takip, okumaya devam, beğeni durumu) sunucudan tazeler.
+  // Aşağı çekmek önbellekleri atlayıp akışı ve kişisel rafları sunucudan tazeler.
   const refresh = useCallback(async () => {
     setRefreshing(true);
     try {
       if (network.isOffline) {
         await storyActions.loadOfflineStories();
-      } else if (userId) {
+      } else {
         await Promise.all([
-          storyActions.loadFollowingStories(),
-          readingProgressActions.loadContinueReadingShelf(),
-          storyActions.refreshLikedStoriesState(),
+          storyActions.loadStoriesFeed({ force: true }),
+          ...(userId ? [
+            storyActions.loadFollowingStories({ force: true }),
+            readingProgressActions.loadContinueReadingShelf(5, { force: true }),
+          ] : []),
         ]);
       }
     } finally {

@@ -14,8 +14,12 @@ CRON_TZ=Europe/Istanbul
 # Süresi dolmak üzere olanlara son hatırlatma (uygulamayı açmasa bile ulaşır).
 0 11 * * *  /opt/bluma-push-worker/cron/bluma-cron.sh notify-unverified.js --grace-day 6
 
-# Sayaç mutabakatı — haftada bir, gece trafiği düşükken.
-30 4 * * 0  /opt/bluma-push-worker/cron/bluma-cron.sh reconcile-counters.js
+# Sayaç mutabakatı: ayda bir (her ayın 1'i), gece trafiği düşükken.
+# Tüm hikâyelerin beğeni/görüntülenme/yorum alt koleksiyonlarını ve bütün
+# kullanıcıların takip listelerini okur; Spark planda tek çalıştırma günlük
+# 50K okuma kotasının büyük kısmını yiyebiliyordu. Sayaçlar atomik
+# increment() ile yazıldığı için haftalık sapma pratikte sıfır.
+30 4 1 * *  /opt/bluma-push-worker/cron/bluma-cron.sh reconcile-counters.js
 
 # ---------------------------------------------------------------------------
 # ASKIYA ALMA — HENÜZ AÇMA.

@@ -3,7 +3,6 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface StoryState {
   stories: Story[];
-  discoverStories: Story[];
   followingStories: Story[];
   userStories: Story[];
   publishedUserStories: Story[];
@@ -23,7 +22,6 @@ interface StoryState {
 
 const initialState: StoryState = {
   stories: [],
-  discoverStories: [],
   followingStories: [],
   userStories: [],
   publishedUserStories: [],

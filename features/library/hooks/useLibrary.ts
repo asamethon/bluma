@@ -17,8 +17,10 @@ export function useLibrary() {
   const savedStories = useAppSelector(state => state.story.savedStories);
   const likedStories = useAppSelector(state => state.story.likedStories);
 
+  // Yalnızca kitaplık dinleyicileri (tekil). Eskiden burada bütün akış
+  // başlatıcısı çağrılıyordu ve sekmeye her dönüş ~100+ okuma demekti.
   useFocusEffect(useCallback(() => {
-    if (userId) storyActions.initializeRealTimeListeners();
+    if (userId) storyActions.setupStoryLibraryListeners();
   }, [userId]));
 
   const reload = useCallback(

@@ -13,13 +13,22 @@ import { patchStory } from '@/store/slices/storySlice';
 import { logger } from '@/utils/logger';
 import { getUserById } from '../userCache';
 
-export async function loadFollowingStories() {
+/** Takip rafı 10 dk içinde tekrar okunmaz (aşağı çekince `force` ile okunur). */
+const FOLLOWING_TTL_MS = 10 * 60 * 1000;
+const following = { loadedAt: 0, userId: null as string | null };
+
+export async function loadFollowingStories(options: { force?: boolean } = {}) {
   try {
     const { user } = store.getState().auth;
     if (!user?.id) {
+      following.userId = null;
       store.dispatch(patchStory({ followingStories: [] }));
       return;
     }
+    const fresh = following.userId === user.id && Date.now() - following.loadedAt < FOLLOWING_TTL_MS;
+    if (fresh && !options.force) return;
+    following.userId = user.id;
+    following.loadedAt = Date.now();
 
     const firestore = getFirestore();
 
@@ -77,6 +86,7 @@ export async function loadFollowingStories() {
 
     store.dispatch(patchStory({ followingStories: allStories.slice(0, 50) }));
   } catch (error) {
+    following.loadedAt = 0;
     logger.error('Load following stories error:', error);
     store.dispatch(patchStory({ followingStories: [] }));
   }

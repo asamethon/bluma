@@ -6,7 +6,10 @@ import {
 import { User } from '@/store/slices/authSlice';
 import { logger } from '@/utils/logger';
 
-const TTL_MS = 5 * 60 * 1000;
+// Yazar adı/avatarı nadiren değişir; kısa TTL her akış yüklemesinde onlarca
+// kullanıcı dokümanını yeniden okutuyordu. Kendi profil değişikliği zaten
+// `primeCachedUser` / `invalidateCachedUser` ile anında yansır.
+const TTL_MS = 30 * 60 * 1000;
 
 const cache = new Map<string, { user: User | null; at: number }>();
 const inFlight = new Map<string, Promise<User | null>>();

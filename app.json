@@ -2,8 +2,10 @@
   "expo": {
     "name": "bluma",
     "slug": "bluma",
-    "version": "3.0.0",
-    "runtimeVersion": { "policy": "fingerprint" },
+    "version": "3.0.1",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
     "updates": {
       "url": "https://u.expo.dev/48225aed-f559-49db-af13-d65c9d2518f0",
       "enabled": true,
@@ -19,7 +21,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.asamethon.bluma",
       "usesAppleSignIn": true,
-      "buildNumber": "13",
+      "buildNumber": "18",
       "googleServicesFile": "./GoogleService-Info.plist",
       "associatedDomains": [
         "applinks:bluma-dc10e.web.app"
@@ -48,17 +50,28 @@
       },
       "googleServicesFile": "./google-services.json",
       "package": "com.d4tecompany.bluma",
-      "versionCode": 14,
+      "versionCode": 15,
       "playStoreUrl": "https://play.google.com/store/apps/details?id=com.d4tecompany.bluma",
       "intentFilters": [
         {
           "action": "VIEW",
           "autoVerify": true,
           "data": [
-            { "scheme": "https", "host": "bluma-dc10e.web.app", "pathPrefix": "/story" },
-            { "scheme": "https", "host": "bluma-dc10e.web.app", "pathPrefix": "/user" }
+            {
+              "scheme": "https",
+              "host": "bluma-dc10e.web.app",
+              "pathPrefix": "/story"
+            },
+            {
+              "scheme": "https",
+              "host": "bluma-dc10e.web.app",
+              "pathPrefix": "/user"
+            }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -71,6 +84,7 @@
       "expo-router",
       "@react-native-firebase/app",
       "./plugins/withFmtConstevalFix",
+      "./plugins/withExpoModulesJsiXcodeFix",
       "@react-native-firebase/auth",
       "expo-apple-authentication",
       [
@@ -109,8 +123,13 @@
       [
         "react-native-share",
         {
-          "ios": ["instagram", "instagram-stories"],
-          "android": ["com.instagram.android"]
+          "ios": [
+            "instagram",
+            "instagram-stories"
+          ],
+          "android": [
+            "com.instagram.android"
+          ]
         }
       ],
       [

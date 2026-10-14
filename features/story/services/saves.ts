@@ -12,7 +12,7 @@ import {
     setDoc,
     where,
 } from '@react-native-firebase/firestore';
-import { getStoryById } from './storyApi';
+import { getStoryForShelf } from './storyReads';
 import { patchStory } from '@/store/slices/storySlice';
 import { store } from '@/store';
 import { logger } from '@/utils/logger';
@@ -120,7 +120,7 @@ async function loadSavedStories() {
 
     const snapshot = await getDocs(savesQuery);
     const fetched = await Promise.all(
-      snapshot.docs.map(saveDoc => getStoryById(saveDoc.data().storyId))
+      snapshot.docs.map(saveDoc => getStoryForShelf(saveDoc.data().storyId))
     );
     store.dispatch(patchStory({ savedStories: fetched.filter((s): s is Story => !!s) }));
   } catch (error) {

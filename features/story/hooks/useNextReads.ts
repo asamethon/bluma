@@ -1,30 +1,17 @@
 import { getNextReads } from '@/features/story/services/nextReads';
-import { loadDiscoverStories } from '@/features/story/services/discover';
 import { useAppSelector } from '@/store/hooks';
 import { Story } from '@/types';
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 
 /**
  * Biten hikâyeye benzeyen sonraki okumaları verir.
  *
- * Aday havuzu bellekteki `discoverStories`'tir; ana sayfa açıldıysa zaten
- * doludur. Doğrudan derin bağlantıyla okuyucuya düşen kullanıcıda boş
- * olabileceği için bir kez doldurulur — bu, dış sisteme (Firestore) yapılan
- * tek seferlik bir çağrı olduğu için effect'in meşru kullanımı.
+ * Aday havuzu bellekteki ana akıştır (`stories`); açılışta her kullanıcı için
+ * zaten yükleniyor, bu yüzden burada ek Firestore okuması yapılmaz.
  */
 export function useNextReads(finished: Story | null, limit = 6): Story[] {
-  const candidates = useAppSelector(s => s.story.discoverStories);
+  const candidates = useAppSelector(s => s.story.stories);
   const viewerId = useAppSelector(s => s.auth.user?.id);
-  const requested = useRef(false);
-
-  useEffect(() => {
-    if (!finished || candidates.length > 0 || requested.current) return;
-    requested.current = true;
-    loadDiscoverStories().catch(() => {
-      // Öneri ikincil bir bölüm; başarısız olursa sessizce gizlenir.
-      requested.current = false;
-    });
-  }, [finished, candidates.length]);
 
   return useMemo(() => {
     if (!finished || candidates.length === 0) return [];

@@ -46,10 +46,9 @@ async function incrementStoryViews(storyId: string) {
 
     const bump = (list: Story[]) =>
       list.map(s => s.id === storyId ? { ...s, viewsCount: (s.viewsCount || 0) + 1 } : s);
-    const { stories, discoverStories, followingStories } = store.getState().story;
+    const { stories, followingStories } = store.getState().story;
     store.dispatch(patchStory({
       stories: bump(stories),
-      discoverStories: bump(discoverStories),
       followingStories: bump(followingStories),
     }));
     const cur = store.getState().story.currentStory;

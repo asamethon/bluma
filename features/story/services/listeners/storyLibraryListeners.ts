@@ -3,7 +3,7 @@ import { patchStory } from '@/store/slices/storySlice';
 import type { Story } from '@/types';
 import { logger } from '@/utils/logger';
 import { collection, getFirestore, onSnapshot, orderBy, query } from '@react-native-firebase/firestore';
-import { getStoryById } from '../storyApi';
+import { getStoryForShelf } from '../storyReads';
 
 const listeners = {
   liked: null as (() => void) | null,
@@ -11,8 +11,12 @@ const listeners = {
   userId: null as string | null,
 };
 
+/**
+ * Dinleyici her beğeni/kaydetmede tüm listeyi yeniden verir; hikâyeler
+ * önbellekten gelir, yalnızca yeni olan Firestore'dan okunur.
+ */
 const loadStories = async (snapshot: any) => {
-  const fetched = await Promise.all(snapshot.docs.map((item: any) => getStoryById(item.data().storyId)));
+  const fetched = await Promise.all(snapshot.docs.map((item: any) => getStoryForShelf(item.data().storyId)));
   return fetched.filter((story): story is Story => Boolean(story));
 };
 

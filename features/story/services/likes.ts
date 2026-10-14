@@ -18,7 +18,7 @@ import {
 } from '@react-native-firebase/firestore';
 import { notificationActions } from '@/store/notificationStore';
 import { applyLikeDelta, setLikedOptimistically } from './likes/likeState';
-import { getStoryById } from './storyApi';
+import { getStoryForShelf } from './storyReads';
 
 function likeRefs(storyId: string, userId: string) {
   const firestore = getFirestore();
@@ -94,7 +94,7 @@ async function writeLike(storyId: string, userId: string, liked: boolean): Promi
 
 async function notifyAuthor(storyId: string, userId: string) {
   const user = store.getState().auth.user;
-  const story = await getStoryById(storyId);
+  const story = await getStoryForShelf(storyId);
   if (!user || !story || story.authorId === userId) return;
   await notificationActions.createLikeNotification(
     userId,
@@ -114,7 +114,7 @@ async function loadLikedStories() {
     const snapshot = await getDocs(
       query(collection(getFirestore(), 'users', userId, 'likedStories'), orderBy('createdAt', 'desc')),
     );
-    const stories = await Promise.all(snapshot.docs.map(like => getStoryById(like.data().storyId)));
+    const stories = await Promise.all(snapshot.docs.map(like => getStoryForShelf(like.data().storyId)));
     store.dispatch(patchStory({ likedStories: stories.filter((story): story is Story => !!story) }));
   } catch (error) {
     logger.error('Load liked stories error:', error);

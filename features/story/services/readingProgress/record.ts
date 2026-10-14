@@ -8,7 +8,21 @@ import {
 } from '@react-native-firebase/firestore';
 import { store } from '@/store';
 import { logger } from '@/utils/logger';
+import { markContinueReadingStale } from './shelf';
+import { decideSync, type LastSync } from './syncPolicy';
 import { localKey, type ReadingProgress } from './types';
+
+/**
+ * Okuyucu kaydırırken ilerlemeyi ~2 sn'de bir kaydeder. Cihaza (AsyncStorage)
+ * her seferinde yazılır; Firestore'a ise bölüm değişince hemen, aynı bölümde
+ * en fazla dakikada bir yazılır. Son konum, kaydırma durduktan sonra bekleyen
+ * bir yazımla gönderilir. Eskiden her kaydırma ayrı bir Firestore yazımıydı ve
+ * günlük ücretsiz yazma kotasının büyük kısmını tek başına tüketiyordu.
+ */
+const sync = {
+  last: new Map<string, LastSync>(),
+  timers: new Map<string, ReturnType<typeof setTimeout>>(),
+};
 
 async function syncToFirestore(uid: string, storyId: string, chapterIndex: number, scrollRatio: number) {
   const db = getFirestore();
@@ -19,15 +33,34 @@ async function syncToFirestore(uid: string, storyId: string, chapterIndex: numbe
   }, { merge: true });
 }
 
+function scheduleSync(uid: string, storyId: string, chapterIndex: number, scrollRatio: number) {
+  const key = `${uid}_${storyId}`;
+  const pending = sync.timers.get(key);
+  if (pending) clearTimeout(pending);
+  sync.timers.delete(key);
+
+  const write = () => {
+    sync.timers.delete(key);
+    sync.last.set(key, { chapterIndex, at: Date.now() });
+    syncToFirestore(uid, storyId, chapterIndex, scrollRatio).catch(() => {
+      sync.last.delete(key);
+      logger.debug('Reading progress sync to Firestore failed (non-critical, will retry next save)');
+    });
+  };
+
+  const decision = decideSync(sync.last.get(key), chapterIndex, Date.now());
+  if (decision.chapterChanged) markContinueReadingStale();
+  if (decision.writeNow) write();
+  else sync.timers.set(key, setTimeout(write, decision.delayMs));
+}
+
 export async function saveReadingProgress(storyId: string, chapterIndex: number, scrollRatio: number = 0) {
   const { user } = store.getState().auth;
   if (!user?.id) return;
 
   const payload: ReadingProgress = { storyId, chapterIndex, scrollRatio, updatedAt: Date.now() };
   await AsyncStorage.setItem(localKey(user.id, storyId), JSON.stringify(payload)).catch(() => {});
-  syncToFirestore(user.id, storyId, chapterIndex, scrollRatio).catch(() => {
-    logger.debug('Reading progress sync to Firestore failed (non-critical, will retry next save)');
-  });
+  scheduleSync(user.id, storyId, chapterIndex, scrollRatio);
 }
 
 export async function getReadingProgress(storyId: string): Promise<ReadingProgress | null> {

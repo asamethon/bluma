@@ -1,4 +1,4 @@
-import { loadDiscoverStories, loadFollowingStories } from './discover';
+import { loadFollowingStories } from './discover';
 import {
   cleanupCommentsListener,
   loadMoreComments,
@@ -7,8 +7,8 @@ import {
 import { setupStoryDetailListener } from './listeners/storyDetailListener';
 import {
   cleanupStoryFeedListeners,
+  loadStoriesFeed,
   setupPublishedUserStoriesListener,
-  setupStoriesListener,
 } from './listeners/storyFeedListeners';
 import {
   cleanupStoryLibraryListeners,
@@ -16,10 +16,14 @@ import {
 } from './listeners/storyLibraryListeners';
 import { loadOfflineStories } from './offline/library';
 
+/**
+ * Oturum açık kullanıcının akış verisi. Birden çok ekran (ana sayfa, profil)
+ * çağırabilir: akış ve takip rafı 10 dk içinde tekrar okunmaz, kitaplık
+ * dinleyicileri tekildir.
+ */
 function initializeRealTimeListeners() {
-  setupStoriesListener();
+  void loadStoriesFeed();
   setupStoryLibraryListeners();
-  void loadDiscoverStories();
   void loadFollowingStories();
   void loadOfflineStories();
 }
@@ -35,8 +39,9 @@ export const listenersActions = {
   cleanupRealTimeListeners,
   initializeRealTimeListeners,
   loadMoreComments,
+  loadStoriesFeed,
   setupCommentsListener,
   setupPublishedUserStoriesListener,
-  setupStoriesListener,
   setupStoryDetailListener,
+  setupStoryLibraryListeners,
 };

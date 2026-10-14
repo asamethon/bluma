@@ -2,37 +2,71 @@ import { store } from '@/store';
 import { patchStory } from '@/store/slices/storySlice';
 import type { Story } from '@/types';
 import { logger } from '@/utils/logger';
-import { collection, getFirestore, limit, onSnapshot, orderBy, query, where } from '@react-native-firebase/firestore';
+import { collection, getDocs, getFirestore, limit, onSnapshot, orderBy, query, where } from '@react-native-firebase/firestore';
 import { getUserById } from '../userCache';
 import { fallbackAuthor, storyFromSnapshot } from './storySnapshot';
 
+/**
+ * Ana akış artık canlı dinlenmez, tek seferlik okunur.
+ *
+ * Neden: `stories` dokümanları sayaçlar yüzünden sürekli değişiyor (her
+ * okumada viewsCount). Canlı dinleyicide her değişiklik, uygulamayı o an açık
+ * tutan HER istemciye ayrı bir okuma olarak faturalanıyordu; eşzamanlı
+ * kullanıcı arttıkça okuma sayısı çarpılarak büyüyordu. Yeni hikâyeler aşağı
+ * çekince, sekmeye 10 dakikadan sonra dönünce ve yazar yayınladığında gelir.
+ */
+const FEED_TTL_MS = 10 * 60 * 1000;
+const FEED_SIZE = 50;
+
+const feed = {
+  loadedAt: 0,
+  inFlight: null as Promise<void> | null,
+};
+
 const listeners = {
-  feed: null as (() => void) | null,
   published: null as (() => void) | null,
   publishedUserId: null as string | null,
 };
 
-export function setupStoriesListener() {
-  if (listeners.feed) return listeners.feed;
-  try {
-    const source = query(
-      collection(getFirestore(), 'stories'),
-      where('isPublished', '==', true),
-      orderBy('createdAt', 'desc'),
-      limit(50),
-    );
-    listeners.feed = onSnapshot(source, snapshot => {
-      void Promise.all(snapshot.docs.map(storyFromSnapshot)).then(stories => {
-        store.dispatch(patchStory({ stories, storiesLoaded: true }));
-      });
-    }, error => {
-      logger.error('Stories listener error:', error);
+export function loadStoriesFeed(options: { force?: boolean } = {}): Promise<void> {
+  if (feed.inFlight) return feed.inFlight;
+  const fresh = Date.now() - feed.loadedAt < FEED_TTL_MS && store.getState().story.storiesLoaded;
+  if (fresh && !options.force) return Promise.resolve();
+
+  const source = query(
+    collection(getFirestore(), 'stories'),
+    where('isPublished', '==', true),
+    orderBy('createdAt', 'desc'),
+    limit(FEED_SIZE),
+  );
+  feed.inFlight = getDocs(source)
+    .then(snapshot => Promise.all(snapshot.docs.map(storyFromSnapshot)))
+    .then(stories => {
+      feed.loadedAt = Date.now();
+      store.dispatch(patchStory({ stories, storiesLoaded: true }));
+    })
+    .catch(error => {
+      logger.error('Load stories feed error:', error);
       store.dispatch(patchStory({ storiesLoaded: true }));
+    })
+    .finally(() => {
+      feed.inFlight = null;
     });
-    return listeners.feed;
-  } catch (error) {
-    logger.error('Setup stories listener error:', error);
-  }
+  return feed.inFlight;
+}
+
+/**
+ * Yazarın kendi değişikliği akışa anında yansısın (canlı dinleyici yokken):
+ * `null` hikâyeyi akıştan çıkarır (silme), yayından kaldırma da çıkarır,
+ * diğer güncellemeler yerinde birleştirilir.
+ */
+export function applyStoryChange(storyId: string, updates: Partial<Story> | null) {
+  const { stories, followingStories } = store.getState().story;
+  const removed = updates === null || updates.isPublished === false || updates.isHidden === true;
+  const apply = (list: Story[]) => (removed
+    ? list.filter(story => story.id !== storyId)
+    : list.map(story => (story.id === storyId ? { ...story, ...updates } : story)));
+  store.dispatch(patchStory({ stories: apply(stories), followingStories: apply(followingStories) }));
 }
 
 function setupPublishedWithClientFiltering(userId: string) {
@@ -80,9 +114,7 @@ export function setupPublishedUserStoriesListener(userId: string) {
 }
 
 export function cleanupStoryFeedListeners() {
-  listeners.feed?.();
   listeners.published?.();
-  listeners.feed = null;
   listeners.published = null;
   listeners.publishedUserId = null;
 }

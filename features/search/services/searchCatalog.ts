@@ -22,7 +22,19 @@ function anonymousAuthor(data: StoryDocument): User {
   };
 }
 
+/** Arama kataloğu 10 dk bellekte tutulur; sekme her açıldığında 100 okuma yapılmaz. */
+const CATALOG_TTL_MS = 10 * 60 * 1000;
+const catalog = { stories: [] as Story[], loadedAt: 0 };
+
 export async function getPublishedSearchStories(): Promise<Story[]> {
+  if (catalog.stories.length && Date.now() - catalog.loadedAt < CATALOG_TTL_MS) return catalog.stories;
+  const stories = await fetchPublishedSearchStories();
+  catalog.stories = stories;
+  catalog.loadedAt = Date.now();
+  return stories;
+}
+
+async function fetchPublishedSearchStories(): Promise<Story[]> {
   const storiesQuery = query(
     collection(getFirestore(), 'stories'),
     where('isPublished', '==', true),

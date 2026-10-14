@@ -7,6 +7,8 @@ import type { Story } from '@/types';
 import { logger } from '@/utils/logger';
 import { getAnalytics, logEvent } from '@react-native-firebase/analytics';
 import { addDoc, collection, doc, getDoc, getFirestore, increment, serverTimestamp, updateDoc } from '@react-native-firebase/firestore';
+import { applyStoryChange, loadStoriesFeed } from './listeners/storyFeedListeners';
+import { forgetStory } from './storyCache';
 
 export async function updateUserStoriesCount(userId: string, delta: number) {
   try {
@@ -25,6 +27,8 @@ const publishSideEffects = (user: NonNullable<ReturnType<typeof store.getState>[
     'new_story',
   );
   void logEvent(getAnalytics(), 'story_publish', { story_id: storyId });
+  // Akış artık canlı dinlenmiyor: yazar yeni hikâyesini hemen görsün.
+  void loadStoriesFeed({ force: true });
 };
 
 export async function createStory(
@@ -71,6 +75,8 @@ export async function updateStory(storyId: string, updates: Partial<Story>) {
     if (!snapshot.exists()) throw new Error(i18n.t('story.notFound'));
     const current = snapshot.data() as Story;
     await updateDoc(reference, { ...updates, updatedAt: serverTimestamp() });
+    forgetStory(storyId);
+    applyStoryChange(storyId, updates);
     const becamePublished = updates.isPublished === true && !current.isPublished;
     if (becamePublished) await updateUserStoriesCount(current.authorId, 1);
     const user = store.getState().auth.user;

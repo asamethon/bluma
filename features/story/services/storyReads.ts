@@ -4,6 +4,7 @@ import type { Story } from '@/types';
 import { logger } from '@/utils/logger';
 import { collection, doc, getDoc, getDocs, getFirestore, query, where } from '@react-native-firebase/firestore';
 import { storyFromSnapshot } from './listeners/storySnapshot';
+import { cachedStory } from './storyCache';
 
 const timestamp = (value: any) => (value?.toDate?.() ?? new Date(value || 0)).getTime();
 
@@ -18,6 +19,14 @@ export async function getStoryById(storyId: string): Promise<Story | null> {
     } else logger.error('Get story error:', error);
     return null;
   }
+}
+
+/**
+ * Raflar için: önbellekte (son 10 dk içinde okunmuş) varsa Firestore'a gitmez.
+ * Okuyucu ve düzenleme ekranları bunun yerine `getStoryById` kullanır.
+ */
+export async function getStoryForShelf(storyId: string): Promise<Story | null> {
+  return cachedStory(storyId) ?? getStoryById(storyId);
 }
 
 export async function loadUserStories(userId: string) {

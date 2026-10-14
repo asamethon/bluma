@@ -34,7 +34,7 @@ export function useBootSequence(fontsLoaded: boolean) {
     // varsayımıyla bir kare bile render edilmesin.
     initNetworkStatus();
     authActions.initializeAuth();
-    storyActions.setupStoriesListener();
+    void storyActions.loadStoriesFeed();
     // "Kaç gündür kullanıyor" ölçümünü başlatır (değerlendirme eşiği için).
     reviewPromptActions.init().catch(() => {});
     const timer = setTimeout(() => setSplashTimedOut(true), SPLASH_TIMEOUT_MS);

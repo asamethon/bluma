@@ -50,6 +50,8 @@ Canlı veriye erişilemedi; bulgular koddan ve 6-7 Eylül Goldie simülatör çe
 
 ## 3. Mimari
 
+> **Güncelleme (12 Ekim 2026):** Spark kotası aşıldı. `discovery/home` ve `discovery/search` Firestore dokümanı olarak değil, Cloudflare R2'ye JSON olarak yazılacak ve CDN'den okunacak; uygulama Firestore'a hiç gitmeden vitrini kurar. Aşağıdaki şema ve hesaplama aynen geçerli, yalnızca hedef depo değişti. Ayrıntı: `docs/ALTYAPI-KARARI.md`.
+
 ```
 Firestore ──listener──► server/discovery (VPS, systemd, Admin SDK)
    stories, likes, comments, views,           │  bellekte 14 günlük olay penceresi
