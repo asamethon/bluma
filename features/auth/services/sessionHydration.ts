@@ -1,10 +1,16 @@
 import i18n from '@/i18n';
 import { store } from '@/store';
-import { patchAuth, User } from '@/store/slices/authSlice';
+import { patchAuth, patchUser, User } from '@/store/slices/authSlice';
 import { logger } from '@/utils/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getIdToken, type FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { doc, getDoc, getFirestore, serverTimestamp, setDoc } from '@react-native-firebase/firestore';
+import {
+  hydrateUserDoc,
+  migratePublicPersonalFields,
+  readPrivateAccount,
+  writePrivateAccount,
+} from './privateAccount';
 import { endSession, isOnboarded } from './sessionState';
 import { isTerminalAuthError, readCachedSession, writeCachedSession } from './sessionStorage';
 import { buildSignupContext, trackSignupContext } from './signupContext';
@@ -46,15 +52,20 @@ export async function hydrateSession(firebaseUser: FirebaseAuthTypes.User) {
   // Push token ve yardımcı servisler ağ bekleyebilir; açılışı geciktirmez.
   void startSessionServices(firebaseUser.uid)
     .catch(error => logger.debug('Oturum servisleri başlatılamadı:', error));
+  void hydrateAppleUserId(firebaseUser)
+    .catch(error => logger.debug('appleUserId okunamadı:', error));
 }
 
 async function syncProfile(firebaseUser: FirebaseAuthTypes.User) {
   try {
     const userDocRef = doc(getFirestore(), 'users', firebaseUser.uid);
     const userDoc = await getDoc(userDocRef);
-    const userData = userDoc.exists()
-      ? ({ id: userDoc.id, ...userDoc.data() } as User)
+    const publicData = userDoc.data();
+    // Kişisel alanlar herkese açık dokümanda tutulmaz; e-posta Auth'tan gelir.
+    const userData = publicData
+      ? hydrateUserDoc(userDoc.id, publicData, store.getState().auth.user)
       : await createMissingProfile(firebaseUser);
+    if (publicData) void migratePublicPersonalFields(firebaseUser.uid, publicData);
 
     const onboarded = isOnboarded(userData);
     store.dispatch(patchAuth({
@@ -79,21 +90,35 @@ async function syncProfile(firebaseUser: FirebaseAuthTypes.User) {
 async function createMissingProfile(firebaseUser: FirebaseAuthTypes.User): Promise<User> {
   logger.debug('Firestore profili yok, oluşturuluyor');
   const signupContext = buildSignupContext();
-  const userData = {
+  const email = firebaseUser.email || '';
+  const publicData = {
     id: firebaseUser.uid,
-    email: firebaseUser.email || '',
     displayName: firebaseUser.displayName || i18n.t('common.user'),
     authProvider: providerOf(firebaseUser),
-    ...signupContext,
-  } as unknown as User;
+  };
 
+  // Kişisel veri (e-posta, cihaz/bölge) herkese açık dokümana yazılmaz.
+  await writePrivateAccount(firebaseUser.uid, { email, ...signupContext });
   await setDoc(doc(getFirestore(), 'users', firebaseUser.uid), {
-    ...userData,
+    ...publicData,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
   trackSignupContext(signupContext);
-  return userData;
+  return { ...publicData, email } as unknown as User;
+}
+
+/**
+ * Apple yeniden kimlik doğrulaması `appleUserId`'ye muhtaçtır ve bu alan
+ * artık herkese açık dokümanda değil, özel dokümanda durur.
+ */
+async function hydrateAppleUserId(firebaseUser: FirebaseAuthTypes.User) {
+  if (providerOf(firebaseUser) !== 'apple') return;
+  if (store.getState().auth.user?.appleUserId) return;
+  const privateAccount = await readPrivateAccount(firebaseUser.uid);
+  if (privateAccount?.appleUserId) {
+    store.dispatch(patchUser({ appleUserId: privateAccount.appleUserId }));
+  }
 }
 
 /** Gizlilik/takip filtreleri, son görülme damgası ve push token kaydı. */

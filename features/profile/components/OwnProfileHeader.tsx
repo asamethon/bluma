@@ -74,7 +74,7 @@ export function OwnProfileHeader({ user, stories, topInset, onShare }: Props) {
 
       <ProfileIdentity
         name={user.displayName}
-        handle={profileHandle(user.username, user.email)}
+        handle={profileHandle(user.username)}
         badge={{
           label: t(rank.name),
           icon: rank.icon as keyof typeof Ionicons.glyphMap,

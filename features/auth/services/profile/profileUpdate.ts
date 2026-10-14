@@ -1,3 +1,4 @@
+import { withoutPersonalFields } from '@/features/auth/services/privateAccount';
 import { primeCachedUser } from '@/features/auth/services/userCache';
 import i18n from '@/i18n';
 import { store } from '@/store';
@@ -9,7 +10,12 @@ import { doc, getFirestore, serverTimestamp, setDoc } from '@react-native-fireba
 export async function updateUserProfile(user: User) {
   store.dispatch(patchAuth({ isLoading: true }));
   try {
-    await setDoc(doc(getFirestore(), 'users', user.id), { ...user, updatedAt: serverTimestamp() }, { merge: true });
+    // Kişisel alanlar (e-posta vb.) herkese açık dokümana geri yazılmaz.
+    await setDoc(
+      doc(getFirestore(), 'users', user.id),
+      { ...withoutPersonalFields(user), updatedAt: serverTimestamp() },
+      { merge: true },
+    );
     await AsyncStorage.setItem('userData', JSON.stringify(user));
     store.dispatch(patchAuth({ user }));
     primeCachedUser(user);

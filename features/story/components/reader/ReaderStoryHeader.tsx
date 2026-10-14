@@ -48,7 +48,7 @@ export function ReaderStoryHeader({ story, colors: reading }: Props) {
         >
           <Avatar
             uri={story.author?.profileImage}
-            name={story.author?.displayName || story.author?.email}
+            name={story.author?.displayName}
             size={40}
           />
           <View style={styles.authorIdentity}>
@@ -56,7 +56,7 @@ export function ReaderStoryHeader({ story, colors: reading }: Props) {
               {story.author?.displayName || t('common.author')}
             </Text>
             <Text variant="caption" color={reading.textSecondary} numberOfLines={1}>
-              @{story.author?.username || story.author?.email?.split('@')[0] || t('common.authorUsername')}
+              @{story.author?.username || t('common.authorUsername')}
             </Text>
           </View>
         </Pressable>

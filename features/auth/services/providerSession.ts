@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAnalytics, logEvent } from '@react-native-firebase/analytics';
 import { getIdToken, type FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { doc, getDoc, getFirestore, serverTimestamp, setDoc } from '@react-native-firebase/firestore';
+import { migratePublicPersonalFields, withoutPersonalFields, writePrivateAccount } from './privateAccount';
 import { isOnboarded } from './sessionState';
 import { writeCachedSession } from './sessionStorage';
 import { buildSignupContext, trackSignupContext } from './signupContext';
@@ -52,11 +53,16 @@ export async function establishSession(
   savePushToken(firebaseUser.uid);
 }
 
-/** Profil dokümanını oluşturur ya da kimlik alanlarını tazeler. */
+/**
+ * Profil dokümanını oluşturur ya da kimlik alanlarını tazeler.
+ * E-posta, `appleUserId` ve kayıt bağlamı herkese açık dokümana DEĞİL,
+ * yalnızca sahibinin okuduğu özel dokümana yazılır (bkz. privateAccount).
+ */
 async function upsertProfile(
   userId: string,
   identity: ProviderIdentity,
 ): Promise<{ user: User; isNew: boolean }> {
+  const { email, appleUserId, ...publicIdentity } = identity;
   try {
     const userDocRef = doc(getFirestore(), 'users', userId);
     const existing = (await getDoc(userDocRef)).data();
@@ -64,9 +70,11 @@ async function upsertProfile(
     if (!existing) {
       // Kayıt bağlamı yalnızca ilk oluşturmada yazılır.
       const signupContext = buildSignupContext();
-      const user = { id: userId, ...identity, ...signupContext } as unknown as User;
+      await writePrivateAccount(userId, { email, appleUserId, ...signupContext });
+      const user = { id: userId, ...identity } as unknown as User;
       await setDoc(userDocRef, {
-        ...user,
+        id: userId,
+        ...publicIdentity,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -74,8 +82,14 @@ async function upsertProfile(
       return { user, isNew: true };
     }
 
-    await setDoc(userDocRef, { ...identity, updatedAt: serverTimestamp() }, { merge: true });
-    return { user: { ...existing, id: userId, ...identity } as User, isNew: false };
+    await writePrivateAccount(userId, { email, appleUserId });
+    await setDoc(userDocRef, { ...publicIdentity, updatedAt: serverTimestamp() }, { merge: true });
+    // Eski sürümlerin sızdırdığı alanları temizler; giriş akışını bekletmez.
+    void migratePublicPersonalFields(userId, existing);
+    return {
+      user: { ...withoutPersonalFields(existing), id: userId, ...identity } as User,
+      isNew: false,
+    };
   } catch (error) {
     // Firestore erişilemezse oturum düşürülmez; kimlik alanlarıyla devam edilir.
     logger.error('Profil okunamadı, kimlik bilgileriyle devam ediliyor:', error);

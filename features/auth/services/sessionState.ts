@@ -4,6 +4,7 @@ import { resetPrivacy } from '@/store/slices/privacySlice';
 import { presenceActions } from '@/features/privacy/services/presenceService';
 import { store } from '@/store';
 import { logger } from '@/utils/logger';
+import { hydrateUserDoc } from './privateAccount';
 import { clearCachedSession, writeCachedSession } from './sessionStorage';
 
 const listener = { unsubscribe: null as (() => void) | null };
@@ -40,7 +41,9 @@ export function setupUserListener(userId: string) {
 
     listener.unsubscribe = onSnapshot(userDocRef, docSnap => {
       if (!docSnap.exists()) return;
-      const userData = { id: docSnap.id, ...docSnap.data() } as User;
+      // Herkese açık doküman e-postayı/appleUserId'yi içermez; oturumdaki
+      // kişisel alanlar korunur (bkz. privateAccount).
+      const userData = hydrateUserDoc(docSnap.id, docSnap.data()!, store.getState().auth.user);
       const onboarded = isOnboarded(userData);
       store.dispatch(patchAuth({ user: userData, hasCompletedOnboarding: onboarded }));
       writeCachedSession(userData, onboarded);

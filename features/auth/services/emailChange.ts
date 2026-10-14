@@ -4,7 +4,6 @@ import {
   reauthenticateWithCredential,
   verifyBeforeUpdateEmail,
 } from '@react-native-firebase/auth';
-import { doc, getFirestore, setDoc } from '@react-native-firebase/firestore';
 import i18n from '@/i18n';
 import { patchAuth } from '@/store/slices/authSlice';
 import { store } from '@/store';
@@ -12,6 +11,7 @@ import { logger } from '@/utils/logger';
 import { isDisposableEmail } from './disposableEmails';
 import { applyAuthLanguage } from './emailVerification';
 import { sendAuthEmailViaServer } from './authEmailApi';
+import { writePrivateAccount } from './privateAccount';
 
 /**
  * Doğrulanmamış adresi düzeltme — kayıtta e-postasını yanlış yazan kullanıcı
@@ -91,7 +91,7 @@ export async function syncEmailFromAuth() {
   if (!user?.email || !stateUser || stateUser.email === user.email) return;
 
   try {
-    await setDoc(doc(getFirestore(), 'users', user.uid), { email: user.email }, { merge: true });
+    await writePrivateAccount(user.uid, { email: user.email });
     store.dispatch(patchAuth({ user: { ...stateUser, email: user.email } }));
   } catch (error) {
     logger.error('Email sync error:', error);

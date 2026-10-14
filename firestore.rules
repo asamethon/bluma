@@ -156,6 +156,13 @@ service cloud.firestore {
         allow update: if false;
         allow delete: if isOwner(userId) || (isSignedIn() && request.auth.uid == requesterId);
       }
+      // Kişisel veri. `users/{uid}` misafir gezinmesi için HERKESE AÇIK
+      // (list dahil) okunur; e-posta, appleUserId ve kayıt bağlamı (cihaz
+      // modeli, OS, bölge) oradan toplanabiliyordu. Artık yalnızca sahibi
+      // okur/yazar (bkz. features/auth/services/privateAccount.ts).
+      match /private/{docId} {
+        allow read, write: if isOwner(userId);
+      }
       // Blocked users — private to the owner.
       match /blocked/{blockedUserId} {
         allow read, write: if isOwner(userId);

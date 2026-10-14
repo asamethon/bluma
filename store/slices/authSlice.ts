@@ -3,6 +3,10 @@ import type { PrivacySettings } from '@/types';
 
 export interface User {
   id: string;
+  /**
+   * Firebase Auth'tan gelir — herkese açık `users/{uid}` dokümanında
+   * TUTULMAZ (bkz. features/auth/services/privateAccount.ts).
+   */
   email: string;
   displayName: string;
   username?: string;
@@ -11,6 +15,7 @@ export interface User {
   website?: string;
   location?: string;
   authProvider: 'email' | 'google' | 'apple';
+  /** Özel hesap dokümanından yüklenir; herkese açık dokümanda tutulmaz. */
   appleUserId?: string;
   followersCount?: number;
   followingCount?: number;
@@ -21,13 +26,6 @@ export interface User {
   lastActiveAt?: any;
   createdAt?: any;
   updatedAt?: any;
-  // Kayıt anının bağlamı — yalnızca kullanıcı ilk oluşturulurken yazılır.
-  signupPlatform?: 'ios' | 'android' | 'web';
-  signupOsVersion?: string;
-  signupAppVersion?: string;
-  signupDeviceModel?: string;
-  signupLanguage?: string;
-  signupRegion?: string;
 }
 
 interface AuthState {
