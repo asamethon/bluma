@@ -20,6 +20,11 @@ export async function openStory(storyId: string, chapterParam?: string) {
     story,
     category: story.category || 'other',
     isPublished: !!story.isPublished,
+    // Takipçilere duyurulmuş bölüm sayısı — "yayımlanmamış bölüm var mı?"
+    // sorusunun yanıtı. Otomatik kayıt `chaptersCount`'u da yazdığı için
+    // bu temel değer oturum boyunca sabit tutulur, Firestore'dan tazelenmez.
+    announcedCount: story.announcedChaptersCount
+      ?? (story.isPublished ? story.chaptersCount || stored.length : 0),
   };
 
   if (chapterParam === 'new') {

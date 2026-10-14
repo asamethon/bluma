@@ -21,7 +21,19 @@ export async function saveDraft(storyId: string, chapters: StudioChapter[]) {
   ]);
 }
 
-export async function publishDraft(storyId: string, chapters: StudioChapter[]) {
+/**
+ * Açık "Yayınla" aksiyonu. Takipçi duyurusu YALNIZCA buradan tetiklenir —
+ * otomatik kayıt (`saveDraft`) aynı alanları yazar ama duyuru izni vermez.
+ */
+export async function publishDraft(
+  storyId: string,
+  chapters: StudioChapter[],
+  announcedBefore?: number,
+) {
   await storyActions.saveChapters(storyId, chapters);
-  return storyActions.updateStory(storyId, { ...chapterMetadata(chapters), isPublished: true });
+  return storyActions.updateStory(
+    storyId,
+    { ...chapterMetadata(chapters), isPublished: true },
+    { announce: true, announcedBefore },
+  );
 }

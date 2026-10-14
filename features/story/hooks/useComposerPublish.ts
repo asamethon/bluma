@@ -14,14 +14,23 @@ type Params = {
   chapters: StudioChapter[];
   category: string;
   isPublished: boolean;
+  /** Takipçilere duyurulmuş bölüm sayısı (stüdyo açılışında alınan temel). */
+  announcedCount: number;
   beforePublish: () => void;
   onPublished: () => void;
 };
 
-/** Yayın akışı: eksik bilgi uyarısı → onay → yazma → kutlama ve değerlendirme. */
+/**
+ * Yayın akışı: eksik bilgi uyarısı → onay → yazma → kutlama ve değerlendirme.
+ *
+ * Yayındaki hikâyede de çalışır: otomatik kayıt artık takipçilere duyuru
+ * göndermediği için (bkz. storyMutations) yeni bölümü duyuran TEK yer bu
+ * açık aksiyondur.
+ */
 export function useComposerPublish(params: Params) {
   const router = useRouter();
   const [publishing, setPublishing] = useState(false);
+  const chapterOnly = params.isPublished;
 
   const publish = () => {
     if (needsStoryInfo(params)) {
@@ -33,11 +42,16 @@ export function useComposerPublish(params: Params) {
     }
 
     Alert.alert(
-      i18n.t('studio.publishTitle'),
-      i18n.t('studio.publishMessage', { title: params.story?.title }),
+      i18n.t(chapterOnly ? 'studio.publishChapterTitle' : 'studio.publishTitle'),
+      chapterOnly
+        ? i18n.t('studio.publishChapterMessage', { number: params.chapters.length })
+        : i18n.t('studio.publishMessage', { title: params.story?.title }),
       [
         { text: i18n.t('common.cancel'), style: 'cancel' },
-        { text: i18n.t('studio.publishAction'), onPress: () => void run() },
+        {
+          text: i18n.t(chapterOnly ? 'studio.publishChapterAction' : 'studio.publishAction'),
+          onPress: () => void run(),
+        },
       ],
     );
   };
@@ -45,7 +59,7 @@ export function useComposerPublish(params: Params) {
   const run = async () => {
     setPublishing(true);
     params.beforePublish();
-    const result = await publishDraft(params.storyId, params.chapters);
+    const result = await publishDraft(params.storyId, params.chapters, params.announcedCount);
     setPublishing(false);
 
     if (!result.success) {
@@ -60,12 +74,19 @@ export function useComposerPublish(params: Params) {
     }
     params.onPublished();
 
+    // Yeni bölüm duyurusu kutlama/lansman akışını açmaz: yazar yazmaya
+    // kaldığı yerden devam eder.
+    if (!firstPublish) {
+      Alert.alert(i18n.t('studio.chapterPublishedTitle'), i18n.t('studio.chapterPublishedMessage'));
+      return;
+    }
+
     // Değerlendirme, kendi uyarımız kapandıktan SONRA istenir ki iki diyalog
     // üst üste binmesin.
     const finish = (launch: boolean) => {
       router.replace(launch ? `/story/${params.storyId}/launch` as never : '/(tabs)');
       // Değerlendirme uyarısı lansman tasarımının üstüne binmemeli.
-      if (firstPublish && !launch) {
+      if (!launch) {
         reviewPromptActions.recordMoment('storyPublished', { immediate: true }).catch(() => {});
       }
     };
