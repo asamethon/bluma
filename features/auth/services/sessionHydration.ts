@@ -129,6 +129,12 @@ async function startSessionServices(userId: string) {
   ]);
   privacyActions.load().catch(() => {});
   presenceActions.start();
+  // Görev ilerlemesi ve seri (streak) oturum açılışında yüklenir: eskiden
+  // yalnızca profil ekranı yüklüyordu, bu yüzden profil açılmadan yapılan
+  // okuma/yorum/takip boş haritadan hesaplanıp ilerlemeyi siliyordu ve seri
+  // "profil sekmesini açtığın gün" ile işliyordu.
+  const { challengeActions } = await import('@/store/challengeStore');
+  challengeActions.loadProgress(userId).catch(() => {});
 
   try {
     const { pushNotificationService } = await import('@/services/pushNotificationService');
