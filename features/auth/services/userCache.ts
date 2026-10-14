@@ -5,6 +5,7 @@ import {
 } from '@react-native-firebase/firestore';
 import { User } from '@/store/slices/authSlice';
 import { logger } from '@/utils/logger';
+import { withoutPersonalFields } from './privateAccount';
 
 // Yazar adı/avatarı nadiren değişir; kısa TTL her akış yüklemesinde onlarca
 // kullanıcı dokümanını yeniden okutuyordu. Kendi profil değişikliği zaten
@@ -27,7 +28,10 @@ async function fetchUserById(userId: string): Promise<User | null> {
   try {
     const db = getFirestore();
     const userDoc = await getDoc(doc(db, 'users', userId));
-    return userDoc.exists() ? ({ id: userDoc.id, ...userDoc.data() } as User) : null;
+    // Eski dokümanlarda kalmış kişisel alanlar arayüze taşınmaz.
+    return userDoc.exists()
+      ? ({ ...withoutPersonalFields(userDoc.data()!), id: userDoc.id } as User)
+      : null;
   } catch (error) {
     logger.error('Get user by ID error:', error);
     return null;

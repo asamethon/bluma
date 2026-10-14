@@ -22,8 +22,9 @@ export function useComposer(id: string, chParam?: string) {
     chapters: doc.chapters,
     category: doc.category,
     isPublished: doc.isPublished,
+    announcedCount: doc.announcedCount,
     beforePublish: doc.cancelPendingSave,
-    onPublished: doc.markPublished,
+    onPublished: () => doc.markPublished(doc.chapters.length),
   });
 
   const { editor } = doc;
@@ -34,6 +35,7 @@ export function useComposer(id: string, chParam?: string) {
     index: doc.index,
     cur: doc.chapters[doc.index],
     isPublished: doc.isPublished,
+    hasUnpublishedChapter: doc.isPublished && doc.chapters.length > doc.announcedCount,
     saveState: doc.saveState,
     setChapterTitle: doc.setChapterTitle,
     switchTo: (index: number) => { doc.switchTo(index); setPanels({ sheet: false }); },

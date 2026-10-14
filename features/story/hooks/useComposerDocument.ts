@@ -15,6 +15,8 @@ type DocumentState = {
   index: number;
   category: StoryCategory;
   isPublished: boolean;
+  /** Takipçilere duyurulmuş bölüm sayısı (bkz. openStory). */
+  announcedCount: number;
   loading: boolean;
 };
 
@@ -24,6 +26,7 @@ const INITIAL: DocumentState = {
   index: 0,
   category: 'other',
   isPublished: false,
+  announcedCount: 0,
   loading: true,
 };
 
@@ -89,7 +92,7 @@ export function useComposerDocument(storyId: string, chapterParam?: string) {
     saveState,
     editor,
     cancelPendingSave: cancelPending,
-    markPublished: () => patch({ isPublished: true }),
+    markPublished: (announcedCount: number) => patch({ isPublished: true, announcedCount }),
     setChapterTitle: (title: string) => editCurrent({ title }),
     switchTo: (index: number) => goToChapter(index),
     addChapter: () => {

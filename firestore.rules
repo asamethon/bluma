@@ -18,11 +18,18 @@ service cloud.firestore {
     // Moderasyon custom claim'i (Firebase Console / Admin SDK ile atanır).
     // Bkz. YAPILACAKLAR 2.7 — şikâyet edilen içeriği gizlemek için.
     function isAdmin() {
-      return isSignedIn() && request.auth.token.admin == true;
+      // `.get()` şart: claim YOKSA `token.admin` okuması değerlendirme
+      // hatası veriyordu ve hata, kuralın tamamını (geçerli olabilecek
+      // başka koşullar dahil) reddetmeye çeviriyordu.
+      return isSignedIn() && request.auth.token.get('admin', false) == true;
     }
     // True when the update touches nothing beyond the given keys.
     function onlyChanges(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+    // True when the update touches at least one of the given keys.
+    function touchesAny(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasAny(keys);
     }
     // True when `field` changes by exactly n (atomic increment/decrement).
     function bumpBy(field, n) {
@@ -116,9 +123,33 @@ service cloud.firestore {
                  .data.get('privacy', {}).get('privateAccount', false) == true;
       }
 
+      // Sahibinin SERBEST yazma hakkından çıkarılan alanlar: kullanıcı kendi
+      // takipçi sayısını ve XP'sini (dolayısıyla rütbesini) dilediği değere
+      // yazabiliyordu.
+      function userProtected() {
+        return ['xp', 'followersCount', 'followingCount', 'storiesCount'];
+      }
+      // XP yalnızca görev ödülü alınırken artar: aynı yazmada ödül listesi de
+      // değişmeli ve artış tek bir görevin verebileceği en yüksek ödülü
+      // (300, bkz. features/challenges/definitions.ts) aşmamalı.
+      //
+      // NOT: XP istemciden yazıldığı sürece tam doğrulama mümkün değil —
+      // gerçek çözüm ödülü sunucuda (Admin SDK) vermek. Bu kural sınırsız
+      // şişirmeyi engeller.
+      function claimsChallengeXp() {
+        return onlyChanges(['xp', 'claimedChallenges'])
+          && touchesAny(['claimedChallenges'])
+          && request.resource.data.xp > resource.data.get('xp', 0)
+          && request.resource.data.xp <= resource.data.get('xp', 0) + 300;
+      }
+
       allow read: if true;
       allow create, delete: if isOwner(userId);
-      allow update: if isOwner(userId)
+      allow update: if (isOwner(userId) && !touchesAny(userProtected()))
+        // Kendi sayaçları yalnızca atomik adımla oynar: takip edilen sayısı
+        // (followRelations) ve hikâye sayısı (updateUserStoriesCount).
+        || (isOwner(userId) && (isCounterBump('followingCount') || isCounterBump('storiesCount')))
+        || (isOwner(userId) && claimsChallengeXp())
         || (isSignedIn() && isCounterBump('followersCount'))
         // İsteği onaylayan, yalnızca isteği duran kullanıcının followingCount'unu
         // bump edebilir.
@@ -155,6 +186,13 @@ service cloud.firestore {
           && notBlockedBy(userId);
         allow update: if false;
         allow delete: if isOwner(userId) || (isSignedIn() && request.auth.uid == requesterId);
+      }
+      // Kişisel veri. `users/{uid}` misafir gezinmesi için HERKESE AÇIK
+      // (list dahil) okunur; e-posta, appleUserId ve kayıt bağlamı (cihaz
+      // modeli, OS, bölge) oradan toplanabiliyordu. Artık yalnızca sahibi
+      // okur/yazar (bkz. features/auth/services/privateAccount.ts).
+      match /private/{docId} {
+        allow read, write: if isOwner(userId);
       }
       // Blocked users — private to the owner.
       match /blocked/{blockedUserId} {
@@ -208,17 +246,28 @@ service cloud.firestore {
           && get(/databases/$(database)/documents/stories/$(storyId)).data.authorId == request.auth.uid;
       }
 
+      // Yazarın SERBEST yazma hakkından çıkarılan alanlar: yazar admin'in
+      // gizlediği hikâyeyi `isHidden: false` ile geri açabiliyor,
+      // `isEditorsPick: true` ile kendini Editörün Seçimi'ne alabiliyor ve
+      // beğeni/yorum/görüntüleme sayaçlarını şişirebiliyordu.
+      function storyProtected() {
+        return ['isHidden', 'isEditorsPick', 'isPremium',
+                'likesCount', 'commentsCount', 'viewsCount'];
+      }
+
       // Public stories are readable by anyone; drafts only by their author.
       allow read: if resource.data.isPublished == true
         || (isSignedIn() && resource.data.authorId == request.auth.uid);
       allow create: if canPublish() && request.resource.data.authorId == request.auth.uid;
       allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
       allow update: if isSignedIn() && (
-        (resource.data.authorId == request.auth.uid && !onBannedDevice())
+        (resource.data.authorId == request.auth.uid && !onBannedDevice()
+          && !touchesAny(storyProtected()))
+        // Sayaçlar yazara da yalnızca atomik bump olarak açıktır.
         || isCounterBump('likesCount')
         || isCounterBump('commentsCount')
         || isCounterBump('viewsCount')
-        || (isAdmin() && onlyChanges(['isHidden']))
+        || (isAdmin() && onlyChanges(['isHidden', 'isEditorsPick', 'isPremium']))
       );
 
       // Chapter bodies (bkz. YAPILACAKLAR 2.2) — okuma kuralı ebeveyn hikâye
@@ -284,15 +333,19 @@ service cloud.firestore {
       allow read: if true;
       allow create: if canPublish() && request.resource.data.authorId == request.auth.uid;
       allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+      // Sayaçlar ve moderasyon bayrağı yazara da yalnızca atomik bump /
+      // admin yoluyla açıktır (bkz. stories/storyProtected).
       // updatedAt is included because commenting bumps it alongside the counter.
       allow update: if isSignedIn() && (
-        resource.data.authorId == request.auth.uid
+        (resource.data.authorId == request.auth.uid
+          && !touchesAny(['isHidden', 'likesCount', 'commentsCount', 'viewsCount']))
         || isCounterBump('likesCount')
         || isCounterBump('viewsCount')
         || (onlyChanges(['commentsCount', 'updatedAt']) && (
           bumpBy('commentsCount', 1) ||
           (request.resource.data.commentsCount < resource.data.get('commentsCount', 0) && request.resource.data.commentsCount >= 0)
         ))
+        || (isAdmin() && onlyChanges(['isHidden']))
       );
 
       match /likes/{likeId} {

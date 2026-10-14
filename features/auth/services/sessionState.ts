@@ -1,9 +1,9 @@
 import { doc, getFirestore, onSnapshot } from '@react-native-firebase/firestore';
 import { patchAuth, User } from '@/store/slices/authSlice';
-import { resetPrivacy } from '@/store/slices/privacySlice';
 import { presenceActions } from '@/features/privacy/services/presenceService';
-import { store } from '@/store';
+import { SESSION_RESET, store } from '@/store';
 import { logger } from '@/utils/logger';
+import { hydrateUserDoc } from './privateAccount';
 import { clearCachedSession, writeCachedSession } from './sessionStorage';
 
 const listener = { unsubscribe: null as (() => void) | null };
@@ -12,19 +12,32 @@ export function isOnboarded(user: User | null): boolean {
   return !!(user?.username && user?.interests);
 }
 
+/**
+ * Oturuma bağlı Firestore dinleyicileri. Durum sıfırlanırken bunlar
+ * kapanmazsa eski hesabın kitaplığı/bildirimleri store'u yeniden doldurur.
+ */
+async function stopSessionListeners() {
+  const [{ listenersActions }, { notificationActions }, { conversationActions }] = await Promise.all([
+    import('@/features/story/services/listeners'),
+    import('@/store/notificationStore'),
+    import('@/store/conversationStore'),
+  ]);
+  listenersActions.cleanupRealTimeListeners();
+  notificationActions.cleanupNotificationsListener();
+  conversationActions.cleanupListeners();
+}
+
 /** Oturumu kapatır. `asGuest` true ise kullanıcı misafir olarak uygulamada kalır. */
 export async function endSession({ asGuest }: { asGuest: boolean }) {
   cleanupUserListener();
   presenceActions.stop();
+  await stopSessionListeners().catch(error => logger.debug('Dinleyiciler kapatılamadı:', error));
   await clearCachedSession();
-  store.dispatch(resetPrivacy());
-  store.dispatch(patchAuth({
-    isAuthenticated: false,
-    hasCompletedOnboarding: false,
-    isGuest: asGuest,
-    user: null,
-    token: null,
-  }));
+  // Kullanıcıya bağlı tüm dilimler sıfırlanır (bkz. SESSION_RESET): görev
+  // ilerlemesi, kitaplık, okuma listeleri ve mesajlar bir sonraki hesaba
+  // taşınmasın.
+  store.dispatch({ type: SESSION_RESET });
+  store.dispatch(patchAuth({ isGuest: asGuest, isLoading: false }));
 }
 
 export function setupUserListener(userId: string) {
@@ -40,7 +53,9 @@ export function setupUserListener(userId: string) {
 
     listener.unsubscribe = onSnapshot(userDocRef, docSnap => {
       if (!docSnap.exists()) return;
-      const userData = { id: docSnap.id, ...docSnap.data() } as User;
+      // Herkese açık doküman e-postayı/appleUserId'yi içermez; oturumdaki
+      // kişisel alanlar korunur (bkz. privateAccount).
+      const userData = hydrateUserDoc(docSnap.id, docSnap.data()!, store.getState().auth.user);
       const onboarded = isOnboarded(userData);
       store.dispatch(patchAuth({ user: userData, hasCompletedOnboarding: onboarded }));
       writeCachedSession(userData, onboarded);

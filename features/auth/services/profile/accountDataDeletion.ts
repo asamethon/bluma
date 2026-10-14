@@ -28,6 +28,7 @@ export async function deleteAccountData(user: User) {
   await Promise.all([
     deleteCollection(['users', user.id, 'followers']),
     deleteCollection(['users', user.id, 'following']),
+    deleteCollection(['users', user.id, 'private']),
     ...personalCollections.map(name => deleteCollection(['users', user.id, name])),
   ]);
   const userNotifications = await getDocs(query(collection(db, 'notifications'), where('userId', '==', user.id)));

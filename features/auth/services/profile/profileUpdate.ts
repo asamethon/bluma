@@ -5,11 +5,17 @@ import { patchAuth, type User } from '@/store/slices/authSlice';
 import { logger } from '@/utils/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getFirestore, serverTimestamp, setDoc } from '@react-native-firebase/firestore';
+import { profileWritePayload } from './profileWrite';
 
 export async function updateUserProfile(user: User) {
   store.dispatch(patchAuth({ isLoading: true }));
   try {
-    await setDoc(doc(getFirestore(), 'users', user.id), { ...user, updatedAt: serverTimestamp() }, { merge: true });
+    // Kişisel alanlar ve sunucu tarafından yönetilen sayaçlar geri yazılmaz.
+    await setDoc(
+      doc(getFirestore(), 'users', user.id),
+      { ...profileWritePayload(user), updatedAt: serverTimestamp() },
+      { merge: true },
+    );
     await AsyncStorage.setItem('userData', JSON.stringify(user));
     store.dispatch(patchAuth({ user }));
     primeCachedUser(user);

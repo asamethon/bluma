@@ -25,6 +25,11 @@ export interface Story {
   isCompleted: boolean;
   isPublished: boolean;
   chaptersCount: number;
+  /**
+   * Takipçilere en son hangi bölüm sayısının duyurulduğu. Otomatik kaydın
+   * `chaptersCount`'u artırması bildirim üretmesin diye ayrı tutulur.
+   */
+  announcedChaptersCount?: number;
   readingTime: number;
   likesCount: number;
   commentsCount: number;

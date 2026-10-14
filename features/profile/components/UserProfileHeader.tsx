@@ -98,7 +98,7 @@ export function UserProfileHeader(props: Props) {
 
       <ProfileIdentity
         name={user.displayName}
-        handle={profileHandle(user.username, user.email)}
+        handle={profileHandle(user.username)}
         bio={user.bio}
       />
 
