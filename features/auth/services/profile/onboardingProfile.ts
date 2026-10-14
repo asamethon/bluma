@@ -5,7 +5,7 @@ import i18n from '@/i18n';
 import { logger } from '@/utils/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getFirestore, serverTimestamp, setDoc } from '@react-native-firebase/firestore';
-import { withoutPersonalFields } from '../privateAccount';
+import { profileWritePayload } from './profileWrite';
 import { checkUsernameAvailability } from './usernameAvailability';
 
 type OnboardingProfile = {
@@ -42,7 +42,7 @@ export async function completeOnboarding(input: OnboardingProfile) {
     };
     await setDoc(
       doc(getFirestore(), 'users', current.id),
-      { ...withoutPersonalFields(user), updatedAt: serverTimestamp() },
+      { ...profileWritePayload(user), updatedAt: serverTimestamp() },
       { merge: true },
     );
     await Promise.all([

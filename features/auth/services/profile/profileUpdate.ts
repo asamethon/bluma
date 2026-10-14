@@ -1,4 +1,3 @@
-import { withoutPersonalFields } from '@/features/auth/services/privateAccount';
 import { primeCachedUser } from '@/features/auth/services/userCache';
 import i18n from '@/i18n';
 import { store } from '@/store';
@@ -6,14 +5,15 @@ import { patchAuth, type User } from '@/store/slices/authSlice';
 import { logger } from '@/utils/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getFirestore, serverTimestamp, setDoc } from '@react-native-firebase/firestore';
+import { profileWritePayload } from './profileWrite';
 
 export async function updateUserProfile(user: User) {
   store.dispatch(patchAuth({ isLoading: true }));
   try {
-    // Kişisel alanlar (e-posta vb.) herkese açık dokümana geri yazılmaz.
+    // Kişisel alanlar ve sunucu tarafından yönetilen sayaçlar geri yazılmaz.
     await setDoc(
       doc(getFirestore(), 'users', user.id),
-      { ...withoutPersonalFields(user), updatedAt: serverTimestamp() },
+      { ...profileWritePayload(user), updatedAt: serverTimestamp() },
       { merge: true },
     );
     await AsyncStorage.setItem('userData', JSON.stringify(user));
