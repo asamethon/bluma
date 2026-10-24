@@ -10,6 +10,7 @@
     "local:emulators": "firebase emulators:start --only auth,firestore --project demo-bluma-local --config firebase.emulators.json --import .firebase-local --export-on-exit .firebase-local",
     "local:seed": "node scripts/emulators/seed.cjs",
     "local:test": "node scripts/emulators/smoke.cjs",
+    "qa:ui": "node scripts/qa/argent.cjs",
     "local:start": "EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1 expo start --dev-client --port 8082",
     "local:ios": "node scripts/emulators/native.cjs ios",
     "local:android": "node scripts/emulators/native.cjs android",

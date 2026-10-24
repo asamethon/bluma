@@ -1,0 +1,27 @@
+steps:
+  - launch: com.asamethon.bluma.local
+  - tool: open-url
+    args:
+      url: bluma-local://story/local-published-story/comments
+  - tap:
+      text: Write your comment...
+  - launch: com.asamethon.bluma.local
+  - tool: open-url
+    args:
+      url: bluma-local://story/local-published-story/comments
+  - tap:
+      text: Write your comment...
+  - tool: keyboard
+    args:
+      text: Yerel test yorumu 1
+  - tap:
+      x: 0.9035
+      y: 0.5894999999999999
+  - tap:
+      text: Write your comment...
+  - tool: keyboard
+    args:
+      text: Yerel test yorumu 2
+  - tap:
+      x: 0.9035
+      y: 0.5894999999999999

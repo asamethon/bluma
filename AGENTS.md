@@ -44,3 +44,9 @@ Mimari hedefler ve detaylı rehber: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 ## Yayın notları
 - Firestore kural değişikliği → `firebase deploy --only firestore:rules` gerekir (hatırlat).
 - `server/` = VPS görsel servisi (blumaimg.d4tecompany.com); değişiklikte rsync + `systemctl restart bluma-image-server` (bkz. server/README.md).
+
+## Yerel UI testleri
+- Argent için önce [docs/ARGENT-TESTING.md](docs/ARGENT-TESTING.md) akışını kullan.
+- Bilinen yolu `yarn qa:ui run <local-akış>` ile tek çağrıda çalıştır; her adımı yeniden keşfetme.
+- Önce filtreli `qa:ui inspect` ve kısa rapor; tam ağaç/görsel yalnızca gerektiğinde.
+- Tekrarlanan UI yollarını bir kez kaydet. Hata parçasıyla ilgili geçen testleri gerekçesiz tekrarlama; zorunlu tip kontrolünü koru.

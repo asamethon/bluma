@@ -47,6 +47,7 @@ export function CommentComposer(props: Props) {
             )}
           </View>
           <TextInput
+            testID="comment-input"
             style={props.styles.commentInput}
             placeholder={props.replyingToName ? t('commentsScreen.replyPlaceholder') : t('commentsScreen.commentPlaceholder')}
             placeholderTextColor={colors.textSecondary}
@@ -57,6 +58,7 @@ export function CommentComposer(props: Props) {
             editable={!props.submitting}
           />
           <TouchableOpacity
+            testID="comment-send"
             style={[props.styles.sendButton, !enabled && props.styles.sendButtonDisabled]}
             onPress={props.onSubmit}
             disabled={!enabled}
