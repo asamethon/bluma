@@ -163,6 +163,12 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
                   <Text variant="labelSm" color={(form.language || 'tr') === lang ? colors.primary : colors.textSecondary}>{LANGUAGE_LABELS[lang] || lang}</Text>
                 </Pressable>
               ))}
+              <Pressable
+                onPress={() => form.setLanguage?.('other')}
+                style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: form.language === 'other' ? `${colors.primary}14` : colors.surfaceVariant, borderWidth: 1, borderColor: form.language === 'other' ? colors.primary : colors.border }}
+              >
+                <Text variant="labelSm" color={form.language === 'other' ? colors.primary : colors.textSecondary}>{t('common.other', 'Diğer')}</Text>
+              </Pressable>
             </View>
           </View>
 
