@@ -1,27 +1,12 @@
-import { storyActions } from '@/store/storyStore';
-import { joinChapters, type StudioChapter } from '../utils/chapterContent';
-import { readingMinutes, wordCount } from '../utils/textStats';
+import type { StudioChapter } from '../utils/chapterContent';
+import { persistChapterDraft } from './chapterDraftStorage';
+import { publishChapterDraft } from './chapterPublication';
+import { queueChapterWrite } from './chapterWriteQueue';
 
-/** Bölüm listesinden üretilen hikâye üstverisi; taslak ve yayın aynı şemayı yazar. */
-function chapterMetadata(chapters: StudioChapter[]) {
-  return {
-    chapterTitles: chapters.map(chapter => chapter.title),
-    chapterWordCounts: chapters.map(chapter => wordCount(chapter.content)),
-    chaptersCount: chapters.length,
-    isBook: chapters.length > 1,
-    readingTime: readingMinutes(joinChapters(chapters)),
-    chaptersInSubcollection: true,
-  };
+export function saveDraft(storyId: string, chapters: StudioChapter[]) {
+  return queueChapterWrite(storyId, () => persistChapterDraft(storyId, chapters));
 }
 
-export async function saveDraft(storyId: string, chapters: StudioChapter[]) {
-  await Promise.all([
-    storyActions.saveChapters(storyId, chapters),
-    storyActions.updateStory(storyId, chapterMetadata(chapters)),
-  ]);
-}
-
-export async function publishDraft(storyId: string, chapters: StudioChapter[]) {
-  await storyActions.saveChapters(storyId, chapters);
-  return storyActions.updateStory(storyId, { ...chapterMetadata(chapters), isPublished: true });
+export function publishDraft(storyId: string, chapters: StudioChapter[]) {
+  return queueChapterWrite(storyId, () => publishChapterDraft(storyId, chapters));
 }

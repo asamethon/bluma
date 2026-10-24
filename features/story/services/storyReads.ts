@@ -5,6 +5,7 @@ import { logger } from '@/utils/logger';
 import { collection, doc, getDoc, getDocs, getFirestore, query, where } from '@react-native-firebase/firestore';
 import { storyFromSnapshot } from './listeners/storySnapshot';
 import { cachedStory } from './storyCache';
+import { loadDraftSummaries } from './chapterDraftStorage';
 
 const timestamp = (value: any) => (value?.toDate?.() ?? new Date(value || 0)).getTime();
 
@@ -36,6 +37,8 @@ export async function loadUserStories(userId: string) {
     const stories = await Promise.all(snapshot.docs.map(storyFromSnapshot));
     stories.sort((a, b) => timestamp(b.createdAt) - timestamp(a.createdAt));
     store.dispatch(patchStory({ userStories: stories }));
+    void loadDraftSummaries(userId, stories.map(story => story.id))
+      .catch(error => logger.debug('Taslak özetleri okunamadı:', error));
   } catch (error) {
     logger.error('Load user stories error:', error);
   } finally {

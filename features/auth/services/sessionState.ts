@@ -3,6 +3,7 @@ import { patchAuth, User } from '@/store/slices/authSlice';
 import { resetPrivacy } from '@/store/slices/privacySlice';
 import { presenceActions } from '@/features/privacy/services/presenceService';
 import { store } from '@/store';
+import { resetStoryDrafts } from '@/store/slices/storyDraftSlice';
 import { logger } from '@/utils/logger';
 import { clearCachedSession, writeCachedSession } from './sessionStorage';
 
@@ -18,6 +19,7 @@ export async function endSession({ asGuest }: { asGuest: boolean }) {
   presenceActions.stop();
   await clearCachedSession();
   store.dispatch(resetPrivacy());
+  store.dispatch(resetStoryDrafts());
   store.dispatch(patchAuth({
     isAuthenticated: false,
     hasCompletedOnboarding: false,

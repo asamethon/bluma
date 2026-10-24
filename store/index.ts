@@ -10,11 +10,13 @@ import preferencesReducer from './slices/preferencesSlice';
 import privacyReducer from './slices/privacySlice';
 import readingListReducer from './slices/readingListSlice';
 import storyReducer from './slices/storySlice';
+import storyDraftReducer from './slices/storyDraftSlice';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     story: storyReducer,
+    storyDraft: storyDraftReducer,
     preferences: preferencesReducer,
     readingList: readingListReducer,
     moderation: moderationReducer,

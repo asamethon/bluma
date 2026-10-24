@@ -122,6 +122,7 @@
     "lastUpdated": "آخر تحديث: {{date}}"
   },
   "studio": {
+    "storyStatusLabel": "حالة القصة",
     "cannotDeleteTitle": "لا يمكن الحذف",
     "cannotDeleteMessage": "يجب أن تحتوي القصة على فصل واحد على الأقل.",
     "deleteChapterTitle": "حذف الفصل",
@@ -182,7 +183,16 @@
     "untitledStory": "قصة بلا عنوان",
     "completeInfoTitle": "خطوة أخيرة",
     "completeInfoMessage": "أضف عنوانًا وتصنيفًا لقصتك قبل نشرها.",
-    "completeInfoAction": "إكمال المعلومات"
+    "completeInfoAction": "إكمال المعلومات",
+    "saveFailed": "تعذر الحفظ · حاول مرة أخرى",
+    "draftOpenFailedTitle": "تعذر فتح المسودة",
+    "draftOpenFailedMessage": "تحقق من اتصالك وأذونات الوصول إلى المسودة ثم حاول مرة أخرى.",
+    "draftLoginRequired": "يجب تسجيل الدخول لحفظ مسودة.",
+    "publishLoginRequired": "يجب تسجيل الدخول للنشر.",
+    "publishEmptyChapters": "لا يمكن نشر فصول فارغة. أضف محتوى أو احذف الفصل الفارغ.",
+    "publishStoryMissing": "لم يتم العثور على القصة.",
+    "publishNotAuthor": "المؤلف فقط يمكنه نشر هذه القصة.",
+    "publishError": "تعذر نشر الفصول. حاول مرة أخرى."
   },
   "saved": {
     "title": "القصص المحفوظة",
@@ -563,6 +573,10 @@
       "title": "ماراثون القراءة في نهاية الأسبوع",
       "desc": "أنهِ 3 فصول واترك تعليقين بين الجمعة والأحد.",
       "endsIn": "يومان"
+    },
+    "errors": {
+      "sessionChanged": "تغيرت جلسة التحدي.",
+      "profileNotFound": "لم يتم العثور على ملف التحدي."
     }
   },
   "genres": {
@@ -648,7 +662,8 @@
     "pwWeak": "ضعيفة",
     "pwMedium": "متوسطة",
     "pwGood": "جيدة",
-    "pwStrong": "قوية"
+    "pwStrong": "قوية",
+    "loadingSession": "جارٍ تحميل الجلسة"
   },
   "profileScreen": {
     "warning": "تحذير",
@@ -805,7 +820,8 @@
     "googleSessionMissing": "جلسة Google غير موجودة.",
     "appleUserIdMissing": "معرّف مستخدم Apple غير موجود.",
     "appleRefreshFailed": "تعذّر تجديد مصادقة Apple.",
-    "disposableEmail": "لا يمكن إنشاء حساب ببريد مؤقت. استخدم عنوانًا دائمًا."
+    "disposableEmail": "لا يمكن إنشاء حساب ببريد مؤقت. استخدم عنوانًا دائمًا.",
+    "localEmailSignInRequired": "استخدم البريد الإلكتروني وكلمة المرور لتسجيل الدخول في الاختبار المحلي."
   },
   "account": {
     "usernameTaken": "اسم المستخدم هذا مُستخدم بالفعل.",

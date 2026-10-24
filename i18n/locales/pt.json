@@ -122,6 +122,7 @@
     "lastUpdated": "Última atualização: {{date}}"
   },
   "studio": {
+    "storyStatusLabel": "Estado da história",
     "cannotDeleteTitle": "Não é possível eliminar",
     "cannotDeleteMessage": "Uma história tem de ter pelo menos um capítulo.",
     "deleteChapterTitle": "Eliminar capítulo",
@@ -182,7 +183,16 @@
     "untitledStory": "História sem título",
     "completeInfoTitle": "Um último passo",
     "completeInfoMessage": "Adiciona um título e um género à tua história antes de a publicares.",
-    "completeInfoAction": "Completar informações"
+    "completeInfoAction": "Completar informações",
+    "saveFailed": "Não foi possível guardar · Tentar novamente",
+    "draftOpenFailedTitle": "Não foi possível abrir o rascunho",
+    "draftOpenFailedMessage": "Verifica a ligação e as permissões de acesso ao rascunho e tenta novamente.",
+    "draftLoginRequired": "Tens de iniciar sessão para guardar um rascunho.",
+    "publishLoginRequired": "Tens de iniciar sessão para publicar.",
+    "publishEmptyChapters": "Capítulos vazios não podem ser publicados. Adiciona conteúdo ou elimina o capítulo vazio.",
+    "publishStoryMissing": "História não encontrada.",
+    "publishNotAuthor": "Apenas o autor pode publicar esta história.",
+    "publishError": "Não foi possível publicar os capítulos. Tenta novamente."
   },
   "saved": {
     "title": "Histórias guardadas",
@@ -563,6 +573,10 @@
       "title": "Maratona de leitura de fim de semana",
       "desc": "Termina 3 capítulos e deixa 2 comentários entre sexta-feira e domingo.",
       "endsIn": "2 dias"
+    },
+    "errors": {
+      "sessionChanged": "A sessão do desafio mudou.",
+      "profileNotFound": "Perfil do desafio não encontrado."
     }
   },
   "genres": {
@@ -648,7 +662,8 @@
     "pwWeak": "Fraca",
     "pwMedium": "Média",
     "pwGood": "Boa",
-    "pwStrong": "Forte"
+    "pwStrong": "Forte",
+    "loadingSession": "A carregar sessão"
   },
   "profileScreen": {
     "warning": "Aviso",
@@ -805,7 +820,8 @@
     "googleSessionMissing": "Sessão do Google não encontrada.",
     "appleUserIdMissing": "ID de utilizador da Apple não encontrado.",
     "appleRefreshFailed": "Não foi possível renovar a autenticação da Apple.",
-    "disposableEmail": "Não é possível criar conta com e-mails descartáveis. Usa um endereço permanente."
+    "disposableEmail": "Não é possível criar conta com e-mails descartáveis. Usa um endereço permanente.",
+    "localEmailSignInRequired": "Usa e-mail e palavra-passe para iniciar sessão no teste local."
   },
   "account": {
     "usernameTaken": "Este nome de utilizador já está em uso.",

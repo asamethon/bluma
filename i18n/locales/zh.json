@@ -122,6 +122,7 @@
     "lastUpdated": "最近更新：{{date}}"
   },
   "studio": {
+    "storyStatusLabel": "故事状态",
     "cannotDeleteTitle": "无法删除",
     "cannotDeleteMessage": "故事至少需要一个章节。",
     "deleteChapterTitle": "删除章节",
@@ -182,7 +183,16 @@
     "untitledStory": "未命名故事",
     "completeInfoTitle": "最后一步",
     "completeInfoMessage": "发布前请为你的故事添加标题和类型。",
-    "completeInfoAction": "完善信息"
+    "completeInfoAction": "完善信息",
+    "saveFailed": "保存失败 · 重试",
+    "draftOpenFailedTitle": "无法打开草稿",
+    "draftOpenFailedMessage": "请检查网络连接和草稿访问权限，然后重试。",
+    "draftLoginRequired": "保存草稿需要登录。",
+    "publishLoginRequired": "发布需要登录。",
+    "publishEmptyChapters": "空章节无法发布。请添加内容或删除空章节。",
+    "publishStoryMissing": "未找到故事。",
+    "publishNotAuthor": "只有作者可以发布这个故事。",
+    "publishError": "章节发布失败。请重试。"
   },
   "saved": {
     "title": "已保存的故事",
@@ -563,6 +573,10 @@
       "title": "周末阅读马拉松",
       "desc": "在周五至周日之间读完 3 个章节并留下 2 条评论。",
       "endsIn": "还剩 2 天"
+    },
+    "errors": {
+      "sessionChanged": "挑战会话已更改。",
+      "profileNotFound": "未找到挑战资料。"
     }
   },
   "genres": {
@@ -648,7 +662,8 @@
     "pwWeak": "弱",
     "pwMedium": "中",
     "pwGood": "良好",
-    "pwStrong": "强"
+    "pwStrong": "强",
+    "loadingSession": "正在加载会话"
   },
   "profileScreen": {
     "warning": "警告",
@@ -805,7 +820,8 @@
     "googleSessionMissing": "未找到 Google 会话。",
     "appleUserIdMissing": "未找到 Apple 用户 ID。",
     "appleRefreshFailed": "无法刷新 Apple 身份验证。",
-    "disposableEmail": "无法使用一次性邮箱注册，请使用长期有效的邮箱地址。"
+    "disposableEmail": "无法使用一次性邮箱注册，请使用长期有效的邮箱地址。",
+    "localEmailSignInRequired": "本地测试请使用邮箱和密码登录。"
   },
   "account": {
     "usernameTaken": "此用户名已被占用。",

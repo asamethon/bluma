@@ -14,8 +14,7 @@ type Params = {
   chapters: StudioChapter[];
   category: string;
   isPublished: boolean;
-  beforePublish: () => void;
-  onPublished: () => void;
+  onPublished: (chapters: StudioChapter[]) => void;
 };
 
 /** Yayın akışı: eksik bilgi uyarısı → onay → yazma → kutlama ve değerlendirme. */
@@ -44,8 +43,8 @@ export function useComposerPublish(params: Params) {
 
   const run = async () => {
     setPublishing(true);
-    params.beforePublish();
-    const result = await publishDraft(params.storyId, params.chapters);
+    const chapters = params.chapters;
+    const result = await publishDraft(params.storyId, chapters).catch(() => ({ success: false, error: i18n.t('studio.publishFailed') }));
     setPublishing(false);
 
     if (!result.success) {
@@ -58,7 +57,7 @@ export function useComposerPublish(params: Params) {
     if (firstPublish) {
       challengeActions.trackAction(authorId!, 'storiesPublished').catch(() => {});
     }
-    params.onPublished();
+    params.onPublished(chapters);
 
     // Değerlendirme, kendi uyarımız kapandıktan SONRA istenir ki iki diyalog
     // üst üste binmesin.

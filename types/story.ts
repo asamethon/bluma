@@ -44,6 +44,7 @@ export interface Story {
   isHidden?: boolean;
   chaptersInSubcollection?: boolean;
   chapterWordCounts?: number[];
+  lastNotifiedChapterCount?: number;
 }
 
 export interface Comment {

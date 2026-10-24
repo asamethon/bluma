@@ -122,6 +122,7 @@
     "lastUpdated": "Zuletzt aktualisiert: {{date}}"
   },
   "studio": {
+    "storyStatusLabel": "Status der Geschichte",
     "cannotDeleteTitle": "Kann nicht gelöscht werden",
     "cannotDeleteMessage": "Eine Geschichte muss mindestens ein Kapitel haben.",
     "deleteChapterTitle": "Kapitel löschen",
@@ -182,7 +183,16 @@
     "untitledStory": "Unbenannte Geschichte",
     "completeInfoTitle": "Ein letzter Schritt",
     "completeInfoMessage": "Füge deiner Geschichte vor dem Veröffentlichen einen Titel und ein Genre hinzu.",
-    "completeInfoAction": "Infos vervollständigen"
+    "completeInfoAction": "Infos vervollständigen",
+    "saveFailed": "Speichern fehlgeschlagen · Erneut versuchen",
+    "draftOpenFailedTitle": "Entwurf konnte nicht geöffnet werden",
+    "draftOpenFailedMessage": "Prüfe deine Verbindung und die Zugriffsrechte für Entwürfe und versuche es erneut.",
+    "draftLoginRequired": "Du musst angemeldet sein, um einen Entwurf zu speichern.",
+    "publishLoginRequired": "Du musst angemeldet sein, um zu veröffentlichen.",
+    "publishEmptyChapters": "Leere Kapitel können nicht veröffentlicht werden. Füge Inhalt hinzu oder lösche das leere Kapitel.",
+    "publishStoryMissing": "Story nicht gefunden.",
+    "publishNotAuthor": "Nur der Autor kann diese Story veröffentlichen.",
+    "publishError": "Kapitel konnten nicht veröffentlicht werden. Bitte versuche es erneut."
   },
   "saved": {
     "title": "Gespeicherte Geschichten",
@@ -563,6 +573,10 @@
       "title": "Wochenend-Lesemarathon",
       "desc": "Schließe zwischen Freitag und Sonntag 3 Kapitel ab und hinterlasse 2 Kommentare.",
       "endsIn": "2 Tage"
+    },
+    "errors": {
+      "sessionChanged": "Aufgabensitzung geändert.",
+      "profileNotFound": "Aufgabenprofil nicht gefunden."
     }
   },
   "genres": {
@@ -648,7 +662,8 @@
     "pwWeak": "Schwach",
     "pwMedium": "Mittel",
     "pwGood": "Gut",
-    "pwStrong": "Stark"
+    "pwStrong": "Stark",
+    "loadingSession": "Sitzung wird geladen"
   },
   "profileScreen": {
     "warning": "Warnung",
@@ -805,7 +820,8 @@
     "googleSessionMissing": "Google-Sitzung nicht gefunden.",
     "appleUserIdMissing": "Apple-Nutzer-ID nicht gefunden.",
     "appleRefreshFailed": "Die Apple-Authentifizierung konnte nicht erneuert werden.",
-    "disposableEmail": "Mit Wegwerf-E-Mail-Adressen kann kein Konto erstellt werden. Bitte nutze eine dauerhafte Adresse."
+    "disposableEmail": "Mit Wegwerf-E-Mail-Adressen kann kein Konto erstellt werden. Bitte nutze eine dauerhafte Adresse.",
+    "localEmailSignInRequired": "Melde dich im lokalen Test mit E-Mail und Passwort an."
   },
   "account": {
     "usernameTaken": "Dieser Nutzername ist bereits vergeben.",

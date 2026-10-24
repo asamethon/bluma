@@ -54,7 +54,7 @@ export function ComposerBottomBar({ c, bottomInset }: { c: ComposerModel; bottom
 
       <View style={styles.actions}>
         <Button label={t('studio.preview')} variant="secondary" icon="eye-outline" onPress={() => c.setPreview(true)} style={{ flex: 1 }} />
-        {c.isPublished ? (
+        {c.isPublished && !c.hasUnpublishedChanges ? (
           <Button label={t('storyStatus.published')} variant="secondary" icon="checkmark-circle" disabled style={{ flex: 1.4 }} />
         ) : (
           <Button label={t('studio.publishAction')} variant="primary" iconRight="arrow-forward" loading={c.publishing} onPress={c.publish} style={{ flex: 1.4 }} />

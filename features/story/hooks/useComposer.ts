@@ -22,7 +22,6 @@ export function useComposer(id: string, chParam?: string) {
     chapters: doc.chapters,
     category: doc.category,
     isPublished: doc.isPublished,
-    beforePublish: doc.cancelPendingSave,
     onPublished: doc.markPublished,
   });
 
@@ -34,6 +33,8 @@ export function useComposer(id: string, chParam?: string) {
     index: doc.index,
     cur: doc.chapters[doc.index],
     isPublished: doc.isPublished,
+    hasUnpublishedChanges: doc.hasUnpublishedChanges,
+    retrySave: doc.retrySave,
     saveState: doc.saveState,
     setChapterTitle: doc.setChapterTitle,
     switchTo: (index: number) => { doc.switchTo(index); setPanels({ sheet: false }); },

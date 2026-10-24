@@ -18,7 +18,7 @@ export async function updateUserStoriesCount(userId: string, delta: number) {
   }
 }
 
-const publishSideEffects = (user: NonNullable<ReturnType<typeof store.getState>['auth']['user']>, storyId: string, title: string) => {
+export const publishSideEffects = (user: NonNullable<ReturnType<typeof store.getState>['auth']['user']>, storyId: string, title: string) => {
   void notificationActions.announceStoryToFollowers(
     user.id,
     user.displayName || user.username || i18n.t('notifications.anAuthorYouFollow'),
@@ -82,19 +82,7 @@ export async function updateStory(storyId: string, updates: Partial<Story>) {
     const user = store.getState().auth.user;
     if (user?.id === current.authorId) {
       const title = updates.title || current.title;
-      const chapterAdded = current.isPublished
-        && updates.isPublished !== false
-        && typeof updates.chaptersCount === 'number'
-        && updates.chaptersCount > (current.chaptersCount || 1);
       if (becamePublished) publishSideEffects(user, storyId, title);
-      else if (chapterAdded) void notificationActions.announceStoryToFollowers(
-        user.id,
-        user.displayName || user.username || i18n.t('notifications.anAuthorYouFollow'),
-        storyId,
-        title,
-        'new_chapter',
-        updates.chaptersCount,
-      );
     }
     return { success: true };
   } catch (error) {
