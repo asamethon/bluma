@@ -125,11 +125,13 @@ service cloud.firestore {
       allow create: if isOwner(userId) && !hasPrivateProfileFields(request.resource.data);
       allow delete: if isOwner(userId);
       allow update: if !hasPrivateProfileFields(request.resource.data) && (isOwner(userId)
-        || (isSignedIn() && isCounterBump('followersCount'))
-        // İsteği onaylayan, yalnızca isteği duran kullanıcının followingCount'unu
-        // bump edebilir.
+        || (isSignedIn() && isCounterBump('followersCount')
+            && exists(/databases/$(database)/documents/users/$(userId)/followers/$(request.auth.uid)))
         || (isSignedIn() && isCounterBump('followingCount')
-            && hasFollowRequest(request.auth.uid, userId)));
+            && (hasFollowRequest(request.auth.uid, userId)
+                || exists(/databases/$(database)/documents/users/$(request.auth.uid)/following/$(userId))))
+        || (isSignedIn() && isCounterBump('followersCount') && exists(/databases/$(database)/documents/users/$(userId)/followers/$(request.auth.uid)) == false && request.resource.data.followersCount < resource.data.get('followersCount', 0))
+        || (isSignedIn() && isCounterBump('followingCount') && request.resource.data.followingCount < resource.data.get('followingCount', 0)));
 
       match /private/{docId} {
         allow read, write: if isOwner(userId);
@@ -239,7 +241,10 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
       allow update: if isSignedIn() && (
         (resource.data.authorId == request.auth.uid && !onBannedDevice() && preservesManagementFields())
-        || isCounterBump('likesCount')
+        || (isCounterBump('likesCount') && (
+            exists(/databases/$(database)/documents/stories/$(storyId)/likes/$(request.auth.uid))
+            || request.resource.data.likesCount < resource.data.likesCount
+          ))
         || isCounterBump('commentsCount')
         || isCounterBump('viewsCount')
         || updatesManagementFields()
@@ -259,7 +264,10 @@ service cloud.firestore {
         // Yazar bölüm içeriğini yazar; başka bir okur yalnızca likesCount'u
         // ±1 bump edebilir (bölüm-bazlı beğeni, bkz. YAPILACAKLAR 2.3).
         allow create, delete: if isStoryAuthor();
-        allow update: if isStoryAuthor() || isCounterBump('likesCount');
+        allow update: if isStoryAuthor() || (isCounterBump('likesCount') && (
+          exists(/databases/$(database)/documents/stories/$(storyId)/chapters/$(chapterId)/likes/$(request.auth.uid))
+          || request.resource.data.likesCount < resource.data.likesCount
+        ));
 
         // Bölüm beğenileri — bir okur yalnızca kendi beğeni dokümanını
         // oluşturabilir/silebilir.
@@ -317,7 +325,10 @@ service cloud.firestore {
       // updatedAt is included because commenting bumps it alongside the counter.
       allow update: if isSignedIn() && !hasPrivateProfileFields(request.resource.data.get('author', {})) && (
         resource.data.authorId == request.auth.uid
-        || isCounterBump('likesCount')
+        || (isCounterBump('likesCount') && (
+            exists(/databases/$(database)/documents/conversations/$(conversationId)/likes/$(request.auth.uid))
+            || request.resource.data.likesCount < resource.data.likesCount
+          ))
         || isCounterBump('viewsCount')
         || (onlyChanges(['commentsCount', 'updatedAt']) && (
           bumpBy('commentsCount', 1) ||
@@ -338,7 +349,10 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow update: if isSignedIn() && (
         resource.data.userId == request.auth.uid
-        || isCounterBump('likesCount')
+        || (isCounterBump('likesCount') && (
+            exists(/databases/$(database)/documents/conversationComments/$(commentId)/likes/$(request.auth.uid))
+            || request.resource.data.likesCount < resource.data.likesCount
+          ))
       );
     }
 
