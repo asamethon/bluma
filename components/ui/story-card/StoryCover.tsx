@@ -51,6 +51,12 @@ export function StoryCover({ story, radius = Radius.md, showChapterBadge = true,
         </View>
       ) : null}
 
+      {story.targetAudience === 'adult' ? (
+        <View style={[styles.premiumSeal, { backgroundColor: `${colors.error}CC`, left: 9, right: undefined }]}>
+          <Text variant="labelSm" color="#fff">18+</Text>
+        </View>
+      ) : null}
+
       {story.isPremium ? (
         <View style={[styles.premiumSeal, { backgroundColor: colors.secondary }]}>
           <Ionicons name="star" size={11} color="#3A2A06" />
@@ -83,7 +89,7 @@ const styles = StyleSheet.create({
   },
   premiumSeal: {
     position: 'absolute', top: 8, right: 8,
-    width: 22, height: 22, borderRadius: Radius.pill,
+    minWidth: 22, height: 22, paddingHorizontal: 4, borderRadius: Radius.pill,
     alignItems: 'center', justifyContent: 'center',
   },
   chapterBadge: {

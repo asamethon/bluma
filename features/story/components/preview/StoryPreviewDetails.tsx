@@ -1,7 +1,8 @@
 import { Avatar, GenreTag, Text } from '@/components/ui';
-import { Motion } from '@/constants/theme';
+import { Motion, useTheme } from '@/constants/theme';
 import type { Story } from '@/types';
 import { formatCount } from '@/utils/format';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { createStoryPreviewStyles } from '../../styles/storyPreviewStyles';
@@ -22,6 +23,7 @@ type Props = {
  */
 export function StoryPreviewDetails({ story, styles, onAuthorPress }: Props) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const author = story.author;
   const meta = [
     t('studio.chapterCount', { count: story.chaptersCount || 1 }),
@@ -33,7 +35,15 @@ export function StoryPreviewDetails({ story, styles, onAuthorPress }: Props) {
   return (
     <View style={styles.body}>
       <View style={styles.titleBlock}>
-        <GenreTag category={story.category ?? 'other'} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <GenreTag category={story.category ?? 'other'} />
+          {story.targetAudience === 'adult' && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: `${colors.error}1A` }}>
+              <Ionicons name="warning" size={11} color={colors.error} />
+              <Text variant="labelSm" color={colors.error}>18+</Text>
+            </View>
+          )}
+        </View>
         <Text variant="title" numberOfLines={2}>{story.title || t('common.story')}</Text>
       </View>
 

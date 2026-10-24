@@ -9,6 +9,7 @@ export type StoryInfoDraft = {
   description: string;
   coverImage: string | null;
   isCompleted: boolean;
+  targetAudience?: 'all' | 'teen' | 'adult';
 };
 
 type SaveParams = { storyId?: string; authorId: string; draft: StoryInfoDraft };
@@ -22,6 +23,7 @@ const NEW_STORY_DEFAULTS = {
   readingTime: 1,
   isPremium: false,
   isBook: false,
+  targetAudience: 'all' as const,
 };
 
 /** Yeni hikâye oluşturur ya da mevcut bilgileri günceller. */
@@ -36,6 +38,7 @@ export async function saveStoryInfo({ storyId, authorId, draft }: SaveParams): P
       description,
       category: draft.category,
       isCompleted: draft.isCompleted,
+      targetAudience: draft.targetAudience ?? 'all',
       ...(coverImage ? { coverImage } : {}),
     });
     return { success: result.success, error: result.error };
@@ -47,6 +50,7 @@ export async function saveStoryInfo({ storyId, authorId, draft }: SaveParams): P
     description,
     category: draft.category,
     isCompleted: draft.isCompleted,
+    targetAudience: draft.targetAudience ?? 'all',
     chapterTitles: [defaultChapterTitle(1)],
     authorId,
   } as Partial<Story> as Story);

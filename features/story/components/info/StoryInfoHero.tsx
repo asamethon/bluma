@@ -1,7 +1,8 @@
 import { GenreTag, Text } from '@/components/ui';
-import { Motion } from '@/constants/theme';
+import { Motion, useTheme } from '@/constants/theme';
 import type { StoryInfoStyles } from '@/features/story/styles/storyInfoStyles';
 import type { Story } from '@/types';
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +16,7 @@ type Props = {
 
 export const StoryInfoHero = memo(function StoryInfoHero({ story, styles, onAuthorPress }: Props) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
 
   return (
     <View style={styles.hero}>
@@ -24,7 +26,15 @@ export const StoryInfoHero = memo(function StoryInfoHero({ story, styles, onAuth
         <View style={[styles.cover, styles.coverPlaceholder]} />
       )}
       <View style={styles.heroMeta}>
-        <GenreTag category={story.category ?? 'other'} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <GenreTag category={story.category ?? 'other'} />
+          {story.targetAudience === 'adult' && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: `${colors.error}1A` }}>
+              <Ionicons name="warning" size={11} color={colors.error} />
+              <Text variant="labelSm" color={colors.error}>18+</Text>
+            </View>
+          )}
+        </View>
         <Text variant="title" numberOfLines={3}>{story.title}</Text>
         <Pressable
           onPress={onAuthorPress}

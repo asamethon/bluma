@@ -10,6 +10,7 @@ import type { useStoryInfoForm } from '../../hooks/useStoryInfoForm';
 import { StoryCoverPicker } from './StoryCoverPicker';
 import { CoverPickerSheet } from '../CoverPickerSheet';
 import { StoryStatusField } from './StoryStatusField';
+import { ChoiceTile } from '@/components/ui/ChoiceTile';
 
 const WRITE_GENRES: StoryCategory[] = [
   'fantasy', 'romance', 'mystery', 'sci_fi', 'drama', 'adventure', 'horror', 'poetry', 'comedy',
@@ -120,6 +121,24 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
           </View>
 
           <StoryStatusField isCompleted={form.isCompleted} onChange={form.setCompleted} />
+
+          <View style={{ gap: Spacing.sm }}>
+            <Text variant="label" tone="textSecondary">{t('studio.audienceLabel', 'İçerik hedef kitlesi')}</Text>
+            <View style={{ gap: Spacing.sm }}>
+              <ChoiceTile
+                label={t('studio.audienceAll', 'Genel izleyici')}
+                icon="people-outline"
+                selected={(form.targetAudience ?? 'all') !== 'adult'}
+                onPress={() => form.setTargetAudience?.('all')}
+              />
+              <ChoiceTile
+                label={t('studio.audienceAdult', 'Yetişkin içerik (+18)')}
+                icon="warning-outline"
+                selected={(form.targetAudience ?? 'all') === 'adult'}
+                onPress={() => form.setTargetAudience?.('adult')}
+              />
+            </View>
+          </View>
 
           {!form.isNew && (
             <Button label={t('studio.deleteStoryTitle')} variant="ghost" icon="trash-outline" onPress={form.remove} />
