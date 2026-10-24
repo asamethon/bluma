@@ -48,7 +48,16 @@ export default function LibraryScreen() {
         ListEmptyComponent={<LibraryEmpty />}
         renderSectionHeader={({ section }: { section: LibrarySection }) => (
           <View>
-            <SectionHeader title={section.title} />
+            <SectionHeader
+              title={section.title}
+              onSeeAll={
+                section.title === t('library.saved')
+                  ? () => router.push('/profile/saved')
+                  : section.title === t('library.liked')
+                    ? () => router.push('/profile/favorites')
+                    : undefined
+              }
+            />
           </View>
         )}
         renderItem={({ item: story }) => (

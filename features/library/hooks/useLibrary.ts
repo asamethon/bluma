@@ -33,7 +33,9 @@ export function useLibrary() {
 
   const sections = useMemo(() => {
     const list: LibrarySection[] = [];
-    if (savedStories.length) list.push({ title: t('library.saved'), data: savedStories });
+    if (savedStories.length) {
+      list.push({ title: t('library.saved'), data: savedStories.slice(0, LIKED_PREVIEW_COUNT) });
+    }
     if (likedStories.length) {
       list.push({
         title: t('library.liked'),
