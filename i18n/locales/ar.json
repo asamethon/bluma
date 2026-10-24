@@ -192,7 +192,17 @@
     "publishEmptyChapters": "لا يمكن نشر فصول فارغة. أضف محتوى أو احذف الفصل الفارغ.",
     "publishStoryMissing": "لم يتم العثور على القصة.",
     "publishNotAuthor": "المؤلف فقط يمكنه نشر هذه القصة.",
-    "publishError": "تعذر نشر الفصول. حاول مرة أخرى."
+    "publishError": "تعذر نشر الفصول. حاول مرة أخرى.",
+    "contentWarningsLabel": "İçerik uyarıları",
+    "contentWarningsHint": "Hikâyende bulunan hassas içerikleri işaretle",
+    "contentWarningViolence": "Violence",
+    "contentWarningSexual": "Sexual content",
+    "contentWarningAbuse": "Abuse",
+    "contentWarningSelfHarm": "Self-harm",
+    "contentWarningSuicide": "Suicide",
+    "contentWarningDrug": "Drugs/Alcohol",
+    "contentWarningLanguage": "Strong language",
+    "contentWarningDark": "Dark themes"
   },
   "saved": {
     "title": "القصص المحفوظة",

@@ -214,7 +214,17 @@
     "publishEmptyChapters": "Boş bölümler yayımlanamaz. İçerik ekleyebilir veya boş bölümü silebilirsin.",
     "publishStoryMissing": "Hikâye bulunamadı.",
     "publishNotAuthor": "Bu hikâyeyi yalnızca yazarı yayımlayabilir.",
-    "publishError": "Bölümler yayımlanamadı. Lütfen tekrar dene."
+    "publishError": "Bölümler yayımlanamadı. Lütfen tekrar dene.",
+    "contentWarningsLabel": "İçerik uyarıları",
+    "contentWarningsHint": "Hikâyende bulunan hassas içerikleri işaretle",
+    "contentWarningViolence": "Şiddet",
+    "contentWarningSexual": "Cinsel içerik",
+    "contentWarningAbuse": "İstismar",
+    "contentWarningSelfHarm": "Kendine zarar verme",
+    "contentWarningSuicide": "İntihar",
+    "contentWarningDrug": "Uyuşturucu/Alkol",
+    "contentWarningLanguage": "Küfür/Argo",
+    "contentWarningDark": "Karanlık temalar"
   },
   "saved": {
     "title": "Kaydedilen Hikayeler",

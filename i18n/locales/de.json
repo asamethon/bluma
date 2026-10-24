@@ -192,7 +192,17 @@
     "publishEmptyChapters": "Leere Kapitel können nicht veröffentlicht werden. Füge Inhalt hinzu oder lösche das leere Kapitel.",
     "publishStoryMissing": "Story nicht gefunden.",
     "publishNotAuthor": "Nur der Autor kann diese Story veröffentlichen.",
-    "publishError": "Kapitel konnten nicht veröffentlicht werden. Bitte versuche es erneut."
+    "publishError": "Kapitel konnten nicht veröffentlicht werden. Bitte versuche es erneut.",
+    "contentWarningsLabel": "İçerik uyarıları",
+    "contentWarningsHint": "Hikâyende bulunan hassas içerikleri işaretle",
+    "contentWarningViolence": "Violence",
+    "contentWarningSexual": "Sexual content",
+    "contentWarningAbuse": "Abuse",
+    "contentWarningSelfHarm": "Self-harm",
+    "contentWarningSuicide": "Suicide",
+    "contentWarningDrug": "Drugs/Alcohol",
+    "contentWarningLanguage": "Strong language",
+    "contentWarningDark": "Dark themes"
   },
   "saved": {
     "title": "Gespeicherte Geschichten",

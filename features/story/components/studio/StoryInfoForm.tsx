@@ -14,6 +14,17 @@ import { ChoiceTile } from '@/components/ui/ChoiceTile';
 import { Ionicons } from '@expo/vector-icons';
 import { SUPPORTED_LANGUAGES } from '@/i18n';
 
+const CONTENT_WARNING_OPTIONS = [
+  { id: 'violence', key: 'studio.contentWarningViolence' },
+  { id: 'sexualContent', key: 'studio.contentWarningSexual' },
+  { id: 'abuse', key: 'studio.contentWarningAbuse' },
+  { id: 'selfHarm', key: 'studio.contentWarningSelfHarm' },
+  { id: 'suicide', key: 'studio.contentWarningSuicide' },
+  { id: 'drugUse', key: 'studio.contentWarningDrug' },
+  { id: 'strongLanguage', key: 'studio.contentWarningLanguage' },
+  { id: 'darkThemes', key: 'studio.contentWarningDark' },
+];
+
 const LANGUAGE_LABELS: Record<string, string> = {
   ar: 'العربية',
   de: 'Deutsch',
@@ -41,6 +52,7 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
   const fieldOffsets = useRef({ title: 0, description: 0 });
   const [tagInput, setTagInput] = useState('');
   const tags = Array.isArray(form.tags) ? form.tags : [];
+  const warnings = Array.isArray(form.contentWarnings) ? form.contentWarnings : [];
 
   const addTag = () => {
     const tag = tagInput.trim().toLowerCase().replace(/[^a-z0-9ğüşıöç]/g, '');
@@ -51,6 +63,14 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
 
   const removeTag = (tag: string) => {
     form.setTags?.(tags.filter(t => t !== tag));
+  };
+
+  const toggleWarning = (id: string) => {
+    if (warnings.includes(id)) {
+      form.setContentWarnings?.(warnings.filter(w => w !== id));
+    } else {
+      form.setContentWarnings?.([...warnings, id]);
+    }
   };
 
   const keyboard = useAnimatedKeyboard();
@@ -219,6 +239,25 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
                 selected={(form.targetAudience ?? 'all') === 'adult'}
                 onPress={() => form.setTargetAudience?.('adult')}
               />
+            </View>
+          </View>
+
+          <View style={{ gap: Spacing.sm }}>
+            <Text variant="label" tone="textSecondary">{t('studio.contentWarningsLabel', 'İçerik uyarıları')}</Text>
+            <Text variant="caption" tone="textSecondary">{t('studio.contentWarningsHint', 'Hikâyende bulunan hassas içerikleri işaretle')}</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs }}>
+              {CONTENT_WARNING_OPTIONS.map(option => {
+                const active = warnings.includes(option.id);
+                return (
+                  <Pressable
+                    key={option.id}
+                    onPress={() => toggleWarning(option.id)}
+                    style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: active ? `${colors.primary}14` : colors.surfaceVariant, borderWidth: 1, borderColor: active ? colors.primary : colors.border }}
+                  >
+                    <Text variant="labelSm" color={active ? colors.primary : colors.textSecondary}>{t(option.key)}</Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
 

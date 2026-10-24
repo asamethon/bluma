@@ -192,7 +192,17 @@
     "publishEmptyChapters": "Capítulos vazios não podem ser publicados. Adicione conteúdo ou exclua o capítulo vazio.",
     "publishStoryMissing": "História não encontrada.",
     "publishNotAuthor": "Apenas o autor pode publicar esta história.",
-    "publishError": "Não foi possível publicar os capítulos. Tente novamente."
+    "publishError": "Não foi possível publicar os capítulos. Tente novamente.",
+    "contentWarningsLabel": "İçerik uyarıları",
+    "contentWarningsHint": "Hikâyende bulunan hassas içerikleri işaretle",
+    "contentWarningViolence": "Violence",
+    "contentWarningSexual": "Sexual content",
+    "contentWarningAbuse": "Abuse",
+    "contentWarningSelfHarm": "Self-harm",
+    "contentWarningSuicide": "Suicide",
+    "contentWarningDrug": "Drugs/Alcohol",
+    "contentWarningLanguage": "Strong language",
+    "contentWarningDark": "Dark themes"
   },
   "saved": {
     "title": "Histórias salvas",

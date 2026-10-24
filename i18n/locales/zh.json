@@ -192,7 +192,17 @@
     "publishEmptyChapters": "空章节无法发布。请添加内容或删除空章节。",
     "publishStoryMissing": "未找到故事。",
     "publishNotAuthor": "只有作者可以发布这个故事。",
-    "publishError": "章节发布失败。请重试。"
+    "publishError": "章节发布失败。请重试。",
+    "contentWarningsLabel": "İçerik uyarıları",
+    "contentWarningsHint": "Hikâyende bulunan hassas içerikleri işaretle",
+    "contentWarningViolence": "Violence",
+    "contentWarningSexual": "Sexual content",
+    "contentWarningAbuse": "Abuse",
+    "contentWarningSelfHarm": "Self-harm",
+    "contentWarningSuicide": "Suicide",
+    "contentWarningDrug": "Drugs/Alcohol",
+    "contentWarningLanguage": "Strong language",
+    "contentWarningDark": "Dark themes"
   },
   "saved": {
     "title": "已保存的故事",

@@ -214,7 +214,17 @@
     "publishEmptyChapters": "Empty chapters can't be published. Add content or delete the empty chapter.",
     "publishStoryMissing": "Story not found.",
     "publishNotAuthor": "Only the author can publish this story.",
-    "publishError": "Chapters couldn't be published. Please try again."
+    "publishError": "Chapters couldn't be published. Please try again.",
+    "contentWarningsLabel": "Content warnings",
+    "contentWarningsHint": "Mark sensitive content in your story",
+    "contentWarningViolence": "Violence",
+    "contentWarningSexual": "Sexual content",
+    "contentWarningAbuse": "Abuse",
+    "contentWarningSelfHarm": "Self-harm",
+    "contentWarningSuicide": "Suicide",
+    "contentWarningDrug": "Drugs/Alcohol",
+    "contentWarningLanguage": "Strong language",
+    "contentWarningDark": "Dark themes"
   },
   "saved": {
     "title": "Saved Stories",

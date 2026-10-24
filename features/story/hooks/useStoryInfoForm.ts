@@ -14,7 +14,7 @@ type FormState = StoryInfoDraft & {
   titleError: boolean;
 };
 
-const EMPTY: StoryInfoDraft = { title: '', category: 'other', description: '', coverImage: null, isCompleted: false, targetAudience: 'all', tags: [], language: 'tr' };
+const EMPTY: StoryInfoDraft = { title: '', category: 'other', description: '', coverImage: null, isCompleted: false, targetAudience: 'all', tags: [], language: 'tr', contentWarnings: [] };
 
 /** Hikâye bilgi formu: alanlar, kapak seçimi ve kaydetme/silme akışı. */
 export function useStoryInfoForm(id?: string) {
@@ -46,6 +46,7 @@ export function useStoryInfoForm(id?: string) {
         targetAudience: story.targetAudience === 'adult' ? 'adult' : 'all',
         tags: Array.isArray(story.tags) ? story.tags : [],
         language: story.language || 'tr',
+        contentWarnings: Array.isArray(story.contentWarnings) ? story.contentWarnings : [],
         loadingStory: false,
       });
     });
@@ -110,6 +111,7 @@ export function useStoryInfoForm(id?: string) {
     setTargetAudience: (targetAudience: 'all' | 'adult') => patch({ targetAudience }),
     setTags: (tags: string[]) => patch({ tags }),
     setLanguage: (language: string) => patch({ language }),
+    setContentWarnings: (contentWarnings: string[]) => patch({ contentWarnings }),
     setCoverImage: (coverImage: string | null) => patch({ coverImage }),
     setCoverSheet: (coverSheet: boolean) => patch({ coverSheet }),
     pickCover: () => chooseCover('gallery'),

@@ -192,7 +192,17 @@
     "publishEmptyChapters": "空の章は公開できません。内容を追加するか、空の章を削除してください。",
     "publishStoryMissing": "ストーリーが見つかりません。",
     "publishNotAuthor": "このストーリーを公開できるのは作者だけです。",
-    "publishError": "章を公開できませんでした。もう一度お試しください。"
+    "publishError": "章を公開できませんでした。もう一度お試しください。",
+    "contentWarningsLabel": "İçerik uyarıları",
+    "contentWarningsHint": "Hikâyende bulunan hassas içerikleri işaretle",
+    "contentWarningViolence": "Violence",
+    "contentWarningSexual": "Sexual content",
+    "contentWarningAbuse": "Abuse",
+    "contentWarningSelfHarm": "Self-harm",
+    "contentWarningSuicide": "Suicide",
+    "contentWarningDrug": "Drugs/Alcohol",
+    "contentWarningLanguage": "Strong language",
+    "contentWarningDark": "Dark themes"
   },
   "saved": {
     "title": "保存したストーリー",
