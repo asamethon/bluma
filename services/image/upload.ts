@@ -1,4 +1,5 @@
 import { IMAGE_SERVER_URL } from '@/constants/config';
+import { isLocalFirebase } from '@/constants/firebaseEnvironment';
 import i18n from '@/i18n';
 import { logger } from '@/utils/logger';
 import { getAuth, getIdToken } from '@react-native-firebase/auth';
@@ -86,6 +87,7 @@ async function toInlineImage(compressedUri: string, kind: ImageKind): Promise<st
 }
 
 export async function uploadImage(imageUri: string, kind: ImageKind, errorKey: string): Promise<string> {
+  if (isLocalFirebase) throw new Error('Yerel testte görsel yükleme kapalı. Metin ve bölüm yayınını deneyebilirsin.');
   try {
     const { width, compress } = COMPRESSION[kind];
     const compressed = (await resize(imageUri, width, compress)).uri;

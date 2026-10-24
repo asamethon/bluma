@@ -4,11 +4,13 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { logger } from '@/utils/logger';
+import { isLocalFirebase } from '@/constants/firebaseEnvironment';
 
 class PushNotificationService {
   private registrationVersion = 0;
 
   async getExpoPushToken(): Promise<string | null> {
+    if (isLocalFirebase) return null;
     try {
       if (!Device.isDevice) {
         logger.debug('Simulator\'da push notification çalışmaz');

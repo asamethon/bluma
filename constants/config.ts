@@ -1,6 +1,8 @@
-export const IMAGE_SERVER_URL = 'https://blumaimg.d4tecompany.com';
+import { isLocalFirebase } from './firebaseEnvironment';
 
-export const API_SERVER_URL = 'https://bluma-api.d4tecompany.com';
+export const IMAGE_SERVER_URL = isLocalFirebase ? '' : 'https://blumaimg.d4tecompany.com';
+
+export const API_SERVER_URL = isLocalFirebase ? '' : 'https://bluma-api.d4tecompany.com';
 
 export const SUPPORT_EMAIL = 'asamethon@gmail.com';
 
