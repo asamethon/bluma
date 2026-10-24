@@ -24,6 +24,11 @@ service cloud.firestore {
     function onlyChanges(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
     }
+    // Özel hesap alanları yalnızca users/{uid}/private/account içinde yaşar.
+    function hasPrivateProfileFields(data) {
+      return data.keys().hasAny(['email', 'appleUserId', 'signupPlatform', 'signupOsVersion',
+        'signupAppVersion', 'signupDeviceModel', 'signupLanguage', 'signupRegion']);
+    }
     // True when `field` changes by exactly n (atomic increment/decrement).
     function bumpBy(field, n) {
       return request.resource.data[field] == resource.data.get(field, 0) + n;
@@ -117,13 +122,18 @@ service cloud.firestore {
       }
 
       allow read: if true;
-      allow create, delete: if isOwner(userId);
-      allow update: if isOwner(userId)
+      allow create: if isOwner(userId) && !hasPrivateProfileFields(request.resource.data);
+      allow delete: if isOwner(userId);
+      allow update: if !hasPrivateProfileFields(request.resource.data) && (isOwner(userId)
         || (isSignedIn() && isCounterBump('followersCount'))
         // İsteği onaylayan, yalnızca isteği duran kullanıcının followingCount'unu
         // bump edebilir.
         || (isSignedIn() && isCounterBump('followingCount')
-            && hasFollowRequest(request.auth.uid, userId));
+            && hasFollowRequest(request.auth.uid, userId)));
+
+      match /private/{docId} {
+        allow read, write: if isOwner(userId);
+      }
 
       // followers — written cross-user on follow/unfollow, but a user may only
       // add/remove *their own* follower doc (doc id == follower's uid).
@@ -208,18 +218,37 @@ service cloud.firestore {
           && get(/databases/$(database)/documents/stories/$(storyId)).data.authorId == request.auth.uid;
       }
 
+      // Yönetim alanları içerik sahipliğinden bağımsızdır. Eksik alanlar eski
+      // hikâyelerle uyumludur; yazar güncellemede alanı silemez veya ekleyemez.
+      function preservesManagementFields() {
+        return !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['isHidden', 'isEditorsPick']);
+      }
+      function updatesManagementFields() {
+        return isAdmin() && onlyChanges(['isHidden', 'isEditorsPick'])
+          && request.resource.data.get('isHidden', false) is bool
+          && request.resource.data.get('isEditorsPick', false) is bool;
+      }
+
       // Public stories are readable by anyone; drafts only by their author.
       allow read: if resource.data.isPublished == true
         || (isSignedIn() && resource.data.authorId == request.auth.uid);
-      allow create: if canPublish() && request.resource.data.authorId == request.auth.uid;
+      allow create: if canPublish() && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.get('isHidden', false) == false
+        && request.resource.data.get('isEditorsPick', false) == false;
       allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
       allow update: if isSignedIn() && (
-        (resource.data.authorId == request.auth.uid && !onBannedDevice())
+        (resource.data.authorId == request.auth.uid && !onBannedDevice() && preservesManagementFields())
         || isCounterBump('likesCount')
         || isCounterBump('commentsCount')
         || isCounterBump('viewsCount')
-        || (isAdmin() && onlyChanges(['isHidden']))
+        || updatesManagementFields()
       );
+
+      // Otomatik kayıtlar yalnızca yazara açıktır; okuyucu /chapters kullanır.
+      match /draftChapters/{chapterId} {
+        allow read, write: if isStoryAuthor();
+      }
 
       // Chapter bodies (bkz. YAPILACAKLAR 2.2) — okuma kuralı ebeveyn hikâye
       // dokümanıyla aynı (yayında herkes, taslakta yalnızca yazar); yazma
@@ -282,10 +311,11 @@ service cloud.firestore {
     // Conversations — same ownership model as stories.
     match /conversations/{conversationId} {
       allow read: if true;
-      allow create: if canPublish() && request.resource.data.authorId == request.auth.uid;
+      allow create: if canPublish() && request.resource.data.authorId == request.auth.uid
+        && !hasPrivateProfileFields(request.resource.data.get('author', {}));
       allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
       // updatedAt is included because commenting bumps it alongside the counter.
-      allow update: if isSignedIn() && (
+      allow update: if isSignedIn() && !hasPrivateProfileFields(request.resource.data.get('author', {})) && (
         resource.data.authorId == request.auth.uid
         || isCounterBump('likesCount')
         || isCounterBump('viewsCount')
