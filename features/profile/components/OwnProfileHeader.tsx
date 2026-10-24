@@ -1,3 +1,4 @@
+import { selectChallengeXp } from '@/store/slices/challengeSlice';
 import { Button, IconButton } from '@/components/ui';
 import { RANKS, getRankIndex } from '@/features/challenges/definitions';
 import { useAppSelector } from '@/store/hooks';
@@ -26,7 +27,7 @@ type Props = {
 export function OwnProfileHeader({ user, stories, topInset, onShare }: Props) {
   const { t } = useTranslation();
   const router = useRouter();
-  const xp = useAppSelector(state => state.challenge.xp);
+  const xp = useAppSelector(selectChallengeXp);
   const rank = RANKS[getRankIndex(xp)];
   const onCover = !!user.coverImage;
   const likes = stories.reduce((sum, story) => sum + (story.likesCount || 0), 0);

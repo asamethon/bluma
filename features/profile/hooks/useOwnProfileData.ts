@@ -1,5 +1,4 @@
 import { authActions } from '@/store/authStore';
-import { challengeActions } from '@/store/challengeStore';
 import { conversationActions } from '@/store/conversationStore';
 import { useAppSelector } from '@/store/hooks';
 import { storyActions } from '@/store/storyStore';
@@ -20,7 +19,6 @@ export function useOwnProfileData() {
     authActions.setupUserListener(userId);
     void conversationActions.getUserConversations(userId);
     void conversationActions.getLikedConversations(userId);
-    void challengeActions.loadProgress(userId);
     return () => {
       storyActions.cleanupRealTimeListeners();
       authActions.cleanupUserListener();

@@ -1,3 +1,4 @@
+import { selectChallengeXp } from '@/store/slices/challengeSlice';
 import { Text } from '@/components/ui';
 import { Fonts, Motion, Spacing, useTheme } from '@/constants/theme';
 import { RANKS, getRankIndex } from '@/features/challenges/definitions';
@@ -17,7 +18,7 @@ const fmt = (xp: number) => (xp >= 1000 ? `${(xp / 1000).toFixed(1)}k` : `${xp}`
 export function ProfileProgressStrip({ onPress }: { onPress: () => void }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const xp = useAppSelector(state => state.challenge.xp);
+  const xp = useAppSelector(selectChallengeXp);
   const rankIndex = getRankIndex(xp);
   const rank = RANKS[rankIndex];
   const nextRank = RANKS[rankIndex + 1];

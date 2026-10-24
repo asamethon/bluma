@@ -1,13 +1,14 @@
+import { challengeActions } from '@/features/challenges/services/challengeProgress';
 import { doc, getFirestore, onSnapshot } from '@react-native-firebase/firestore';
 import { getAuth } from '@react-native-firebase/auth';
 import { patchAuth, User } from '@/store/slices/authSlice';
 import { resetPrivacy } from '@/store/slices/privacySlice';
 import { presenceActions } from '@/features/privacy/services/presenceService';
 import { store } from '@/store';
-import { resetStoryDrafts } from '@/store/slices/storyDraftSlice';
 import { logger } from '@/utils/logger';
 import { clearCachedSession, writeCachedSession } from './sessionStorage';
 import { sessionUser } from './sessionIdentity';
+import { resetStoryDrafts } from '@/store/slices/storyDraftSlice';
 
 const listener = { unsubscribe: null as (() => void) | null };
 
@@ -18,6 +19,7 @@ export function isOnboarded(user: User | null): boolean {
 /** Oturumu kapatır. `asGuest` true ise kullanıcı misafir olarak uygulamada kalır. */
 export async function endSession({ asGuest }: { asGuest: boolean }) {
   cleanupUserListener();
+  challengeActions.resetSession();
   presenceActions.stop();
   await clearCachedSession();
   store.dispatch(resetPrivacy());
