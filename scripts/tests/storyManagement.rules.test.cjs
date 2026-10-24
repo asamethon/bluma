@@ -112,9 +112,16 @@ test('yazar işaretli ve eski hikâyeyi düzenleyip bölümünü yayımlayabilir
 
 test('okurun atomik sayaçları çalışır; aynı yazıma yönetim alanı gizlenemez', async () => {
   const path = await existing({ isHidden: false, isEditorsPick: false });
-  for (const field of ['likesCount', 'commentsCount', 'viewsCount']) {
-    const transform = { transform: { document: `${prefix}/${path}`,
-      fieldTransforms: [{ fieldPath: field, increment: { integerValue: '1' } }] } };
+  // likesCount yalnızca kendi like dokümanıyla artırılabilir
+  await expectStatus([{ update: { name: `${prefix}/${path}/likes/${runId}-reader`, fields: fields({ userId: `${runId}-reader` }) } }], 200, `${runId}-reader`);
+  await expectStatus([{ transform: { document: `${prefix}/${path}`, fieldTransforms: [{ fieldPath: 'likesCount', increment: { integerValue: '1' } }] } }], 200, `${runId}-reader`);
+  for (const flag of flags) {
+    await expectStatus([update(path, { [flag]: true })], 403, `${runId}-reader`);
+  }
+  assert.equal((await db.doc(path).get()).data().likesCount, 1);
+  // commentsCount ve viewsCount hâlâ atomik bump ile artırılabilir
+  for (const field of ['commentsCount', 'viewsCount']) {
+    const transform = { transform: { document: `${prefix}/${path}`, fieldTransforms: [{ fieldPath: field, increment: { integerValue: '1' } }] } };
     await expectStatus([transform], 200, `${runId}-reader`);
     for (const flag of flags) {
       await expectStatus([update(path, { [flag]: true }), transform], 403, `${runId}-reader`);
