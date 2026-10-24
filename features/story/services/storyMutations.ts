@@ -44,7 +44,7 @@ export async function createStory(
       value !== undefined && value !== null && value !== '' && (!Array.isArray(value) || value.length > 0)
     )));
     const reference = await addDoc(collection(getFirestore(), 'stories'), {
-      language: i18n.language,
+      language: (storyData as any).language || i18n.language,
       ...cleanData,
       authorId: user.id,
       likesCount: 0,

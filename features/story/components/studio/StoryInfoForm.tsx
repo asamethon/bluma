@@ -137,6 +137,21 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
           <StoryStatusField isCompleted={form.isCompleted} onChange={form.setCompleted} />
 
           <View style={{ gap: Spacing.sm }}>
+            <Text variant="label" tone="textSecondary">{t('studio.languageLabel', 'Hikâye dili')}</Text>
+            <View style={{ flexDirection: 'row', gap: Spacing.xs, flexWrap: 'wrap' }}>
+              {[{ code: 'tr', label: 'Türkçe' }, { code: 'en', label: 'English' }, { code: 'de', label: 'Deutsch' }, { code: 'fr', label: 'Français' }].map(lang => (
+                <Pressable
+                  key={lang.code}
+                  onPress={() => form.setLanguage?.(lang.code)}
+                  style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: (form.language || 'tr') === lang.code ? `${colors.primary}14` : colors.surfaceVariant, borderWidth: 1, borderColor: (form.language || 'tr') === lang.code ? colors.primary : colors.border }}
+                >
+                  <Text variant="labelSm" color={(form.language || 'tr') === lang.code ? colors.primary : colors.textSecondary}>{lang.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          <View style={{ gap: Spacing.sm }}>
             <Text variant="label" tone="textSecondary">{t('studio.tagsLabel', 'Etiketler')}</Text>
             <Text variant="caption" tone="textSecondary">{t('studio.tagsHint', 'En fazla 5 etiket ekleyebilirsin')}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs }}>
