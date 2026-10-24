@@ -9,6 +9,7 @@ import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-re
 import type { useStoryInfoForm } from '../../hooks/useStoryInfoForm';
 import { StoryCoverPicker } from './StoryCoverPicker';
 import { CoverPickerSheet } from '../CoverPickerSheet';
+import { StoryStatusField } from './StoryStatusField';
 
 const WRITE_GENRES: StoryCategory[] = [
   'fantasy', 'romance', 'mystery', 'sci_fi', 'drama', 'adventure', 'horror', 'poetry', 'comedy',
@@ -117,6 +118,8 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
               ]}
             />
           </View>
+
+          <StoryStatusField isCompleted={form.isCompleted} onChange={form.setCompleted} />
 
           {!form.isNew && (
             <Button label={t('studio.deleteStoryTitle')} variant="ghost" icon="trash-outline" onPress={form.remove} />
