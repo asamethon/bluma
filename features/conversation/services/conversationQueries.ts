@@ -1,4 +1,5 @@
 import { assertEmailVerified } from '@/features/auth/services/emailVerification';
+import { publicProfileData } from '@/features/auth/services/profilePrivacy';
 import i18n from '@/i18n';
 import { authActions } from '@/store/authStore';
 import { store } from '@/store';
@@ -76,6 +77,7 @@ export async function createConversation(
     if (!verified.ok) return { success: false, error: verified.error };
     const reference = await addDoc(collection(getFirestore(), 'conversations'), {
       ...conversation,
+      author: publicProfileData(conversation.author),
       likesCount: 0,
       commentsCount: 0,
       viewsCount: 0,

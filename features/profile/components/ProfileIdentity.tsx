@@ -28,6 +28,5 @@ export function ProfileIdentity({ name, handle, badge, bio }: Props) {
   );
 }
 
-/** `@kullanıcı` künyesi için güvenli isim: username → e-posta yerel kısmı. */
-export const profileHandle = (username?: string, email?: string) =>
-  username || email?.split('@')[0] || 'user';
+/** Kullanıcı adı eksikse e-postadan herkese açık kimlik türetilmez. */
+export const profileHandle = (username?: string) => username || 'kullanici';

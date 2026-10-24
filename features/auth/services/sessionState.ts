@@ -1,4 +1,5 @@
 import { doc, getFirestore, onSnapshot } from '@react-native-firebase/firestore';
+import { getAuth } from '@react-native-firebase/auth';
 import { patchAuth, User } from '@/store/slices/authSlice';
 import { resetPrivacy } from '@/store/slices/privacySlice';
 import { presenceActions } from '@/features/privacy/services/presenceService';
@@ -6,6 +7,7 @@ import { store } from '@/store';
 import { resetStoryDrafts } from '@/store/slices/storyDraftSlice';
 import { logger } from '@/utils/logger';
 import { clearCachedSession, writeCachedSession } from './sessionStorage';
+import { sessionUser } from './sessionIdentity';
 
 const listener = { unsubscribe: null as (() => void) | null };
 
@@ -41,8 +43,9 @@ export function setupUserListener(userId: string) {
     const userDocRef = doc(getFirestore(), 'users', userId);
 
     listener.unsubscribe = onSnapshot(userDocRef, docSnap => {
-      if (!docSnap.exists()) return;
-      const userData = { id: docSnap.id, ...docSnap.data() } as User;
+      const firebaseUser = getAuth().currentUser;
+      if (!docSnap.exists() || firebaseUser?.uid !== userId) return;
+      const userData = sessionUser(firebaseUser, docSnap.data()!);
       const onboarded = isOnboarded(userData);
       store.dispatch(patchAuth({ user: userData, hasCompletedOnboarding: onboarded }));
       writeCachedSession(userData, onboarded);

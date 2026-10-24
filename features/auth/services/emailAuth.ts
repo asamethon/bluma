@@ -30,7 +30,7 @@ async function signInWithEmail(email: string, password: string): Promise<AuthRes
     await establishSession(firebaseUser, {
       email: firebaseUser.email || '',
       displayName:
-        firebaseUser.displayName || firebaseUser.email?.split('@')[0] || i18n.t('common.user'),
+        firebaseUser.displayName || i18n.t('common.user'),
       authProvider: 'email',
     });
     return { success: true };

@@ -3,6 +3,7 @@ import type { User } from '@/store/slices/authSlice';
 import { collection, deleteDoc, doc, getDocs, getFirestore, query, where } from '@react-native-firebase/firestore';
 
 const personalCollections = [
+  'private',
   'likedStories',
   'savedStories',
   'likedConversations',

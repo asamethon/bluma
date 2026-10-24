@@ -5,6 +5,7 @@ import {
 } from '@react-native-firebase/firestore';
 import { User } from '@/store/slices/authSlice';
 import { logger } from '@/utils/logger';
+import { publicProfileData } from './profilePrivacy';
 
 // Yazar adı/avatarı nadiren değişir; kısa TTL her akış yüklemesinde onlarca
 // kullanıcı dokümanını yeniden okutuyordu. Kendi profil değişikliği zaten
@@ -20,14 +21,14 @@ export function invalidateCachedUser(userId?: string) {
 }
 
 export function primeCachedUser(user: User) {
-  cache.set(user.id, { user, at: Date.now() });
+  cache.set(user.id, { user: publicProfileData(user) as unknown as User, at: Date.now() });
 }
 
 async function fetchUserById(userId: string): Promise<User | null> {
   try {
     const db = getFirestore();
     const userDoc = await getDoc(doc(db, 'users', userId));
-    return userDoc.exists() ? ({ id: userDoc.id, ...userDoc.data() } as User) : null;
+    return userDoc.exists() ? ({ ...publicProfileData(userDoc.data()!), id: userDoc.id } as User) : null;
   } catch (error) {
     logger.error('Get user by ID error:', error);
     return null;

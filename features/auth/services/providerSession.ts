@@ -1,22 +1,13 @@
 import { store } from '@/store';
 import { notificationActions } from '@/store/notificationStore';
-import { patchAuth, User } from '@/store/slices/authSlice';
+import { patchAuth } from '@/store/slices/authSlice';
 import { logger } from '@/utils/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAnalytics, logEvent } from '@react-native-firebase/analytics';
 import { getIdToken, type FirebaseAuthTypes } from '@react-native-firebase/auth';
-import { doc, getDoc, getFirestore, serverTimestamp, setDoc } from '@react-native-firebase/firestore';
+import { upsertProviderProfile, type ProviderIdentity } from './providerProfile';
 import { isOnboarded } from './sessionState';
 import { writeCachedSession } from './sessionStorage';
-import { buildSignupContext, trackSignupContext } from './signupContext';
-
-/** Sağlayıcıdan gelen kimlik alanları — her girişte tazelenir. */
-export type ProviderIdentity = {
-  email: string;
-  displayName: string;
-  authProvider: NonNullable<User['authProvider']>;
-  appleUserId?: string;
-};
 
 /**
  * Sağlayıcıdan bağımsız oturum kurulumu: profil upsert + Redux + kalıcı kayıt.
@@ -26,7 +17,7 @@ export async function establishSession(
   firebaseUser: FirebaseAuthTypes.User,
   identity: ProviderIdentity,
 ): Promise<void> {
-  const { user, isNew } = await upsertProfile(firebaseUser.uid, identity);
+  const { user, isNew } = await upsertProviderProfile(firebaseUser.uid, identity);
   const token = await getIdToken(firebaseUser);
   const onboarded = isOnboarded(user);
 
@@ -50,37 +41,6 @@ export async function establishSession(
   }
 
   savePushToken(firebaseUser.uid);
-}
-
-/** Profil dokümanını oluşturur ya da kimlik alanlarını tazeler. */
-async function upsertProfile(
-  userId: string,
-  identity: ProviderIdentity,
-): Promise<{ user: User; isNew: boolean }> {
-  try {
-    const userDocRef = doc(getFirestore(), 'users', userId);
-    const existing = (await getDoc(userDocRef)).data();
-
-    if (!existing) {
-      // Kayıt bağlamı yalnızca ilk oluşturmada yazılır.
-      const signupContext = buildSignupContext();
-      const user = { id: userId, ...identity, ...signupContext } as unknown as User;
-      await setDoc(userDocRef, {
-        ...user,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-      trackSignupContext(signupContext);
-      return { user, isNew: true };
-    }
-
-    await setDoc(userDocRef, { ...identity, updatedAt: serverTimestamp() }, { merge: true });
-    return { user: { ...existing, id: userId, ...identity } as User, isNew: false };
-  } catch (error) {
-    // Firestore erişilemezse oturum düşürülmez; kimlik alanlarıyla devam edilir.
-    logger.error('Profil okunamadı, kimlik bilgileriyle devam ediliyor:', error);
-    return { user: { id: userId, ...identity } as User, isNew: false };
-  }
 }
 
 /** Push token kaydı kritik değil — giriş akışını bekletmez. */
