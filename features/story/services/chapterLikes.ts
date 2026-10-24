@@ -33,8 +33,8 @@ async function toggleChapterLike(storyId: string, chapterIndex: number, wasLiked
   try {
     const likeRef = doc(collection(chapterRef(storyId, chapterIndex), 'likes'), user.id);
     if (wasLiked) {
-      await deleteDoc(likeRef);
       await updateDoc(chapterRef(storyId, chapterIndex), { likesCount: increment(-1) });
+      await deleteDoc(likeRef);
     } else {
       await setDoc(likeRef, { userId: user.id, createdAt: serverTimestamp() });
       await updateDoc(chapterRef(storyId, chapterIndex), { likesCount: increment(1) });

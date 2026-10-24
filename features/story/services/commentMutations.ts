@@ -112,12 +112,11 @@ export async function likeComment(storyId: string, commentId: string) {
     const like = doc(db, 'stories', storyId, 'comments', commentId, 'likes', userId);
     const comment = doc(db, 'stories', storyId, 'comments', commentId);
     if ((await getDoc(like)).exists()) {
-      await Promise.all([deleteDoc(like), updateDoc(comment, { likesCount: increment(-1) })]);
+      await updateDoc(comment, { likesCount: increment(-1) });
+      await deleteDoc(like);
     } else {
-      await Promise.all([
-        setDoc(like, { userId, createdAt: serverTimestamp() }),
-        updateDoc(comment, { likesCount: increment(1) }),
-      ]);
+      await setDoc(like, { userId, createdAt: serverTimestamp() });
+      await updateDoc(comment, { likesCount: increment(1) });
     }
     return { success: true };
   } catch (error) {

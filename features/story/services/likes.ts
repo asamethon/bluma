@@ -69,19 +69,15 @@ async function unlikeStory(storyId: string): Promise<LikeResult> {
 async function writeLike(storyId: string, userId: string, liked: boolean): Promise<boolean> {
   const refs = likeRefs(storyId, userId);
   try {
-    await Promise.all(
-      liked
-        ? [
-            setDoc(refs.like, { userId, createdAt: serverTimestamp() }),
-            setDoc(refs.userLike, { storyId, createdAt: serverTimestamp() }),
-            updateDoc(refs.story, { likesCount: increment(1) }),
-          ]
-        : [
-            deleteDoc(refs.like),
-            deleteDoc(refs.userLike),
-            updateDoc(refs.story, { likesCount: increment(-1) }),
-          ],
-    );
+    if (liked) {
+      await setDoc(refs.like, { userId, createdAt: serverTimestamp() });
+      await setDoc(refs.userLike, { storyId, createdAt: serverTimestamp() });
+      await updateDoc(refs.story, { likesCount: increment(1) });
+    } else {
+      await updateDoc(refs.story, { likesCount: increment(-1) });
+      await deleteDoc(refs.like);
+      await deleteDoc(refs.userLike);
+    }
     if (liked) notifyAuthor(storyId, userId).catch(error => logger.error('Like notification error:', error));
     return true;
   } catch (error) {

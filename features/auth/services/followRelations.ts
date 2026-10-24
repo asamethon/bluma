@@ -32,11 +32,16 @@ function followRefs(currentUserId: string, otherUserId: string) {
 }
 
 /** Sayaç yazımı kullanıcıyı bekletmez; hata yalnızca loglanır. */
-function bumpCounters(refs: ReturnType<typeof followRefs>, delta: number) {
-  updateDoc(refs.currentUser, { followingCount: increment(delta) })
-    .catch(error => logger.error('Following count update error:', error));
-  updateDoc(refs.otherUser, { followersCount: increment(delta) })
-    .catch(error => logger.error('Followers count update error:', error));
+async function bumpCounters(refs: ReturnType<typeof followRefs>, delta: number) {
+  try {
+    await Promise.all([
+      updateDoc(refs.currentUser, { followingCount: increment(delta) }),
+      updateDoc(refs.otherUser, { followersCount: increment(delta) }),
+    ]);
+  } catch (error) {
+    logger.error('Follow counter update error:', error);
+    throw error;
+  }
 }
 
 function shiftOwnFollowingCount(delta: number) {
@@ -62,7 +67,7 @@ async function followUser(userIdToFollow: string): Promise<FollowResult> {
       setDoc(refs.following, { userId: userIdToFollow, followedAt: serverTimestamp() }),
       setDoc(refs.followers, { userId: currentUser.id, followedAt: serverTimestamp() }),
     ]);
-    bumpCounters(refs, 1);
+    await bumpCounters(refs, 1);
 
     shiftOwnFollowingCount(1);
     // Gizli hesap filtresi takip listesine bakar; anında güncel tutulur.
@@ -86,8 +91,8 @@ async function unfollowUser(userIdToUnfollow: string): Promise<FollowResult> {
 
   try {
     const refs = followRefs(currentUser.id, userIdToUnfollow);
+    await bumpCounters(refs, -1);
     await Promise.all([deleteDoc(refs.following), deleteDoc(refs.followers)]);
-    bumpCounters(refs, -1);
 
     shiftOwnFollowingCount(-1);
     store.dispatch(removeFollowingId(userIdToUnfollow));

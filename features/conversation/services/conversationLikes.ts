@@ -66,14 +66,15 @@ export async function performLikeConversationFirebaseOperation(conversationId: s
     const savedLike = doc(db, 'users', userId, 'likedConversations', conversationId);
     const liked = (await getDoc(like)).exists();
     if (liked) {
-      await Promise.all([deleteDoc(like), deleteDoc(savedLike), updateDoc(conversation, { likesCount: increment(-1) })]);
+      await updateDoc(conversation, { likesCount: increment(-1) });
+      await Promise.all([deleteDoc(like), deleteDoc(savedLike)]);
       return;
     }
     await Promise.all([
       setDoc(like, { userId, createdAt: serverTimestamp() }),
       setDoc(savedLike, { conversationId, createdAt: serverTimestamp() }),
-      updateDoc(conversation, { likesCount: increment(1) }),
     ]);
+    await updateDoc(conversation, { likesCount: increment(1) });
     void notifyConversationLike(conversationId, userId);
   } catch (error) {
     logger.error('Firebase like operation error:', error);
