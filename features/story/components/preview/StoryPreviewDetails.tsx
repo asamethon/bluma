@@ -21,6 +21,17 @@ type Props = {
  * açıklama her hikâyede yer kaplar, böylece kapak kaydırılırken künye ve alt
  * aksiyon yerinden oynamaz. Açıklamanın tamamı hikâye sayfasındadır.
  */
+const WARNING_LABELS: Record<string, string> = {
+  violence: 'studio.contentWarningViolence',
+  sexualContent: 'studio.contentWarningSexual',
+  abuse: 'studio.contentWarningAbuse',
+  selfHarm: 'studio.contentWarningSelfHarm',
+  suicide: 'studio.contentWarningSuicide',
+  drugUse: 'studio.contentWarningDrug',
+  strongLanguage: 'studio.contentWarningLanguage',
+  darkThemes: 'studio.contentWarningDark',
+};
+
 export function StoryPreviewDetails({ story, styles, onAuthorPress }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -64,6 +75,16 @@ export function StoryPreviewDetails({ story, styles, onAuthorPress }: Props) {
         <Text variant="bodyLg" tone="textSecondary" numberOfLines={3} style={styles.desc}>
           {story.description}
         </Text>
+      )}
+      {Array.isArray(story.contentWarnings) && story.contentWarnings.length > 0 && (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginTop: Spacing.sm }}>
+          {story.contentWarnings.slice(0, 3).map(w => (
+            <View key={w} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: `${colors.warning}14` }}>
+              <Ionicons name="warning-outline" size={11} color={colors.warning} />
+              <Text variant="labelSm" color={colors.warning}>{t(WARNING_LABELS[w] || w)}</Text>
+            </View>
+          ))}
+        </View>
       )}
       {Array.isArray(story.tags) && story.tags.length > 0 && (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginTop: Spacing.sm }}>

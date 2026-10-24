@@ -16,6 +16,17 @@ type Props = { story: Story; colors: ReaderColors };
  * Hikâyenin künye sayfası — kitabın iç kapağı gibi yalnızca BAŞTA durur.
  * Sonraki bölümlerde tekrar edilmez; kimlik üst çubukta taşınır.
  */
+const WARNING_LABELS: Record<string, string> = {
+  violence: 'studio.contentWarningViolence',
+  sexualContent: 'studio.contentWarningSexual',
+  abuse: 'studio.contentWarningAbuse',
+  selfHarm: 'studio.contentWarningSelfHarm',
+  suicide: 'studio.contentWarningSuicide',
+  drugUse: 'studio.contentWarningDrug',
+  strongLanguage: 'studio.contentWarningLanguage',
+  darkThemes: 'studio.contentWarningDark',
+};
+
 export function ReaderStoryHeader({ story, colors: reading }: Props) {
   const { colors, fonts } = useTheme();
   const { t } = useTranslation();
@@ -25,6 +36,7 @@ export function ReaderStoryHeader({ story, colors: reading }: Props) {
   const toggleFollow = () => {
     if (requireAuth('follow')) follow.toggle();
   };
+  const warnings = Array.isArray(story.contentWarnings) ? story.contentWarnings : [];
 
   return (
     <View>
@@ -37,6 +49,16 @@ export function ReaderStoryHeader({ story, colors: reading }: Props) {
           </View>
         )}
       </View>
+      {warnings.length > 0 && (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+          {warnings.slice(0, 4).map(w => (
+            <View key={w} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: `${colors.warning}14` }}>
+              <Ionicons name="warning-outline" size={11} color={colors.warning} />
+              <Text variant="labelSm" color={colors.warning}>{t(WARNING_LABELS[w] || w)}</Text>
+            </View>
+          ))}
+        </View>
+      )}
       <Text style={[styles.storyTitle, { color: reading.text, fontFamily: fonts.serif }]}>
         {story.title}
       </Text>

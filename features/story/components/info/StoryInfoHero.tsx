@@ -8,6 +8,17 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 
+const WARNING_LABELS: Record<string, string> = {
+  violence: 'studio.contentWarningViolence',
+  sexualContent: 'studio.contentWarningSexual',
+  abuse: 'studio.contentWarningAbuse',
+  selfHarm: 'studio.contentWarningSelfHarm',
+  suicide: 'studio.contentWarningSuicide',
+  drugUse: 'studio.contentWarningDrug',
+  strongLanguage: 'studio.contentWarningLanguage',
+  darkThemes: 'studio.contentWarningDark',
+};
+
 type Props = {
   story: Story;
   styles: StoryInfoStyles;
@@ -45,6 +56,16 @@ export const StoryInfoHero = memo(function StoryInfoHero({ story, styles, onAuth
             @{story.author?.username || t('common.anonymous')}
           </Text>
         </Pressable>
+        {Array.isArray(story.contentWarnings) && story.contentWarnings.length > 0 && (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginTop: Spacing.xs }}>
+            {story.contentWarnings.slice(0, 3).map(w => (
+              <View key={w} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: `${colors.warning}14` }}>
+                <Ionicons name="warning-outline" size={11} color={colors.warning} />
+                <Text variant="labelSm" color={colors.warning}>{t(WARNING_LABELS[w] || w)}</Text>
+              </View>
+            ))}
+          </View>
+        )}
         {Array.isArray(story.tags) && story.tags.length > 0 && (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginTop: Spacing.xs }}>
             {story.tags.slice(0, 5).map(tag => (
