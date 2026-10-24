@@ -24,26 +24,6 @@ const WRITE_TAB_NATIVE_PROPS = {
   },
 } as const;
 
-type WriteTabTriggerProps = {
-  disabled: boolean;
-  label: string;
-};
-
-function WriteTabTrigger({ disabled, label }: WriteTabTriggerProps) {
-  return (
-    <NativeTabs.Trigger
-      name="write"
-      role={Platform.OS === "ios" ? "search" : undefined}
-      disabled={disabled}
-      accessibilityLabel={label}
-      unstable_nativeProps={WRITE_TAB_NATIVE_PROPS}
-    >
-      <NativeTabs.Trigger.Icon sf="square.and.pencil" md="edit_square" />
-      <NativeTabs.Trigger.Label>{label}</NativeTabs.Trigger.Label>
-    </NativeTabs.Trigger>
-  );
-}
-
 /**
  * Sistem tab bar'ı iOS 26'da sürüklenebilir Liquid Glass indicator'ı sağlar.
  * `search` rolü, Yaz sekmesini sağdaki ayrık cam aksiyon olarak yerleştirir;
@@ -60,6 +40,21 @@ export function BlumaNativeTabs() {
   const { t } = useTranslation();
   const { isWriteDisabled, screenListeners } = useNativeTabGate();
   const isAndroid = Platform.OS === "android";
+  const hasDetachedWrite = Platform.OS === "ios" && Number.parseInt(String(Platform.Version), 10) >= 26;
+  // Router doğrudan Trigger öğesini okur; ayrı bir bileşene sarmak sekmeyi gizler.
+  const writeTab = (
+    <NativeTabs.Trigger
+      name="write"
+      testID="tab-write"
+      role={hasDetachedWrite ? "search" : undefined}
+      disabled={isWriteDisabled}
+      accessibilityLabel={t("tabs.write")}
+      unstable_nativeProps={WRITE_TAB_NATIVE_PROPS}
+    >
+      <NativeTabs.Trigger.Icon sf="square.and.pencil" md="edit_square" />
+      <NativeTabs.Trigger.Label>{t("tabs.write")}</NativeTabs.Trigger.Label>
+    </NativeTabs.Trigger>
+  );
 
   return (
     <NativeTabs
@@ -103,9 +98,7 @@ export function BlumaNativeTabs() {
         <NativeTabs.Trigger.Label>{t("tabs.search")}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
-      {isAndroid ? (
-        <WriteTabTrigger disabled={isWriteDisabled} label={t("tabs.write")} />
-      ) : null}
+      {hasDetachedWrite ? null : writeTab}
 
       <NativeTabs.Trigger name="library">
         <NativeTabs.Trigger.Icon
@@ -123,9 +116,7 @@ export function BlumaNativeTabs() {
         <NativeTabs.Trigger.Label>{t("tabs.profile")}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
-      {isAndroid ? null : (
-        <WriteTabTrigger disabled={isWriteDisabled} label={t("tabs.write")} />
-      )}
+      {hasDetachedWrite ? writeTab : null}
     </NativeTabs>
   );
 }

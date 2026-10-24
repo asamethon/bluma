@@ -18,6 +18,7 @@
     "scheme": "bluma",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "deploymentTarget": "16.4",
       "supportsTablet": true,
       "bundleIdentifier": "com.asamethon.bluma",
       "usesAppleSignIn": true,
@@ -84,9 +85,12 @@
       "expo-router",
       "@react-native-firebase/app",
       "./plugins/withFmtConstevalFix",
+      "./plugins/withIosPodDeploymentTarget",
       "./plugins/withExpoModulesJsiXcodeFix",
       "@react-native-firebase/auth",
       "expo-apple-authentication",
+      "./plugins/withIosSceneLifecycle",
+      "./plugins/withIosDetachedWriteTab",
       [
         "expo-build-properties",
         {
