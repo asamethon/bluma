@@ -49,6 +49,13 @@ export function OwnProfileHeader({ user, stories, topInset, onShare }: Props) {
               onPress={() => router.push('/profile/edit')}
             />
             <IconButton
+              icon="chatbubble-ellipses-outline"
+              variant="outline"
+              size={36}
+              accessibilityLabel={t('conversations.startConversation')}
+              onPress={() => router.push('/conversation/create')}
+            />
+            <IconButton
               icon="share-social-outline"
               variant="outline"
               size={36}
