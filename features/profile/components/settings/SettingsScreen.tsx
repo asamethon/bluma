@@ -54,6 +54,7 @@ export function SettingsScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <SettingsSection title={t('settings.accountSection')}>
           <SettingsRow icon="person-circle-outline" label={t('profileScreen.editProfile')} color={colors.primary} onPress={() => go('/profile/edit')} />
+          <SettingsRow icon="list-outline" label={t('lists.myLists')} color={colors.primary} onPress={() => go('/profile/lists')} />
           {isEmailAccount ? <SettingsRow icon="mail-outline" label={t('emailVerify.screenTitle')} color={colors.primary} onPress={() => go('/profile/verify-email')} /> : null}
           <SettingsRow icon="log-out-outline" label={t('profileScreen.signOut')} color={colors.error} noBorder onPress={signOut} />
         </SettingsSection>
