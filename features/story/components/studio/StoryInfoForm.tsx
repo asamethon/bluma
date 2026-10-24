@@ -2,15 +2,16 @@ import { storyInfoFormStyles as styles } from '@/features/story/styles/storyInfo
 import { Button, CategoryChip, IconButton, Text } from '@/components/ui';
 import { Spacing, useTheme } from '@/constants/theme';
 import { StoryCategory } from '@/types';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, ScrollView, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
 import type { useStoryInfoForm } from '../../hooks/useStoryInfoForm';
 import { StoryCoverPicker } from './StoryCoverPicker';
 import { CoverPickerSheet } from '../CoverPickerSheet';
 import { StoryStatusField } from './StoryStatusField';
 import { ChoiceTile } from '@/components/ui/ChoiceTile';
+import { Ionicons } from '@expo/vector-icons';
 
 const WRITE_GENRES: StoryCategory[] = [
   'fantasy', 'romance', 'mystery', 'sci_fi', 'drama', 'adventure', 'horror', 'poetry', 'comedy',
@@ -23,6 +24,19 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
   const { t } = useTranslation();
   const scrollRef = useRef<ScrollView>(null);
   const fieldOffsets = useRef({ title: 0, description: 0 });
+  const [tagInput, setTagInput] = useState('');
+  const tags = Array.isArray(form.tags) ? form.tags : [];
+
+  const addTag = () => {
+    const tag = tagInput.trim().toLowerCase().replace(/[^a-z0-9ğüşıöç]/g, '');
+    if (!tag || tags.includes(tag) || tags.length >= 5) return;
+    form.setTags?.([...tags, tag]);
+    setTagInput('');
+  };
+
+  const removeTag = (tag: string) => {
+    form.setTags?.(tags.filter(t => t !== tag));
+  };
 
   const keyboard = useAnimatedKeyboard();
   const containerAnimStyle = useAnimatedStyle(() => ({ paddingBottom: keyboard.height.value }));
@@ -121,6 +135,38 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
           </View>
 
           <StoryStatusField isCompleted={form.isCompleted} onChange={form.setCompleted} />
+
+          <View style={{ gap: Spacing.sm }}>
+            <Text variant="label" tone="textSecondary">{t('studio.tagsLabel', 'Etiketler')}</Text>
+            <Text variant="caption" tone="textSecondary">{t('studio.tagsHint', 'En fazla 5 etiket ekleyebilirsin')}</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs }}>
+              {tags.map(tag => (
+                <Pressable
+                  key={tag}
+                  onPress={() => removeTag(tag)}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: `${colors.primary}14` }}
+                >
+                  <Text variant="labelSm" color={colors.primary}>#{tag}</Text>
+                  <Ionicons name="close" size={12} color={colors.primary} />
+                </Pressable>
+              ))}
+            </View>
+            {tags.length < 5 && (
+              <View style={{ flexDirection: 'row', gap: Spacing.xs, alignItems: 'center' }}>
+                <TextInput
+                  value={tagInput}
+                  onChangeText={setTagInput}
+                  onSubmitEditing={addTag}
+                  placeholder={t('studio.tagPlaceholder', 'Etiket ekle...')}
+                  placeholderTextColor={colors.textLight}
+                  maxLength={20}
+                  style={[styles.input, { flex: 1, color: colors.text, backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}
+                  returnKeyType="done"
+                />
+                <Button label={t('common.add', 'Ekle')} size="sm" variant="secondary" onPress={addTag} disabled={!tagInput.trim()} />
+              </View>
+            )}
+          </View>
 
           <View style={{ gap: Spacing.sm }}>
             <Text variant="label" tone="textSecondary">{t('studio.audienceLabel', 'İçerik hedef kitlesi')}</Text>

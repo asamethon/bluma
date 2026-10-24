@@ -1,5 +1,5 @@
 import { Avatar, GenreTag, Text } from '@/components/ui';
-import { Motion, useTheme } from '@/constants/theme';
+import { Motion, Spacing, useTheme } from '@/constants/theme';
 import type { Story } from '@/types';
 import { formatCount } from '@/utils/format';
 import { Ionicons } from '@expo/vector-icons';
@@ -64,6 +64,15 @@ export function StoryPreviewDetails({ story, styles, onAuthorPress }: Props) {
         <Text variant="bodyLg" tone="textSecondary" numberOfLines={3} style={styles.desc}>
           {story.description}
         </Text>
+      )}
+      {Array.isArray(story.tags) && story.tags.length > 0 && (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginTop: Spacing.sm }}>
+          {story.tags.slice(0, 5).map(tag => (
+            <View key={tag} style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: `${colors.primary}14` }}>
+              <Text variant="labelSm" color={colors.primary}>#{tag}</Text>
+            </View>
+          ))}
+        </View>
       )}
     </View>
   );

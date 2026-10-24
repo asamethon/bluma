@@ -1,5 +1,5 @@
 import { GenreTag, Text } from '@/components/ui';
-import { Motion, useTheme } from '@/constants/theme';
+import { Motion, Spacing, useTheme } from '@/constants/theme';
 import type { StoryInfoStyles } from '@/features/story/styles/storyInfoStyles';
 import type { Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
@@ -45,6 +45,15 @@ export const StoryInfoHero = memo(function StoryInfoHero({ story, styles, onAuth
             @{story.author?.username || t('common.anonymous')}
           </Text>
         </Pressable>
+        {Array.isArray(story.tags) && story.tags.length > 0 && (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginTop: Spacing.xs }}>
+            {story.tags.slice(0, 5).map(tag => (
+              <View key={tag} style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: `${colors.primary}14` }}>
+                <Text variant="labelSm" color={colors.primary}>#{tag}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
     </View>
   );

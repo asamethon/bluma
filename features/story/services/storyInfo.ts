@@ -10,6 +10,7 @@ export type StoryInfoDraft = {
   coverImage: string | null;
   isCompleted: boolean;
   targetAudience?: 'all' | 'teen' | 'adult';
+  tags?: string[];
 };
 
 type SaveParams = { storyId?: string; authorId: string; draft: StoryInfoDraft };
@@ -39,6 +40,7 @@ export async function saveStoryInfo({ storyId, authorId, draft }: SaveParams): P
       category: draft.category,
       isCompleted: draft.isCompleted,
       targetAudience: draft.targetAudience ?? 'all',
+      tags: Array.isArray(draft.tags) ? draft.tags.filter((t: string) => t.trim().length > 0) : [],
       ...(coverImage ? { coverImage } : {}),
     });
     return { success: result.success, error: result.error };
@@ -51,6 +53,7 @@ export async function saveStoryInfo({ storyId, authorId, draft }: SaveParams): P
     category: draft.category,
     isCompleted: draft.isCompleted,
     targetAudience: draft.targetAudience ?? 'all',
+    tags: Array.isArray(draft.tags) ? draft.tags.filter((t: string) => t.trim().length > 0) : [],
     chapterTitles: [defaultChapterTitle(1)],
     authorId,
   } as Partial<Story> as Story);
