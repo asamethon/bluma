@@ -38,6 +38,7 @@ export function useWriteStudio() {
 
   const { starting, startQuickDraft } = useQuickDraft();
   const newStory = useCallback(() => { void startQuickDraft(); }, [startQuickDraft]);
+  const importStory = useCallback(() => router.push('/story/import' as never), [router]);
 
   const editInfo = useCallback(
     (id: string) => router.push(`/story/edit/${id}`),
@@ -89,6 +90,7 @@ export function useWriteStudio() {
     expandedId,
     toggleExpand,
     newStory,
+    importStory,
     starting,
     editInfo,
     openChapter,

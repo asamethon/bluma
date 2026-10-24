@@ -23,6 +23,7 @@ export default function WriteScreen() {
         expandedId={s.expandedId}
         onToggle={s.toggleExpand}
         onNewStory={s.newStory}
+        onImportStory={(s as any).importStory}
         onOpenChapter={s.openChapter}
         onAddChapter={s.addChapter}
         onEditInfo={s.editInfo}

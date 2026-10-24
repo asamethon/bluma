@@ -17,6 +17,7 @@ type Props = {
   expandedId: string | null;
   onToggle: (id: string) => void;
   onNewStory: () => void;
+  onImportStory?: () => void;
   onOpenChapter: (id: string, index: number) => void;
   onAddChapter: (id: string) => void;
   onEditInfo: (id: string) => void;
@@ -32,6 +33,7 @@ export function StudioHub({
   expandedId,
   onToggle,
   onNewStory,
+  onImportStory,
   onOpenChapter,
   onAddChapter,
   onEditInfo,
@@ -75,7 +77,7 @@ export function StudioHub({
       keyExtractor={(s) => s.id}
       numColumns={numColumns}
       ListHeaderComponent={
-        <StudioHubHeader topInset={top} hasStories={stories.length > 0} onNewStory={onNewStory} />
+        <StudioHubHeader topInset={top} hasStories={stories.length > 0} onNewStory={onNewStory} onImportStory={onImportStory} />
       }
       contentContainerStyle={{
         paddingHorizontal: Spacing.screenX,

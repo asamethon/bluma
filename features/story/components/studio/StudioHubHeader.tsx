@@ -5,9 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 
-type Props = { topInset: number; hasStories: boolean; onNewStory: () => void };
+type Props = { topInset: number; hasStories: boolean; onNewStory: () => void; onImportStory?: () => void };
 
-export function StudioHubHeader({ topInset, hasStories, onNewStory }: Props) {
+export function StudioHubHeader({ topInset, hasStories, onNewStory, onImportStory }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -31,6 +31,22 @@ export function StudioHubHeader({ topInset, hasStories, onNewStory }: Props) {
         </View>
         <Ionicons name="chevron-forward" size={17} color={colors.textLight} />
       </Pressable>
+
+      {onImportStory && (
+        <Pressable
+          onPress={onImportStory}
+          style={({ pressed }) => [styles.cta, { marginTop: 10, opacity: pressed ? Motion.pressOpacity : 1 }]}
+        >
+          <View style={[styles.ctaIcon, { backgroundColor: alpha(colors.textSecondary, 0.12) }]}>
+            <Ionicons name="download-outline" size={20} color={colors.textSecondary} />
+          </View>
+          <View style={styles.ctaCopy}>
+            <Text variant="bodyStrong">{t('import.title')}</Text>
+            <Text variant="caption" tone="textLight">{t('import.description', { defaultValue: t('import.pastePlaceholder') })}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={17} color={colors.textLight} />
+        </Pressable>
+      )}
 
       {hasStories && (
         <View style={styles.storiesHead}>
