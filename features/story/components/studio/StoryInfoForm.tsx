@@ -12,6 +12,21 @@ import { CoverPickerSheet } from '../CoverPickerSheet';
 import { StoryStatusField } from './StoryStatusField';
 import { ChoiceTile } from '@/components/ui/ChoiceTile';
 import { Ionicons } from '@expo/vector-icons';
+import { SUPPORTED_LANGUAGES } from '@/i18n';
+
+const LANGUAGE_LABELS: Record<string, string> = {
+  ar: 'العربية',
+  de: 'Deutsch',
+  en: 'English',
+  es: 'Español',
+  id: 'Bahasa Indonesia',
+  ja: '日本語',
+  ko: '한국어',
+  pt: 'Português',
+  'pt-BR': 'Português (Brasil)',
+  tr: 'Türkçe',
+  zh: '中文',
+};
 
 const WRITE_GENRES: StoryCategory[] = [
   'fantasy', 'romance', 'mystery', 'sci_fi', 'drama', 'adventure', 'horror', 'poetry', 'comedy',
@@ -139,13 +154,13 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
           <View style={{ gap: Spacing.sm }}>
             <Text variant="label" tone="textSecondary">{t('studio.languageLabel', 'Hikâye dili')}</Text>
             <View style={{ flexDirection: 'row', gap: Spacing.xs, flexWrap: 'wrap' }}>
-              {[{ code: 'tr', label: 'Türkçe' }, { code: 'en', label: 'English' }, { code: 'de', label: 'Deutsch' }, { code: 'fr', label: 'Français' }].map(lang => (
+              {SUPPORTED_LANGUAGES.map(lang => (
                 <Pressable
-                  key={lang.code}
-                  onPress={() => form.setLanguage?.(lang.code)}
-                  style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: (form.language || 'tr') === lang.code ? `${colors.primary}14` : colors.surfaceVariant, borderWidth: 1, borderColor: (form.language || 'tr') === lang.code ? colors.primary : colors.border }}
+                  key={lang}
+                  onPress={() => form.setLanguage?.(lang)}
+                  style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: (form.language || 'tr') === lang ? `${colors.primary}14` : colors.surfaceVariant, borderWidth: 1, borderColor: (form.language || 'tr') === lang ? colors.primary : colors.border }}
                 >
-                  <Text variant="labelSm" color={(form.language || 'tr') === lang.code ? colors.primary : colors.textSecondary}>{lang.label}</Text>
+                  <Text variant="labelSm" color={(form.language || 'tr') === lang ? colors.primary : colors.textSecondary}>{LANGUAGE_LABELS[lang] || lang}</Text>
                 </Pressable>
               ))}
             </View>
