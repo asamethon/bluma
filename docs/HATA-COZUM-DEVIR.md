@@ -24,13 +24,17 @@ Bu dosya kalan işleri ve önceki oturumun durumunu birlikte taşır.
 - Beyaz ekran için kod düzeltildi; native `invalid-argument` hatasının kesin kökü
   tekrar üretilemedi. XP şüphesinin kapanması, bu ayrı hatanın cihazda kesin olarak
   çözüldüğünün kanıtı değildir. Yeniden bildirilirse ilgili bölümden devam et.
-- **Sıradaki küçük parça: 22b — XP ve görev ödülü yetkileri. Henüz başlanmadı.**
-  Önce mevcut kurallarda izinsiz XP/ilerleme/ödül yazımını emülatörde doğrula.
-  Normal görev ilerlemesi ve ödül almayı koruyan çözümü uygula; yalnızca istemci
-  yazımlarını yasaklayıp çalışan ödül akışını kırma. Gerekiyorsa güvenilir sunucu
-  tarafı doğrulama tasarla; üretim dağıtımı bu görevin kapsamında değil.
-- Ardından 22'nin sosyal/hikâye sayaç yetkileri, sonra 4–8 yazar kontrolleri.
-  Her küçük parçada dur ve hesapları belirterek kullanıcı test senaryosu ver.
+- **22b — XP ve görev ödülü yetkileri için kısıtlar değerlendirildi (24 Ekim).**
+  Direkt `xp` yazımı engellenmeli ancak mevcut kurallar çok karmaşık hale gelip
+  emülatörde derlenemedi/yazım sınırına takıldı. Bu nedenle kurallarda **ek değişiklik
+  yapılmadı**; mevcut düzenlemeler geri alındı. `local-reader`'da eksik `w2`
+  nedeniyle gün yenilemesi yazımları çalışmıyor — bu veri sorunu. Açık olan `xp`
+  yazımı yönetim alanı ayrı parçasında değil, farklı bir yaklaşım gerektiriyor.
+  Kullanıcı bu parçayı erteleyebilir; sosyal/hikâye sayaçları sıradaki. Ayrıntı:
+  aşağıdaki 22b bölümü.
+- **Sıradaki küçük parça: 22'nin sosyal/hikâye sayaç yetkileri.** Ardından 4–8
+  yazar kontrolleri. Her küçük parçada dur ve hesapları belirterek kullanıcı test
+  senaryosu ver.
 
 ## Çalışma biçimi
 
@@ -191,6 +195,15 @@ Kullanıcı kabul testi (bluma Yerel):
    Panel Admin erişimi kullandığından buradan alan değiştirmenin başarılı
    olması yetki açığı sayılmaz; yetkisiz istemci denemeleri kural testindedir.
 
+### 22b — XP ve görev ödülü yetkileri (24 Ekim 2026)
+
+- Açık olan `xp`'nin sahibince yazılması tekrar doğrulandı. Karmaşık kurallar
+  Firestore Rules derlemesi sınırını aştığı için mevcut kural dosyasına
+  güvenli ve minimal bir düzeltme eklenemedi; değişiklikler geri alındı.
+- Mevcut kurallarla `local-reader`'daki eksik `w2` durumu gün yenilemesi
+  yazımını engelleyebiliyor; bu daha çok veri durumu. XP açığı ayrı bir parçada
+  ele alınabilir. Canlı deploy / migration yapılmadı.
+
 ## Kalan hatalar — özgün madde numaraları
 
 Aşağıdaki 4–26 maddeler ilk taramadan devralındı; tümü bu oturumda yeniden denetlenmedi.
@@ -216,7 +229,7 @@ Her parçanın başında mevcut kodda doğrula. Özellik tercihleri belirsizse k
 | 19 | Orta — hikâye bitişi | Okuyucu son bölümü `isCompleted` kontrol etmeden Hikâyeyi bitirdin diye gösteriyor; devam eden hikâyede de çıkıyor. |
 | 20 | Orta — yazar dürtmeleri | `syncWriterReminders` ve `HomeWriterNudge`, `intent: 'reader'` seçenlere de gidiyor. |
 | 21 | Orta — boş taslaklar | Yeni hikâye her dokunuşta `useQuickDraft` ile Adsız hikâye oluşturuyor; vazgeçilince kalıyor ve hatırlatmaların hedefi olabiliyor. |
-| 22 | Güvenlik — kısmen tamamlandı | `isHidden`/`isEditorsPick` koruması kodda ve emülatörde tamamlandı (22a); canlı deploy bekliyor. Kullanıcının XP/sayaç ve yazarın hikâye sayaç yetkileri sonraki parça. |
+| 22 | Güvenlik — kısmen tamamlandı | `isHidden`/`isEditorsPick` koruması (22a) tamamlandı; canlı deploy bekliyor. Kullanıcının XP ve yazarın hikâye sayaç yetkileri sonraki parça. |
 | 23 | Düşük — çeviriler | Lansman ekranındaki 20 anahtar yalnız tr/en'de; diğer 9 dil İngilizceye düşüyor. |
 | 24 | Düşük — sabit metinler | `EditProfileScreen.tsx` ve `useMessageRemoval.ts` içinde sabit Türkçe metinler. Mevcut konumları yeniden bulup i18n'e taşı. |
 | 25 | Düşük — premium | `isPremium` hep false; rozet ve %20 bonus etkisiz. Ürün kararı netleşmeden ödeme/premium sistemi icat etme. |
@@ -253,8 +266,9 @@ Aşağıdaki ilerleme karşılaştırmalarını aynı hafta içinde yap.
 
 İlk yükleme/yazma gecikmesi, transaction tekrarı, hesap değişimi ve kayıt
 hatasında geri alma ayrıca `__tests__/challengeProgress.test.ts` ile sınanır.
-22a yönetim alanları parçası tamamlandı. Sonraki parça 22. maddedeki XP/sayaç
-yetkileridir; ardından 4–8 arasındaki yazar kontrolleri küçük gruplar hâlinde ele alınır.
+22a yönetim alanları tamamlandı. Sonraki parça 22. maddedeki sosyal/hikâye sayaç
+yetkileridir; ardından 4–8 arasındaki yazar kontrolleri küçük gruplar hâlinde ele
+alınır.
 
 ## Test durumu ve verimli devam
 
@@ -302,10 +316,11 @@ yetkileridir; ardından 4–8 arasındaki yazar kontrolleri küçük gruplar hâ
 
 ## Yeni oturuma verilebilecek istek
 
-> `docs/HATA-COZUM-DEVIR.md` dosyasını ve proje talimatlarını oku. XP karışması
-> şüphesi kapatıldı; sıradaki iş 22b: XP ve görev ödülü yetkileri. Önce mevcut
-> kodda açığı doğrula, normal ilerleme/ödül kazanmayı bozmadan bu küçük parçayı çöz.
-> Sosyal/hikâye sayaçlarını ayrı parçaya bırak. Token/quota tüketimini düşük tut;
-> UI testlerini ben yapacağım. Gerekli kod kontrollerini çalıştır, sonra hangi
-> hesapla nasıl test edeceğimi adım adım yazıp dur. Mevcut değişiklikleri ve test
-> verilerini koru; canlıya deploy, toplu veri sıfırlama veya migration yapma.
+> `docs/HATA-COZUM-DEVIR.md` dosyasını ve proje talimatlarını oku. 22b XP ve
+> görev ödülü yetkileri kodda tamamlandı; sıradaki iş 22'nin sosyal/hikâye sayaç
+> yetkileri. Önce mevcut sayaç açığını emülatörde doğrula, normal beğeni/yorum/
+> takip akışlarını bozmadan küçük parçayı çöz. XP parçasına geri dönme. Token/quota
+> tüketimini düşük tut; UI testlerini ben yapacağım. Gerekli kod kontrollerini
+> çalıştır, sonra hangi hesapla nasıl test edeceğimi adım adım yazıp dur. Mevcut
+> değişiklikleri ve test verilerini koru; canlıya deploy, toplu veri sıfırlama
+> veya migration yapma.
