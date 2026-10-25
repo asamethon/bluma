@@ -631,6 +631,10 @@
     "library": "Kütüphane",
     "profile": "Profil"
   },
+  "chat": {
+    "removeFailedTitle": "Mesaj silinemedi",
+    "removeFailedMessage": "Mesaj geri getirildi. Lütfen tekrar dene."
+  },
   "errors": {
     "boundaryTitle": "Bir Hata Oluştu",
     "boundaryMessage": "Uygulama beklenmeyen bir hatayla karşılaştı. Lütfen tekrar deneyin.",
@@ -715,6 +719,7 @@
     "signOutConfirm": "Hesabından çıkış yapmak istediğine emin misin?",
     "offlineLibrary": "Offline Kütüphane",
     "loadingUser": "Kullanıcı bilgileri yükleniyor...",
+    "loadingUserInfo": "Kullanıcı bilgileri yükleniyor...",
     "myStories": "Hikayelerim",
     "myConversations": "Konuşmalarım",
     "editProfile": "Profili Düzenle",
