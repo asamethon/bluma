@@ -47,7 +47,17 @@ export function StoryPreviewScreen({ storyId }: { storyId: string }) {
     if (current && requireAuth('save')) void storyActions.saveStory(current.id);
   }, [current, requireAuth]);
   const openAuthor = useCallback(() => {
-    if (current?.authorId) router.push(`/user/${current.authorId}` as never);
+    if (current?.authorId) {
+      try {
+        const { store } = require('@/store');
+        const { challengeActions } = require('@/store/challengeStore');
+        const currentUserId = store.getState()?.auth?.user?.id;
+        if (currentUserId && currentUserId !== current.authorId) {
+          void challengeActions?.trackAction?.(currentUserId, 'authorsDiscovered');
+        }
+      } catch {}
+      router.push(`/user/${current.authorId}` as never);
+    }
   }, [current?.authorId, router]);
 
   return (

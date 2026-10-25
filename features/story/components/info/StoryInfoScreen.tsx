@@ -45,7 +45,17 @@ export function StoryInfoScreen({ storyId }: { storyId: string }) {
     }));
   }, [info.story, t]);
   const openAuthor = useCallback(() => {
-    if (info.story?.authorId) router.push(`/user/${info.story.authorId}` as never);
+    if (info.story?.authorId) {
+      try {
+        const { store } = require('@/store');
+        const { challengeActions } = require('@/store/challengeStore');
+        const currentUserId = store.getState()?.auth?.user?.id;
+        if (currentUserId && currentUserId !== info.story.authorId) {
+          void challengeActions?.trackAction?.(currentUserId, 'authorsDiscovered');
+        }
+      } catch {}
+      router.push(`/user/${info.story.authorId}` as never);
+    }
   }, [info.story?.authorId, router]);
   const share = useCallback(() => {
     const story = info.story;

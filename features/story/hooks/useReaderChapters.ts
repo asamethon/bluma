@@ -48,10 +48,12 @@ export function useReaderChapters(params: Params) {
     if (index < 0 || index >= total || index === chapterIndex) return;
     selectChapter(index);
     onNavigated();
-    if (index > chapterIndex && currentUserId) {
+    if (index > chapterIndex && currentUserId && story?.authorId && story.authorId !== currentUserId) {
+      void challengeActions.trackAction(currentUserId, 'chaptersRead');
+    } else if (index > chapterIndex && currentUserId && !story?.authorId) {
       void challengeActions.trackAction(currentUserId, 'chaptersRead');
     }
-  }, [chapterIndex, currentUserId, isGuest, onNavigated, requireAuth, selectChapter, total]);
+  }, [chapterIndex, currentUserId, isGuest, onNavigated, requireAuth, selectChapter, story?.authorId, total]);
 
   return {
     chapters,

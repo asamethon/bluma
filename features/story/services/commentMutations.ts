@@ -65,7 +65,16 @@ export async function addComment(storyId: string, content: string, parentId?: st
     await updateDoc(doc(db, 'stories', storyId), { commentsCount: increment(1) });
     void notifyComment(storyId, reference.id, parentId, content, chapterIndex)
       .catch(error => logger.error('Comment notification error:', error));
-    if (!parentId) void challengeActions.trackAction(user.id, 'commentsPosted');
+    if (!parentId) {
+      try {
+        const story = await getStoryById(storyId);
+        if (story?.authorId && story.authorId !== user.id) {
+          void challengeActions.trackAction(user.id, 'commentsPosted');
+        }
+      } catch {
+        void challengeActions.trackAction(user.id, 'commentsPosted');
+      }
+    }
     return { success: true, commentId: reference.id };
   } catch (error) {
     logger.error('Add comment error:', error);

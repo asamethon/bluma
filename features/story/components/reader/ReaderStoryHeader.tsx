@@ -66,7 +66,19 @@ export function ReaderStoryHeader({ story, colors: reading }: Props) {
         <Pressable
           style={styles.authorPress}
           accessibilityRole="button"
-          onPress={() => router.push(`/user/${story.authorId}` as never)}
+          onPress={() => {
+            if (story.authorId) {
+              try {
+                const { useAppSelector } = require('@/store/hooks');
+                const { challengeActions } = require('@/store/challengeStore');
+                const currentUserId = useAppSelector?.((s: any) => s.auth.user?.id);
+                if (currentUserId && currentUserId !== story.authorId) {
+                  void challengeActions?.trackAction?.(currentUserId, 'authorsDiscovered');
+                }
+              } catch {}
+            }
+            router.push(`/user/${story.authorId}` as never);
+          }}
         >
           <Avatar
             uri={story.author?.profileImage}
