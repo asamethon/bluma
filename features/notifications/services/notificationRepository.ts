@@ -81,10 +81,9 @@ export async function loadNotificationSettings(userId: string) {
       commentNotifications: true,
       mentionNotifications: true,
       storyNotifications: true,
-      emailNotifications: false,
       pushNotifications: true,
       updatedAt: serverTimestamp(),
-    };
+    } as NotificationSettings;
     await setDoc(reference, settings);
     store.dispatch(patchNotification({ settings }));
   } catch (error) {

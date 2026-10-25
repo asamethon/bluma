@@ -2,11 +2,10 @@ import type { NotificationSettings } from '@/types';
 import type { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 
-export type ToggleKey = keyof Omit<NotificationSettings, 'userId' | 'updatedAt'>;
+export type ToggleKey = keyof Omit<NotificationSettings, 'userId' | 'updatedAt' | 'emailNotifications'>;
 
 export const DEFAULT_SETTINGS: Record<ToggleKey, boolean> = {
   pushNotifications: true,
-  emailNotifications: false,
   storyNotifications: true,
   likeNotifications: true,
   commentNotifications: true,
@@ -23,7 +22,6 @@ export type SettingRow = {
 
 export const CHANNEL_ROWS: SettingRow[] = [
   { key: 'pushNotifications', icon: 'notifications-outline', title: 'notifSettings.push', caption: 'notifSettings.pushSub' },
-  { key: 'emailNotifications', icon: 'mail-outline', title: 'notifSettings.email', caption: 'notifSettings.emailSub' },
 ];
 
 export const ACTIVITY_ROWS: SettingRow[] = [
