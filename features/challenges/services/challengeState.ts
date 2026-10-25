@@ -17,7 +17,7 @@ export const emptyChallengeData: ChallengeData = {
   xp: 0, streak: 0, lastActiveDate: '', challengeWeekStart: '',
   challengeProgress: {}, claimedChallenges: [],
 };
-const weeklyTrackers: Tracker[] = ['storiesPublished', 'chaptersRead', 'commentsPosted', 'newFollows'];
+const weeklyTrackers: Tracker[] = ['storiesPublished', 'chaptersRead', 'commentsPosted', 'newFollows', 'storyLikes', 'authorsDiscovered', 'storiesCompletedByAuthor'];
 
 /** Takvim yenilemesi sunucudan okunan ilerleme üzerinde uygulanır. */
 export function refreshChallengeDay(stored: Partial<ChallengeData>): ChallengeData {
@@ -26,11 +26,16 @@ export function refreshChallengeDay(stored: Partial<ChallengeData>): ChallengeDa
   const streak = !data.lastActiveDate || data.lastActiveDate < yesterday ? 1
     : data.lastActiveDate === yesterday ? data.streak + 1 : data.streak || 1;
   const progress = { ...data.challengeProgress };
+  const weekChanged = data.challengeWeekStart < weekStartKey();
+  let claimedChallenges = data.claimedChallenges || [];
   for (const def of CHALLENGE_DEFS) {
-    if (data.challengeWeekStart < weekStartKey() && weeklyTrackers.includes(def.tracker)) progress[def.id] = 0;
+    if (weekChanged && weeklyTrackers.includes(def.tracker)) {
+      progress[def.id] = 0;
+      claimedChallenges = claimedChallenges.filter(id => id !== def.id);
+    }
     if (def.tracker === 'streakDays') progress[def.id] = Math.min(streak, def.goal);
   }
-  return { ...data, streak, lastActiveDate: todayKey(), challengeWeekStart: weekStartKey(), challengeProgress: progress };
+  return { ...data, streak, lastActiveDate: todayKey(), challengeWeekStart: weekStartKey(), challengeProgress: progress, claimedChallenges };
 }
 
 export function applyChallengeOperation(data: ChallengeData, operation: ChallengeOperation): ChallengeData {
