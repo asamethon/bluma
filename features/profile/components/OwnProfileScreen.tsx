@@ -1,6 +1,8 @@
 import ImageModal from '@/components/ui/ImageModal';
 import { IconButton, Screen, SkeletonRow } from '@/components/ui';
 import { ContentMaxWidth, useTheme } from '@/constants/theme';
+import { useHasAuthoredConversation } from '@/features/conversation/hooks/useHasAuthoredConversation';
+import { useAppSelector } from '@/store/hooks';
 import type { Conversation, Story, User } from '@/types';
 import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
@@ -54,10 +56,12 @@ export function OwnProfileScreen({ user, stories, conversations, loading }: Prop
   const { top } = useSafeAreaInsets();
   const actions = useOwnProfileActions({ user, router, t });
   const [state, dispatch] = useReducer(reducer, INITIAL);
+  const currentUser = useAppSelector(state => state.auth.user) || user;
+  const { hasAuthored } = useHasAuthoredConversation(currentUser?.id);
 
   const openStory = useCallback((id: string) => router.push(`/story/${id}/preview` as never), [router]);
   const openConversation = useCallback((id: string) => router.push(`/conversation/${id}` as never), [router]);
-  const openComposer = useCallback(() => dispatch({ type: 'composer', value: true }), []);
+  const openComposer = useCallback(() => router.push('/conversation/create'), [router]);
   const setTab = useCallback((tab: ProfileTab) => dispatch({ type: 'tab', value: tab }), []);
   const setImage = useCallback((value: string | null) => dispatch({ type: 'image', value }), []);
   const onHeaderLayout = useCallback(
@@ -90,14 +94,17 @@ export function OwnProfileScreen({ user, stories, conversations, loading }: Prop
       stories,
       conversations,
       loading: state.tab === 'stories' && loading,
-      composer: true,
+      composer: state.tab === 'conversations' ? hasAuthored : true,
     }),
-    [conversations, loading, state.tab, stories],
+    [conversations, hasAuthored, loading, state.tab, stories],
   );
 
   const renderItem = useCallback<ListRenderItem<ProfileRow>>(({ item }) => {
     if (item.kind === 'tabs') return tabs();
-    if (item.kind === 'composer') return <ProfileComposePrompt onPress={openComposer} />;
+    if (item.kind === 'composer') {
+      if (state.tab === 'conversations' && !hasAuthored) return null;
+      return <ProfileComposePrompt onPress={openComposer} />;
+    }
     if (item.kind === 'skeleton') return <View style={styles.tabRow}><SkeletonRow /></View>;
     if (item.kind === 'empty') return <OwnProfileEmpty tab={state.tab} onCompose={openComposer} />;
     return (
@@ -154,7 +161,7 @@ export function OwnProfileScreen({ user, stories, conversations, loading }: Prop
         onClose={() => setImage(null)}
       />
       <ProfileMessageComposer
-        visible={state.composerVisible}
+        visible={false}
         user={user}
         onClose={() => dispatch({ type: 'composer', value: false })}
       />

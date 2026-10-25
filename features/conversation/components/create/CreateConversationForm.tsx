@@ -9,10 +9,13 @@ import { ConversationImageField } from './ConversationImageField';
 type Props = {
   announce: boolean;
   content: string;
+  extraMessage?: string;
+  hasAuthoredAny?: boolean;
   image: string | null;
   styles: CreateConversationStyles;
   title: string;
   onContentChange: (value: string) => void;
+  onExtraMessageChange?: (value: string) => void;
   onImagePick: () => void;
   onImageRemove: () => void;
   onTitleChange: (value: string) => void;
@@ -53,6 +56,20 @@ export const CreateConversationForm = memo(function CreateConversationForm(props
           multiline
         />
       </View>
+      {props.hasAuthoredAny && (
+        <View style={props.styles.inputContainer}>
+          <Text style={props.styles.inputLabel}>{t('conversations.messageLabel', { defaultValue: 'Mesaj yaz' })}</Text>
+          <TextInput
+            style={[props.styles.contentInput, { color: colors.text, borderColor: colors.border, minHeight: 80 }]}
+            placeholder={t('conversations.messagePlaceholder', { defaultValue: 'Mesaj yaz...' })}
+            placeholderTextColor={colors.textSecondary}
+            value={props.extraMessage || ''}
+            onChangeText={props.onExtraMessageChange || (() => {})}
+            multiline
+            maxLength={1000}
+          />
+        </View>
+      )}
       <ConversationImageField image={props.image} styles={props.styles} onPick={props.onImagePick} onRemove={props.onImageRemove} />
       <View style={props.styles.announceContainer}>
         <TouchableOpacity style={props.styles.announceButton} onPress={props.onToggleAnnounce} activeOpacity={0.7}>

@@ -75,7 +75,7 @@ export async function createConversation(
   try {
     const verified = await assertEmailVerified();
     if (!verified.ok) return { success: false, error: verified.error };
-    const reference = await addDoc(collection(getFirestore(), 'conversations'), {
+    const payload: Record<string, any> = {
       ...conversation,
       author: publicProfileData(conversation.author),
       likesCount: 0,
@@ -83,7 +83,13 @@ export async function createConversation(
       viewsCount: 0,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
+    };
+    Object.keys(payload).forEach(key => {
+      if (payload[key] === undefined || payload[key] === null) {
+        delete payload[key];
+      }
     });
+    const reference = await addDoc(collection(getFirestore(), 'conversations'), payload);
     return { success: true, conversationId: reference.id };
   } catch (error) {
     logger.error('Create conversation error:', error);

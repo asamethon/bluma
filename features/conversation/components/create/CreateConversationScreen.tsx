@@ -1,7 +1,9 @@
 import { Screen } from '@/components/ui';
 import { ContentMaxWidth, useTheme } from '@/constants/theme';
 import { useCreateConversation } from '@/features/conversation/hooks/useCreateConversation';
+import { useHasAuthoredConversation } from '@/features/conversation/hooks/useHasAuthoredConversation';
 import { createConversationStyles } from '@/features/conversation/styles/createConversationStyles';
+import { useAppSelector } from '@/store/hooks';
 import { useMemo } from 'react';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import { CreateConversationForm } from './CreateConversationForm';
@@ -10,6 +12,8 @@ import { CreateConversationHeader } from './CreateConversationHeader';
 export function CreateConversationScreen() {
   const { colors } = useTheme();
   const form = useCreateConversation();
+  const user = useAppSelector(state => state.auth.user);
+  const { hasAuthored } = useHasAuthoredConversation(user?.id);
   const styles = useMemo(() => createConversationStyles(colors), [colors]);
   return (
     <Screen style={styles.container} maxContentWidth={ContentMaxWidth.content}>
@@ -24,10 +28,13 @@ export function CreateConversationScreen() {
         <CreateConversationForm
           announce={form.announce}
           content={form.content}
+          extraMessage={(form as any).extraMessage || ''}
+          hasAuthoredAny={hasAuthored}
           image={form.image}
           styles={styles}
           title={form.title}
           onContentChange={form.setContent}
+          onExtraMessageChange={(form as any).setExtraMessage || (() => {})}
           onImagePick={form.pickImage}
           onImageRemove={form.removeImage}
           onTitleChange={form.setTitle}

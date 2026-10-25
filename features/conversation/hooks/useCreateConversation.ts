@@ -10,12 +10,13 @@ import { Alert } from 'react-native';
 type FormState = {
   announce: boolean;
   content: string;
+  extraMessage: string;
   image: string | null;
   submitting: boolean;
   title: string;
 };
 
-const initialState: FormState = { announce: false, content: '', image: null, submitting: false, title: '' };
+const initialState: FormState = { announce: false, content: '', extraMessage: '', image: null, submitting: false, title: '' };
 const reducer = (state: FormState, patch: Partial<FormState>): FormState => ({ ...state, ...patch });
 
 export function useCreateConversation() {
@@ -25,6 +26,7 @@ export function useCreateConversation() {
   const [form, patch] = useReducer(reducer, initialState);
   const setTitle = useCallback((title: string) => patch({ title }), []);
   const setContent = useCallback((content: string) => patch({ content }), []);
+  const setExtraMessage = useCallback((extraMessage: string) => patch({ extraMessage }), []);
   const toggleAnnounce = useCallback(() => patch({ announce: !form.announce }), [form.announce]);
   const removeImage = useCallback(() => patch({ image: null }), []);
   const pickImage = useCallback(() => {
@@ -60,12 +62,15 @@ export function useCreateConversation() {
       return;
     }
     patch({ submitting: true });
+    const finalContent = form.extraMessage.trim()
+      ? `${content}\n\n${form.extraMessage.trim()}`
+      : content;
     void conversationActions.createConversation({
       authorId: user.id,
       author: user,
       title,
-      content,
-      image: form.image || undefined,
+      content: finalContent,
+      ...(form.image ? { image: form.image } : {}),
       isActive: true,
     }).then(result => {
       if (!result.success || !result.conversationId) {
@@ -97,6 +102,7 @@ export function useCreateConversation() {
     pickImage,
     removeImage,
     setContent,
+    setExtraMessage,
     setTitle,
     submit,
     toggleAnnounce,
