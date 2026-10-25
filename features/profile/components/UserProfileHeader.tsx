@@ -100,6 +100,8 @@ export function UserProfileHeader(props: Props) {
         name={user.displayName}
         handle={profileHandle(user.username)}
         bio={user.bio}
+        website={user.website}
+        location={user.location}
       />
 
       <ProfileStatsBar

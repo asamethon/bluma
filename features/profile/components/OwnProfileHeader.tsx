@@ -88,6 +88,8 @@ export function OwnProfileHeader({ user, stories, topInset, onShare }: Props) {
           icon: rank.icon as keyof typeof Ionicons.glyphMap,
         }}
         bio={user.bio}
+        website={user.website}
+        location={user.location}
       />
 
       <ProfileStatsBar
