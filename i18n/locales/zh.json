@@ -1078,5 +1078,27 @@
     "alertBody": "Your email address isn't verified. If you don't verify it within {{days}} days, your account will be suspended. If the address is wrong, you can fix it on the verification screen.",
     "alertLater": "Later",
     "alertGo": "Verify now"
+  },
+  "launch": {
+    "title": "Launch Your Book",
+    "subtitle": "The cover is ready. The stage is yours.",
+    "newStory": "NEW STORY",
+    "nowOnBluma": "Now on Bluma",
+    "byAuthor": "By {{author}}",
+    "readNow": "Start reading now",
+    "storyFormat": "Story · Full screen",
+    "postFormat": "Post · 4:5",
+    "shareWhere": "WHERE DO YOU WANT TO SHARE?",
+    "instagramStory": "Share to Instagram Story",
+    "instagramPost": "Post",
+    "message": "Message",
+    "shareMessage": "“{{title}}” is now on Bluma. Start reading:\n{{url}}",
+    "shareFailedTitle": "Sharing couldn't be completed",
+    "shareFailedMessage": "If Instagram isn't installed, try sharing by message.",
+    "linkHint": "The link is copied to your clipboard. Once the story opens in Instagram, add the \"Link\" sticker and paste it. Instagram doesn't let apps add it automatically.",
+    "makeLaunch": "Launch Your Book",
+    "later": "Later",
+    "unavailable": "Launch unavailable",
+    "ownerOnly": "Only the author of a published book can prepare its launch."
   }
 }
