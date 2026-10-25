@@ -9,6 +9,7 @@ import { defaultChapterTitle } from '../utils/chapterContent';
 export function useQuickDraft() {
   const router = useRouter();
   const uid = useAppSelector(s => s.auth.user?.id);
+  const userStories = useAppSelector(s => s.story.userStories);
   const [starting, setStarting] = useState(false);
   const inFlight = useRef(false);
 
@@ -18,6 +19,14 @@ export function useQuickDraft() {
       inFlight.current = true;
       setStarting(true);
       try {
+        const existingDraft = userStories.find(
+          s => !s.isPublished && s.title === i18n.t('studio.untitledStory') && (s.chaptersCount || 1) <= 1 && (!s.content || s.content.trim().length === 0),
+        );
+        if (existingDraft?.id) {
+          router.push(`/story/compose/${existingDraft.id}?ch=0`);
+          return;
+        }
+
         const result = await storyActions.createStory({
           title: i18n.t('studio.untitledStory'),
           description: '',
@@ -43,7 +52,7 @@ export function useQuickDraft() {
         setStarting(false);
       }
     },
-    [uid, router],
+    [uid, router, userStories],
   );
 
   return { starting, startQuickDraft };
