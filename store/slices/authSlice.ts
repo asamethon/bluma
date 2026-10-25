@@ -28,6 +28,7 @@ export interface User {
   signupDeviceModel?: string;
   signupLanguage?: string;
   signupRegion?: string;
+  intent?: 'reader' | 'writer' | 'both';
 }
 
 interface AuthState {

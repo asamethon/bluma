@@ -72,7 +72,7 @@ export function ReaderChapterTail(props: Props) {
         onNext={props.onNext}
       />
 
-      {props.isLast && (
+      {props.isLast && props.story?.isCompleted === true && (
         <>
           <View style={styles.chapterNavEnd}>
             <Ionicons name="checkmark-circle" size={22} color={colors.success} />

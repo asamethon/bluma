@@ -3,6 +3,7 @@ import { BloomMark, Screen, SectionHeader, SkeletonRow, Text } from '@/component
 import { CategoryMeta, useTheme } from '@/constants/theme';
 import { useSectionImpressions } from '@/features/discovery/hooks/useSectionImpressions';
 import { useResponsiveGrid } from '@/hooks/useResponsive';
+import { useAppSelector } from '@/store/hooks';
 import type { Story } from '@/types';
 import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import { useCallback, useMemo } from 'react';
@@ -37,6 +38,7 @@ export function HomeScreen() {
   const impressions = useSectionImpressions();
   const { numColumns } = useResponsiveGrid();
   const styles = useMemo(() => createHomeStyles(colors), [colors]);
+  const intent = useAppSelector(s => s.auth.user?.intent);
   const items = useMemo<HomeListItem[]>(() => (category.stories
     ? category.stories.map(story => ({ kind: 'story' as const, story }))
     : sections.map(section => ({ kind: 'section' as const, section }))), [category.stories, sections]);
@@ -81,7 +83,7 @@ export function HomeScreen() {
                 <SectionHeader title={selectedTitle || ''} />
               </View>
             ) : (
-              <HomeWriterNudge />
+              intent !== 'reader' ? <HomeWriterNudge /> : null
             )}
           </>
         }

@@ -73,6 +73,10 @@ async function writeLike(storyId: string, userId: string, liked: boolean): Promi
       await setDoc(refs.like, { userId, createdAt: serverTimestamp() });
       await setDoc(refs.userLike, { storyId, createdAt: serverTimestamp() });
       await updateDoc(refs.story, { likesCount: increment(1) });
+      try {
+        const { challengeActions } = await import('@/features/challenges/services/challengeProgress');
+        void challengeActions.trackAction(userId, 'storyLikes').catch(() => {});
+      } catch {}
     } else {
       await updateDoc(refs.story, { likesCount: increment(-1) });
       await deleteDoc(refs.like);

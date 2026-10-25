@@ -9,6 +9,14 @@ const DAY_SECONDS = 24 * 60 * 60;
 
 export async function syncWriterReminders(stories: Story[]) {
   try {
+    const { store } = await import('@/store');
+    const intent = store.getState().auth.user?.intent;
+    if (intent === 'reader') {
+      await Notifications.cancelScheduledNotificationAsync(FIRST_STORY_ID).catch(() => {});
+      await Notifications.cancelScheduledNotificationAsync(DRAFT_ID).catch(() => {});
+      return;
+    }
+
     const { status } = await Notifications.getPermissionsAsync();
     if (status !== 'granted') return;
 

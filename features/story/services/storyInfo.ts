@@ -35,6 +35,9 @@ export async function saveStoryInfo({ storyId, authorId, draft }: SaveParams): P
   const description = draft.description.trim();
 
   if (storyId) {
+    const { getFirestore, getDoc, doc } = await import('@react-native-firebase/firestore');
+    const before = await getDoc(doc(getFirestore(), 'stories', storyId));
+    const wasCompleted = before.exists() ? before.data()?.isCompleted === true : false;
     const coverImage = await resolveCoverUrl(draft.coverImage);
     const result = await storyActions.updateStory(storyId, {
       title,
@@ -47,6 +50,10 @@ export async function saveStoryInfo({ storyId, authorId, draft }: SaveParams): P
       contentWarnings: Array.isArray(draft.contentWarnings) ? draft.contentWarnings.filter((w: string) => w.trim().length > 0) : [],
       ...(coverImage ? { coverImage } : {}),
     });
+    if (result.success && !wasCompleted && draft.isCompleted === true) {
+      const { challengeActions } = await import('@/features/challenges/services/challengeProgress');
+      void challengeActions.trackAction(authorId, 'storiesCompletedByAuthor').catch(() => {});
+    }
     return { success: result.success, error: result.error };
   }
 
@@ -64,6 +71,11 @@ export async function saveStoryInfo({ storyId, authorId, draft }: SaveParams): P
     authorId,
   } as Partial<Story> as Story);
   if (!created.success || !created.storyId) return { success: false, error: created.error };
+
+  if (draft.isCompleted === true) {
+    const { challengeActions } = await import('@/features/challenges/services/challengeProgress');
+    void challengeActions.trackAction(authorId, 'storiesCompletedByAuthor').catch(() => {});
+  }
 
   // Kapak yüklemesi hikâye kaydını bekletmez; başarısızsa hikâye yine de durur.
   const coverImage = await resolveCoverUrl(draft.coverImage);
