@@ -25,3 +25,21 @@ export function weekStartKey(): string {
   const monday = now.getDate() - weekday + (weekday === 0 ? -6 : 1);
   return dayKey(new Date(now.getFullYear(), now.getMonth(), monday));
 }
+
+export function getDaysLeftInWeekend(): number {
+  const now = new Date();
+  const day = now.getDay(); // 0 Pazar, 1 Pazartesi, ..., 6 Cumartesi
+  if (day === 0 || day === 6) {
+    return day === 6 ? 1 : 0;
+  }
+  if (day === 5) {
+    return 2; // Cuma -> Cumartesi + Pazar
+  }
+  return 0;
+}
+
+export function isWeekendOrFriday(): boolean {
+  const now = new Date();
+  const day = now.getDay();
+  return day === 5 || day === 6 || day === 0;
+}

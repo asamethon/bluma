@@ -30,7 +30,13 @@ export function ChallengesScreen() {
   const claim = useCallback((challengeId: string) => {
     if (userId) void challengeActions.claimChallenge(userId, challengeId);
   }, [userId]);
-  const weeklyProgress = (progress.r1 || 0) + (progress.c1 || 0);
+  const weeklyProgress = Math.min((progress.r1 || 0) + (progress.c1 || 0), 5);
+  const weeklyClaimed = claimedSet.has('weekly_marathon');
+  const claimWeekly = useCallback(() => {
+    if (userId && weeklyProgress >= 5 && !weeklyClaimed) {
+      void challengeActions.claimChallenge(userId, 'weekly_marathon');
+    }
+  }, [userId, weeklyClaimed, weeklyProgress]);
 
   return (
     <Screen style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -46,7 +52,7 @@ export function ChallengesScreen() {
       >
         <RankHero xp={xp} streak={streak} completed={claimed.length} />
         <View style={styles.heroRule} />
-        <WeeklyChallenge progress={weeklyProgress} />
+        <WeeklyChallenge progress={weeklyProgress} claimed={weeklyClaimed} onClaim={claimWeekly} />
         <ChallengeFilters value={filter} onChange={setFilter} />
         <View style={styles.challengeList}>
           {challenges.map((challenge, index) => (

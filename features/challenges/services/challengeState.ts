@@ -35,11 +35,20 @@ export function refreshChallengeDay(stored: Partial<ChallengeData>): ChallengeDa
     }
     if (def.tracker === 'streakDays') progress[def.id] = Math.min(streak, def.goal);
   }
+  if (weekChanged) {
+    claimedChallenges = claimedChallenges.filter(id => id !== 'weekly_marathon');
+  }
   return { ...data, streak, lastActiveDate: todayKey(), challengeWeekStart: weekStartKey(), challengeProgress: progress, claimedChallenges };
 }
 
 export function applyChallengeOperation(data: ChallengeData, operation: ChallengeOperation): ChallengeData {
   if (operation.kind === 'claim') {
+    if (operation.challengeId === 'weekly_marathon') {
+      if (data.claimedChallenges.includes('weekly_marathon')) return data;
+      const weeklyProgress = Math.min((data.challengeProgress.r1 || 0) + (data.challengeProgress.c1 || 0), 5);
+      if (weeklyProgress < 5) return data;
+      return { ...data, xp: data.xp + 250, claimedChallenges: [...data.claimedChallenges, 'weekly_marathon'] };
+    }
     const def = CHALLENGE_DEFS.find(item => item.id === operation.challengeId);
     if (!def || data.claimedChallenges.includes(def.id) || (data.challengeProgress[def.id] ?? 0) < def.goal) return data;
     return { ...data, xp: data.xp + def.xp, claimedChallenges: [...data.claimedChallenges, def.id] };
