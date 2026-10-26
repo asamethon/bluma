@@ -15,6 +15,9 @@ import { CommentComposer } from './CommentComposer';
 import { CommentItem } from './CommentItem';
 import { CommentsHeader } from './CommentsHeader';
 import { useEffect, useRef, useState } from 'react';
+import { CommentMentionList } from './CommentMentionList';
+import { searchUsers } from '@/features/search/services/userSearch';
+import type { User } from '@/types';
 
 type Props = { storyId: string; chapter?: string; commentId?: string };
 
@@ -36,6 +39,10 @@ export function CommentsScreen({ storyId, chapter, commentId }: Props) {
   const { report: reportComment } = comments;
   const styles = useMemo(() => createCommentsStyles(colors), [colors]);
   const [autoHighlighted, setAutoHighlighted] = useState<string | null>(null);
+  const [mentionSuggestions, setMentionSuggestions] = useState<User[]>([]);
+  const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
+  const mentionQueryRef = useRef('');
+  const mentionTimeoutRef = useRef<any>(null);
   const back = () => router.canGoBack() ? router.back() : router.push(`/story/${storyId}/preview` as never);
   const report = useCallback((comment: Comment) => reportComment({
     targetId: comment.id,
@@ -120,16 +127,53 @@ export function CommentsScreen({ storyId, chapter, commentId }: Props) {
           </TouchableOpacity>
         ) : null}
       />
-      <CommentComposer
-        user={comments.currentUser}
-        content={comments.content}
-        replyingToName={findAuthorName(comments.comments, comments.replyingTo)}
-        submitting={comments.submitting}
-        styles={styles}
-        onChange={comments.setContent}
-        onCancelReply={() => comments.setReplyingTo(null)}
-        onSubmit={comments.submit}
-      />
+      <View>
+        <CommentMentionList
+          suggestions={mentionSuggestions}
+          visible={showMentionSuggestions}
+          onSelect={(username) => {
+            if (!username) return;
+            const query = mentionQueryRef.current;
+            const newContent = comments.content.replace(new RegExp(`@${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`), `@${username} `);
+            comments.setContent(newContent);
+            setShowMentionSuggestions(false);
+            setMentionSuggestions([]);
+            mentionQueryRef.current = '';
+          }}
+        />
+        <CommentComposer
+          user={comments.currentUser}
+          content={comments.content}
+          replyingToName={findAuthorName(comments.comments, comments.replyingTo)}
+          submitting={comments.submitting}
+          styles={styles}
+          onChange={(value: string) => {
+            comments.setContent(value);
+            const match = value.match(/@([a-zA-Z0-9_]{2,})$/);
+            if (match) {
+              const query = match[1];
+              mentionQueryRef.current = query;
+              setShowMentionSuggestions(true);
+              if (mentionTimeoutRef.current) clearTimeout(mentionTimeoutRef.current);
+              mentionTimeoutRef.current = setTimeout(async () => {
+                try {
+                  const results = await searchUsers(query);
+                  setMentionSuggestions(results);
+                } catch {
+                  setMentionSuggestions([]);
+                }
+              }, 150);
+            } else {
+              setShowMentionSuggestions(false);
+              setMentionSuggestions([]);
+              mentionQueryRef.current = '';
+              if (mentionTimeoutRef.current) clearTimeout(mentionTimeoutRef.current);
+            }
+          }}
+          onCancelReply={() => comments.setReplyingTo(null)}
+          onSubmit={comments.submit}
+        />
+      </View>
       <ReportSheet
         visible={!!comments.reportTarget}
         onClose={comments.closeReport}
