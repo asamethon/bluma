@@ -13,6 +13,7 @@ export const CATEGORY_FIELD = {
   follow_accepted: 'followNotifications',
   like: 'likeNotifications',
   comment: 'commentNotifications',
+  mention: 'mentionNotifications',
   story_published: 'storyNotifications',
   new_chapter: 'storyNotifications',
   conversation_announcement: 'storyNotifications',

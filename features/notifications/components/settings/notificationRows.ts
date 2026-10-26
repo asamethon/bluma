@@ -28,5 +28,6 @@ export const ACTIVITY_ROWS: SettingRow[] = [
   { key: 'storyNotifications', icon: 'book-outline', title: 'notifSettings.newChapter', caption: 'notifSettings.newChapterSub' },
   { key: 'likeNotifications', icon: 'heart-outline', title: 'notifSettings.likes', caption: 'notifSettings.likesSub' },
   { key: 'commentNotifications', icon: 'chatbubble-ellipses-outline', title: 'notifSettings.comments', caption: 'notifSettings.commentsSub' },
+  { key: 'mentionNotifications', icon: 'at-outline', title: 'notifSettings.mentions', caption: 'notifSettings.mentionsSub' },
   { key: 'followNotifications', icon: 'person-add-outline', title: 'notifSettings.newFollower', caption: 'notifSettings.newFollowerSub' },
 ];

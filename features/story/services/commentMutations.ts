@@ -21,6 +21,7 @@ import {
 } from '@react-native-firebase/firestore';
 import { getCommentById } from './commentRecords';
 import { getStoryById } from './storyApi';
+import { notifyMentions } from './commentMentions';
 
 async function notifyComment(storyId: string, commentId: string, parentId: string | undefined, content: string, chapterIndex?: number) {
   const user = store.getState().auth.user;
@@ -65,6 +66,13 @@ export async function addComment(storyId: string, content: string, parentId?: st
     await updateDoc(doc(db, 'stories', storyId), { commentsCount: increment(1) });
     void notifyComment(storyId, reference.id, parentId, content, chapterIndex)
       .catch(error => logger.error('Comment notification error:', error));
+    void notifyMentions({
+      storyId,
+      storyTitle: (await getStoryById(storyId))?.title || i18n.t('common.story'),
+      commentId: reference.id,
+      content,
+      chapterIndex,
+    }).catch(error => logger.error('Mention notification error:', error));
     if (!parentId) {
       try {
         const story = await getStoryById(storyId);
@@ -133,3 +141,5 @@ export async function likeComment(storyId: string, commentId: string) {
     return { success: false, error: error instanceof Error ? error.message : i18n.t('comments.likeFailed') };
   }
 }
+
+

@@ -397,6 +397,8 @@
     "likesSub": "Hikayelerin beğeni aldığında",
     "comments": "Yorumlar",
     "commentsSub": "İçeriklerine yorum yapıldığında",
+    "mentions": "Bahsetmeler",
+    "mentionsSub": "Bir yorumda senden bahsedildiğinde",
     "newFollower": "Yeni Takipçi",
     "newFollowerSub": "Biri seni takip etmeye başladığında",
     "enablePushFirst": "Etkinlik bildirimlerini açmak için önce Push Bildirimlerini etkinleştir."

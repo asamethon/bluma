@@ -120,6 +120,42 @@ export async function createCommentNotification(
   }
 }
 
+export async function createMentionNotification(
+  mentionerId: string,
+  mentionedId: string,
+  mentionerName: string,
+  storyTitle: string,
+  storyId: string,
+  commentText: string,
+  commentId: string,
+  chapterIndex?: number,
+) {
+  try {
+    const titleKey = 'notifications.mentionTitle';
+    const messageKey = 'notifications.mentionMessage';
+    const params = { name: mentionerName, story: storyTitle };
+    return createNotification({
+      userId: mentionedId,
+      senderId: mentionerId,
+      type: 'mention',
+      title: i18n.t(titleKey),
+      message: i18n.t(messageKey, params),
+      data: {
+        storyId,
+        storyTitle,
+        commentText,
+        commentId,
+        ...(chapterIndex !== undefined ? { chapterIndex: String(chapterIndex) } : {}),
+        commenterProfileImage: await profileImage(mentionerId),
+        i18n: { titleKey, messageKey, params },
+      },
+      isRead: false,
+    });
+  } catch (error) {
+    logger.error('Create mention notification error:', error);
+  }
+}
+
 export function createWelcomeNotification(userId: string, userName: string) {
   const params = { name: userName };
   return createNotification({
