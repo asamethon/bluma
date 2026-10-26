@@ -49,7 +49,6 @@ export function CommentMentionList({ suggestions, visible, onSelect }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const opacity = useSharedValue(0);
-  const screenHeight = Dimensions.get('window').height;
 
   useEffect(() => {
     opacity.value = visible && suggestions.length > 0 ? withTiming(1, { duration: 200 }) : withTiming(0, { duration: 150 });
@@ -64,7 +63,7 @@ export function CommentMentionList({ suggestions, visible, onSelect }: Props) {
 
   return (
     <View>
-      <Animated.View style={[styles.backdrop, { backgroundColor: 'rgba(0,0,0,0.28)', height: screenHeight * 2 }, backdropStyle]} pointerEvents="none" />
+      <Animated.View style={[styles.backdrop, { backgroundColor: 'rgba(0,0,0,0.28)' }, backdropStyle]} pointerEvents="none" />
       <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.divider }]}>
         <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('commentsScreen.mentionHint')}</Text>
         <FlatList
@@ -82,9 +81,10 @@ export function CommentMentionList({ suggestions, visible, onSelect }: Props) {
 const styles = StyleSheet.create({
   backdrop: {
     position: 'absolute',
-    left: -Spacing.screenX,
-    right: -Spacing.screenX,
-    bottom: -Dimensions.get('window').height,
+    left: -Spacing.screenX * 2,
+    right: -Spacing.screenX * 2,
+    bottom: -Dimensions.get('window').height * 3,
+    height: Dimensions.get('window').height * 4,
   },
   container: {
     borderTopWidth: StyleSheet.hairlineWidth,
