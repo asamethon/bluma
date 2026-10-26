@@ -12,6 +12,7 @@ type Props = {
 
 export function CommentMentionList({ suggestions, visible, onSelect }: Props) {
   const { colors } = useTheme();
+  console.log('[MENTION_LIST] render', { visible, count: suggestions.length });
   if (!visible || suggestions.length === 0) return null;
 
   return (
