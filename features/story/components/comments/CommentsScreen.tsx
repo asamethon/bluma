@@ -149,20 +149,20 @@ export function CommentsScreen({ storyId, chapter, commentId }: Props) {
           styles={styles}
           onChange={(value: string) => {
             comments.setContent(value);
-            const match = value.match(/@([a-zA-Z0-9_]{1,})$/);
+            const match = value.match(/@([a-zA-Z0-9_]*)$/);
             if (match) {
-              const query = match[1];
+              const query = match[1] || '';
               mentionQueryRef.current = query;
               setShowMentionSuggestions(true);
               if (mentionTimeoutRef.current) clearTimeout(mentionTimeoutRef.current);
               mentionTimeoutRef.current = setTimeout(async () => {
                 try {
                   const results = await searchUsers(query);
-                  setMentionSuggestions(results);
+                  setMentionSuggestions(results.slice(0, 5));
                 } catch {
                   setMentionSuggestions([]);
                 }
-              }, 150);
+              }, 100);
             } else {
               setShowMentionSuggestions(false);
               setMentionSuggestions([]);

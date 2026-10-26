@@ -33,7 +33,7 @@ const byRelevance = (term: string) => (a: User, b: User) => {
 
 export async function searchUsers(searchQuery: string): Promise<User[]> {
   const term = searchQuery.toLowerCase().trim();
-  if (term.length < 1) return [];
+  if (term.length < 0) return [];
 
   try {
     // Görünen ad büyük harfle kaydedilmiş olabilir; iki varyant da taranır.
