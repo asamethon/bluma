@@ -56,6 +56,7 @@ export function CommentMentionList({ suggestions, visible, onSelect }: Props) {
 
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
+    pointerEvents: opacity.value === 0 ? 'none' : 'none',
   }));
 
   if (!visible || suggestions.length === 0) return null;
