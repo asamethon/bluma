@@ -4,6 +4,7 @@ import { store } from '@/store';
 import { challengeActions } from '@/store/challengeStore';
 import { notificationActions } from '@/store/notificationStore';
 import { logger } from '@/utils/logger';
+import { createMentionNotification } from '@/features/notifications/services/storyNotifications';
 import {
   addDoc,
   collection,
@@ -21,7 +22,6 @@ import {
 } from '@react-native-firebase/firestore';
 import { getCommentById } from './commentRecords';
 import { getStoryById } from './storyApi';
-import { notifyMentions } from './commentMentions';
 
 async function notifyComment(storyId: string, commentId: string, parentId: string | undefined, content: string, chapterIndex?: number) {
   const user = store.getState().auth.user;
@@ -45,6 +45,45 @@ async function notifyComment(storyId: string, commentId: string, parentId: strin
   );
 }
 
+async function notifyMentions(storyId: string, commentId: string, content: string, chapterIndex?: number) {
+  try {
+    const user = store.getState().auth.user;
+    if (!user?.id) return;
+    const matches = content.match(/@([a-zA-Z0-9_]+)/g);
+    if (!matches) return;
+    const usernames = Array.from(new Set(matches.map(m => m.slice(1).toLowerCase()))).slice(0, 10);
+    if (usernames.length === 0) return;
+    const db = getFirestore();
+    const story = await getStoryById(storyId);
+    const storyTitle = story?.title || i18n.t('common.story');
+    await Promise.all(
+      usernames.map(async (username) => {
+        try {
+          const snap = await getDocs(query(collection(db, 'users'), where('username', '==', username)));
+          if (snap.empty) return;
+          const docSnap = snap.docs[0];
+          const mentionedId = docSnap.id;
+          if (!mentionedId || mentionedId === user.id) return;
+          await createMentionNotification(
+            user.id,
+            mentionedId,
+            user.displayName || user.username || '',
+            storyTitle,
+            storyId,
+            content,
+            commentId,
+            chapterIndex,
+          );
+        } catch {
+          // ignore
+        }
+      }),
+    );
+  } catch {
+    // ignore
+  }
+}
+
 export async function addComment(storyId: string, content: string, parentId?: string, chapterIndex?: number) {
   try {
     const user = store.getState().auth.user;
@@ -66,13 +105,8 @@ export async function addComment(storyId: string, content: string, parentId?: st
     await updateDoc(doc(db, 'stories', storyId), { commentsCount: increment(1) });
     void notifyComment(storyId, reference.id, parentId, content, chapterIndex)
       .catch(error => logger.error('Comment notification error:', error));
-    void notifyMentions({
-      storyId,
-      storyTitle: (await getStoryById(storyId))?.title || i18n.t('common.story'),
-      commentId: reference.id,
-      content,
-      chapterIndex,
-    }).catch(error => logger.error('Mention notification error:', error));
+    void notifyMentions(storyId, reference.id, content, chapterIndex)
+      .catch(error => logger.error('Mention notification error:', error));
     if (!parentId) {
       try {
         const story = await getStoryById(storyId);

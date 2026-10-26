@@ -2,6 +2,6 @@ import { CommentsScreen } from '@/features/story/components/comments/CommentsScr
 import { useLocalSearchParams } from 'expo-router';
 
 export default function StoryCommentsRoute() {
-  const { id, chapter } = useLocalSearchParams<{ id: string; chapter?: string }>();
-  return <CommentsScreen storyId={String(id)} chapter={chapter} />;
+  const { id, chapter, commentId } = useLocalSearchParams<{ id: string; chapter?: string; commentId?: string }>();
+  return <CommentsScreen storyId={String(id)} chapter={chapter} commentId={Array.isArray(commentId) ? commentId[0] : commentId} />;
 }

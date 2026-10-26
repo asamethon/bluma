@@ -14,8 +14,9 @@ import { createCommentsStyles } from '../../styles/commentsStyles';
 import { CommentComposer } from './CommentComposer';
 import { CommentItem } from './CommentItem';
 import { CommentsHeader } from './CommentsHeader';
+import { useEffect, useRef } from 'react';
 
-type Props = { storyId: string; chapter?: string };
+type Props = { storyId: string; chapter?: string; commentId?: string };
 
 const findAuthorName = (comments: Comment[], id: string | null): string | undefined => {
   if (!id) return undefined;
@@ -24,11 +25,12 @@ const findAuthorName = (comments: Comment[], id: string | null): string | undefi
   ), undefined);
 };
 
-export function CommentsScreen({ storyId, chapter }: Props) {
+export function CommentsScreen({ storyId, chapter, commentId }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { top } = useSafeAreaInsets();
   const router = useRouter();
+  const listRef = useRef<any>(null);
   const chapterIndex = chapter === undefined ? undefined : Number.parseInt(chapter, 10) || 0;
   const comments = useComments(storyId, chapterIndex);
   const { report: reportComment } = comments;
@@ -47,8 +49,19 @@ export function CommentsScreen({ storyId, chapter }: Props) {
       onReply={comments.setReplyingTo}
       onDelete={comments.remove}
       onReport={report}
+      highlight={commentId === item.id}
     />
-  ), [comments.currentUser?.id, comments.like, comments.remove, comments.setReplyingTo, report, styles]);
+  ), [comments.currentUser?.id, comments.like, comments.remove, comments.setReplyingTo, report, styles, commentId]);
+
+  useEffect(() => {
+    if (!commentId || comments.visible.length === 0) return;
+    const index = comments.visible.findIndex((item: any) => item.id === commentId);
+    if (index >= 0 && listRef.current) {
+      try {
+        listRef.current.scrollToIndex({ index, animated: true, viewPosition: 0.4 });
+      } catch {}
+    }
+  }, [commentId, comments.visible]);
 
   return (
     // Alt güvenli alan boşluğunu yazma alanı verir (bkz. useKeyboardLift).
@@ -63,6 +76,7 @@ export function CommentsScreen({ storyId, chapter }: Props) {
         onFilter={comments.setFilterChapter}
       />
       <FlashList
+        ref={listRef}
         data={comments.visible}
         keyExtractor={item => item.id}
         renderItem={renderComment}

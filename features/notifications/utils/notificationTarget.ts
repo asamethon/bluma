@@ -37,13 +37,15 @@ export function notificationTarget(input: {
   if (conversation && ['like', 'comment', 'conversation_announcement'].includes(type || '')) {
     return route(`/conversation/${conversation}`);
   }
-  if (story && type === 'comment') {
-    const suffix = chapterIndex === undefined ? '' : `?chapter=${chapterIndex}`;
+  if (story && (type === 'comment' || type === 'mention')) {
+    const commentId = segment((data as any)?.commentId);
+    const base = chapterIndex === undefined ? '' : `?chapter=${chapterIndex}`;
+    const suffix = commentId ? (base ? `${base}&commentId=${commentId}` : `?commentId=${commentId}`) : base;
     return route(`/story/${story}/comments${suffix}`);
   }
   if (story && type === 'new_chapter') return route(`/story/${story}?chapter=${newChapterIndex}`);
   if (story && type === 'like' && chapterIndex !== undefined) return route(`/story/${story}?chapter=${chapterIndex}`);
-  if (story && ['like', 'story_published', 'mention'].includes(type || '')) {
+  if (story && ['like', 'story_published'].includes(type || '')) {
     return route(`/story/${story}/preview`);
   }
   if (type === 'announcement') {

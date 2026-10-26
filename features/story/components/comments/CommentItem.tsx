@@ -1,4 +1,4 @@
-import { useTheme } from '@/constants/theme';
+import { alpha, useTheme } from '@/constants/theme';
 import { formatRelativeTime } from '@/features/story/utils/time';
 import type { Comment } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,15 +18,16 @@ type Props = {
   onReply: (id: string) => void;
   onDelete: (id: string) => void;
   onReport: (comment: Comment) => void;
+  highlight?: boolean;
 };
 
-function CommentItemComponent({ comment, currentUserId, level = 0, styles, ...actions }: Props) {
+function CommentItemComponent({ comment, currentUserId, level = 0, styles, highlight, ...actions }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const router = useRouter();
 
   return (
-    <View style={[styles.commentItem, { marginLeft: level * 20 }]}>
+    <View style={[styles.commentItem, { marginLeft: level * 20 }, highlight && { backgroundColor: alpha(colors.primary, 0.08), borderRadius: 12, paddingHorizontal: 8 } ]}>
       <View style={styles.commentHeader}>
         <TouchableOpacity style={styles.userAvatar} onPress={() => router.push(`/user/${comment.user.id}` as never)}>
           {comment.user.profileImage ? (
