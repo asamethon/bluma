@@ -127,7 +127,7 @@ export function CommentsScreen({ storyId, chapter, commentId }: Props) {
           </TouchableOpacity>
         ) : null}
       />
-      <View style={{ position: 'relative', zIndex: 50 }}>
+      <View style={{ position: 'relative', zIndex: 999 }}>
         <CommentMentionList
           suggestions={mentionSuggestions}
           visible={showMentionSuggestions}

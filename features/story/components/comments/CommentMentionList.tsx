@@ -17,21 +17,24 @@ export function CommentMentionList({ suggestions, visible, onSelect }: Props) {
 
   return (
     <View
+      pointerEvents="box-none"
       style={{
         position: 'absolute',
-        bottom: 72,
+        bottom: '100%',
         left: 12,
         right: 12,
+        marginBottom: 6,
         backgroundColor: colors.surface,
         borderRadius: 12,
         borderWidth: 1,
         borderColor: colors.border,
-        maxHeight: 220,
+        maxHeight: 240,
         overflow: 'hidden',
         shadowColor: '#000',
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 6,
+        shadowOpacity: 0.12,
+        shadowRadius: 16,
+        elevation: 20,
+        zIndex: 9999,
       }}
     >
       <FlatList
