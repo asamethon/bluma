@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { createCommentsStyles } from '../../styles/commentsStyles';
 import { renderMentionText } from '@/features/story/utils/mentionText';
+import { getUserByUsername } from '@/features/auth/services/userByUsername';
 
 type Props = {
   comment: Comment;
@@ -44,7 +45,12 @@ function CommentItemComponent({ comment, currentUserId, level = 0, styles, highl
         <Text style={styles.commentTime}>{formatRelativeTime(comment.createdAt)}</Text>
       </View>
       <Text style={styles.commentContent}>
-        {renderMentionText(comment.content, colors.primary, (username: string) => router.push(`/user/${username}` as never))}
+        {renderMentionText(comment.content, colors.primary, (username: string) => {
+          void getUserByUsername(username).then((user) => {
+            if (user?.id) router.push(`/user/${user.id}` as never);
+            else router.push(`/user/${username}` as never);
+          });
+        })}
       </Text>
       <View style={styles.commentActions}>
         <TouchableOpacity style={styles.commentAction} onPress={() => actions.onLike(comment.id)}>
