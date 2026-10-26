@@ -127,14 +127,15 @@ export function CommentsScreen({ storyId, chapter, commentId }: Props) {
           </TouchableOpacity>
         ) : null}
       />
-      <View>
+      <View style={{ position: 'relative', zIndex: 50 }}>
         <CommentMentionList
           suggestions={mentionSuggestions}
           visible={showMentionSuggestions}
           onSelect={(username) => {
             if (!username) return;
             const query = mentionQueryRef.current;
-            const newContent = comments.content.replace(new RegExp(`@${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`), `@${username} `);
+            const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const newContent = comments.content.replace(new RegExp(`@${escaped}$`), `@${username} `);
             comments.setContent(newContent);
             setShowMentionSuggestions(false);
             setMentionSuggestions([]);
@@ -158,11 +159,11 @@ export function CommentsScreen({ storyId, chapter, commentId }: Props) {
               mentionTimeoutRef.current = setTimeout(async () => {
                 try {
                   const results = await searchUsers(query);
-                  setMentionSuggestions(results.slice(0, 5));
+                  setMentionSuggestions(results.slice(0, 6));
                 } catch {
                   setMentionSuggestions([]);
                 }
-              }, 100);
+              }, 20);
             } else {
               setShowMentionSuggestions(false);
               setMentionSuggestions([]);
@@ -171,7 +172,11 @@ export function CommentsScreen({ storyId, chapter, commentId }: Props) {
             }
           }}
           onCancelReply={() => comments.setReplyingTo(null)}
-          onSubmit={comments.submit}
+          onSubmit={() => {
+            setShowMentionSuggestions(false);
+            setMentionSuggestions([]);
+            comments.submit();
+          }}
         />
       </View>
       <ReportSheet
