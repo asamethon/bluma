@@ -40,11 +40,29 @@ export async function createStory(
     if (!user?.id) throw new Error(i18n.t('errors.loginRequired'));
     const verified = await assertEmailVerified();
     if (!verified.ok) return { success: false, error: verified.error };
-    const cleanData = Object.fromEntries(Object.entries(storyData).filter(([, value]) => (
-      value !== undefined && value !== null && value !== '' && (!Array.isArray(value) || value.length > 0)
-    )));
+    const preserveEmptyArrays = new Set(['tags', 'contentWarnings']);
+    const cleanData = Object.fromEntries(Object.entries(storyData).filter(([key, value]) => {
+      if (value === undefined || value === null) return false;
+      if (value === '') return false;
+      if (Array.isArray(value)) {
+        if (preserveEmptyArrays.has(key)) return true;
+        return value.length > 0;
+      }
+      return true;
+    }));
+    const rawLang = (storyData as any).language || i18n.language;
+    const normalizeLang = (l: string) => {
+      if (!l) return 'tr';
+      const map: Record<string, string> = { 'Türkçe': 'tr', 'Turkish': 'tr', 'İngilizce': 'en', 'English': 'en', 'Almanca': 'de', 'Alman': 'de', 'Fransızca': 'fr', 'French': 'fr', 'İspanyolca': 'es', 'Spanish': 'es' };
+      if (map[l]) return map[l];
+      if (l.length === 2) return l;
+      return 'tr';
+    };
     const reference = await addDoc(collection(getFirestore(), 'stories'), {
-      language: (storyData as any).language || i18n.language,
+      language: normalizeLang(rawLang),
+      tags: Array.isArray((storyData as any).tags) ? (storyData as any).tags : [],
+      contentWarnings: Array.isArray((storyData as any).contentWarnings) ? (storyData as any).contentWarnings : [],
+      targetAudience: (storyData as any).targetAudience || 'all',
       ...cleanData,
       authorId: user.id,
       likesCount: 0,
