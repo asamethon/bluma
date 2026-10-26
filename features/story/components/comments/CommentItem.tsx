@@ -8,6 +8,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { createCommentsStyles } from '../../styles/commentsStyles';
+import { renderMentionText } from '@/features/story/utils/mentionText';
 
 type Props = {
   comment: Comment;
@@ -42,7 +43,9 @@ function CommentItemComponent({ comment, currentUserId, level = 0, styles, highl
         </View>
         <Text style={styles.commentTime}>{formatRelativeTime(comment.createdAt)}</Text>
       </View>
-      <Text style={styles.commentContent}>{comment.content}</Text>
+      <Text style={styles.commentContent}>
+        {renderMentionText(comment.content, colors.primary, (username: string) => router.push(`/user/${username}` as never))}
+      </Text>
       <View style={styles.commentActions}>
         <TouchableOpacity style={styles.commentAction} onPress={() => actions.onLike(comment.id)}>
           <Ionicons name="heart-outline" size={16} color={colors.textSecondary} />
