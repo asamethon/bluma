@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { memo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 type Props = {
@@ -49,6 +49,7 @@ export function CommentMentionList({ suggestions, visible, onSelect }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const opacity = useSharedValue(0);
+  const screenHeight = Dimensions.get('window').height;
 
   useEffect(() => {
     opacity.value = visible && suggestions.length > 0 ? withTiming(1, { duration: 200 }) : withTiming(0, { duration: 150 });
@@ -63,7 +64,7 @@ export function CommentMentionList({ suggestions, visible, onSelect }: Props) {
 
   return (
     <View>
-      <Animated.View style={[styles.backdrop, { backgroundColor: 'rgba(0,0,0,0.28)' }, backdropStyle]} pointerEvents="none" />
+      <Animated.View style={[styles.backdrop, { backgroundColor: 'rgba(0,0,0,0.28)', height: screenHeight * 2 }, backdropStyle]} pointerEvents="none" />
       <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.divider }]}>
         <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('commentsScreen.mentionHint')}</Text>
         <FlatList
@@ -83,8 +84,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: -Spacing.screenX,
     right: -Spacing.screenX,
-    bottom: -2000,
-    height: 4000,
+    bottom: -Dimensions.get('window').height,
   },
   container: {
     borderTopWidth: StyleSheet.hairlineWidth,
