@@ -149,7 +149,7 @@ export function CommentsScreen({ storyId, chapter, commentId }: Props) {
           styles={styles}
           onChange={(value: string) => {
             comments.setContent(value);
-            const match = value.match(/@([a-zA-Z0-9_]{2,})$/);
+            const match = value.match(/@([a-zA-Z0-9_]{1,})$/);
             if (match) {
               const query = match[1];
               mentionQueryRef.current = query;
