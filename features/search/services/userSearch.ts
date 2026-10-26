@@ -35,6 +35,16 @@ export async function searchUsers(searchQuery: string): Promise<User[]> {
   const term = searchQuery.toLowerCase().trim();
 
   try {
+    if (term.length === 0) {
+      const snapshot = await getDocs(query(collection(getFirestore(), 'users')));
+      const all = snapshot.docs
+        .map(document => ({ id: document.id, ...document.data() }) as User)
+        .filter(user => !!user.username);
+      return privacyActions
+        .filterDiscoverable(all.sort((a, b) => (b.followersCount ?? 0) - (a.followersCount ?? 0)))
+        .slice(0, MAX_RESULTS);
+    }
+
     // Görünen ad büyük harfle kaydedilmiş olabilir; iki varyant da taranır.
     const capitalized = term.charAt(0).toLocaleUpperCase('tr-TR') + term.slice(1);
     const variants = [...new Set([term, capitalized])];
@@ -46,7 +56,7 @@ export async function searchUsers(searchQuery: string): Promise<User[]> {
     const unique = new Map(results.flat().map(user => [user.id, user]));
     // "Aramada göster" kapalı hesaplar sonuçlardan düşer.
     return privacyActions
-      .filterDiscoverable([...unique.values()].sort(byRelevance(term)))
+      .filterDiscoverable([...unique.values()].filter(user => !!user.username).sort(byRelevance(term)))
       .slice(0, MAX_RESULTS);
   } catch (error) {
     logger.error('Search users error:', error);

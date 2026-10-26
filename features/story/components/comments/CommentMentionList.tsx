@@ -50,20 +50,31 @@ export function CommentMentionList({ suggestions, visible, onSelect }: Props) {
   if (!visible || suggestions.length === 0) return null;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.divider }]}>
-      <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('commentsScreen.mentionHint')}</Text>
-      <FlatList
-        data={suggestions}
-        keyExtractor={item => item.id}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => <MentionRow user={item} onPress={onSelect} />}
-      />
+    <View>
+      <View style={styles.backdrop} pointerEvents="none" />
+      <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.divider }]}>
+        <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('commentsScreen.mentionHint')}</Text>
+        <FlatList
+          data={suggestions}
+          keyExtractor={item => item.id}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => <MentionRow user={item} onPress={onSelect} />}
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  backdrop: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 320,
+    backgroundColor: 'rgba(0,0,0,0.12)',
+  },
   container: {
     borderTopWidth: StyleSheet.hairlineWidth,
     maxHeight: 232,
