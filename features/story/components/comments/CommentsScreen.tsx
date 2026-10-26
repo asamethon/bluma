@@ -14,7 +14,7 @@ import { createCommentsStyles } from '../../styles/commentsStyles';
 import { CommentComposer } from './CommentComposer';
 import { CommentItem } from './CommentItem';
 import { CommentsHeader } from './CommentsHeader';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Props = { storyId: string; chapter?: string; commentId?: string };
 
@@ -35,6 +35,7 @@ export function CommentsScreen({ storyId, chapter, commentId }: Props) {
   const comments = useComments(storyId, chapterIndex);
   const { report: reportComment } = comments;
   const styles = useMemo(() => createCommentsStyles(colors), [colors]);
+  const [autoHighlighted, setAutoHighlighted] = useState<string | null>(null);
   const back = () => router.canGoBack() ? router.back() : router.push(`/story/${storyId}/preview` as never);
   const report = useCallback((comment: Comment) => reportComment({
     targetId: comment.id,
@@ -49,19 +50,42 @@ export function CommentsScreen({ storyId, chapter, commentId }: Props) {
       onReply={comments.setReplyingTo}
       onDelete={comments.remove}
       onReport={report}
-      highlight={commentId === item.id}
+      highlight={(commentId === item.id) || (autoHighlighted === item.id)}
     />
-  ), [comments.currentUser?.id, comments.like, comments.remove, comments.setReplyingTo, report, styles, commentId]);
+  ), [comments.currentUser?.id, comments.like, comments.remove, comments.setReplyingTo, report, styles, commentId, autoHighlighted]);
 
   useEffect(() => {
-    if (!commentId || comments.visible.length === 0) return;
-    const index = comments.visible.findIndex((item: any) => item.id === commentId);
+    const targetId = commentId || autoHighlighted;
+    if (!targetId || comments.visible.length === 0) return;
+    const index = comments.visible.findIndex((item: any) => item.id === targetId);
     if (index >= 0 && listRef.current) {
       try {
         listRef.current.scrollToIndex({ index, animated: true, viewPosition: 0.4 });
       } catch {}
     }
-  }, [commentId, comments.visible]);
+  }, [commentId, autoHighlighted, comments.visible]);
+
+  useEffect(() => {
+    if (commentId || autoHighlighted) return;
+    const currentUsername = comments.currentUser?.username?.toLowerCase();
+    if (!currentUsername || comments.visible.length === 0) return;
+    const mentionRegex = new RegExp(`@${currentUsername.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    for (const item of comments.visible as any[]) {
+      if (mentionRegex.test(item.content || '')) {
+        setAutoHighlighted(item.id);
+        break;
+      }
+      if (item.replies?.length) {
+        for (const reply of item.replies) {
+          if (mentionRegex.test(reply.content || '')) {
+            setAutoHighlighted(reply.id);
+            break;
+          }
+        }
+        if (autoHighlighted) break;
+      }
+    }
+  }, [comments.currentUser?.username, comments.visible, commentId, autoHighlighted]);
 
   return (
     // Alt güvenli alan boşluğunu yazma alanı verir (bkz. useKeyboardLift).
