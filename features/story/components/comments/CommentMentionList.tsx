@@ -69,11 +69,11 @@ export function CommentMentionList({ suggestions, visible, onSelect }: Props) {
 const styles = StyleSheet.create({
   backdrop: {
     position: 'absolute',
-    left: 0,
-    right: 0,
+    left: -Spacing.screenX,
+    right: -Spacing.screenX,
     bottom: 0,
-    height: 320,
-    backgroundColor: 'rgba(0,0,0,0.12)',
+    height: 340,
+    backgroundColor: 'rgba(0,0,0,0.25)',
   },
   container: {
     borderTopWidth: StyleSheet.hairlineWidth,
