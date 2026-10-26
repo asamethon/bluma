@@ -33,6 +33,7 @@ const byRelevance = (term: string) => (a: User, b: User) => {
 
 export async function searchUsers(searchQuery: string): Promise<User[]> {
   const term = searchQuery.toLowerCase().trim();
+  console.log('[SEARCH_USERS] term', term);
   if (term.length < 0) return [];
 
   try {

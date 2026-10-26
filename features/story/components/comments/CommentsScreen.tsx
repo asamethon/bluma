@@ -149,22 +149,28 @@ export function CommentsScreen({ storyId, chapter, commentId }: Props) {
           submitting={comments.submitting}
           styles={styles}
           onChange={(value: string) => {
+            console.log('[MENTION] change', value);
             comments.setContent(value);
             const match = value.match(/@([a-zA-Z0-9_]*)$/);
             if (match) {
               const query = match[1] || '';
+              console.log('[MENTION] match', query);
               mentionQueryRef.current = query;
               setShowMentionSuggestions(true);
               if (mentionTimeoutRef.current) clearTimeout(mentionTimeoutRef.current);
               mentionTimeoutRef.current = setTimeout(async () => {
                 try {
+                  console.log('[MENTION] searching', query);
                   const results = await searchUsers(query);
+                  console.log('[MENTION] results', results.length);
                   setMentionSuggestions(results.slice(0, 6));
-                } catch {
+                } catch (e) {
+                  console.log('[MENTION] err', e);
                   setMentionSuggestions([]);
                 }
               }, 20);
             } else {
+              console.log('[MENTION] no match');
               setShowMentionSuggestions(false);
               setMentionSuggestions([]);
               mentionQueryRef.current = '';
