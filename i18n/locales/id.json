@@ -265,6 +265,7 @@
     "replyingTo": "Membalas: {{name}}",
     "replyPlaceholder": "Tulis balasanmu...",
     "commentPlaceholder": "Tulis komentarmu...",
+    "mentionHint": "Pilih pengguna",
     "loadMore": "Muat lebih banyak komentar"
   },
   "storyScreen": {

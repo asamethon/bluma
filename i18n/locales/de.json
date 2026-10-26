@@ -265,6 +265,7 @@
     "replyingTo": "Antwort an: {{name}}",
     "replyPlaceholder": "Schreibe deine Antwort...",
     "commentPlaceholder": "Schreibe deinen Kommentar...",
+    "mentionHint": "Benutzer auswählen",
     "loadMore": "Weitere Kommentare laden"
   },
   "storyScreen": {

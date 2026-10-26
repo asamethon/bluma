@@ -265,6 +265,7 @@
     "replyingTo": "返信先: {{name}}",
     "replyPlaceholder": "返信を入力...",
     "commentPlaceholder": "コメントを入力...",
+    "mentionHint": "ユーザーを選択",
     "loadMore": "さらにコメントを読み込む"
   },
   "storyScreen": {

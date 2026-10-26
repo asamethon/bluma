@@ -6,6 +6,7 @@ import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Animated from 'react-native-reanimated';
+import type { ReactNode } from 'react';
 import { createCommentsStyles } from '../../styles/commentsStyles';
 
 type Props = {
@@ -17,6 +18,8 @@ type Props = {
   onChange: (value: string) => void;
   onCancelReply: () => void;
   onSubmit: () => void;
+  /** Input'un hemen üstünde, klavyeyle birlikte hareket eden alan (mention önerileri). */
+  aboveInput?: ReactNode;
 };
 
 export function CommentComposer(props: Props) {
@@ -27,6 +30,7 @@ export function CommentComposer(props: Props) {
 
   return (
     <Animated.View style={[props.styles.keyboardAvoidingView, keyboard.lift]}>
+      {props.aboveInput}
       <Animated.View style={[props.styles.commentInputContainer, keyboard.pad]}>
         {props.replyingToName && (
           <View style={props.styles.replyingToContainer}>

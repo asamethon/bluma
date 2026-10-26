@@ -265,6 +265,7 @@
     "replyingTo": "답글 대상: {{name}}",
     "replyPlaceholder": "답글을 입력하세요...",
     "commentPlaceholder": "댓글을 입력하세요...",
+    "mentionHint": "사용자 선택",
     "loadMore": "댓글 더 보기"
   },
   "storyScreen": {

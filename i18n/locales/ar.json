@@ -265,6 +265,7 @@
     "replyingTo": "ردًا على: {{name}}",
     "replyPlaceholder": "اكتب ردك...",
     "commentPlaceholder": "اكتب تعليقك...",
+    "mentionHint": "اختر مستخدمًا",
     "loadMore": "تحميل المزيد من التعليقات"
   },
   "storyScreen": {

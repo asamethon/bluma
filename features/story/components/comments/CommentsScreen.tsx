@@ -2,11 +2,10 @@ import ReportSheet from '@/features/moderation/components/ReportSheet';
 import { Screen } from '@/components/ui';
 import { useTheme } from '@/constants/theme';
 import { useComments } from '@/features/story/hooks/useComments';
-import type { Comment } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,10 +13,9 @@ import { createCommentsStyles } from '../../styles/commentsStyles';
 import { CommentComposer } from './CommentComposer';
 import { CommentItem } from './CommentItem';
 import { CommentsHeader } from './CommentsHeader';
-import { useEffect, useRef, useState } from 'react';
 import { CommentMentionList } from './CommentMentionList';
 import { searchUsers } from '@/features/search/services/userSearch';
-import type { User } from '@/types';
+import type { Comment, User } from '@/types';
 
 type Props = { storyId: string; chapter?: string; commentId?: string };
 
@@ -44,6 +42,10 @@ export function CommentsScreen({ storyId, chapter, commentId }: Props) {
   const mentionQueryRef = useRef('');
   const mentionTimeoutRef = useRef<any>(null);
   const back = () => router.canGoBack() ? router.back() : router.push(`/story/${storyId}/preview` as never);
+  useEffect(() => () => {
+    if (mentionTimeoutRef.current) clearTimeout(mentionTimeoutRef.current);
+  }, []);
+
   const report = useCallback((comment: Comment) => reportComment({
     targetId: comment.id,
     reportedUserId: comment.user.id,
@@ -127,64 +129,57 @@ export function CommentsScreen({ storyId, chapter, commentId }: Props) {
           </TouchableOpacity>
         ) : null}
       />
-      <View style={{ position: 'relative', zIndex: 100000, elevation: 100000 }}>
-        <CommentMentionList
-          suggestions={mentionSuggestions}
-          visible={showMentionSuggestions}
-          onSelect={(username) => {
-            if (!username) return;
-            const query = mentionQueryRef.current;
-            const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const newContent = comments.content.replace(new RegExp(`@${escaped}$`), `@${username} `);
-            comments.setContent(newContent);
+      <CommentComposer
+        user={comments.currentUser}
+        content={comments.content}
+        replyingToName={findAuthorName(comments.comments, comments.replyingTo)}
+        submitting={comments.submitting}
+        styles={styles}
+        onChange={(value: string) => {
+          comments.setContent(value);
+          const match = value.match(/(?:^|\s)@([a-zA-Z0-9_]*)$/);
+          if (match) {
+            const query = match[1] || '';
+            mentionQueryRef.current = query;
+            setShowMentionSuggestions(true);
+            if (mentionTimeoutRef.current) clearTimeout(mentionTimeoutRef.current);
+            mentionTimeoutRef.current = setTimeout(async () => {
+              try {
+                const results = await searchUsers(query);
+                setMentionSuggestions(results.slice(0, 6));
+              } catch {
+                setMentionSuggestions([]);
+              }
+            }, 20);
+          } else {
             setShowMentionSuggestions(false);
             setMentionSuggestions([]);
             mentionQueryRef.current = '';
-          }}
-        />
-        <CommentComposer
-          user={comments.currentUser}
-          content={comments.content}
-          replyingToName={findAuthorName(comments.comments, comments.replyingTo)}
-          submitting={comments.submitting}
-          styles={styles}
-          onChange={(value: string) => {
-            console.log('[MENTION] change', value);
-            comments.setContent(value);
-            const match = value.match(/@([a-zA-Z0-9_]*)$/);
-            if (match) {
-              const query = match[1] || '';
-              console.log('[MENTION] match', query);
-              mentionQueryRef.current = query;
-              setShowMentionSuggestions(true);
-              if (mentionTimeoutRef.current) clearTimeout(mentionTimeoutRef.current);
-              mentionTimeoutRef.current = setTimeout(async () => {
-                try {
-                  console.log('[MENTION] searching', query);
-                  const results = await searchUsers(query);
-                  console.log('[MENTION] results', results.length);
-                  setMentionSuggestions(results.slice(0, 6));
-                } catch (e) {
-                  console.log('[MENTION] err', e);
-                  setMentionSuggestions([]);
-                }
-              }, 20);
-            } else {
-              console.log('[MENTION] no match');
+            if (mentionTimeoutRef.current) clearTimeout(mentionTimeoutRef.current);
+          }
+        }}
+        onCancelReply={() => comments.setReplyingTo(null)}
+        onSubmit={() => {
+          setShowMentionSuggestions(false);
+          setMentionSuggestions([]);
+          comments.submit();
+        }}
+        aboveInput={(
+          <CommentMentionList
+            suggestions={mentionSuggestions}
+            visible={showMentionSuggestions}
+            onSelect={(username) => {
+              if (!username) return;
+              const query = mentionQueryRef.current;
+              const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              comments.setContent(comments.content.replace(new RegExp(`@${escaped}$`), `@${username} `));
               setShowMentionSuggestions(false);
               setMentionSuggestions([]);
               mentionQueryRef.current = '';
-              if (mentionTimeoutRef.current) clearTimeout(mentionTimeoutRef.current);
-            }
-          }}
-          onCancelReply={() => comments.setReplyingTo(null)}
-          onSubmit={() => {
-            setShowMentionSuggestions(false);
-            setMentionSuggestions([]);
-            comments.submit();
-          }}
-        />
-      </View>
+            }}
+          />
+        )}
+      />
       <ReportSheet
         visible={!!comments.reportTarget}
         onClose={comments.closeReport}

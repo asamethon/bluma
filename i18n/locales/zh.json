@@ -265,6 +265,7 @@
     "replyingTo": "回复：{{name}}",
     "replyPlaceholder": "写下你的回复…",
     "commentPlaceholder": "写下你的评论…",
+    "mentionHint": "选择用户",
     "loadMore": "加载更多评论"
   },
   "storyScreen": {
