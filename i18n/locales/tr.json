@@ -338,6 +338,7 @@
     "locationLabel": "Konum",
     "locationPlaceholder": "Şehir, Ülke",
     "websiteLabel": "İnternet Sitesi",
+    "invalidWebsite": "Lütfen geçerli bir web sitesi adresi girin.",
     "accountSection": "Hesap Ayarları",
     "saveChanges": "Değişiklikleri Kaydet",
     "available": "Uygun",

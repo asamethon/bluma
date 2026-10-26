@@ -65,6 +65,13 @@ export function useEditProfileForm(user: User) {
     if (state.form.username !== user.username && state.usernameStatus !== 'available') {
       return Alert.alert(t('common.error'), t('editProfile.pickAvailableUsername'));
     }
+    const website = state.form.website.trim();
+    if (website) {
+      const isValid = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/[^\s]*)?$/i.test(website);
+      if (!isValid) {
+        return Alert.alert(t('common.error'), t('editProfile.invalidWebsite'));
+      }
+    }
     dispatch({ type: 'saving', value: true });
     try {
       const profileUpload = avatar.image === user.profileImage
