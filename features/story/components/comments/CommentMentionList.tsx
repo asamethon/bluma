@@ -83,9 +83,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: -Spacing.screenX,
     right: -Spacing.screenX,
-    bottom: 0,
-    height: 800,
-    marginBottom: -600,
+    bottom: -2000,
+    height: 4000,
   },
   container: {
     borderTopWidth: StyleSheet.hairlineWidth,
