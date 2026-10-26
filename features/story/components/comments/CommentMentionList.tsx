@@ -2,9 +2,10 @@ import { Radius, Spacing, useTheme } from '@/constants/theme';
 import type { User } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 type Props = {
   suggestions: User[];
@@ -47,11 +48,21 @@ const MentionRow = memo(function MentionRow({ user, onPress }: RowProps) {
 export function CommentMentionList({ suggestions, visible, onSelect }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    opacity.value = visible && suggestions.length > 0 ? withTiming(1, { duration: 200 }) : withTiming(0, { duration: 150 });
+  }, [visible, suggestions.length, opacity]);
+
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
   if (!visible || suggestions.length === 0) return null;
 
   return (
     <View>
-      <View style={styles.backdrop} pointerEvents="none" />
+      <Animated.View style={[styles.backdrop, { backgroundColor: 'rgba(0,0,0,0.28)' }, backdropStyle]} pointerEvents="none" />
       <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.divider }]}>
         <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('commentsScreen.mentionHint')}</Text>
         <FlatList
@@ -72,8 +83,8 @@ const styles = StyleSheet.create({
     left: -Spacing.screenX,
     right: -Spacing.screenX,
     bottom: 0,
-    height: 340,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    height: 800,
+    marginBottom: -600,
   },
   container: {
     borderTopWidth: StyleSheet.hairlineWidth,

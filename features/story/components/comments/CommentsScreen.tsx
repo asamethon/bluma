@@ -7,7 +7,7 @@ import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Keyboard, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createCommentsStyles } from '../../styles/commentsStyles';
 import { CommentComposer } from './CommentComposer';
@@ -41,6 +41,16 @@ export function CommentsScreen({ storyId, chapter, commentId }: Props) {
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const mentionQueryRef = useRef('');
   const mentionTimeoutRef = useRef<any>(null);
+
+  useEffect(() => {
+    const hide = () => setShowMentionSuggestions(false);
+    const s1 = Keyboard.addListener('keyboardDidHide', hide);
+    const s2 = Keyboard.addListener('keyboardWillHide', hide);
+    return () => {
+      s1.remove();
+      s2.remove();
+    };
+  }, []);
   const back = () => router.canGoBack() ? router.back() : router.push(`/story/${storyId}/preview` as never);
   useEffect(() => () => {
     if (mentionTimeoutRef.current) clearTimeout(mentionTimeoutRef.current);
