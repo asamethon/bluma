@@ -50,6 +50,17 @@ it('ilk yayın gövdeyi ve üstveriyi kaydeder, sayaç ve duyuru bir kez çalı�
   expect(notificationActions.announceStoryToFollowers).not.toHaveBeenCalled();
 });
 
+it('yayından kaldırılıp yeniden yayınlanan hikâye takipçilere ikinci kez duyurulmaz', async () => {
+  await publishDraft('story', [first]);
+  expect(publishSideEffects).toHaveBeenLastCalledWith(expect.anything(), 'story', 'Test hikâyesi', true);
+  // Yayından kaldırma (updateStory) duyuru kaydını silmez, sayacı geri alır.
+  documents.set('stories/story', { ...documents.get('stories/story'), isPublished: false });
+  documents.set('users/writer', { ...documents.get('users/writer'), storiesCount: 0 });
+  expect((await publishDraft('story', [first])).success).toBe(true);
+  expect(publishSideEffects).toHaveBeenLastCalledWith(expect.anything(), 'story', 'Test hikâyesi', false);
+  expect(documents.get('users/writer')?.storiesCount).toBe(1);
+});
+
 it('yeni bölüm duyurusu yalnızca başarılı açık yayından sonra bir kez gönderilir', async () => {
   await publishDraft('story', [first]);
   await saveDraft('story', [first, second]);

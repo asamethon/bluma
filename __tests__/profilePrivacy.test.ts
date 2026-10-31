@@ -1,4 +1,4 @@
-import { PRIVATE_PROFILE_FIELDS, privateProfileData, publicProfileData } from '@/features/auth/services/profilePrivacy';
+import { PRIVATE_PROFILE_FIELDS, privateProfileData, profileWriteData, publicProfileData } from '@/features/auth/services/profilePrivacy';
 import { sessionUser } from '@/features/auth/services/sessionIdentity';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
@@ -33,6 +33,21 @@ describe('profil gizliliği', () => {
     // Profil düzenlenirse eski bağlam da kaybolmadan özel belgeye taşınır.
     expect(privateProfileData(user)).toMatchObject({ email: 'current@example.com', signupDeviceModel: 'phone', appleUserId: 'apple-secret' });
     expect(publicProfileData(user)).not.toHaveProperty('email');
+  });
+
+  it('profil kaydı sayaçları, görev durumunu, gizliliği ve zaman damgalarını geri yazmaz', () => {
+    // Redux'taki kullanıcı, belge okunduğu andaki sayaçları ve önbellekten
+    // dönen (haritaya dönüşmüş) zaman damgalarını taşır.
+    const stale = {
+      ...legacy, bio: 'Yeni biyografi', website: 'https://ornek.com', coverImage: null,
+      followersCount: 3, followingCount: 1, storiesCount: 2, xp: 900, streak: 4,
+      claimedChallenges: ['w1'], challengeProgress: { w1: 3 }, privacy: { privateAccount: true },
+      createdAt: { seconds: 1, nanoseconds: 0 }, lastActiveAt: 5,
+    };
+    expect(profileWriteData(stale)).toEqual({
+      id: 'writer', displayName: 'Yazar', username: 'yazar', interests: ['fantastik'],
+      bio: 'Yeni biyografi', website: 'https://ornek.com', coverImage: null,
+    });
   });
 
   it('ad eksikse e-postanın yerel kısmından görünen ad türetmez', () => {

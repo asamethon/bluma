@@ -46,7 +46,7 @@ export async function publishChapterDraft(storyId: string, chapters: StudioChapt
     });
     forgetStory(storyId);
     applyStoryChange(storyId, result.updates);
-    if (result.firstPublish) publishSideEffects(user, storyId, result.title);
+    if (result.firstPublish) publishSideEffects(user, storyId, result.title, result.announceStory);
     else if (result.newChapterNumber) {
       void notificationActions.announceStoryToFollowers(user.id,
         user.displayName || user.username || i18n.t('notifications.anAuthorYouFollow'),

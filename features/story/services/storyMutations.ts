@@ -18,14 +18,22 @@ export async function updateUserStoriesCount(userId: string, delta: number) {
   }
 }
 
-export const publishSideEffects = (user: NonNullable<ReturnType<typeof store.getState>['auth']['user']>, storyId: string, title: string) => {
-  void notificationActions.announceStoryToFollowers(
-    user.id,
-    user.displayName || user.username || i18n.t('notifications.anAuthorYouFollow'),
-    storyId,
-    title,
-    'new_story',
-  );
+/** `announce` false: yeniden yayın — takipçilere ikinci kez duyurulmaz. */
+export const publishSideEffects = (
+  user: NonNullable<ReturnType<typeof store.getState>['auth']['user']>,
+  storyId: string,
+  title: string,
+  announce = true,
+) => {
+  if (announce) {
+    void notificationActions.announceStoryToFollowers(
+      user.id,
+      user.displayName || user.username || i18n.t('notifications.anAuthorYouFollow'),
+      storyId,
+      title,
+      'new_story',
+    );
+  }
   void logEvent(getAnalytics(), 'story_publish', { story_id: storyId });
   // Akış artık canlı dinlenmiyor: yazar yeni hikâyesini hemen görsün.
   void loadStoriesFeed({ force: true });
@@ -78,11 +86,15 @@ export async function updateStory(storyId: string, updates: Partial<Story>) {
     forgetStory(storyId);
     applyStoryChange(storyId, updates);
     const becamePublished = updates.isPublished === true && !current.isPublished;
+    // Yayından kaldırma sayacı geri almazsa her kaldır→yayınla döngüsü
+    // profildeki hikâye sayısını bir artırıyordu.
+    const becameUnpublished = updates.isPublished === false && current.isPublished;
     if (becamePublished) await updateUserStoriesCount(current.authorId, 1);
+    if (becameUnpublished) await updateUserStoriesCount(current.authorId, -1);
     const user = store.getState().auth.user;
     if (user?.id === current.authorId) {
       const title = updates.title || current.title;
-      if (becamePublished) publishSideEffects(user, storyId, title);
+      if (becamePublished) publishSideEffects(user, storyId, title, !current.lastNotifiedChapterCount);
     }
     return { success: true };
   } catch (error) {

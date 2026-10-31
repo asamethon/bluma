@@ -73,16 +73,24 @@ export async function addComment(storyId: string, content: string, parentId?: st
   }
 }
 
-async function deleteCommentDocument(storyId: string, reference: any) {
+/**
+ * Sayaç her silinen belge için ayrı `-1` ile düşer: güvenlik kuralı tek
+ * yazımda yalnızca bir adıma izin verir (eskiden sınırsız azaltma, herkesin
+ * başkasının sayacını sıfırlamasına açıktı).
+ */
+async function deleteCommentDocument(storyId: string, reference: any): Promise<boolean> {
   try {
-    const likes = await getDocs(collection(getFirestore(), 'stories', storyId, 'comments', reference.id, 'likes'));
+    const db = getFirestore();
+    const likes = await getDocs(collection(db, 'stories', storyId, 'comments', reference.id, 'likes'));
     await Promise.all(likes.docs.map(item => deleteDoc(item.ref)));
     await deleteDoc(reference);
-    return 1;
   } catch (error) {
     logger.warn('Comment cleanup skipped:', reference.id, error);
-    return 0;
+    return false;
   }
+  await updateDoc(doc(getFirestore(), 'stories', storyId), { commentsCount: increment(-1) })
+    .catch(error => logger.warn('Yorum sayacı düşürülemedi:', error));
+  return true;
 }
 
 export async function deleteComment(storyId: string, commentId: string) {
@@ -91,12 +99,13 @@ export async function deleteComment(storyId: string, commentId: string) {
     const comments = collection(db, 'stories', storyId, 'comments');
     const reference = doc(comments, commentId);
     const replies = await getDocs(query(comments, where('parentId', '==', commentId)));
-    const deleted = await Promise.all([
-      ...replies.docs.map(reply => deleteCommentDocument(storyId, reply.ref)),
+    // Başkasına ait yanıtları yalnızca hikâye yazarı silebilir; onlar kalırsa
+    // sorun değil. Asıl yorum silinemezse kullanıcıya başarı gösterilmez.
+    const [deleted] = await Promise.all([
       deleteCommentDocument(storyId, reference),
+      ...replies.docs.map(reply => deleteCommentDocument(storyId, reply.ref)),
     ]);
-    const count = deleted.reduce<number>((total, value) => total + value, 0);
-    if (count) await updateDoc(doc(db, 'stories', storyId), { commentsCount: increment(-count) });
+    if (!deleted) return { success: false, error: i18n.t('comments.deleteFailed') };
     return { success: true };
   } catch (error) {
     logger.error('Delete comment error:', error);

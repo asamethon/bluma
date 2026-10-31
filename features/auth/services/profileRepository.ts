@@ -1,6 +1,6 @@
 import type { User } from '@/store/slices/authSlice';
 import { deleteField, doc, getFirestore, serverTimestamp, writeBatch } from '@react-native-firebase/firestore';
-import { PRIVATE_PROFILE_FIELDS, privateProfileData, publicProfileData } from './profilePrivacy';
+import { PRIVATE_PROFILE_FIELDS, privateProfileData, profileWriteData } from './profilePrivacy';
 
 /** Özel alanların eski profil önbelleklerinden tekrar yayımlanmasını da önler. */
 export async function saveUserProfile(user: Pick<User, 'id'> & Partial<User>, isNew = false) {
@@ -8,7 +8,7 @@ export async function saveUserProfile(user: Pick<User, 'id'> & Partial<User>, is
   const batch = writeBatch(db);
   const removedFields = Object.fromEntries(PRIVATE_PROFILE_FIELDS.map(key => [key, deleteField()]));
   batch.set(doc(db, 'users', user.id), {
-    ...publicProfileData(user),
+    ...profileWriteData(user),
     ...removedFields,
     ...(isNew ? { createdAt: serverTimestamp() } : {}),
     updatedAt: serverTimestamp(),

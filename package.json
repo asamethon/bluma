@@ -21,6 +21,7 @@
     "migrate:chapters": "node ./scripts/migrateChaptersToSubcollection.js",
     "migrate:chapters:dry-run": "node ./scripts/migrateChaptersToSubcollection.js --dry-run",
     "test": "jest",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-bluma-rules --config firebase.emulators.json \"node --test scripts/tests/*.rules.test.cjs\"",
     "ota:check": "node scripts/ota/check-config.cjs",
     "ota:publish": "node scripts/ota/release.cjs publish",
     "ota:promote": "node scripts/ota/release.cjs promote",
