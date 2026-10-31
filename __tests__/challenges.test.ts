@@ -1,5 +1,8 @@
-import { CHALLENGE_DEFS, getRankIndex, RANKS } from '@/features/challenges/definitions';
+import { CHALLENGE_DEFS, getRankIndex, RANKS, WEEKLY_FEATURED } from '@/features/challenges/definitions';
 import { todayKey, weekStartKey, yesterdayKey } from '@/features/challenges/services/challengeCalendar';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- kural dosyasını okuyan yardımcı CJS olarak çalışır.
+const { allowedChallengeRewards } = require('../scripts/challengeRewards.cjs');
 
 describe('getRankIndex', () => {
   it('sıfır XP ilk rütbede kalır', () => {
@@ -54,5 +57,27 @@ describe('görev takvimi', () => {
   it('hafta başı pazartesidir ve bugünden sonra olamaz', () => {
     expect(asLocalDate(weekStartKey()).getDay()).toBe(1);
     expect(weekStartKey() <= todayKey()).toBe(true);
+  });
+});
+
+// XP istemciden yazıldığı için firestore.rules yalnızca TANIMLI ödül
+// miktarlarını kabul ediyor. Liste elle eşlendiğinden yeni bir ödül eklenince
+// bu test kırılır: kuralı güncellemeden ödül alma izin hatası vermesin.
+describe('kural ile ödül miktarı eşlemesi', () => {
+  const allowed: number[] = allowedChallengeRewards();
+
+  it('firestore.rules ödül listesini okuyabiliyor', () => {
+    expect(allowed.length).toBeGreaterThan(0);
+    expect(allowed.every(Number.isInteger)).toBe(true);
+  });
+
+  it('her görev ödülü kuralda tanımlı', () => {
+    for (const def of CHALLENGE_DEFS) {
+      expect(allowed).toContain(def.xp);
+    }
+  });
+
+  it('hafta sonu ödülü kuralda tanımlı', () => {
+    expect(allowed).toContain(WEEKLY_FEATURED.xp);
   });
 });

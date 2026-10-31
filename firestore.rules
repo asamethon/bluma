@@ -121,10 +121,37 @@ service cloud.firestore {
                  .data.get('privacy', {}).get('privateAccount', false) == true;
       }
 
+      // Görev ödülü XP'si istemciden yazılıyor (güvenilir sunucu yazıcısı yok,
+      // bkz. YAPILACAKLAR 3.1). Kural bu yüzden miktarı sınırlar: `xp`
+      // düşürülemez ve bir yazmada ancak TANIMLI bir görev ödülü kadar
+      // artabilir. `xp: 999999` gibi keyfi şişirme reddedilir.
+      //
+      // Liste `features/challenges/definitions.ts` ile ELLE eşlenir:
+      // CHALLENGE_DEFS[].xp + WEEKLY_FEATURED.xp. Yeni ödül eklerken burayı da
+      // güncelle, yoksa ödül alma izin hatası verir.
+      //
+      // SINIR: bu bir hız sınırıdır, açığı tümden kapatmaz — istemci meşru
+      // claim yazmasını tekrarlayabilir. Kalıcı çözüm XP'yi Cloud Function'a
+      // taşımaktır (YAPILACAKLAR 3.1); XP yalnızca rütbe/rozet besler.
+      // NOT: istemci XP'yi `increment()` ile yazıyor ve JS sayıları ondalık
+      // gelebiliyor (250 yerine 250.0). Bu yüzden liste üyeliği yerine sayısal
+      // eşitlik kullanılır — `hasAny` tür duyarlıdır ve ondalığı eşleştirmez.
+      function isChallengeReward(amount) {
+        return amount == 40 || amount == 60 || amount == 80 || amount == 90
+          || amount == 100 || amount == 120 || amount == 150 || amount == 180
+          || amount == 200 || amount == 250 || amount == 300;
+      }
+      function xpChangeAllowed() {
+        return !('xp' in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data.get('xp', 0) is number
+            && resource.data.get('xp', 0) is number
+            && isChallengeReward(request.resource.data.get('xp', 0) - resource.data.get('xp', 0)));
+      }
+
       allow read: if true;
       allow create: if isOwner(userId) && !hasPrivateProfileFields(request.resource.data);
       allow delete: if isOwner(userId);
-      allow update: if !hasPrivateProfileFields(request.resource.data) && (isOwner(userId)
+      allow update: if !hasPrivateProfileFields(request.resource.data) && ((isOwner(userId) && xpChangeAllowed())
         || (isSignedIn() && isCounterBump('followersCount')
             && (exists(/databases/$(database)/documents/users/$(userId)/followers/$(request.auth.uid))
                 || request.resource.data.followersCount < resource.data.get('followersCount', 0)))
