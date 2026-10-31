@@ -1,4 +1,4 @@
-import { SectionHeader, StoryRow, Text } from '@/components/ui';
+import { ListRow, SectionHeader, StoryRow, Text } from '@/components/ui';
 import { Spacing, useTheme } from '@/constants/theme';
 import { GuestState } from '@/features/auth/components/guest/GuestState';
 import { useLibrary, type LibrarySection } from '@/features/library/hooks/useLibrary';
@@ -23,6 +23,18 @@ export default function LibraryScreen() {
       <Text variant="display" numberOfLines={1}>{t('library.title')}</Text>
     </View>
   );
+  // Okuma listeleri kitaplıkta yaşar: okuyucudaki "Listeye ekle" bir listeye
+  // yazıyordu ama listelere hiçbir yerden gidilemiyordu.
+  const listsRow = (
+    <ListRow
+      icon="list-outline"
+      title={t('lists.myLists')}
+      subtitle={t('library.readingListsSub')}
+      showChevron
+      style={styles.listsRow}
+      onPress={() => router.push('/profile/lists')}
+    />
+  );
 
   if (isGuest) {
     return (
@@ -44,11 +56,11 @@ export default function LibraryScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.bloom} />
         }
-        ListHeaderComponent={header}
+        ListHeaderComponent={<>{header}{listsRow}</>}
         ListEmptyComponent={<LibraryEmpty />}
         renderSectionHeader={({ section }: { section: LibrarySection }) => (
           <View>
-            <SectionHeader title={section.title} />
+            <SectionHeader title={section.title} onSeeAll={() => router.push(section.route)} />
           </View>
         )}
         renderItem={({ item: story }) => (

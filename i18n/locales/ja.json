@@ -202,7 +202,8 @@
     "tagsHint": "最大{{count}}個まで。おすすめや検索に使われます。",
     "tagAdd": "タグを追加",
     "warningsLabel": "コンテンツ警告",
-    "warningsHint": "読者が読み始める前に表示されます。"
+    "warningsHint": "読者が読み始める前に表示されます。",
+    "importCtaSub": "ほかで書いた作品を貼り付けると、章に分けて取り込みます。"
   },
   "saved": {
     "title": "保存したストーリー",
@@ -501,27 +502,7 @@
     "commentFailed": "コメントの追加中に問題が発生しました。",
     "deleteFailed": "会話の削除中に問題が発生しました。",
     "yourConversation": "あなたの会話",
-    "enterTitle": "会話のタイトルを入力してください。",
-    "enterContent": "会話の内容を入力してください。",
-    "created": "会話が正常に作成されました!",
-    "createdAnnounced": "会話が作成され、フォロワーに通知されました!",
-    "exitTitle": "終了",
-    "exitConfirm": "変更内容は保存されません。終了してもよろしいですか?",
-    "exit": "終了",
-    "startConversation": "会話を始める",
-    "creating": "作成中...",
-    "titleLabel": "タイトル",
-    "titlePlaceholder": "会話のタイトルを入力...",
-    "contentLabel": "内容",
-    "contentPlaceholder": "何を考えていますか?フォロワーと共有しましょう...",
-    "imageOptional": "画像(任意)",
-    "addImage": "画像を追加",
-    "announceTitle": "これを通知する",
-    "announceSubtitle": "この会話を始めたことをフォロワーに通知します",
-    "tipsTitle": "ヒント:",
-    "tip1": "質問をしてフォロワーとの交流を深めましょう",
-    "tip2": "最近の話題について考えを共有しましょう",
-    "tip3": "フォロワーにコメントを促しましょう"
+    "creating": "作成中..."
   },
   "challenges": {
     "ranks": {
@@ -752,7 +733,8 @@
     "title": "自分のライブラリ",
     "saved": "保存済み",
     "liked": "いいねしたもの",
-    "emptySub": "お気に入りのストーリーを保存すると、すべてここにまとまります。"
+    "emptySub": "お気に入りのストーリーを保存すると、すべてここにまとまります。",
+    "readingListsSub": "自分のリストと、リーダーから追加した作品。"
   },
   "home": {
     "guestReader": "ゲスト読者",

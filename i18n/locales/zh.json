@@ -202,7 +202,8 @@
     "tagsHint": "最多 {{count}} 个标签，用于推荐和搜索。",
     "tagAdd": "添加标签",
     "warningsLabel": "内容警告",
-    "warningsHint": "读者在开始阅读前会看到。"
+    "warningsHint": "读者在开始阅读前会看到。",
+    "importCtaSub": "粘贴你在别处写的故事，我们会帮你分成章节。"
   },
   "saved": {
     "title": "已保存的故事",
@@ -501,27 +502,7 @@
     "commentFailed": "添加评论时出错。",
     "deleteFailed": "删除对话时出错。",
     "yourConversation": "你的对话",
-    "enterTitle": "请输入对话标题。",
-    "enterContent": "请输入对话内容。",
-    "created": "对话创建成功！",
-    "createdAnnounced": "对话已创建，并已通知你的关注者！",
-    "exitTitle": "退出",
-    "exitConfirm": "更改不会保存。确定要退出吗？",
-    "exit": "退出",
-    "startConversation": "开始对话",
-    "creating": "创建中…",
-    "titleLabel": "标题",
-    "titlePlaceholder": "输入对话标题…",
-    "contentLabel": "内容",
-    "contentPlaceholder": "你在想什么？和关注者分享吧…",
-    "imageOptional": "图片（可选）",
-    "addImage": "添加图片",
-    "announceTitle": "发布通知",
-    "announceSubtitle": "向关注者发送你开始此对话的通知",
-    "tipsTitle": "提示：",
-    "tip1": "提出问题，与关注者互动",
-    "tip2": "分享你对当前话题的看法",
-    "tip3": "鼓励关注者发表评论"
+    "creating": "创建中…"
   },
   "challenges": {
     "ranks": {
@@ -752,7 +733,8 @@
     "title": "我的书库",
     "saved": "已保存",
     "liked": "我的点赞",
-    "emptySub": "保存喜欢的故事，它们都会在这里等你。"
+    "emptySub": "保存喜欢的故事，它们都会在这里等你。",
+    "readingListsSub": "你的书单以及你在阅读器中添加的故事。"
   },
   "home": {
     "guestReader": "游客读者",

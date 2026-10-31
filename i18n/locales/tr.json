@@ -224,7 +224,8 @@
     "tagsHint": "En fazla {{count}} etiket. Önerilerde ve aramada kullanılır.",
     "tagAdd": "Etiketi ekle",
     "warningsLabel": "İçerik uyarıları",
-    "warningsHint": "Okurlar hikâyeye başlamadan önce görür."
+    "warningsHint": "Okurlar hikâyeye başlamadan önce görür.",
+    "importCtaSub": "Başka yerde yazdığın hikâyeyi yapıştır, bölümlerine ayıralım."
   },
   "saved": {
     "title": "Kaydedilen Hikayeler",
@@ -523,27 +524,7 @@
     "commentFailed": "Yorum eklenirken bir hata oluştu.",
     "deleteFailed": "Konuşma silinirken bir hata oluştu.",
     "yourConversation": "Konuşmanız",
-    "enterTitle": "Lütfen konuşma başlığı girin.",
-    "enterContent": "Lütfen konuşma içeriği girin.",
-    "created": "Konuşma başarıyla oluşturuldu!",
-    "createdAnnounced": "Konuşma başarıyla oluşturuldu ve takipçilerinize duyuruldu!",
-    "exitTitle": "Çıkış",
-    "exitConfirm": "Değişiklikleriniz kaydedilmeyecek. Çıkmak istediğinizden emin misiniz?",
-    "exit": "Çık",
-    "startConversation": "Konuşma Başlat",
-    "creating": "Oluşturuluyor...",
-    "titleLabel": "Başlık",
-    "titlePlaceholder": "Konuşma başlığını girin...",
-    "contentLabel": "İçerik",
-    "contentPlaceholder": "Ne düşünüyorsun? Takipçilerinle paylaş...",
-    "imageOptional": "Resim (Opsiyonel)",
-    "addImage": "Resim Ekle",
-    "announceTitle": "Bunu duyur",
-    "announceSubtitle": "Takipçilerinize bu konuşmayı başlattığınıza dair bildirim gönder",
-    "tipsTitle": "İpuçları:",
-    "tip1": "Takipçilerinle etkileşim kurmak için sorular sorun",
-    "tip2": "Güncel konular hakkında düşüncelerinizi paylaşın",
-    "tip3": "Takipçilerinizin yorum yapmasını teşvik edin"
+    "creating": "Oluşturuluyor..."
   },
   "challenges": {
     "ranks": {
@@ -774,7 +755,8 @@
     "title": "Kütüphanem",
     "saved": "Kaydedilenler",
     "liked": "Beğendiklerim",
-    "emptySub": "Beğendiğin hikâyeleri kaydet; hepsi burada seni bekler."
+    "emptySub": "Beğendiğin hikâyeleri kaydet; hepsi burada seni bekler.",
+    "readingListsSub": "Kendi listelerin ve okuyucuda eklediğin hikâyeler."
   },
   "home": {
     "guestReader": "Misafir okur",

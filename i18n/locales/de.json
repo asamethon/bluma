@@ -202,7 +202,8 @@
     "tagsHint": "Bis zu {{count}} Tags. Werden für Empfehlungen und Suche genutzt.",
     "tagAdd": "Tag hinzufügen",
     "warningsLabel": "Inhaltswarnungen",
-    "warningsHint": "Leser sehen sie, bevor sie beginnen."
+    "warningsHint": "Leser sehen sie, bevor sie beginnen.",
+    "importCtaSub": "Füge eine anderswo geschriebene Geschichte ein – wir teilen sie in Kapitel auf."
   },
   "saved": {
     "title": "Gespeicherte Geschichten",
@@ -501,27 +502,7 @@
     "commentFailed": "Beim Hinzufügen des Kommentars ist etwas schiefgelaufen.",
     "deleteFailed": "Beim Löschen der Unterhaltung ist etwas schiefgelaufen.",
     "yourConversation": "Deine Unterhaltung",
-    "enterTitle": "Bitte gib einen Titel für die Unterhaltung ein.",
-    "enterContent": "Bitte gib den Inhalt der Unterhaltung ein.",
-    "created": "Die Unterhaltung wurde erfolgreich erstellt!",
-    "createdAnnounced": "Die Unterhaltung wurde erstellt und deinen Followern angekündigt!",
-    "exitTitle": "Verlassen",
-    "exitConfirm": "Deine Änderungen werden nicht gespeichert. Möchtest du wirklich verlassen?",
-    "exit": "Verlassen",
-    "startConversation": "Unterhaltung starten",
-    "creating": "Wird erstellt...",
-    "titleLabel": "Titel",
-    "titlePlaceholder": "Gib den Titel der Unterhaltung ein...",
-    "contentLabel": "Inhalt",
-    "contentPlaceholder": "Was geht dir durch den Kopf? Teile es mit deinen Followern...",
-    "imageOptional": "Bild (optional)",
-    "addImage": "Bild hinzufügen",
-    "announceTitle": "Dies ankündigen",
-    "announceSubtitle": "Sende deinen Followern eine Benachrichtigung, dass du diese Unterhaltung gestartet hast",
-    "tipsTitle": "Tipps:",
-    "tip1": "Stelle Fragen, um mit deinen Followern in Kontakt zu treten",
-    "tip2": "Teile deine Gedanken zu aktuellen Themen",
-    "tip3": "Ermutige deine Follower zu kommentieren"
+    "creating": "Wird erstellt..."
   },
   "challenges": {
     "ranks": {
@@ -752,7 +733,8 @@
     "title": "Meine Bibliothek",
     "saved": "Gespeichert",
     "liked": "Meine Likes",
-    "emptySub": "Speichere Geschichten, die dir gefallen; sie warten alle hier auf dich."
+    "emptySub": "Speichere Geschichten, die dir gefallen; sie warten alle hier auf dich.",
+    "readingListsSub": "Deine eigenen Listen und die Geschichten, die du im Lesemodus hinzugefügt hast."
   },
   "home": {
     "guestReader": "Gastleser",

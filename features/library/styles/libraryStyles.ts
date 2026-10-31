@@ -11,6 +11,7 @@ export const libraryStyles = StyleSheet.create({
     gap: Spacing.xs,
   },
   rowWrap: { paddingHorizontal: Spacing.screenX, paddingVertical: Spacing.md },
+  listsRow: { marginHorizontal: Spacing.screenX, marginBottom: Spacing.lg },
   listContent: { paddingBottom: 140 },
   empty: { alignItems: 'center', paddingVertical: 80, paddingHorizontal: Spacing.huge },
 });

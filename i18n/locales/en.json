@@ -224,7 +224,8 @@
     "tagsHint": "Up to {{count}} tags. Used in recommendations and search.",
     "tagAdd": "Add tag",
     "warningsLabel": "Content warnings",
-    "warningsHint": "Readers see these before they start."
+    "warningsHint": "Readers see these before they start.",
+    "importCtaSub": "Paste a story you wrote elsewhere and we'll split it into chapters."
   },
   "saved": {
     "title": "Saved Stories",
@@ -523,27 +524,7 @@
     "commentFailed": "Something went wrong while adding the comment.",
     "deleteFailed": "Something went wrong while deleting the conversation.",
     "yourConversation": "Your conversation",
-    "enterTitle": "Please enter a conversation title.",
-    "enterContent": "Please enter the conversation content.",
-    "created": "The conversation was created successfully!",
-    "createdAnnounced": "The conversation was created and announced to your followers!",
-    "exitTitle": "Exit",
-    "exitConfirm": "Your changes won't be saved. Are you sure you want to exit?",
-    "exit": "Exit",
-    "startConversation": "Start a Conversation",
-    "creating": "Creating...",
-    "titleLabel": "Title",
-    "titlePlaceholder": "Enter the conversation title...",
-    "contentLabel": "Content",
-    "contentPlaceholder": "What's on your mind? Share it with your followers...",
-    "imageOptional": "Image (Optional)",
-    "addImage": "Add Image",
-    "announceTitle": "Announce this",
-    "announceSubtitle": "Send your followers a notification that you started this conversation",
-    "tipsTitle": "Tips:",
-    "tip1": "Ask questions to engage with your followers",
-    "tip2": "Share your thoughts on current topics",
-    "tip3": "Encourage your followers to comment"
+    "creating": "Creating..."
   },
   "challenges": {
     "ranks": {
@@ -774,7 +755,8 @@
     "title": "My Library",
     "saved": "Saved",
     "liked": "My Likes",
-    "emptySub": "Save the stories you love; they'll all be waiting for you here."
+    "emptySub": "Save the stories you love; they'll all be waiting for you here.",
+    "readingListsSub": "Your own lists and the stories you added from the reader."
   },
   "home": {
     "guestReader": "Guest reader",

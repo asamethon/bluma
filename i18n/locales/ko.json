@@ -202,7 +202,8 @@
     "tagsHint": "최대 {{count}}개. 추천과 검색에 사용됩니다.",
     "tagAdd": "태그 추가",
     "warningsLabel": "콘텐츠 경고",
-    "warningsHint": "독자가 읽기 전에 볼 수 있습니다."
+    "warningsHint": "독자가 읽기 전에 볼 수 있습니다.",
+    "importCtaSub": "다른 곳에서 쓴 작품을 붙여 넣으면 챕터로 나눠 드려요."
   },
   "saved": {
     "title": "저장한 스토리",
@@ -501,27 +502,7 @@
     "commentFailed": "댓글을 추가하는 중 문제가 발생했습니다.",
     "deleteFailed": "대화를 삭제하는 중 문제가 발생했습니다.",
     "yourConversation": "내 대화",
-    "enterTitle": "대화 제목을 입력해주세요.",
-    "enterContent": "대화 내용을 입력해주세요.",
-    "created": "대화가 성공적으로 생성되었습니다!",
-    "createdAnnounced": "대화가 생성되어 팔로워에게 알려졌습니다!",
-    "exitTitle": "나가기",
-    "exitConfirm": "변경사항이 저장되지 않습니다. 나가시겠습니까?",
-    "exit": "나가기",
-    "startConversation": "대화 시작하기",
-    "creating": "생성 중...",
-    "titleLabel": "제목",
-    "titlePlaceholder": "대화 제목을 입력하세요...",
-    "contentLabel": "내용",
-    "contentPlaceholder": "무슨 생각을 하고 있나요? 팔로워와 공유해보세요...",
-    "imageOptional": "이미지 (선택사항)",
-    "addImage": "이미지 추가",
-    "announceTitle": "이 소식 알리기",
-    "announceSubtitle": "이 대화를 시작했다는 알림을 팔로워에게 보냅니다",
-    "tipsTitle": "팁:",
-    "tip1": "질문을 던져 팔로워와 소통해보세요",
-    "tip2": "시사 주제에 대한 생각을 공유해보세요",
-    "tip3": "팔로워가 댓글을 남기도록 유도해보세요"
+    "creating": "생성 중..."
   },
   "challenges": {
     "ranks": {
@@ -752,7 +733,8 @@
     "title": "내 보관함",
     "saved": "저장됨",
     "liked": "내가 좋아요한 것",
-    "emptySub": "좋아하는 스토리를 저장하면 여기에서 모두 만나볼 수 있습니다."
+    "emptySub": "좋아하는 스토리를 저장하면 여기에서 모두 만나볼 수 있습니다.",
+    "readingListsSub": "내 목록과 리더에서 추가한 작품."
   },
   "home": {
     "guestReader": "게스트 독자",

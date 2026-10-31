@@ -202,7 +202,8 @@
     "tagsHint": "Hasta {{count}} etiquetas. Se usan en recomendaciones y búsquedas.",
     "tagAdd": "Añadir etiqueta",
     "warningsLabel": "Advertencias de contenido",
-    "warningsHint": "Los lectores las ven antes de empezar."
+    "warningsHint": "Los lectores las ven antes de empezar.",
+    "importCtaSub": "Pega una historia que escribiste en otro lugar y la dividiremos en capítulos."
   },
   "saved": {
     "title": "Historias guardadas",
@@ -501,27 +502,7 @@
     "commentFailed": "Algo salió mal al añadir el comentario.",
     "deleteFailed": "Algo salió mal al eliminar la conversación.",
     "yourConversation": "Tu conversación",
-    "enterTitle": "Introduce un título para la conversación.",
-    "enterContent": "Introduce el contenido de la conversación.",
-    "created": "¡La conversación se creó correctamente!",
-    "createdAnnounced": "¡La conversación se creó y se anunció a tus seguidores!",
-    "exitTitle": "Salir",
-    "exitConfirm": "Tus cambios no se guardarán. ¿Seguro que quieres salir?",
-    "exit": "Salir",
-    "startConversation": "Iniciar una conversación",
-    "creating": "Creando...",
-    "titleLabel": "Título",
-    "titlePlaceholder": "Introduce el título de la conversación...",
-    "contentLabel": "Contenido",
-    "contentPlaceholder": "¿En qué estás pensando? Compártelo con tus seguidores...",
-    "imageOptional": "Imagen (opcional)",
-    "addImage": "Añadir imagen",
-    "announceTitle": "Anunciar esto",
-    "announceSubtitle": "Envía a tus seguidores una notificación de que iniciaste esta conversación",
-    "tipsTitle": "Consejos:",
-    "tip1": "Haz preguntas para interactuar con tus seguidores",
-    "tip2": "Comparte tus opiniones sobre temas de actualidad",
-    "tip3": "Anima a tus seguidores a comentar"
+    "creating": "Creando..."
   },
   "challenges": {
     "ranks": {
@@ -752,7 +733,8 @@
     "title": "Mi biblioteca",
     "saved": "Guardadas",
     "liked": "Mis me gusta",
-    "emptySub": "Guarda las historias que te encantan; todas te estarán esperando aquí."
+    "emptySub": "Guarda las historias que te encantan; todas te estarán esperando aquí.",
+    "readingListsSub": "Tus listas y las historias que añadiste desde el lector."
   },
   "home": {
     "guestReader": "Lector invitado",

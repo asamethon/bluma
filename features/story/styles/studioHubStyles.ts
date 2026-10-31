@@ -4,12 +4,12 @@ import { StyleSheet } from 'react-native';
 /** Stüdyo — editoryal masa: kesikli kutu yerine hairline ayraçlı satır ritmi. */
 export const studioHubStyles = StyleSheet.create({
   intro: { paddingTop: Spacing.lg, paddingBottom: Spacing.xl, gap: Spacing.xs },
+  ctaGroup: { marginBottom: Spacing.xl },
   cta: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
     paddingVertical: Spacing.lg,
-    marginBottom: Spacing.xl,
   },
   ctaIcon: {
     width: 40,

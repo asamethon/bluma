@@ -202,7 +202,8 @@
     "tagsHint": "Até {{count}} tags. Usadas em recomendações e na busca.",
     "tagAdd": "Adicionar tag",
     "warningsLabel": "Avisos de conteúdo",
-    "warningsHint": "Os leitores veem antes de começar."
+    "warningsHint": "Os leitores veem antes de começar.",
+    "importCtaSub": "Cole uma história que você escreveu em outro lugar e vamos dividi-la em capítulos."
   },
   "saved": {
     "title": "Histórias salvas",
@@ -501,27 +502,7 @@
     "commentFailed": "Ocorreu um erro ao adicionar o comentário.",
     "deleteFailed": "Ocorreu um erro ao excluir a conversa.",
     "yourConversation": "Sua conversa",
-    "enterTitle": "Digite um título para a conversa.",
-    "enterContent": "Digite o conteúdo da conversa.",
-    "created": "A conversa foi criada com sucesso!",
-    "createdAnnounced": "A conversa foi criada e anunciada aos seus seguidores!",
-    "exitTitle": "Sair",
-    "exitConfirm": "Suas alterações não serão salvas. Tem certeza de que deseja sair?",
-    "exit": "Sair",
-    "startConversation": "Iniciar uma conversa",
-    "creating": "Criando...",
-    "titleLabel": "Título",
-    "titlePlaceholder": "Digite o título da conversa...",
-    "contentLabel": "Conteúdo",
-    "contentPlaceholder": "No que você está pensando? Compartilhe com seus seguidores...",
-    "imageOptional": "Imagem (opcional)",
-    "addImage": "Adicionar imagem",
-    "announceTitle": "Anunciar isso",
-    "announceSubtitle": "Envie aos seus seguidores uma notificação de que você iniciou esta conversa",
-    "tipsTitle": "Dicas:",
-    "tip1": "Faça perguntas para interagir com seus seguidores",
-    "tip2": "Compartilhe suas opiniões sobre assuntos do momento",
-    "tip3": "Incentive seus seguidores a comentar"
+    "creating": "Criando..."
   },
   "challenges": {
     "ranks": {
@@ -752,7 +733,8 @@
     "title": "Minha biblioteca",
     "saved": "Salvas",
     "liked": "Minhas curtidas",
-    "emptySub": "Salve as histórias de que você gosta; todas vão estar esperando por você aqui."
+    "emptySub": "Salve as histórias de que você gosta; todas vão estar esperando por você aqui.",
+    "readingListsSub": "Suas listas e as histórias que você adicionou pelo leitor."
   },
   "home": {
     "guestReader": "Leitor convidado",

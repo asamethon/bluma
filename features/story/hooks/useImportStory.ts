@@ -18,6 +18,9 @@ export function useImportStory() {
   const [category, setCategory] = useState<StoryCategory>('other');
   const [pastedText, setPastedText] = useState('');
   const [publishing, setPublishing] = useState(false);
+  // Yayın başarısız olursa (ör. boş bölüm) oluşturulan taslak hatırlanır:
+  // yeniden denemek ikinci bir hikâye açmaz, aynı taslağı yayınlar.
+  const [draftId, setDraftId] = useState<string | null>(null);
 
   const chapters: StudioChapter[] = useMemo(
     () => autoSplitPastedText(pastedText),
@@ -50,7 +53,7 @@ export function useImportStory() {
     setPublishing(true);
     try {
       const readingTime = readingMinutes(chapters.map(c => c.content).join('\n\n'));
-      const result = await storyActions.createStory({
+      const result = draftId ? { success: true, storyId: draftId, error: undefined } : await storyActions.createStory({
         title: title.trim(),
         description: '',
         content: '',
@@ -70,6 +73,9 @@ export function useImportStory() {
         Alert.alert(i18n.t('common.error'), result.error || i18n.t('story.createFailed'));
         return;
       }
+      setDraftId(result.storyId);
+      // Başarısız denemeden sonra başlık/tür değiştirilmiş olabilir.
+      if (draftId) await storyActions.updateStory(draftId, { title: title.trim(), category });
 
       const published = await publishDraft(result.storyId, chapters);
       if (!published.success) {

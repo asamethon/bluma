@@ -202,7 +202,8 @@
     "tagsHint": "Maksimal {{count}} tag. Dipakai untuk rekomendasi dan pencarian.",
     "tagAdd": "Tambahkan tag",
     "warningsLabel": "Peringatan konten",
-    "warningsHint": "Pembaca melihatnya sebelum mulai membaca."
+    "warningsHint": "Pembaca melihatnya sebelum mulai membaca.",
+    "importCtaSub": "Tempel cerita yang kamu tulis di tempat lain, kami bagi menjadi bab."
   },
   "saved": {
     "title": "Cerita tersimpan",
@@ -501,27 +502,7 @@
     "commentFailed": "Terjadi kesalahan saat menambahkan komentar.",
     "deleteFailed": "Terjadi kesalahan saat menghapus percakapan.",
     "yourConversation": "Percakapanmu",
-    "enterTitle": "Masukkan judul untuk percakapan.",
-    "enterContent": "Masukkan isi percakapan.",
-    "created": "Percakapan berhasil dibuat!",
-    "createdAnnounced": "Percakapan telah dibuat dan diumumkan kepada pengikutmu!",
-    "exitTitle": "Keluar",
-    "exitConfirm": "Perubahanmu tidak akan disimpan. Yakin ingin keluar?",
-    "exit": "Keluar",
-    "startConversation": "Mulai percakapan",
-    "creating": "Membuat...",
-    "titleLabel": "Judul",
-    "titlePlaceholder": "Masukkan judul percakapan...",
-    "contentLabel": "Isi",
-    "contentPlaceholder": "Apa yang sedang kamu pikirkan? Bagikan dengan pengikutmu...",
-    "imageOptional": "Gambar (opsional)",
-    "addImage": "Tambahkan gambar",
-    "announceTitle": "Umumkan ini",
-    "announceSubtitle": "Kirim notifikasi ke pengikutmu bahwa kamu memulai percakapan ini",
-    "tipsTitle": "Tips:",
-    "tip1": "Ajukan pertanyaan untuk berinteraksi dengan pengikutmu",
-    "tip2": "Bagikan pendapatmu tentang topik yang sedang hangat",
-    "tip3": "Dorong pengikutmu untuk berkomentar"
+    "creating": "Membuat..."
   },
   "challenges": {
     "ranks": {
@@ -752,7 +733,8 @@
     "title": "Perpustakaanku",
     "saved": "Tersimpan",
     "liked": "Yang kusukai",
-    "emptySub": "Simpan cerita yang kamu sukai, semuanya akan menantimu di sini."
+    "emptySub": "Simpan cerita yang kamu sukai, semuanya akan menantimu di sini.",
+    "readingListsSub": "Daftarmu dan cerita yang kamu tambahkan dari pembaca."
   },
   "home": {
     "guestReader": "Pembaca tamu",
