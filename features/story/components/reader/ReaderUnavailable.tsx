@@ -6,15 +6,16 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 type Props = {
-  kind: 'loading' | 'missing' | 'hidden' | 'private-check' | 'private';
+  kind: 'loading' | 'missing' | 'hidden' | 'private-check' | 'private' | 'mature' | 'mature-guest';
   safeTop: number;
   authorName?: string;
   onBack: () => void;
+  onOpenSettings: () => void;
 };
 
 const LINES = ['96%', '99%', '92%', '97%', '88%', '99%', '58%'] as const;
 
-export function ReaderUnavailable({ kind, safeTop, authorName, onBack }: Props) {
+export function ReaderUnavailable({ kind, safeTop, authorName, onBack, onOpenSettings }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const base = { backgroundColor: colors.background, paddingTop: safeTop };
@@ -46,6 +47,19 @@ export function ReaderUnavailable({ kind, safeTop, authorName, onBack }: Props) 
         </>
       )}
       {kind === 'private' && <PrivateProfileNotice name={authorName?.split(' ')[0]} />}
+      {(kind === 'mature' || kind === 'mature-guest') && (
+        <>
+          <Ionicons name="warning-outline" size={40} color={colors.error} />
+          <Text variant="bodyStrong" style={styles.message}>{t('reader.matureGateTitle')}</Text>
+          <Text variant="body" tone="textSecondary" style={styles.message}>
+            {t(kind === 'mature' ? 'reader.matureGateBody' : 'reader.matureGateGuest')}
+          </Text>
+          {kind === 'mature' && (
+            <Button label={t('reader.matureGateAction')} variant="secondary" size="sm"
+              onPress={onOpenSettings} style={styles.back} />
+          )}
+        </>
+      )}
       <Button label={t('userProfile.goBack')} variant="ghost" size="sm" onPress={onBack} style={styles.back} />
     </View>
   );

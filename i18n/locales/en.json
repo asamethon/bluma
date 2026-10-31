@@ -214,7 +214,17 @@
     "publishEmptyChapters": "Empty chapters can't be published. Add content or delete the empty chapter.",
     "publishStoryMissing": "Story not found.",
     "publishNotAuthor": "Only the author can publish this story.",
-    "publishError": "Chapters couldn't be published. Please try again."
+    "publishError": "Chapters couldn't be published. Please try again.",
+    "audienceLabel": "Audience",
+    "adultTitle": "Adult content (18+)",
+    "adultHint": "When on, the story is hidden from guests and from readers who haven't turned on adult content.",
+    "languageLabel": "Story language",
+    "tagsLabel": "Tags",
+    "tagsPlaceholder": "Type a tag and add it",
+    "tagsHint": "Up to {{count}} tags. Used in recommendations and search.",
+    "tagAdd": "Add tag",
+    "warningsLabel": "Content warnings",
+    "warningsHint": "Readers see these before they start."
   },
   "saved": {
     "title": "Saved Stories",
@@ -264,7 +274,12 @@
     "themeLight": "Light",
     "themeSepia": "Sepia",
     "themeDark": "Dark",
-    "themeBlack": "Black"
+    "themeBlack": "Black",
+    "contentWarnings": "Content warning: {{list}}",
+    "matureGateTitle": "Adult content (18+)",
+    "matureGateBody": "This story is for adult readers. Turn on adult content in Settings to read it.",
+    "matureGateGuest": "This story is for adult readers. Sign in and turn on adult content in Settings to read it.",
+    "matureGateAction": "Open Settings"
   },
   "commentsScreen": {
     "title": "Comments ({{count}})",
@@ -1096,5 +1111,17 @@
     "alertBody": "Your email address isn't verified. If you don't verify it within {{days}} days, your account will be suspended. If the address is wrong, you can fix it on the verification screen.",
     "alertLater": "Later",
     "alertGo": "Verify now"
+  },
+  "contentWarnings": {
+    "violence": "Violence",
+    "sexual": "Sexual content",
+    "profanity": "Profanity",
+    "substances": "Substance use",
+    "selfHarm": "Self-harm",
+    "eatingDisorder": "Eating disorders",
+    "racism": "Racism",
+    "homophobia": "Homophobia",
+    "transphobia": "Transphobia",
+    "animalHarm": "Animal harm"
   }
 }

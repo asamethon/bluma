@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { readerStyles as styles } from '../../styles/readerStyles';
+import { normalizeWarnings } from '../../utils/storyDetails';
 import type { ReaderColors } from './types';
 
 type Props = { story: Story; colors: ReaderColors };
@@ -22,6 +23,8 @@ export function ReaderStoryHeader({ story, colors: reading }: Props) {
   const router = useRouter();
   const { requireAuth } = useGuestGate();
   const follow = useFollow(story.authorId, undefined, { source: 'reader' });
+  // Eski hikâyelerde uyarılar Türkçe etiket olarak duruyor; koda indirilip çevrilir.
+  const warnings = normalizeWarnings(story.contentWarnings);
   const toggleFollow = () => {
     if (requireAuth('follow')) follow.toggle();
   };
@@ -40,6 +43,16 @@ export function ReaderStoryHeader({ story, colors: reading }: Props) {
       <Text style={[styles.storyTitle, { color: reading.text, fontFamily: fonts.serif }]}>
         {story.title}
       </Text>
+      {warnings.length > 0 && (
+        <View style={styles.warningRow} accessibilityRole="text">
+          <Ionicons name="alert-circle-outline" size={14} color={colors.error} />
+          <Text variant="caption" color={reading.textSecondary} style={styles.warningText}>
+            {t('reader.contentWarnings', {
+              list: warnings.map(warning => t(`contentWarnings.${warning}`)).join(' · '),
+            })}
+          </Text>
+        </View>
+      )}
       <View style={styles.authorRow}>
         <Pressable
           style={styles.authorPress}

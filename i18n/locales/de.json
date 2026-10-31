@@ -192,7 +192,17 @@
     "publishEmptyChapters": "Leere Kapitel können nicht veröffentlicht werden. Füge Inhalt hinzu oder lösche das leere Kapitel.",
     "publishStoryMissing": "Story nicht gefunden.",
     "publishNotAuthor": "Nur der Autor kann diese Story veröffentlichen.",
-    "publishError": "Kapitel konnten nicht veröffentlicht werden. Bitte versuche es erneut."
+    "publishError": "Kapitel konnten nicht veröffentlicht werden. Bitte versuche es erneut.",
+    "audienceLabel": "Zielgruppe",
+    "adultTitle": "Inhalte für Erwachsene (18+)",
+    "adultHint": "Wenn aktiviert, wird die Geschichte Gästen und Lesern ohne aktivierte Erwachseneninhalte nicht angezeigt.",
+    "languageLabel": "Sprache der Geschichte",
+    "tagsLabel": "Tags",
+    "tagsPlaceholder": "Tag eingeben und hinzufügen",
+    "tagsHint": "Bis zu {{count}} Tags. Werden für Empfehlungen und Suche genutzt.",
+    "tagAdd": "Tag hinzufügen",
+    "warningsLabel": "Inhaltswarnungen",
+    "warningsHint": "Leser sehen sie, bevor sie beginnen."
   },
   "saved": {
     "title": "Gespeicherte Geschichten",
@@ -242,7 +252,12 @@
     "themeLight": "Hell",
     "themeSepia": "Sepia",
     "themeDark": "Dunkel",
-    "themeBlack": "Schwarz"
+    "themeBlack": "Schwarz",
+    "contentWarnings": "Inhaltswarnung: {{list}}",
+    "matureGateTitle": "Inhalte für Erwachsene (18+)",
+    "matureGateBody": "Diese Geschichte ist für erwachsene Leser. Aktiviere Inhalte für Erwachsene in den Einstellungen, um sie zu lesen.",
+    "matureGateGuest": "Diese Geschichte ist für erwachsene Leser. Melde dich an und aktiviere Inhalte für Erwachsene in den Einstellungen.",
+    "matureGateAction": "Einstellungen öffnen"
   },
   "commentsScreen": {
     "title": "Kommentare ({{count}})",
@@ -1074,5 +1089,17 @@
     "alertBody": "Your email address isn't verified. If you don't verify it within {{days}} days, your account will be suspended. If the address is wrong, you can fix it on the verification screen.",
     "alertLater": "Later",
     "alertGo": "Verify now"
+  },
+  "contentWarnings": {
+    "violence": "Gewalt",
+    "sexual": "Sexuelle Inhalte",
+    "profanity": "Vulgäre Sprache",
+    "substances": "Drogenkonsum",
+    "selfHarm": "Selbstverletzung",
+    "eatingDisorder": "Essstörungen",
+    "racism": "Rassismus",
+    "homophobia": "Homophobie",
+    "transphobia": "Transphobie",
+    "animalHarm": "Tierleid"
   }
 }

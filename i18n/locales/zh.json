@@ -192,7 +192,17 @@
     "publishEmptyChapters": "空章节无法发布。请添加内容或删除空章节。",
     "publishStoryMissing": "未找到故事。",
     "publishNotAuthor": "只有作者可以发布这个故事。",
-    "publishError": "章节发布失败。请重试。"
+    "publishError": "章节发布失败。请重试。",
+    "audienceLabel": "读者群",
+    "adultTitle": "成人内容（18+）",
+    "adultHint": "开启后，访客和未开启成人内容的读者将看不到此故事。",
+    "languageLabel": "故事语言",
+    "tagsLabel": "标签",
+    "tagsPlaceholder": "输入标签并添加",
+    "tagsHint": "最多 {{count}} 个标签，用于推荐和搜索。",
+    "tagAdd": "添加标签",
+    "warningsLabel": "内容警告",
+    "warningsHint": "读者在开始阅读前会看到。"
   },
   "saved": {
     "title": "已保存的故事",
@@ -242,7 +252,12 @@
     "themeLight": "浅色",
     "themeSepia": "护眼",
     "themeDark": "深色",
-    "themeBlack": "纯黑"
+    "themeBlack": "纯黑",
+    "contentWarnings": "内容警告：{{list}}",
+    "matureGateTitle": "成人内容（18+）",
+    "matureGateBody": "此故事面向成年读者。请在设置中开启成人内容后阅读。",
+    "matureGateGuest": "此故事面向成年读者。请登录并在设置中开启成人内容后阅读。",
+    "matureGateAction": "打开设置"
   },
   "commentsScreen": {
     "title": "评论（{{count}}）",
@@ -1074,5 +1089,17 @@
     "alertBody": "Your email address isn't verified. If you don't verify it within {{days}} days, your account will be suspended. If the address is wrong, you can fix it on the verification screen.",
     "alertLater": "Later",
     "alertGo": "Verify now"
+  },
+  "contentWarnings": {
+    "violence": "暴力",
+    "sexual": "性内容",
+    "profanity": "粗俗语言",
+    "substances": "药物滥用",
+    "selfHarm": "自我伤害",
+    "eatingDisorder": "饮食失调",
+    "racism": "种族歧视",
+    "homophobia": "恐同",
+    "transphobia": "跨性别恐惧",
+    "animalHarm": "虐待动物"
   }
 }

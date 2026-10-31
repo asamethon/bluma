@@ -192,7 +192,17 @@
     "publishEmptyChapters": "Bab kosong tidak dapat diterbitkan. Tambahkan konten atau hapus bab kosong.",
     "publishStoryMissing": "Cerita tidak ditemukan.",
     "publishNotAuthor": "Hanya penulis yang dapat menerbitkan cerita ini.",
-    "publishError": "Bab tidak dapat diterbitkan. Silakan coba lagi."
+    "publishError": "Bab tidak dapat diterbitkan. Silakan coba lagi.",
+    "audienceLabel": "Pembaca",
+    "adultTitle": "Konten dewasa (18+)",
+    "adultHint": "Jika aktif, cerita disembunyikan dari tamu dan pembaca yang belum mengaktifkan konten dewasa.",
+    "languageLabel": "Bahasa cerita",
+    "tagsLabel": "Tag",
+    "tagsPlaceholder": "Ketik tag lalu tambahkan",
+    "tagsHint": "Maksimal {{count}} tag. Dipakai untuk rekomendasi dan pencarian.",
+    "tagAdd": "Tambahkan tag",
+    "warningsLabel": "Peringatan konten",
+    "warningsHint": "Pembaca melihatnya sebelum mulai membaca."
   },
   "saved": {
     "title": "Cerita tersimpan",
@@ -242,7 +252,12 @@
     "themeLight": "Terang",
     "themeSepia": "Sepia",
     "themeDark": "Gelap",
-    "themeBlack": "Hitam"
+    "themeBlack": "Hitam",
+    "contentWarnings": "Peringatan konten: {{list}}",
+    "matureGateTitle": "Konten dewasa (18+)",
+    "matureGateBody": "Cerita ini untuk pembaca dewasa. Aktifkan konten dewasa di Pengaturan untuk membacanya.",
+    "matureGateGuest": "Cerita ini untuk pembaca dewasa. Masuk lalu aktifkan konten dewasa di Pengaturan untuk membacanya.",
+    "matureGateAction": "Buka Pengaturan"
   },
   "commentsScreen": {
     "title": "Komentar ({{count}})",
@@ -1074,5 +1089,17 @@
     "alertBody": "Your email address isn't verified. If you don't verify it within {{days}} days, your account will be suspended. If the address is wrong, you can fix it on the verification screen.",
     "alertLater": "Later",
     "alertGo": "Verify now"
+  },
+  "contentWarnings": {
+    "violence": "Kekerasan",
+    "sexual": "Konten seksual",
+    "profanity": "Kata kasar",
+    "substances": "Penggunaan zat terlarang",
+    "selfHarm": "Menyakiti diri sendiri",
+    "eatingDisorder": "Gangguan makan",
+    "racism": "Rasisme",
+    "homophobia": "Homofobia",
+    "transphobia": "Transfobia",
+    "animalHarm": "Kekerasan terhadap hewan"
   }
 }

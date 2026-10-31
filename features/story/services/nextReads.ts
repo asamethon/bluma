@@ -1,4 +1,5 @@
 import { Story } from '@/types';
+import { sameLanguage } from '../utils/storyDetails';
 
 /**
  * "Sırada ne okusam?" — biten hikâyeye BENZEYENİ bulur.
@@ -31,11 +32,6 @@ function normalizeTags(tags?: string[]): Set<string> {
   return out;
 }
 
-function sameLanguage(a?: string, b?: string): boolean {
-  if (!a || !b) return false;
-  const base = (l: string) => l.toLowerCase().split('-')[0];
-  return base(a) === base(b);
-}
 
 /** Etkileşim, yakınlık eşit olduğunda sıralamayı belirleyen ikincil sinyal. */
 function popularity(story: Story): number {

@@ -214,7 +214,17 @@
     "publishEmptyChapters": "Boş bölümler yayımlanamaz. İçerik ekleyebilir veya boş bölümü silebilirsin.",
     "publishStoryMissing": "Hikâye bulunamadı.",
     "publishNotAuthor": "Bu hikâyeyi yalnızca yazarı yayımlayabilir.",
-    "publishError": "Bölümler yayımlanamadı. Lütfen tekrar dene."
+    "publishError": "Bölümler yayımlanamadı. Lütfen tekrar dene.",
+    "audienceLabel": "Okur kitlesi",
+    "adultTitle": "Yetişkin içerik (18+)",
+    "adultHint": "Açıkken hikâye misafirlere ve yetişkin içeriği kapalı okurlara gösterilmez.",
+    "languageLabel": "Hikâyenin dili",
+    "tagsLabel": "Etiketler",
+    "tagsPlaceholder": "Etiket yaz ve ekle",
+    "tagsHint": "En fazla {{count}} etiket. Önerilerde ve aramada kullanılır.",
+    "tagAdd": "Etiketi ekle",
+    "warningsLabel": "İçerik uyarıları",
+    "warningsHint": "Okurlar hikâyeye başlamadan önce görür."
   },
   "saved": {
     "title": "Kaydedilen Hikayeler",
@@ -264,7 +274,12 @@
     "themeLight": "Aydınlık",
     "themeSepia": "Sepya",
     "themeDark": "Koyu",
-    "themeBlack": "Siyah"
+    "themeBlack": "Siyah",
+    "contentWarnings": "İçerik uyarısı: {{list}}",
+    "matureGateTitle": "Yetişkin içerik (18+)",
+    "matureGateBody": "Bu hikâye yetişkin okurlar içindir. Okumak için Ayarlar'dan yetişkin içeriği aç.",
+    "matureGateGuest": "Bu hikâye yetişkin okurlar içindir. Okumak için giriş yapıp Ayarlar'dan yetişkin içeriği açmalısın.",
+    "matureGateAction": "Ayarları aç"
   },
   "commentsScreen": {
     "title": "Yorumlar ({{count}})",
@@ -1096,5 +1111,17 @@
     "alertBody": "Hesabının e-posta adresi doğrulanmamış. {{days}} gün içinde doğrulamazsan hesabın askıya alınacak. Adresi yanlış yazdıysan doğrulama ekranından düzeltebilirsin.",
     "alertLater": "Daha sonra",
     "alertGo": "Şimdi doğrula"
+  },
+  "contentWarnings": {
+    "violence": "Şiddet",
+    "sexual": "Cinsel içerik",
+    "profanity": "Küfür",
+    "substances": "Madde kullanımı",
+    "selfHarm": "Kendine zarar verme",
+    "eatingDisorder": "Yeme bozukluğu",
+    "racism": "Irkçılık",
+    "homophobia": "Homofobi",
+    "transphobia": "Transfobi",
+    "animalHarm": "Hayvana zarar"
   }
 }

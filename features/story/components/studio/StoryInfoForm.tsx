@@ -9,6 +9,7 @@ import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-re
 import type { useStoryInfoForm } from '../../hooks/useStoryInfoForm';
 import { StoryCoverPicker } from './StoryCoverPicker';
 import { CoverPickerSheet } from '../CoverPickerSheet';
+import { StoryDetailsFields } from './StoryDetailsFields';
 import { StoryStatusField } from './StoryStatusField';
 
 const WRITE_GENRES: StoryCategory[] = [
@@ -21,7 +22,7 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
   const { colors } = useTheme();
   const { t } = useTranslation();
   const scrollRef = useRef<ScrollView>(null);
-  const fieldOffsets = useRef({ title: 0, description: 0 });
+  const fieldOffsets = useRef({ title: 0, description: 0, tags: 0 });
 
   const keyboard = useAnimatedKeyboard();
   const containerAnimStyle = useAnimatedStyle(() => ({ paddingBottom: keyboard.height.value }));
@@ -120,6 +121,12 @@ export function StoryInfoForm({ form, safeBottom }: { form: Form; safeBottom: nu
           </View>
 
           <StoryStatusField isCompleted={form.isCompleted} onChange={form.setCompleted} />
+
+          <StoryDetailsFields
+            form={form}
+            onTagsLayout={e => { fieldOffsets.current.tags = e.nativeEvent.layout.y; }}
+            onTagsFocus={() => scrollToField('tags')}
+          />
 
           {!form.isNew && (
             <Button label={t('studio.deleteStoryTitle')} variant="ghost" icon="trash-outline" onPress={form.remove} />

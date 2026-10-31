@@ -192,7 +192,17 @@
     "publishEmptyChapters": "空の章は公開できません。内容を追加するか、空の章を削除してください。",
     "publishStoryMissing": "ストーリーが見つかりません。",
     "publishNotAuthor": "このストーリーを公開できるのは作者だけです。",
-    "publishError": "章を公開できませんでした。もう一度お試しください。"
+    "publishError": "章を公開できませんでした。もう一度お試しください。",
+    "audienceLabel": "対象読者",
+    "adultTitle": "成人向けコンテンツ（18+）",
+    "adultHint": "オンにすると、ゲストや成人向けコンテンツを有効にしていない読者には表示されません。",
+    "languageLabel": "作品の言語",
+    "tagsLabel": "タグ",
+    "tagsPlaceholder": "タグを入力して追加",
+    "tagsHint": "最大{{count}}個まで。おすすめや検索に使われます。",
+    "tagAdd": "タグを追加",
+    "warningsLabel": "コンテンツ警告",
+    "warningsHint": "読者が読み始める前に表示されます。"
   },
   "saved": {
     "title": "保存したストーリー",
@@ -242,7 +252,12 @@
     "themeLight": "ライト",
     "themeSepia": "セピア",
     "themeDark": "ダーク",
-    "themeBlack": "ブラック"
+    "themeBlack": "ブラック",
+    "contentWarnings": "コンテンツ警告：{{list}}",
+    "matureGateTitle": "成人向けコンテンツ（18+）",
+    "matureGateBody": "この作品は成人の読者向けです。読むには設定で成人向けコンテンツを有効にしてください。",
+    "matureGateGuest": "この作品は成人の読者向けです。読むにはログインして、設定で成人向けコンテンツを有効にしてください。",
+    "matureGateAction": "設定を開く"
   },
   "commentsScreen": {
     "title": "コメント({{count}})",
@@ -1074,5 +1089,17 @@
     "alertBody": "Your email address isn't verified. If you don't verify it within {{days}} days, your account will be suspended. If the address is wrong, you can fix it on the verification screen.",
     "alertLater": "Later",
     "alertGo": "Verify now"
+  },
+  "contentWarnings": {
+    "violence": "暴力",
+    "sexual": "性的な内容",
+    "profanity": "不適切な言葉",
+    "substances": "薬物の使用",
+    "selfHarm": "自傷行為",
+    "eatingDisorder": "摂食障害",
+    "racism": "人種差別",
+    "homophobia": "同性愛嫌悪",
+    "transphobia": "トランスフォビア",
+    "animalHarm": "動物への危害"
   }
 }

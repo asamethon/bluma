@@ -192,7 +192,17 @@
     "publishEmptyChapters": "لا يمكن نشر فصول فارغة. أضف محتوى أو احذف الفصل الفارغ.",
     "publishStoryMissing": "لم يتم العثور على القصة.",
     "publishNotAuthor": "المؤلف فقط يمكنه نشر هذه القصة.",
-    "publishError": "تعذر نشر الفصول. حاول مرة أخرى."
+    "publishError": "تعذر نشر الفصول. حاول مرة أخرى.",
+    "audienceLabel": "الجمهور",
+    "adultTitle": "محتوى للبالغين (18+)",
+    "adultHint": "عند التفعيل، لا تظهر القصة للزوار ولا للقراء الذين لم يفعّلوا محتوى البالغين.",
+    "languageLabel": "لغة القصة",
+    "tagsLabel": "الوسوم",
+    "tagsPlaceholder": "اكتب وسمًا وأضِفه",
+    "tagsHint": "حتى {{count}} وسوم. تُستخدم في الاقتراحات والبحث.",
+    "tagAdd": "إضافة وسم",
+    "warningsLabel": "تحذيرات المحتوى",
+    "warningsHint": "يراها القراء قبل البدء."
   },
   "saved": {
     "title": "القصص المحفوظة",
@@ -242,7 +252,12 @@
     "themeLight": "فاتح",
     "themeSepia": "سيبيا",
     "themeDark": "داكن",
-    "themeBlack": "أسود"
+    "themeBlack": "أسود",
+    "contentWarnings": "تحذير المحتوى: {{list}}",
+    "matureGateTitle": "محتوى للبالغين (18+)",
+    "matureGateBody": "هذه القصة مخصصة للقراء البالغين. فعّل محتوى البالغين من الإعدادات لقراءتها.",
+    "matureGateGuest": "هذه القصة مخصصة للقراء البالغين. سجّل الدخول وفعّل محتوى البالغين من الإعدادات لقراءتها.",
+    "matureGateAction": "فتح الإعدادات"
   },
   "commentsScreen": {
     "title": "التعليقات ({{count}})",
@@ -1074,5 +1089,17 @@
     "alertBody": "Your email address isn't verified. If you don't verify it within {{days}} days, your account will be suspended. If the address is wrong, you can fix it on the verification screen.",
     "alertLater": "Later",
     "alertGo": "Verify now"
+  },
+  "contentWarnings": {
+    "violence": "عنف",
+    "sexual": "محتوى جنسي",
+    "profanity": "ألفاظ نابية",
+    "substances": "تعاطي المخدرات",
+    "selfHarm": "إيذاء النفس",
+    "eatingDisorder": "اضطرابات الأكل",
+    "racism": "عنصرية",
+    "homophobia": "رهاب المثلية",
+    "transphobia": "رهاب العابرين جنسيًا",
+    "animalHarm": "إيذاء الحيوانات"
   }
 }

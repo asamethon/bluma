@@ -9,6 +9,7 @@ import { logger } from '@/utils/logger';
 import { getAnalytics, logEvent } from '@react-native-firebase/analytics';
 import { addDoc, collection, doc, getDoc, getFirestore, increment, serverTimestamp, updateDoc } from '@react-native-firebase/firestore';
 import { applyStoryChange, loadStoriesFeed } from './listeners/storyFeedListeners';
+import { normalizeLanguage } from '../utils/storyDetails';
 import { forgetStory } from './storyCache';
 
 export async function updateUserStoriesCount(userId: string, delta: number) {
@@ -53,7 +54,8 @@ export async function createStory(
       value !== undefined && value !== null && value !== '' && (!Array.isArray(value) || value.length > 0)
     )));
     const reference = await addDoc(collection(getFirestore(), 'stories'), {
-      language: i18n.language,
+      // Varsayılan dil arayüz dilinin KODU ('pt-BR' → 'pt'); yazar formdan seçer.
+      language: normalizeLanguage(i18n.language) ?? 'tr',
       ...cleanData,
       authorId: user.id,
       likesCount: 0,

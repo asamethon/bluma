@@ -192,7 +192,17 @@
     "publishEmptyChapters": "Capítulos vazios não podem ser publicados. Adiciona conteúdo ou elimina o capítulo vazio.",
     "publishStoryMissing": "História não encontrada.",
     "publishNotAuthor": "Apenas o autor pode publicar esta história.",
-    "publishError": "Não foi possível publicar os capítulos. Tenta novamente."
+    "publishError": "Não foi possível publicar os capítulos. Tenta novamente.",
+    "audienceLabel": "Público",
+    "adultTitle": "Conteúdo para adultos (18+)",
+    "adultHint": "Quando ativo, a história não é mostrada a visitantes nem a leitores sem o conteúdo para adultos ativado.",
+    "languageLabel": "Idioma da história",
+    "tagsLabel": "Etiquetas",
+    "tagsPlaceholder": "Escreve uma etiqueta e adiciona-a",
+    "tagsHint": "Até {{count}} etiquetas. Usadas em recomendações e pesquisa.",
+    "tagAdd": "Adicionar etiqueta",
+    "warningsLabel": "Avisos de conteúdo",
+    "warningsHint": "Os leitores veem-nos antes de começar."
   },
   "saved": {
     "title": "Histórias guardadas",
@@ -242,7 +252,12 @@
     "themeLight": "Claro",
     "themeSepia": "Sépia",
     "themeDark": "Escuro",
-    "themeBlack": "Preto"
+    "themeBlack": "Preto",
+    "contentWarnings": "Aviso de conteúdo: {{list}}",
+    "matureGateTitle": "Conteúdo para adultos (18+)",
+    "matureGateBody": "Esta história é para leitores adultos. Ativa o conteúdo para adultos nas Definições para a ler.",
+    "matureGateGuest": "Esta história é para leitores adultos. Inicia sessão e ativa o conteúdo para adultos nas Definições para a ler.",
+    "matureGateAction": "Abrir Definições"
   },
   "commentsScreen": {
     "title": "Comentários ({{count}})",
@@ -1074,5 +1089,17 @@
     "alertBody": "Your email address isn't verified. If you don't verify it within {{days}} days, your account will be suspended. If the address is wrong, you can fix it on the verification screen.",
     "alertLater": "Later",
     "alertGo": "Verify now"
+  },
+  "contentWarnings": {
+    "violence": "Violência",
+    "sexual": "Conteúdo sexual",
+    "profanity": "Linguagem ofensiva",
+    "substances": "Consumo de substâncias",
+    "selfHarm": "Automutilação",
+    "eatingDisorder": "Distúrbios alimentares",
+    "racism": "Racismo",
+    "homophobia": "Homofobia",
+    "transphobia": "Transfobia",
+    "animalHarm": "Maus-tratos a animais"
   }
 }

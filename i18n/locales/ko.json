@@ -192,7 +192,17 @@
     "publishEmptyChapters": "빈 챕터는 게시할 수 없습니다. 내용을 추가하거나 빈 챕터를 삭제하세요.",
     "publishStoryMissing": "스토리를 찾을 수 없습니다.",
     "publishNotAuthor": "이 스토리는 작성자만 게시할 수 있습니다.",
-    "publishError": "챕터를 게시하지 못했습니다. 다시 시도하세요."
+    "publishError": "챕터를 게시하지 못했습니다. 다시 시도하세요.",
+    "audienceLabel": "독자층",
+    "adultTitle": "성인 콘텐츠 (18+)",
+    "adultHint": "켜면 게스트와 성인 콘텐츠를 켜지 않은 독자에게는 작품이 표시되지 않습니다.",
+    "languageLabel": "작품 언어",
+    "tagsLabel": "태그",
+    "tagsPlaceholder": "태그를 입력해 추가하세요",
+    "tagsHint": "최대 {{count}}개. 추천과 검색에 사용됩니다.",
+    "tagAdd": "태그 추가",
+    "warningsLabel": "콘텐츠 경고",
+    "warningsHint": "독자가 읽기 전에 볼 수 있습니다."
   },
   "saved": {
     "title": "저장한 스토리",
@@ -242,7 +252,12 @@
     "themeLight": "라이트",
     "themeSepia": "세피아",
     "themeDark": "다크",
-    "themeBlack": "블랙"
+    "themeBlack": "블랙",
+    "contentWarnings": "콘텐츠 경고: {{list}}",
+    "matureGateTitle": "성인 콘텐츠 (18+)",
+    "matureGateBody": "이 작품은 성인 독자를 위한 작품입니다. 읽으려면 설정에서 성인 콘텐츠를 켜세요.",
+    "matureGateGuest": "이 작품은 성인 독자를 위한 작품입니다. 읽으려면 로그인한 뒤 설정에서 성인 콘텐츠를 켜세요.",
+    "matureGateAction": "설정 열기"
   },
   "commentsScreen": {
     "title": "댓글 ({{count}})",
@@ -1074,5 +1089,17 @@
     "alertBody": "Your email address isn't verified. If you don't verify it within {{days}} days, your account will be suspended. If the address is wrong, you can fix it on the verification screen.",
     "alertLater": "Later",
     "alertGo": "Verify now"
+  },
+  "contentWarnings": {
+    "violence": "폭력",
+    "sexual": "성적인 내용",
+    "profanity": "비속어",
+    "substances": "약물 사용",
+    "selfHarm": "자해",
+    "eatingDisorder": "섭식 장애",
+    "racism": "인종차별",
+    "homophobia": "동성애 혐오",
+    "transphobia": "트랜스젠더 혐오",
+    "animalHarm": "동물 학대"
   }
 }

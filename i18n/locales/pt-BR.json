@@ -192,7 +192,17 @@
     "publishEmptyChapters": "Capítulos vazios não podem ser publicados. Adicione conteúdo ou exclua o capítulo vazio.",
     "publishStoryMissing": "História não encontrada.",
     "publishNotAuthor": "Apenas o autor pode publicar esta história.",
-    "publishError": "Não foi possível publicar os capítulos. Tente novamente."
+    "publishError": "Não foi possível publicar os capítulos. Tente novamente.",
+    "audienceLabel": "Público",
+    "adultTitle": "Conteúdo adulto (18+)",
+    "adultHint": "Quando ativado, a história não aparece para visitantes nem para leitores sem conteúdo adulto ativado.",
+    "languageLabel": "Idioma da história",
+    "tagsLabel": "Tags",
+    "tagsPlaceholder": "Digite uma tag e adicione",
+    "tagsHint": "Até {{count}} tags. Usadas em recomendações e na busca.",
+    "tagAdd": "Adicionar tag",
+    "warningsLabel": "Avisos de conteúdo",
+    "warningsHint": "Os leitores veem antes de começar."
   },
   "saved": {
     "title": "Histórias salvas",
@@ -242,7 +252,12 @@
     "themeLight": "Claro",
     "themeSepia": "Sépia",
     "themeDark": "Escuro",
-    "themeBlack": "Preto"
+    "themeBlack": "Preto",
+    "contentWarnings": "Aviso de conteúdo: {{list}}",
+    "matureGateTitle": "Conteúdo adulto (18+)",
+    "matureGateBody": "Esta história é para leitores adultos. Ative o conteúdo adulto nas Configurações para ler.",
+    "matureGateGuest": "Esta história é para leitores adultos. Entre na sua conta e ative o conteúdo adulto nas Configurações para ler.",
+    "matureGateAction": "Abrir Configurações"
   },
   "commentsScreen": {
     "title": "Comentários ({{count}})",
@@ -1074,5 +1089,17 @@
     "alertBody": "Your email address isn't verified. If you don't verify it within {{days}} days, your account will be suspended. If the address is wrong, you can fix it on the verification screen.",
     "alertLater": "Later",
     "alertGo": "Verify now"
+  },
+  "contentWarnings": {
+    "violence": "Violência",
+    "sexual": "Conteúdo sexual",
+    "profanity": "Palavrões",
+    "substances": "Uso de substâncias",
+    "selfHarm": "Automutilação",
+    "eatingDisorder": "Transtornos alimentares",
+    "racism": "Racismo",
+    "homophobia": "Homofobia",
+    "transphobia": "Transfobia",
+    "animalHarm": "Maus-tratos a animais"
   }
 }
