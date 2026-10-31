@@ -221,6 +221,42 @@ veri migrasyonları geri alınabilir ve eski paketle uyumlu tasarlanmalıdır.
 - Test runtime'ında sağlam gruba geri dönüşü ve embedded rollback'i deneyin.
 - Native bağımlılık değişiminde eski binary'nin uyumsuz OTA almadığını doğrulayın.
 
+## Mağaza sürümü TestFlight kontrolü
+
+**Bu build CANLI Firebase'e (`bluma-dc10e`) bağlanır.** Açtığın hikâye, yorum ve
+hesap gerçek veriye yazılır; test hesabı kullan ve bıraktıklarını temizle.
+İzin hatası görürsen ekran görüntüsü yerine **tam hata metnini** al:
+`permission-denied` ise kural, başka bir şeyse uygulama tarafıdır.
+
+### Önce bu üçü — hepsi 3.0.1'de ilk kez gerçek binary'de çalışıyor
+
+1. **Ayrı Yaz sekmesi.** iOS 26+ cihazda sekme çubuğunun sağında ayrı pembe
+   çiçekli Yaz düğmesi görünmeli. Görünmüyorsa `patchNativeDeps` yaması
+   binary'ye girmemiş demektir (yama prebuild yerine postinstall'da uygulanıyor).
+   Düğmeye bas, stüdyo açılmalı; diğer sekmelere geçiş bozulmamalı.
+2. **Kayıt ve profil kaydı.** Yeni hesap aç; profil düzenle, kaydet, çık-gir.
+   Yeni sürüm profili `users/{uid}` + `users/{uid}/private/account` olarak tek
+   batch'te yazıyor ve kural 1 Kasım'da dağıtıldı — ilk gerçek sınav bu.
+   Hesap ekranında e-posta doğru görünmeli.
+3. **Taslak ve yayınlama.** Taslak yaz, uygulamadan çık, geri dön (taslak
+   korunmalı), sonra yayınla. `draftChapters` kuralı da 1 Kasım'da açıldı.
+
+### Ardından
+
+4. Görevlerden bir ödül al: XP artmalı, izin hatası olmamalı (22b kuralı canlı).
+5. Beğeni, takip, yorum: sayılar artmalı (geçiş döneminde sayaç kanıtı aranmıyor).
+6. DM gönder ve push bildiriminin geldiğini doğrula (push worker + collection
+   group indeksi).
+7. Görsel yükle: profil fotoğrafı/kapak `blumaimg.d4tecompany.com` üzerinden
+   gitmeli, base64 fallback'e düşmemeli.
+
+### Bir şey kırılırsa
+
+`permission-denied` görürsen **kuralları geri alma** — canlıdaki set zaten
+geçiş dönemi ayarında ve 3.0.1'in ihtiyaç duyduğu `private/{docId}` kuralını
+o taşıyor; geri almak durumu kötüleştirir. Bunun yerine hangi yazmanın
+reddedildiğini tespit et ve ilgili kuralı gözden geçir.
+
 ## İsteğe bağlı imzalama
 
 Uçtan uca OTA code signing, Expo Production/Enterprise planı gerektirir.
