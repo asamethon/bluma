@@ -340,12 +340,14 @@ Hata listesi bitti. Geriye kalanlar yayın işleri ve doğrulama:
 3. **Kullanıcı kontrolü bekleyen iki nokta:** 4. maddenin son görsel düzenlemesi;
    23 Ekim'deki beyaz ekran / native `invalid-argument` hatası (kök neden tekrar
    üretilemedi, cihazda çözüldüğü varsayılmamalı).
-4. **Kırmızı duran bir test:** `__tests__/challengeProgress.test.ts:170` "kalıcı
-   görev korunur" diyor ama 13. madde sonrası `w3` haftalık sıfırlananlar
-   arasında. Ürün sorusu: rozetli "hikâyeni tamamla" her hafta yeniden
-   kazanılabilir mi olmalı? Cevaba göre test ya da `weeklyTrackers` değişir.
-5. **İleride:** XP'yi Cloud Function'a taşımak (YAPILACAKLAR 3.1) 22b'nin
+4. **İleride:** XP'yi Cloud Function'a taşımak (YAPILACAKLAR 3.1) 22b'nin
    kalıcı çözümüdür.
+
+**Karara bağlanan ürün sorusu (1 Kasım 2026):** rozetli "hikâyeni tamamla" (w3)
+görevi **kalıcıdır** — ömür boyu bir kez kazanılır, hafta başında sıfırlanmaz.
+`storiesCompletedByAuthor` bu yüzden `weeklyTrackers` dışında tutulur
+(`features/challenges/services/challengeState.ts`); 13. madde sonrası kırmızı
+kalan `challengeProgress.test.ts:170` böylece yeşile döndü.
 
 ### Ek doğrulama: hesaplar arası veri taşınması
 
@@ -390,8 +392,8 @@ kontrolleri tamamlandı; kalan tek güvenlik parçası 22b XP yazma yetkisidir.
   7 adım geçmişti, küçük ekran hareketi nedeniyle `WARN` vardı. Son native yamada henüz tekrar koşulmadı.
 - Bu akışlar açık **yerel okur hesabı ve İngilizce arayüz** bekler; altı iş senaryosunun tüm otomasyonu değildir.
 - Eski tam koşu: 23 paket/133 Jest testi ve 13 Firestore kural testi başarılıydı.
-- 31 Ekim koşusu: 33/33 Firestore kural testi (4 dosya) ve 161/162 Jest testi;
-  kırmızı olan tek test yukarıda 4. maddede anlatılan `challengeProgress.test.ts:170`.
+- 1 Kasım koşusu: 33/33 Firestore kural testi (4 dosya), **162/162 Jest testi**,
+  TypeScript 0 hata ve `yarn lint` 0 uyarı — dördü de temiz.
 - Sonraki ek kontroller: raporlayıcı 4 test; ayrı Yaz native yaması 3 test başarılı.
 - Son kod için TypeScript 0 hata ve ilgili ESLint temiz. Yeni native build 0 hata/5 uyarıyla tamamlandı.
 - Uygulamada doğrulanan önceki altı senaryo: taslak izolasyonu, hızlı çıkışta kayıt, yayınlama,
