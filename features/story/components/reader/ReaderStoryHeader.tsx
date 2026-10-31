@@ -2,6 +2,8 @@ import { Avatar, Button, GenreTag, Text } from '@/components/ui';
 import { useTheme } from '@/constants/theme';
 import { useGuestGate } from '@/contexts/GuestContext';
 import { useFollow } from '@/features/social/hooks/useFollow';
+import { challengeActions } from '@/store/challengeStore';
+import { useAppSelector } from '@/store/hooks';
 import type { Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -32,6 +34,7 @@ export function ReaderStoryHeader({ story, colors: reading }: Props) {
   const { t } = useTranslation();
   const router = useRouter();
   const { requireAuth } = useGuestGate();
+  const currentUserId = useAppSelector(s => s.auth.user?.id);
   const follow = useFollow(story.authorId, undefined, { source: 'reader' });
   const toggleFollow = () => {
     if (requireAuth('follow')) follow.toggle();
@@ -67,15 +70,8 @@ export function ReaderStoryHeader({ story, colors: reading }: Props) {
           style={styles.authorPress}
           accessibilityRole="button"
           onPress={() => {
-            if (story.authorId) {
-              try {
-                const { useAppSelector } = require('@/store/hooks');
-                const { challengeActions } = require('@/store/challengeStore');
-                const currentUserId = useAppSelector?.((s: any) => s.auth.user?.id);
-                if (currentUserId && currentUserId !== story.authorId) {
-                  void challengeActions?.trackAction?.(currentUserId, 'authorsDiscovered');
-                }
-              } catch {}
+            if (currentUserId && story.authorId && currentUserId !== story.authorId) {
+              challengeActions.trackAction(currentUserId, 'authorsDiscovered').catch(() => {});
             }
             router.push(`/user/${story.authorId}` as never);
           }}

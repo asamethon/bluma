@@ -11,6 +11,7 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { challengeActions } from '@/store/challengeStore';
 import { useAppSelector } from '@/store/hooks';
 import { StoryChapterItem } from './StoryChapterRow';
 import { StoryInfoContent } from './StoryInfoContent';
@@ -46,17 +47,12 @@ export function StoryInfoScreen({ storyId }: { storyId: string }) {
   }, [info.story, t]);
   const openAuthor = useCallback(() => {
     if (info.story?.authorId) {
-      try {
-        const { store } = require('@/store');
-        const { challengeActions } = require('@/store/challengeStore');
-        const currentUserId = store.getState()?.auth?.user?.id;
-        if (currentUserId && currentUserId !== info.story.authorId) {
-          void challengeActions?.trackAction?.(currentUserId, 'authorsDiscovered');
-        }
-      } catch {}
+      if (userId && userId !== info.story.authorId) {
+        challengeActions.trackAction(userId, 'authorsDiscovered').catch(() => {});
+      }
       router.push(`/user/${info.story.authorId}` as never);
     }
-  }, [info.story?.authorId, router]);
+  }, [info.story?.authorId, router, userId]);
   const share = useCallback(() => {
     const story = info.story;
     if (story && story.authorId === userId && story.isPublished) {

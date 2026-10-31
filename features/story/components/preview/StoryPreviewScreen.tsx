@@ -3,6 +3,8 @@ import { CategoryMeta, ContentMaxWidth, useTheme } from '@/constants/theme';
 import { useGuestGate } from '@/contexts/GuestContext';
 import { useProfileAccess } from '@/features/privacy/hooks/useProfileAccess';
 import { useResponsive } from '@/hooks/useResponsive';
+import { challengeActions } from '@/store/challengeStore';
+import { useAppSelector } from '@/store/hooks';
 import { storyActions } from '@/store/storyStore';
 import { Stack, useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
@@ -28,6 +30,7 @@ export function StoryPreviewScreen({ storyId }: { storyId: string }) {
   const insets = useSafeAreaInsets();
   const { width } = useResponsive();
   const { requireAuth } = useGuestGate();
+  const currentUserId = useAppSelector(s => s.auth.user?.id);
   const preview = useStoryPreview(storyId);
   const access = useProfileAccess(preview.current?.author);
   const styles = useMemo(() => createStoryPreviewStyles(colors), [colors]);
@@ -48,17 +51,12 @@ export function StoryPreviewScreen({ storyId }: { storyId: string }) {
   }, [current, requireAuth]);
   const openAuthor = useCallback(() => {
     if (current?.authorId) {
-      try {
-        const { store } = require('@/store');
-        const { challengeActions } = require('@/store/challengeStore');
-        const currentUserId = store.getState()?.auth?.user?.id;
-        if (currentUserId && currentUserId !== current.authorId) {
-          void challengeActions?.trackAction?.(currentUserId, 'authorsDiscovered');
-        }
-      } catch {}
+      if (currentUserId && currentUserId !== current.authorId) {
+        challengeActions.trackAction(currentUserId, 'authorsDiscovered').catch(() => {});
+      }
       router.push(`/user/${current.authorId}` as never);
     }
-  }, [current?.authorId, router]);
+  }, [current?.authorId, currentUserId, router]);
 
   return (
     <Screen edges={['bottom']} maxContentWidth={ContentMaxWidth.content} style={styles.container}>
