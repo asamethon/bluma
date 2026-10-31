@@ -122,6 +122,7 @@
     "lastUpdated": "Última atualização: {{date}}"
   },
   "studio": {
+    "storyStatusLabel": "Status da história",
     "cannotDeleteTitle": "Não é possível excluir",
     "cannotDeleteMessage": "Uma história precisa ter pelo menos um capítulo.",
     "deleteChapterTitle": "Excluir capítulo",
@@ -134,11 +135,6 @@
     "publishedTitle": "Ótimo!",
     "publishedMessage": "Sua história já está publicada e todos podem lê-la.",
     "publishFailed": "Não foi possível publicar a história.",
-    "publishChapterTitle": "Publicar capítulo",
-    "publishChapterMessage": "Publicar o capítulo {{number}} e avisar seus seguidores?",
-    "publishChapterAction": "Publicar capítulo",
-    "chapterPublishedTitle": "Capítulo publicado",
-    "chapterPublishedMessage": "O novo capítulo está publicado e seus seguidores foram avisados.",
     "loginRequiredTitle": "É necessário fazer login",
     "loginRequiredMessage": "Você precisa fazer login para continuar.",
     "titleMissingTitle": "Falta o título",
@@ -187,7 +183,16 @@
     "untitledStory": "História sem título",
     "completeInfoTitle": "Um último passo",
     "completeInfoMessage": "Adicione um título e um gênero à sua história antes de publicar.",
-    "completeInfoAction": "Completar informações"
+    "completeInfoAction": "Completar informações",
+    "saveFailed": "Não foi possível salvar · Tentar novamente",
+    "draftOpenFailedTitle": "Não foi possível abrir o rascunho",
+    "draftOpenFailedMessage": "Verifique sua conexão e as permissões de acesso ao rascunho e tente novamente.",
+    "draftLoginRequired": "Você precisa entrar para salvar um rascunho.",
+    "publishLoginRequired": "Você precisa entrar para publicar.",
+    "publishEmptyChapters": "Capítulos vazios não podem ser publicados. Adicione conteúdo ou exclua o capítulo vazio.",
+    "publishStoryMissing": "História não encontrada.",
+    "publishNotAuthor": "Apenas o autor pode publicar esta história.",
+    "publishError": "Não foi possível publicar os capítulos. Tente novamente."
   },
   "saved": {
     "title": "Histórias salvas",
@@ -568,6 +573,10 @@
       "title": "Maratona de leitura de fim de semana",
       "desc": "Termine 3 capítulos e deixe 2 comentários entre sexta-feira e domingo.",
       "endsIn": "2 dias"
+    },
+    "errors": {
+      "sessionChanged": "A sessão do desafio mudou.",
+      "profileNotFound": "Perfil do desafio não encontrado."
     }
   },
   "genres": {
@@ -653,7 +662,8 @@
     "pwWeak": "Fraca",
     "pwMedium": "Média",
     "pwGood": "Boa",
-    "pwStrong": "Forte"
+    "pwStrong": "Forte",
+    "loadingSession": "Carregando sessão"
   },
   "profileScreen": {
     "warning": "Aviso",
@@ -810,7 +820,8 @@
     "googleSessionMissing": "Sessão do Google não encontrada.",
     "appleUserIdMissing": "ID de usuário da Apple não encontrado.",
     "appleRefreshFailed": "Não foi possível renovar a autenticação da Apple.",
-    "disposableEmail": "Não é possível criar conta com e-mails descartáveis. Use um endereço permanente."
+    "disposableEmail": "Não é possível criar conta com e-mails descartáveis. Use um endereço permanente.",
+    "localEmailSignInRequired": "Use e-mail e senha para entrar no teste local."
   },
   "account": {
     "usernameTaken": "Este nome de usuário já está em uso.",

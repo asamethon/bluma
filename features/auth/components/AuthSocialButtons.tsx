@@ -1,5 +1,6 @@
 import { Text } from '@/components/ui';
 import { Radius, useTheme } from '@/constants/theme';
+import { isLocalFirebase } from '@/constants/firebaseEnvironment';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 
@@ -13,6 +14,7 @@ export function AuthSocialButtons({ disabled, onApplePress, onGooglePress }: Pro
   const { colors } = useTheme();
   const buttonStyle = [styles.button, { borderColor: colors.border, backgroundColor: colors.surface }];
   const showApple = Platform.OS === 'ios';
+  if (isLocalFirebase) return null;
 
   return (
     <View style={styles.row}>

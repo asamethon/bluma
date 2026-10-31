@@ -6,6 +6,7 @@ import { collection, deleteDoc, doc, getDoc, getDocs, getFirestore, writeBatch }
 import { applyStoryChange } from './listeners/storyFeedListeners';
 import { forgetStory } from './storyCache';
 import { updateUserStoriesCount } from './storyMutations';
+import { forgetDraftSummary } from '@/store/slices/storyDraftSlice';
 
 async function nestedReferences(storyId: string, group: 'chapters' | 'comments') {
   const db = getFirestore();
@@ -36,20 +37,23 @@ export async function deleteStory(storyId: string) {
     const reference = doc(db, 'stories', storyId);
     const story = await getDoc(reference);
     if (!story.exists()) return { success: false, error: i18n.t('story.notFound') };
-    const [likes, views, chapters, comments] = await Promise.all([
+    const [likes, views, chapters, comments, drafts] = await Promise.all([
       getDocs(collection(db, 'stories', storyId, 'likes')),
       getDocs(collection(db, 'stories', storyId, 'views')),
       nestedReferences(storyId, 'chapters'),
       nestedReferences(storyId, 'comments'),
+      getDocs(collection(db, 'stories', storyId, 'draftChapters')),
     ]);
     await deleteReferences([
       ...likes.docs.map(item => item.ref),
       ...views.docs.map(item => item.ref),
       ...chapters.flat(),
       ...comments.flat(),
+      ...drafts.docs.map(item => item.ref),
     ]);
     await deleteDoc(reference);
     forgetStory(storyId);
+    store.dispatch(forgetDraftSummary(storyId));
     applyStoryChange(storyId, null);
     if ((story.data() as Story).isPublished) await updateUserStoriesCount(userId, -1);
     return { success: true };

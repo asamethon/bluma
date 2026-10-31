@@ -122,6 +122,7 @@
     "lastUpdated": "Terakhir diperbarui: {{date}}"
   },
   "studio": {
+    "storyStatusLabel": "Status cerita",
     "cannotDeleteTitle": "Tidak dapat dihapus",
     "cannotDeleteMessage": "Sebuah cerita harus memiliki setidaknya satu bab.",
     "deleteChapterTitle": "Hapus bab",
@@ -134,11 +135,6 @@
     "publishedTitle": "Hebat!",
     "publishedMessage": "Ceritamu kini sudah diterbitkan dan bisa dibaca oleh semua orang.",
     "publishFailed": "Cerita tidak dapat diterbitkan.",
-    "publishChapterTitle": "Terbitkan Bab",
-    "publishChapterMessage": "Terbitkan bab {{number}} dan beri tahu pengikutmu?",
-    "publishChapterAction": "Terbitkan Bab",
-    "chapterPublishedTitle": "Bab sudah tayang",
-    "chapterPublishedMessage": "Bab baru sudah diterbitkan dan pengikutmu telah diberi tahu.",
     "loginRequiredTitle": "Perlu masuk",
     "loginRequiredMessage": "Kamu harus masuk untuk melanjutkan.",
     "titleMissingTitle": "Judul belum ada",
@@ -187,7 +183,16 @@
     "untitledStory": "Cerita Tanpa Judul",
     "completeInfoTitle": "Satu langkah lagi",
     "completeInfoMessage": "Tambahkan judul dan genre pada ceritamu sebelum menerbitkannya.",
-    "completeInfoAction": "Lengkapi Info"
+    "completeInfoAction": "Lengkapi Info",
+    "saveFailed": "Gagal menyimpan · Coba lagi",
+    "draftOpenFailedTitle": "Draf tidak dapat dibuka",
+    "draftOpenFailedMessage": "Periksa koneksi dan izin akses draf, lalu coba lagi.",
+    "draftLoginRequired": "Kamu harus masuk untuk menyimpan draf.",
+    "publishLoginRequired": "Kamu harus masuk untuk menerbitkan.",
+    "publishEmptyChapters": "Bab kosong tidak dapat diterbitkan. Tambahkan konten atau hapus bab kosong.",
+    "publishStoryMissing": "Cerita tidak ditemukan.",
+    "publishNotAuthor": "Hanya penulis yang dapat menerbitkan cerita ini.",
+    "publishError": "Bab tidak dapat diterbitkan. Silakan coba lagi."
   },
   "saved": {
     "title": "Cerita tersimpan",
@@ -568,6 +573,10 @@
       "title": "Maraton membaca akhir pekan",
       "desc": "Selesaikan 3 bab dan tinggalkan 2 komentar antara Jumat dan Minggu.",
       "endsIn": "2 hari"
+    },
+    "errors": {
+      "sessionChanged": "Sesi tantangan berubah.",
+      "profileNotFound": "Profil tantangan tidak ditemukan."
     }
   },
   "genres": {
@@ -653,7 +662,8 @@
     "pwWeak": "Lemah",
     "pwMedium": "Sedang",
     "pwGood": "Baik",
-    "pwStrong": "Kuat"
+    "pwStrong": "Kuat",
+    "loadingSession": "Memuat sesi"
   },
   "profileScreen": {
     "warning": "Peringatan",
@@ -810,7 +820,8 @@
     "googleSessionMissing": "Sesi Google tidak ditemukan.",
     "appleUserIdMissing": "ID pengguna Apple tidak ditemukan.",
     "appleRefreshFailed": "Autentikasi Apple tidak dapat diperbarui.",
-    "disposableEmail": "Email sekali pakai tidak bisa digunakan untuk mendaftar. Gunakan alamat permanen."
+    "disposableEmail": "Email sekali pakai tidak bisa digunakan untuk mendaftar. Gunakan alamat permanen.",
+    "localEmailSignInRequired": "Gunakan email dan kata sandi untuk masuk ke tes lokal."
   },
   "account": {
     "usernameTaken": "Nama pengguna ini sudah digunakan.",

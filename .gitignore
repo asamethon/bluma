@@ -64,6 +64,9 @@ server/data/
 *.apk
 *.ipa
 firestore-debug.log
+firebase-debug.log
+ui-debug.log
+.firebase-local/
 
 # goldie magaza gorselleri (uretilen ciktilar)
 goldie/out/
@@ -72,6 +75,8 @@ goldie/goldie.design.json
 # argent demo hesap kimlik bilgileri ({{secret:...}} yer tutucularinin kaynagi)
 .argent/secrets.env
 /.argent/recordings/
+/.argent/session.local.json
+/.argent/results/
 
 # goldie capture icin sabitlenen release simulator build'i
 goldie/build/

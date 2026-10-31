@@ -14,23 +14,13 @@ type Params = {
   chapters: StudioChapter[];
   category: string;
   isPublished: boolean;
-  /** Takipçilere duyurulmuş bölüm sayısı (stüdyo açılışında alınan temel). */
-  announcedCount: number;
-  beforePublish: () => void;
-  onPublished: () => void;
+  onPublished: (chapters: StudioChapter[]) => void;
 };
 
-/**
- * Yayın akışı: eksik bilgi uyarısı → onay → yazma → kutlama ve değerlendirme.
- *
- * Yayındaki hikâyede de çalışır: otomatik kayıt artık takipçilere duyuru
- * göndermediği için (bkz. storyMutations) yeni bölümü duyuran TEK yer bu
- * açık aksiyondur.
- */
+/** Yayın akışı: eksik bilgi uyarısı → onay → yazma → kutlama ve değerlendirme. */
 export function useComposerPublish(params: Params) {
   const router = useRouter();
   const [publishing, setPublishing] = useState(false);
-  const chapterOnly = params.isPublished;
 
   const publish = () => {
     if (needsStoryInfo(params)) {
@@ -42,24 +32,19 @@ export function useComposerPublish(params: Params) {
     }
 
     Alert.alert(
-      i18n.t(chapterOnly ? 'studio.publishChapterTitle' : 'studio.publishTitle'),
-      chapterOnly
-        ? i18n.t('studio.publishChapterMessage', { number: params.chapters.length })
-        : i18n.t('studio.publishMessage', { title: params.story?.title }),
+      i18n.t('studio.publishTitle'),
+      i18n.t('studio.publishMessage', { title: params.story?.title }),
       [
         { text: i18n.t('common.cancel'), style: 'cancel' },
-        {
-          text: i18n.t(chapterOnly ? 'studio.publishChapterAction' : 'studio.publishAction'),
-          onPress: () => void run(),
-        },
+        { text: i18n.t('studio.publishAction'), onPress: () => void run() },
       ],
     );
   };
 
   const run = async () => {
     setPublishing(true);
-    params.beforePublish();
-    const result = await publishDraft(params.storyId, params.chapters, params.announcedCount);
+    const chapters = params.chapters;
+    const result = await publishDraft(params.storyId, chapters).catch(() => ({ success: false, error: i18n.t('studio.publishFailed') }));
     setPublishing(false);
 
     if (!result.success) {
@@ -72,21 +57,14 @@ export function useComposerPublish(params: Params) {
     if (firstPublish) {
       challengeActions.trackAction(authorId!, 'storiesPublished').catch(() => {});
     }
-    params.onPublished();
-
-    // Yeni bölüm duyurusu kutlama/lansman akışını açmaz: yazar yazmaya
-    // kaldığı yerden devam eder.
-    if (!firstPublish) {
-      Alert.alert(i18n.t('studio.chapterPublishedTitle'), i18n.t('studio.chapterPublishedMessage'));
-      return;
-    }
+    params.onPublished(chapters);
 
     // Değerlendirme, kendi uyarımız kapandıktan SONRA istenir ki iki diyalog
     // üst üste binmesin.
     const finish = (launch: boolean) => {
       router.replace(launch ? `/story/${params.storyId}/launch` as never : '/(tabs)');
       // Değerlendirme uyarısı lansman tasarımının üstüne binmemeli.
-      if (!launch) {
+      if (firstPublish && !launch) {
         reviewPromptActions.recordMoment('storyPublished', { immediate: true }).catch(() => {});
       }
     };

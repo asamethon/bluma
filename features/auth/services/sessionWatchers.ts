@@ -1,3 +1,5 @@
+import { startChallengeSession } from '@/features/challenges/services/challengeSession';
+import { challengeActions } from '@/features/challenges/services/challengeProgress';
 import { store } from '@/store';
 import { logger } from '@/utils/logger';
 import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
@@ -19,6 +21,8 @@ function watchAuthState() {
 
     if (user) {
       if (!state.isAuthenticated || state.user?.id !== user.uid) void hydrateSession(user);
+      // Önbellek oturumu native Auth'tan önce açılmış olabilir.
+      void challengeActions.loadProgress(user.uid);
       return;
     }
     if (state.isAuthenticated) {
@@ -47,6 +51,7 @@ function watchAppState() {
 }
 
 export function startSessionWatchers() {
+  startChallengeSession();
   watchAuthState();
   watchAppState();
 }

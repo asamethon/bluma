@@ -9,6 +9,7 @@ import { useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 import { autoSplitPastedText, StudioChapter } from '../utils/chapterContent';
 import { readingMinutes, wordCount } from '../utils/textStats';
+import { publishDraft } from '../services/chapterDraft';
 
 export function useImportStory() {
   const router = useRouter();
@@ -53,28 +54,29 @@ export function useImportStory() {
       const result = await storyActions.createStory({
         title: title.trim(),
         description: '',
+        content: '',
         category,
         tags: [],
         isCompleted: false,
-        isPublished: true,
+        isPublished: false,
         chaptersCount: chapters.length,
         chapterTitles: chapters.map(c => c.title),
         readingTime,
         isPremium: false,
         authorId: uid,
         isBook: chapters.length > 1,
-      } as any);
+      });
 
       if (!result.success || !result.storyId) {
         Alert.alert(i18n.t('common.error'), result.error || i18n.t('story.createFailed'));
         return;
       }
 
-      await storyActions.saveChapters(result.storyId, chapters);
-      await storyActions.updateStory(result.storyId, {
-        chaptersInSubcollection: true,
-        chapterWordCounts: chapters.map(c => wordCount(c.content)),
-      });
+      const published = await publishDraft(result.storyId, chapters);
+      if (!published.success) {
+        Alert.alert(i18n.t('common.error'), published.error || i18n.t('studio.publishFailed'));
+        return;
+      }
 
       if (uid) challengeActions.trackAction(uid, 'storiesPublished').catch(() => {});
 

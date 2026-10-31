@@ -1,3 +1,4 @@
+import { selectChallengeXp, selectChallengeStreak, selectChallengeProgress, selectClaimedChallenges } from '@/store/slices/challengeSlice';
 import { Screen } from '@/components/ui';
 import { useTheme } from '@/constants/theme';
 import { CHALLENGE_DEFS } from '@/features/challenges/definitions';
@@ -17,10 +18,10 @@ export function ChallengesScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const userId = useAppSelector(state => state.auth.user?.id);
-  const xp = useAppSelector(state => state.challenge.xp);
-  const streak = useAppSelector(state => state.challenge.streak);
-  const progress = useAppSelector(state => state.challenge.challengeProgress);
-  const claimed = useAppSelector(state => state.challenge.claimedChallenges);
+  const xp = useAppSelector(selectChallengeXp);
+  const streak = useAppSelector(selectChallengeStreak);
+  const progress = useAppSelector(selectChallengeProgress);
+  const claimed = useAppSelector(selectClaimedChallenges);
   const [filter, setFilter] = useState<ChallengeFilter>('all');
   const claimedSet = useMemo(() => new Set(claimed), [claimed]);
   const challenges = useMemo(() => CHALLENGE_DEFS

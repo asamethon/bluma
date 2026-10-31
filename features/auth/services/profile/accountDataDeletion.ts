@@ -3,6 +3,7 @@ import type { User } from '@/store/slices/authSlice';
 import { collection, deleteDoc, doc, getDocs, getFirestore, query, where } from '@react-native-firebase/firestore';
 
 const personalCollections = [
+  'private',
   'likedStories',
   'savedStories',
   'likedConversations',
@@ -28,7 +29,6 @@ export async function deleteAccountData(user: User) {
   await Promise.all([
     deleteCollection(['users', user.id, 'followers']),
     deleteCollection(['users', user.id, 'following']),
-    deleteCollection(['users', user.id, 'private']),
     ...personalCollections.map(name => deleteCollection(['users', user.id, name])),
   ]);
   const userNotifications = await getDocs(query(collection(db, 'notifications'), where('userId', '==', user.id)));

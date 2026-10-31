@@ -2,31 +2,31 @@ import i18n from '@/i18n';
 import { storyActions } from '@/store/storyStore';
 import type { Story, StoryCategory } from '@/types';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useEffect, useReducer } from 'react';
+import { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { Alert } from 'react-native';
 import { newChapter, openStory } from '../services/storyDraft';
 import type { StudioChapter } from '../utils/chapterContent';
 import { useChapterAutosave } from './useChapterAutosave';
 import { useChapterEditor } from './useChapterEditor';
+import { sameChapters } from '../services/chapterMetadata';
 
 type DocumentState = {
   story: Story | null;
   chapters: StudioChapter[];
+  publishedChapters: StudioChapter[];
   index: number;
   category: StoryCategory;
   isPublished: boolean;
-  /** Takipçilere duyurulmuş bölüm sayısı (bkz. openStory). */
-  announcedCount: number;
   loading: boolean;
 };
 
 const INITIAL: DocumentState = {
   story: null,
   chapters: [],
+  publishedChapters: [],
   index: 0,
   category: 'other',
   isPublished: false,
-  announcedCount: 0,
   loading: true,
 };
 
@@ -37,7 +37,9 @@ export function useComposerDocument(storyId: string, chapterParam?: string) {
     (current: DocumentState, next: Partial<DocumentState>) => ({ ...current, ...next }),
     INITIAL,
   );
-  const { saveState, schedule, saveNow, cancelPending } = useChapterAutosave(storyId);
+  const { saveState, schedule, saveNow, retry } = useChapterAutosave(storyId);
+  const hasUnpublishedChanges = useMemo(() => !state.isPublished || !sameChapters(state.chapters, state.publishedChapters),
+    [state.chapters, state.isPublished, state.publishedChapters]);
 
   const commitChapters = (chapters: StudioChapter[], extra?: Partial<DocumentState>) => {
     patch({ chapters, ...extra });
@@ -66,12 +68,15 @@ export function useComposerDocument(storyId: string, chapterParam?: string) {
       }
       patch({ ...opened, loading: false });
       loadEditor(opened.chapters[opened.index]?.content ?? '');
+    }).catch(() => {
+      if (!lifecycle.active) return;
+      Alert.alert(i18n.t('studio.draftOpenFailedTitle'), i18n.t('studio.draftOpenFailedMessage'));
+      router.back();
     });
     return () => {
       lifecycle.active = false;
-      cancelPending();
     };
-  }, [cancelPending, chapterParam, loadEditor, router, storyId]);
+  }, [chapterParam, loadEditor, router, storyId]);
 
   // Bilgi ekranından dönüldüğünde başlık/kategori tazelenir.
   useFocusEffect(useCallback(() => {
@@ -90,9 +95,10 @@ export function useComposerDocument(storyId: string, chapterParam?: string) {
   return {
     ...state,
     saveState,
+    hasUnpublishedChanges,
+    retrySave: retry,
     editor,
-    cancelPendingSave: cancelPending,
-    markPublished: (announcedCount: number) => patch({ isPublished: true, announcedCount }),
+    markPublished: (chapters: StudioChapter[]) => patch({ isPublished: true, publishedChapters: chapters }),
     setChapterTitle: (title: string) => editCurrent({ title }),
     switchTo: (index: number) => goToChapter(index),
     addChapter: () => {

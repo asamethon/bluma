@@ -48,7 +48,7 @@ export function ReaderStoryHeader({ story, colors: reading }: Props) {
         >
           <Avatar
             uri={story.author?.profileImage}
-            name={story.author?.displayName}
+            name={story.author?.displayName || t('common.author')}
             size={40}
           />
           <View style={styles.authorIdentity}>

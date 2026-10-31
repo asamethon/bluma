@@ -8,7 +8,7 @@ import { logger } from '@/utils/logger';
 
 /**
  * Kaydın hangi ortamdan geldiğini anlatan alanlar. Yalnızca YENİ kullanıcı
- * dokümanı oluşturulurken yazılır — sonraki girişlerde güncellenmez ki
+ * hesabın özel belgesine yazılır — sonraki girişlerde güncellenmez ki
  * "ilk kayıt anı" bilgisi bozulmasın.
  */
 export interface SignupContext {

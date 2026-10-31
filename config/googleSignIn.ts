@@ -7,12 +7,14 @@ import {
 } from '@react-native-google-signin/google-signin';
 import i18n from '@/i18n';
 import { logger } from '@/utils/logger';
+import { isLocalFirebase } from '@/constants/firebaseEnvironment';
 
 type GoogleSignInResult =
   | { success: true; idToken: string; userInfo: SignInSuccessResponse }
   | { success: false; error: string };
 
 export const configureGoogleSignIn = () => {
+  if (isLocalFirebase) return;
   GoogleSignin.configure({
     webClientId: '626165614889-crsvdlrp4oommq6eiu14ltn372l10al7.apps.googleusercontent.com',
     iosClientId: '626165614889-8logf9c1pufo9h0llo9jvp4cfvq98asl.apps.googleusercontent.com',
@@ -23,6 +25,7 @@ export const configureGoogleSignIn = () => {
 };
 
 export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
+  if (isLocalFirebase) return { success: false, error: i18n.t('authErrors.localEmailSignInRequired') };
   try {
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
     const userInfo = await GoogleSignin.signIn();

@@ -1,5 +1,7 @@
 import { storyActions } from '@/store/storyStore';
 import { defaultChapterTitle, splitChapters, type StudioChapter } from '../utils/chapterContent';
+import { loadChapterDraft } from './chapterDraftStorage';
+import { waitForChapterWrites } from './chapterWriteQueue';
 
 export const newChapter = (order: number): StudioChapter => ({
   id: `${Date.now()}`,
@@ -9,22 +11,23 @@ export const newChapter = (order: number): StudioChapter => ({
 
 /** Editörü açarken hikâyeyi ve bölümlerini hazırlar; yoksa null döner. */
 export async function openStory(storyId: string, chapterParam?: string) {
+  await waitForChapterWrites(storyId);
   const story = await storyActions.getStoryById(storyId);
   if (!story) return null;
 
-  const loaded = story.chaptersInSubcollection
-    ? await storyActions.loadAllChapters(storyId)
-    : splitChapters(story.content, story.chapterTitles);
+  const [published, draft] = await Promise.all([
+    story.chaptersInSubcollection
+      ? storyActions.loadAllChapters(storyId)
+      : Promise.resolve(splitChapters(story.content, story.chapterTitles)),
+    loadChapterDraft(storyId),
+  ]);
+  const loaded = draft ?? published;
   const stored = loaded.length > 0 ? loaded : [newChapter(1)];
   const opened = {
     story,
     category: story.category || 'other',
     isPublished: !!story.isPublished,
-    // Takipçilere duyurulmuş bölüm sayısı — "yayımlanmamış bölüm var mı?"
-    // sorusunun yanıtı. Otomatik kayıt `chaptersCount`'u da yazdığı için
-    // bu temel değer oturum boyunca sabit tutulur, Firestore'dan tazelenmez.
-    announcedCount: story.announcedChaptersCount
-      ?? (story.isPublished ? story.chaptersCount || stored.length : 0),
+    publishedChapters: story.isPublished ? published : [],
   };
 
   if (chapterParam === 'new') {

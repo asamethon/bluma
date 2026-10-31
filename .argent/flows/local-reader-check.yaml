@@ -1,0 +1,17 @@
+steps:
+  - echo: Yerel okur hesabını aç. Bu akış derin bağlantıyla ekran erişimini kontrol
+      eder; sekme gezinmesini sınamaz.
+  - launch: com.asamethon.bluma.local
+  - await:
+      visible: { text: Write your first story }
+      timeout: 15000
+  - await: { idle: true, stableFor: 800 }
+  - echo: Örnek hikâyeyi derin bağlantıyla aç; okur ekranını doğrula.
+  - tool: open-url
+    args:
+      url: bluma-local://story/local-published-story
+  - await:
+      visible: { text: Chapters }
+  - await: { idle: true }
+  - assert:
+      visible: { text: Yerel Yayın Testi }

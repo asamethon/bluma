@@ -1,27 +1,16 @@
 import i18n from '@/i18n';
 import { store } from '@/store';
-import { patchAuth, patchUser, User } from '@/store/slices/authSlice';
+import { patchAuth, User } from '@/store/slices/authSlice';
 import { logger } from '@/utils/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getIdToken, type FirebaseAuthTypes } from '@react-native-firebase/auth';
-import { doc, getDoc, getFirestore, serverTimestamp, setDoc } from '@react-native-firebase/firestore';
-import {
-  hydrateUserDoc,
-  migratePublicPersonalFields,
-  readPrivateAccount,
-  writePrivateAccount,
-} from './privateAccount';
+import { doc, getDoc, getFirestore } from '@react-native-firebase/firestore';
+import { saveUserProfile } from './profileRepository';
+import { sessionUser } from './sessionIdentity';
 import { endSession, isOnboarded } from './sessionState';
 import { isTerminalAuthError, readCachedSession, writeCachedSession } from './sessionStorage';
 import { buildSignupContext, trackSignupContext } from './signupContext';
 import { primeCachedUser } from './userCache';
-
-function providerOf(firebaseUser: FirebaseAuthTypes.User): User['authProvider'] {
-  const providerId = firebaseUser.providerData[0]?.providerId ?? '';
-  if (providerId.includes('apple')) return 'apple';
-  if (providerId.includes('google')) return 'google';
-  return 'email';
-}
 
 /**
  * Oturumu Redux'a yazar. Kritik nokta: oturumun varlığı ID token'a DEĞİL,
@@ -39,7 +28,7 @@ export async function hydrateSession(firebaseUser: FirebaseAuthTypes.User) {
     store.dispatch(patchAuth({
       isAuthenticated: true,
       isGuest: false,
-      user: cached.user,
+      user: sessionUser(firebaseUser, cached.user),
       hasCompletedOnboarding: cached.hasCompletedOnboarding,
     }));
   }
@@ -52,20 +41,15 @@ export async function hydrateSession(firebaseUser: FirebaseAuthTypes.User) {
   // Push token ve yardımcı servisler ağ bekleyebilir; açılışı geciktirmez.
   void startSessionServices(firebaseUser.uid)
     .catch(error => logger.debug('Oturum servisleri başlatılamadı:', error));
-  void hydrateAppleUserId(firebaseUser)
-    .catch(error => logger.debug('appleUserId okunamadı:', error));
 }
 
 async function syncProfile(firebaseUser: FirebaseAuthTypes.User) {
   try {
     const userDocRef = doc(getFirestore(), 'users', firebaseUser.uid);
     const userDoc = await getDoc(userDocRef);
-    const publicData = userDoc.data();
-    // Kişisel alanlar herkese açık dokümanda tutulmaz; e-posta Auth'tan gelir.
-    const userData = publicData
-      ? hydrateUserDoc(userDoc.id, publicData, store.getState().auth.user)
+    const userData = userDoc.exists()
+      ? sessionUser(firebaseUser, userDoc.data()!)
       : await createMissingProfile(firebaseUser);
-    if (publicData) void migratePublicPersonalFields(firebaseUser.uid, publicData);
 
     const onboarded = isOnboarded(userData);
     store.dispatch(patchAuth({
@@ -90,35 +74,14 @@ async function syncProfile(firebaseUser: FirebaseAuthTypes.User) {
 async function createMissingProfile(firebaseUser: FirebaseAuthTypes.User): Promise<User> {
   logger.debug('Firestore profili yok, oluşturuluyor');
   const signupContext = buildSignupContext();
-  const email = firebaseUser.email || '';
-  const publicData = {
-    id: firebaseUser.uid,
-    displayName: firebaseUser.displayName || i18n.t('common.user'),
-    authProvider: providerOf(firebaseUser),
-  };
+  const userData = {
+    ...sessionUser(firebaseUser, { displayName: firebaseUser.displayName || i18n.t('common.user') }),
+    ...signupContext,
+  } as unknown as User;
 
-  // Kişisel veri (e-posta, cihaz/bölge) herkese açık dokümana yazılmaz.
-  await writePrivateAccount(firebaseUser.uid, { email, ...signupContext });
-  await setDoc(doc(getFirestore(), 'users', firebaseUser.uid), {
-    ...publicData,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
+  await saveUserProfile(userData, true);
   trackSignupContext(signupContext);
-  return { ...publicData, email } as unknown as User;
-}
-
-/**
- * Apple yeniden kimlik doğrulaması `appleUserId`'ye muhtaçtır ve bu alan
- * artık herkese açık dokümanda değil, özel dokümanda durur.
- */
-async function hydrateAppleUserId(firebaseUser: FirebaseAuthTypes.User) {
-  if (providerOf(firebaseUser) !== 'apple') return;
-  if (store.getState().auth.user?.appleUserId) return;
-  const privateAccount = await readPrivateAccount(firebaseUser.uid);
-  if (privateAccount?.appleUserId) {
-    store.dispatch(patchUser({ appleUserId: privateAccount.appleUserId }));
-  }
+  return userData;
 }
 
 /** Gizlilik/takip filtreleri, son görülme damgası ve push token kaydı. */
@@ -129,12 +92,6 @@ async function startSessionServices(userId: string) {
   ]);
   privacyActions.load().catch(() => {});
   presenceActions.start();
-  // Görev ilerlemesi ve seri (streak) oturum açılışında yüklenir: eskiden
-  // yalnızca profil ekranı yüklüyordu, bu yüzden profil açılmadan yapılan
-  // okuma/yorum/takip boş haritadan hesaplanıp ilerlemeyi siliyordu ve seri
-  // "profil sekmesini açtığın gün" ile işliyordu.
-  const { challengeActions } = await import('@/store/challengeStore');
-  challengeActions.loadProgress(userId).catch(() => {});
 
   try {
     const { pushNotificationService } = await import('@/services/pushNotificationService');

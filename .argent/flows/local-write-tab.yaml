@@ -1,0 +1,15 @@
+steps:
+  - echo: Yerel okur hesabının ana sayfasını aç; gerçek Yaz sekmesinden stüdyoya geç.
+  - launch: com.asamethon.bluma.local
+  - await:
+      visible: { text: Write your first story }
+      timeout: 15000
+  - await: { idle: true, stableFor: 800 }
+  - assert:
+      visible: { id: tab-write }
+  - echo: Yaz düğmesine dokun; yazı stüdyosunun başlığını doğrula.
+  - tap:
+      id: tab-write
+  - await:
+      visible: { text: Writing Studio }
+  - await: { idle: true, stableFor: 800 }

@@ -22,16 +22,16 @@ export function ComposerHeader({ c }: { c: ComposerModel }) {
         </Pressable>
         <View style={{ flex: 1 }} />
         {!c.focus && c.saveState && (
-          <View style={styles.save}>
+          <Pressable style={styles.save} onPress={c.retrySave} disabled={c.saveState !== 'error'} accessibilityRole="button">
             <Ionicons
-              name={c.saveState === 'saving' ? 'ellipsis-horizontal' : 'cloud-done-outline'}
+              name={c.saveState === 'error' ? 'cloud-offline-outline' : c.saveState === 'saving' ? 'ellipsis-horizontal' : 'cloud-done-outline'}
               size={15}
-              color={c.saveState === 'saving' ? colors.textLight : colors.success}
+              color={c.saveState === 'error' ? colors.error : c.saveState === 'saving' ? colors.textLight : colors.success}
             />
             <Text variant="caption" tone="textSecondary">
-              {c.saveState === 'saving' ? t('studio.saving') : t('studio.saved')}
+              {c.saveState === 'error' ? t('studio.saveFailed') : c.saveState === 'saving' ? t('studio.saving') : t('studio.saved')}
             </Text>
-          </View>
+          </Pressable>
         )}
         <IconButton
           icon={c.focus ? 'contract-outline' : 'scan-outline'}

@@ -4,8 +4,7 @@ import { patchAuth, type User } from '@/store/slices/authSlice';
 import i18n from '@/i18n';
 import { logger } from '@/utils/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { doc, getFirestore, serverTimestamp, setDoc } from '@react-native-firebase/firestore';
-import { profileWritePayload } from './profileWrite';
+import { saveUserProfile } from '../profileRepository';
 import { checkUsernameAvailability } from './usernameAvailability';
 
 type OnboardingProfile = {
@@ -40,11 +39,7 @@ export async function completeOnboarding(input: OnboardingProfile) {
       ...(input.displayName ? { displayName: input.displayName } : {}),
       ...(profileImage ? { profileImage } : {}),
     };
-    await setDoc(
-      doc(getFirestore(), 'users', current.id),
-      { ...profileWritePayload(user), updatedAt: serverTimestamp() },
-      { merge: true },
-    );
+    await saveUserProfile(user);
     await Promise.all([
       AsyncStorage.setItem('userData', JSON.stringify(user)),
       AsyncStorage.setItem('hasCompletedOnboarding', 'true'),

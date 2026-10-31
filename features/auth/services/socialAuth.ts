@@ -32,7 +32,7 @@ async function signInWithGoogle(): Promise<AuthResult> {
 
     await establishSession(firebaseUser, {
       email: googleUser.email,
-      displayName: googleUser.name ?? googleUser.email,
+      displayName: googleUser.name || i18n.t('common.user'),
       authProvider: 'google',
     });
     return { success: true };

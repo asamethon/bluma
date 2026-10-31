@@ -1,5 +1,6 @@
 import { Badge, Divider, MenuButton, Text } from '@/components/ui';
-import { categoryLabel, Motion, Radius, Spacing, useTheme } from '@/constants/theme';
+import { categoryLabel, Motion, Spacing, useTheme } from '@/constants/theme';
+import { useAppSelector } from '@/store/hooks';
 import { Story } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
@@ -7,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { splitChapters } from '../../utils/chapterContent';
 import { formatRelativeTime } from '../../utils/time';
-import { ChapterRow } from './ChapterRow';
+import { StudioChapterList } from './StudioChapterList';
 import { CoverThumb } from './CoverThumb';
 
 type Props = {
@@ -31,9 +32,12 @@ function StudioStoryCardBase({
 }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const draft = useAppSelector(state => state.storyDraft.ownerId === state.auth.user?.id
+    && state.auth.user?.id === story.authorId ? state.storyDraft.summaries[story.id] : undefined);
   const chapters = React.useMemo(
-    () => splitChapters(story.content, story.chapterTitles),
-    [story.content, story.chapterTitles],
+    () => draft ? draft.chapterTitles.map((title, index) => ({ id: String(index), title, content: '' }))
+      : splitChapters(story.content, story.chapterTitles),
+    [draft, story.content, story.chapterTitles],
   );
 
   return (
@@ -88,25 +92,9 @@ function StudioStoryCardBase({
 
       {expanded && (
         <View style={styles.chapters}>
-          {chapters.map((c, i) => (
-            <ChapterRow
-              key={c.id}
-              chapter={c}
-              num={i + 1}
-              onPress={() => onOpenChapter(i)}
-              wordCountOverride={story.chaptersInSubcollection ? story.chapterWordCounts?.[i] : undefined}
-            />
-          ))}
-          <Pressable
-            onPress={onAddChapter}
-            style={({ pressed }) => [
-              styles.addChapter,
-              { borderColor: colors.border, opacity: pressed ? Motion.pressOpacity : 1 },
-            ]}
-          >
-            <Ionicons name="add" size={16} color={colors.primary} />
-            <Text variant="label" color={colors.primary}>{t('studio.addChapter')}</Text>
-          </Pressable>
+          <StudioChapterList chapters={chapters} counts={draft?.chapterWordCounts
+            ?? (story.chaptersInSubcollection ? story.chapterWordCounts : undefined)}
+            onOpen={onOpenChapter} onAdd={onAddChapter} />
         </View>
       )}
 
@@ -134,15 +122,5 @@ const styles = StyleSheet.create({
     marginLeft: CHAPTER_INSET,
   },
   chapters: { marginLeft: CHAPTER_INSET, paddingBottom: Spacing.sm },
-  addChapter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: Spacing.md,
-    marginTop: Spacing.xs,
-    borderWidth: 1,
-    borderRadius: Radius.sm,
-  },
   divider: { marginTop: Spacing.sm },
 });

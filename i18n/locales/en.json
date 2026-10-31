@@ -144,6 +144,7 @@
     "lastUpdated": "Last updated: {{date}}"
   },
   "studio": {
+    "storyStatusLabel": "Story status",
     "cannotDeleteTitle": "Can't Delete",
     "cannotDeleteMessage": "A story must have at least one chapter.",
     "deleteChapterTitle": "Delete Chapter",
@@ -156,11 +157,6 @@
     "publishedTitle": "Awesome!",
     "publishedMessage": "Your story is published and everyone can read it now.",
     "publishFailed": "Couldn't publish the story.",
-    "publishChapterTitle": "Publish Chapter",
-    "publishChapterMessage": "Publish chapter {{number}} and let your followers know?",
-    "publishChapterAction": "Publish Chapter",
-    "chapterPublishedTitle": "Chapter is live",
-    "chapterPublishedMessage": "The new chapter is published and your followers have been notified.",
     "loginRequiredTitle": "Sign-in required",
     "loginRequiredMessage": "You need to sign in to continue.",
     "titleMissingTitle": "Title missing",
@@ -209,7 +205,16 @@
     "untitledStory": "Untitled Story",
     "completeInfoTitle": "One last step",
     "completeInfoMessage": "Add a title and genre to your story before publishing.",
-    "completeInfoAction": "Complete Info"
+    "completeInfoAction": "Complete Info",
+    "saveFailed": "Couldn't save · Try again",
+    "draftOpenFailedTitle": "Couldn't open draft",
+    "draftOpenFailedMessage": "Check your connection and draft access permissions, then try again.",
+    "draftLoginRequired": "You need to sign in to save a draft.",
+    "publishLoginRequired": "You need to sign in to publish.",
+    "publishEmptyChapters": "Empty chapters can't be published. Add content or delete the empty chapter.",
+    "publishStoryMissing": "Story not found.",
+    "publishNotAuthor": "Only the author can publish this story.",
+    "publishError": "Chapters couldn't be published. Please try again."
   },
   "saved": {
     "title": "Saved Stories",
@@ -590,6 +595,10 @@
       "title": "Weekend Reading Marathon",
       "desc": "Finish 3 chapters and leave 2 comments between Friday and Sunday.",
       "endsIn": "2 days"
+    },
+    "errors": {
+      "sessionChanged": "Challenge session changed.",
+      "profileNotFound": "Challenge profile not found."
     }
   },
   "genres": {
@@ -675,7 +684,8 @@
     "pwWeak": "Weak",
     "pwMedium": "Medium",
     "pwGood": "Good",
-    "pwStrong": "Strong"
+    "pwStrong": "Strong",
+    "loadingSession": "Loading session"
   },
   "profileScreen": {
     "warning": "Warning",
@@ -832,7 +842,8 @@
     "googleSessionMissing": "Google session not found.",
     "appleUserIdMissing": "Apple user ID not found.",
     "appleRefreshFailed": "Apple authentication couldn't be refreshed.",
-    "disposableEmail": "Disposable email addresses can't be used to sign up. Please use a permanent address."
+    "disposableEmail": "Disposable email addresses can't be used to sign up. Please use a permanent address.",
+    "localEmailSignInRequired": "Use email and password to sign in to the local test."
   },
   "account": {
     "usernameTaken": "This username is already taken.",

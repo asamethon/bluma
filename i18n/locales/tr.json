@@ -144,6 +144,7 @@
     "lastUpdated": "Son güncelleme: {{date}}"
   },
   "studio": {
+    "storyStatusLabel": "Hikâyenin durumu",
     "cannotDeleteTitle": "Silinemez",
     "cannotDeleteMessage": "Bir hikâyenin en az bir bölümü olmalı.",
     "deleteChapterTitle": "Bölümü Sil",
@@ -156,11 +157,6 @@
     "publishedTitle": "Harika!",
     "publishedMessage": "Hikâyen yayınlandı ve artık herkes okuyabilir.",
     "publishFailed": "Hikâye yayınlanamadı.",
-    "publishChapterTitle": "Bölümü Yayınla",
-    "publishChapterMessage": "{{number}}. bölümü yayınlayıp takipçilerine duyurmak istiyor musun?",
-    "publishChapterAction": "Bölümü Yayınla",
-    "chapterPublishedTitle": "Bölüm yayında",
-    "chapterPublishedMessage": "Yeni bölüm yayınlandı ve takipçilerine duyuruldu.",
     "loginRequiredTitle": "Giriş gerekli",
     "loginRequiredMessage": "Devam etmek için giriş yapmalısın.",
     "titleMissingTitle": "Başlık eksik",
@@ -209,7 +205,16 @@
     "untitledStory": "Adsız Hikâye",
     "completeInfoTitle": "Son bir adım",
     "completeInfoMessage": "Yayınlamadan önce hikâyene bir başlık ve tür eklemelisin.",
-    "completeInfoAction": "Bilgileri Tamamla"
+    "completeInfoAction": "Bilgileri Tamamla",
+    "saveFailed": "Kaydedilemedi · Tekrar dene",
+    "draftOpenFailedTitle": "Taslak açılamadı",
+    "draftOpenFailedMessage": "Bağlantını ve taslak erişim izinlerini kontrol ederek tekrar dene.",
+    "draftLoginRequired": "Taslak kaydetmek için giriş yapmalısın.",
+    "publishLoginRequired": "Yayınlamak için giriş yapmalısın.",
+    "publishEmptyChapters": "Boş bölümler yayımlanamaz. İçerik ekleyebilir veya boş bölümü silebilirsin.",
+    "publishStoryMissing": "Hikâye bulunamadı.",
+    "publishNotAuthor": "Bu hikâyeyi yalnızca yazarı yayımlayabilir.",
+    "publishError": "Bölümler yayımlanamadı. Lütfen tekrar dene."
   },
   "saved": {
     "title": "Kaydedilen Hikayeler",
@@ -590,6 +595,10 @@
       "title": "Hafta Sonu Okuma Maratonu",
       "desc": "Cuma-Pazar arası 3 bölüm bitir, 2 yorum bırak.",
       "endsIn": "2 gün"
+    },
+    "errors": {
+      "sessionChanged": "Görev oturumu değişti.",
+      "profileNotFound": "Görev profili bulunamadı."
     }
   },
   "genres": {
@@ -675,7 +684,8 @@
     "pwWeak": "Zayıf",
     "pwMedium": "Orta",
     "pwGood": "İyi",
-    "pwStrong": "Güçlü"
+    "pwStrong": "Güçlü",
+    "loadingSession": "Oturum yükleniyor"
   },
   "profileScreen": {
     "warning": "Uyarı",
@@ -832,7 +842,8 @@
     "googleSessionMissing": "Google oturumu bulunamadı.",
     "appleUserIdMissing": "Apple kullanıcı kimliği bulunamadı.",
     "appleRefreshFailed": "Apple kimlik doğrulaması yenilenemedi.",
-    "disposableEmail": "Tek kullanımlık e-posta adresleriyle hesap açılamıyor. Kalıcı bir adres kullan."
+    "disposableEmail": "Tek kullanımlık e-posta adresleriyle hesap açılamıyor. Kalıcı bir adres kullan.",
+    "localEmailSignInRequired": "Yerel testte e-posta ve şifre ile giriş yapmalısın."
   },
   "account": {
     "usernameTaken": "Bu kullanıcı adı zaten kullanımda.",

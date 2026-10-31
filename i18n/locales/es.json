@@ -122,6 +122,7 @@
     "lastUpdated": "Última actualización: {{date}}"
   },
   "studio": {
+    "storyStatusLabel": "Estado de la historia",
     "cannotDeleteTitle": "No se puede eliminar",
     "cannotDeleteMessage": "Una historia debe tener al menos un capítulo.",
     "deleteChapterTitle": "Eliminar capítulo",
@@ -134,11 +135,6 @@
     "publishedTitle": "¡Genial!",
     "publishedMessage": "Tu historia ya está publicada y todos pueden leerla.",
     "publishFailed": "No se pudo publicar la historia.",
-    "publishChapterTitle": "Publicar capítulo",
-    "publishChapterMessage": "¿Publicar el capítulo {{number}} y avisar a tus seguidores?",
-    "publishChapterAction": "Publicar capítulo",
-    "chapterPublishedTitle": "Capítulo publicado",
-    "chapterPublishedMessage": "El nuevo capítulo está publicado y tus seguidores han sido avisados.",
     "loginRequiredTitle": "Se requiere iniciar sesión",
     "loginRequiredMessage": "Debes iniciar sesión para continuar.",
     "titleMissingTitle": "Falta el título",
@@ -187,7 +183,16 @@
     "untitledStory": "Historia sin título",
     "completeInfoTitle": "Un último paso",
     "completeInfoMessage": "Añade un título y un género a tu historia antes de publicarla.",
-    "completeInfoAction": "Completar información"
+    "completeInfoAction": "Completar información",
+    "saveFailed": "No se pudo guardar · Reintentar",
+    "draftOpenFailedTitle": "No se pudo abrir el borrador",
+    "draftOpenFailedMessage": "Comprueba tu conexión y los permisos de acceso al borrador e inténtalo de nuevo.",
+    "draftLoginRequired": "Debes iniciar sesión para guardar un borrador.",
+    "publishLoginRequired": "Debes iniciar sesión para publicar.",
+    "publishEmptyChapters": "No se pueden publicar capítulos vacíos. Añade contenido o elimina el capítulo vacío.",
+    "publishStoryMissing": "Historia no encontrada.",
+    "publishNotAuthor": "Solo el autor puede publicar esta historia.",
+    "publishError": "No se pudieron publicar los capítulos. Inténtalo de nuevo."
   },
   "saved": {
     "title": "Historias guardadas",
@@ -568,6 +573,10 @@
       "title": "Maratón de lectura del fin de semana",
       "desc": "Termina 3 capítulos y deja 2 comentarios entre el viernes y el domingo.",
       "endsIn": "2 días"
+    },
+    "errors": {
+      "sessionChanged": "La sesión del desafío cambió.",
+      "profileNotFound": "Perfil de desafío no encontrado."
     }
   },
   "genres": {
@@ -653,7 +662,8 @@
     "pwWeak": "Débil",
     "pwMedium": "Media",
     "pwGood": "Buena",
-    "pwStrong": "Fuerte"
+    "pwStrong": "Fuerte",
+    "loadingSession": "Cargando sesión"
   },
   "profileScreen": {
     "warning": "Advertencia",
@@ -810,7 +820,8 @@
     "googleSessionMissing": "No se encontró la sesión de Google.",
     "appleUserIdMissing": "No se encontró el ID de usuario de Apple.",
     "appleRefreshFailed": "No se pudo renovar la autenticación de Apple.",
-    "disposableEmail": "No se pueden crear cuentas con correos desechables. Usa una dirección permanente."
+    "disposableEmail": "No se pueden crear cuentas con correos desechables. Usa una dirección permanente.",
+    "localEmailSignInRequired": "Usa correo y contraseña para iniciar sesión en la prueba local."
   },
   "account": {
     "usernameTaken": "Este nombre de usuario ya está en uso.",

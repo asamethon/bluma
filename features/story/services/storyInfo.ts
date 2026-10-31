@@ -8,6 +8,7 @@ export type StoryInfoDraft = {
   category: StoryCategory;
   description: string;
   coverImage: string | null;
+  isCompleted: boolean;
 };
 
 type SaveParams = { storyId?: string; authorId: string; draft: StoryInfoDraft };
@@ -16,7 +17,6 @@ type SaveResult = { success: boolean; error?: string; createdStoryId?: string };
 const NEW_STORY_DEFAULTS = {
   content: '',
   tags: [] as string[],
-  isCompleted: false,
   isPublished: false,
   chaptersCount: 1,
   readingTime: 1,
@@ -35,6 +35,7 @@ export async function saveStoryInfo({ storyId, authorId, draft }: SaveParams): P
       title,
       description,
       category: draft.category,
+      isCompleted: draft.isCompleted,
       ...(coverImage ? { coverImage } : {}),
     });
     return { success: result.success, error: result.error };
@@ -45,6 +46,7 @@ export async function saveStoryInfo({ storyId, authorId, draft }: SaveParams): P
     title,
     description,
     category: draft.category,
+    isCompleted: draft.isCompleted,
     chapterTitles: [defaultChapterTitle(1)],
     authorId,
   } as Partial<Story> as Story);

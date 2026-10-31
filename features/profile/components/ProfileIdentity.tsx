@@ -1,5 +1,4 @@
 import { Badge, Text } from '@/components/ui';
-import i18n from '@/i18n';
 import type { Ionicons } from '@expo/vector-icons';
 import { View } from 'react-native';
 import { profileStyles as styles } from '../styles/profileStyles';
@@ -29,8 +28,5 @@ export function ProfileIdentity({ name, handle, badge, bio }: Props) {
   );
 }
 
-/**
- * `@kullanıcı` künyesi. E-POSTA YEDEĞİ YOK: adresin yerel kısmını göstermek
- * kişisel veriyi herkese açık profilde sızdırıyordu.
- */
-export const profileHandle = (username?: string) => username || i18n.t('common.authorUsername');
+/** Kullanıcı adı eksikse e-postadan herkese açık kimlik türetilmez. */
+export const profileHandle = (username?: string) => username || 'kullanici';
