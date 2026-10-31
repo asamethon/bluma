@@ -192,11 +192,13 @@ Bunlar yeni sürüm gönderilmeden ÖNCE bitmeli. Her kural değişikliğinden s
 
 **Eşik:** D7 retention ≥ %15 VE haftalık aktif kullanıcı 3 ay üst üste artıyor VE katalogda ≥ 300 hikâye.
 
+**Ürün kararı (31 Eki 2026) — abonelik olmayacak:** bu uygulamada destek aboneliği, premium üyelik ve coin/bölüm kilidi **yok**. `isPremium` sabit `false` kalır; mevcut premium rozeti (`components/ui/story-card/StoryCover.tsx`) ve %20 popülerlik bonusu (`features/story/services/discover/popularity.ts`) ölü koddur (bkz. [HATA-COZUM-DEVIR.md](HATA-COZUM-DEVIR.md) madde 25). Okur hiçbir bölümün arkasında ödeme duvarı görmez — "ücretsiz ve tam katalog" konumlanmanın parçası, Wattpad'in koin modelinden ayrışma noktası.
+
 Eşik geçilince sıra:
-1. **Yazara bahşiş** (en düşük sürtünme, topluluk dostu) — IAP ile "çiçek gönder", %70 yazara (bakiye), %30 platforma. Bloom markasıyla doğal örtüşür.
-2. **Destek aboneliği** (reklamsız zaten — "topluluğu destekle + rozet + erken erişim").
-3. **Reklam** — yalnızca bölüm aralarında, native format; TR eCPM düşük olduğu için en son.
-4. **Coin/bölüm kilidi** — ancak seri üreten sadık yazar kadrosu oluşursa (muhtemelen 2. yıl konusu).
+1. **Yazara bahşiş** (en düşük sürtünme, topluluk dostu) — IAP ile "çiçek gönder", %70 yazara (bakiye), %30 platforma. Bloom markasıyla doğal örtüşür. Tek seferlik satın alma; tekrarlayan abonelik değil.
+2. **Reklam** — yalnızca bölüm aralarında, native format; TR eCPM düşük olduğu için en son.
+
+Bilinçli olarak bu sıranın dışında: destek aboneliği, premium üyelik, coin/bölüm kilidi.
 
 ---
 
@@ -212,6 +214,7 @@ Eşik geçilince sıra:
 | Sürekli | Analitik panelini haftalık oku (3.2); 3-6 ay sonra FAZ 5 eşiğini değerlendir |
 
 ## Yapılacaklar-DIŞI (bilinçli erteleme)
+- Abonelik / premium üyelik / coin-bölüm kilidi (ürün kararı 31 Eki 2026: olmayacak — bkz. FAZ 5)
 - Reklam SDK'sı eklemek (eşik var — FAZ 5)
 - Web sürümü / react-native-web yayını
 - Çoklu dil desteği (TR nişi avantaj, dağıtma)

@@ -1,40 +1,39 @@
 # Bluma — hata çözümü devir dosyası
 
-Güncelleme: **24 Ekim 2026**. Proje: `/Users/sametbalci/Desktop/fantasy/bluma_LATEST`.
+Güncelleme: **31 Ekim 2026**. Proje: `/Users/sametbalci/Desktop/fantasy/bluma_LATEST`.
 Kaynak: kullanıcının 12 Ekim 2026 tarihli, 26 maddelik hata taraması.
-Bu dosya kalan işleri ve önceki oturumun durumunu birlikte taşır.
+Bu dosya kalan işleri ve önceki oturumların durumunu birlikte taşır.
+
+**Sayaç: 26 maddenin 25'i kapandı.** Kodda açık kalan tek madde, 22'nin XP yazma
+yetkisidir (22b). Madde 25 ürün kararıyla kapatıldı: bu uygulamada abonelik veya
+premium satışı olmayacak. Madde madde durum aşağıdaki tabloda.
 
 ## Yeni oturum için kısa durum
 
-- 24 Ekim devamında yüksek öncelikli **4. maddenin yazar kontrolü** ele alındı:
-  hikâye bilgi formuna Devam ediyor / Tamamlandı seçimi eklendi. Kod kontrolleri
-  geçti; kullanıcı işlevsel kabul testinin geçtiğini doğruladı. Ardından durum
-  seçenekleri ikonlu, lila seçim vurgulu alanlara dönüştürüldü; başlık 11 dile
-  eklendi. Son görsel düzenlemenin kullanıcı kontrolü bekliyor. `w3` görev
-  takibi hâlâ 13. madde kapsamındadır.
-- 1, 2 ve 3. maddelerin kod düzeltmeleri ve önceki kullanıcı kabul testleri tamamlandı;
-  canlıya geçiş gerektiren işler aşağıda ayrıca belirtiliyor.
-- 22a yönetim alanı korumasının yerel testleri ve kullanıcı kabulü geçti.
-- Son bildirilen **XP karışması şüphesi kapatıldı**: yerel kayıtta okurun yorum
-  ilerlemesi 4/5, kitap yayımlama ilerlemesi 0/3; yazarınki sırasıyla 0/5 ve 1/3.
-  İki hesapta da kazanılmış XP 0 ve alınmış ödül listesi boştu. Bunlar son okumanın
-  değerleri; sonraki testlerde değişebilir. Veri sıfırlanmadı veya düzeltilmedi.
-- Görev kartlarındaki +XP, kazanılabilecek sabit ödüldür; bütün hesaplarda görünür.
-  Kullanıcıyla bu ayrım netleştirildi ve sıradaki işe geçme konusunda anlaşıldı.
-- Beyaz ekran için kod düzeltildi; native `invalid-argument` hatasının kesin kökü
-  tekrar üretilemedi. XP şüphesinin kapanması, bu ayrı hatanın cihazda kesin olarak
-  çözüldüğünün kanıtı değildir. Yeniden bildirilirse ilgili bölümden devam et.
-- **22b — XP ve görev ödülü yetkileri için kısıtlar değerlendirildi (24 Ekim).**
-  Direkt `xp` yazımı engellenmeli ancak mevcut kurallar çok karmaşık hale gelip
-  emülatörde derlenemedi/yazım sınırına takıldı. Bu nedenle kurallarda **ek değişiklik
-  yapılmadı**; mevcut düzenlemeler geri alındı. `local-reader`'da eksik `w2`
-  nedeniyle gün yenilemesi yazımları çalışmıyor — bu veri sorunu. Açık olan `xp`
-  yazımı yönetim alanı ayrı parçasında değil, farklı bir yaklaşım gerektiriyor.
-  Kullanıcı bu parçayı erteleyebilir; sosyal/hikâye sayaçları sıradaki. Ayrıntı:
-  aşağıdaki 22b bölümü.
-- **Sıradaki küçük parça: 22'nin sosyal/hikâye sayaç yetkileri.** Ardından 4–8
-  yazar kontrolleri. Her küçük parçada dur ve hesapları belirterek kullanıcı test
-  senaryosu ver.
+- **26 maddeden 25'i kodda kapandı** (24–26 Ekim commit'leri). Kodda açık kalan
+  tek iş 22b: `firestore.rules:127` hâlâ sahibin `xp` alanını doğrudan yazmasına
+  izin veriyor. Diğer bütün maddeler 31 Ekim'de kodda tek tek doğrulandı.
+- **Madde 25 (premium) ürün kararıyla kapatıldı:** bu uygulamada abonelik veya
+  premium satışı olmayacak. `isPremium` sabit `false` kalır; bu bir hata değil ve
+  ödeme/premium sistemi icat edilmeyecek. Geriye kalan rozet (`StoryCover.tsx`) ve
+  popülerlik bonusu (`discover/popularity.ts`) ölü koddur — istenirse ayrı bir
+  temizlik işi, hata listesinin parçası değil.
+- **Commit edilmemiş 7 dosya var:** `features/challenges/definitions.ts`,
+  `features/challenges/services/challengeState.ts`,
+  `features/profile/components/challenges/ChallengesScreen.tsx`,
+  `features/story/hooks/useReaderChapters.ts`,
+  `features/story/hooks/useWriterActivation.ts`,
+  `features/story/services/commentMutations.ts`, `i18n/locales/tr.json`.
+  13, 15, 16 ve 20. maddelerin son rötuşları bunların içinde; kullanıcı
+  değişikliklerini koru, toplu reset/discard/stash yapma.
+- **"Kodda tamam" ≠ "canlıda tamam":** 1, 2 ve 22a için profil migration'ı ve
+  `firebase deploy --only firestore:rules` yapılmadı; ayrı Yaz sekmesinin native
+  yaması için yeni binary gönderilmedi. Ayrıntı: "Canlıya çıkış hâlâ ayrı iş".
+- Kullanıcı kontrolü bekleyen iki nokta: 4. maddenin son görsel düzenlemesi ve
+  23 Ekim'de görülen beyaz ekran / native `firestore/invalid-argument` hatası.
+  İkincisinin kesin kökü tekrar üretilemedi; cihazda çözüldüğü varsayılmamalı.
+- XP karışması şüphesi 24 Ekim'de kapatıldı: görev kartlarındaki +XP kazanılabilecek
+  sabit ödüldür, bütün hesaplarda görünür. Veri sıfırlanmadı veya düzeltilmedi.
 
 ## Çalışma biçimi
 
@@ -54,6 +53,50 @@ Canlıya deploy ve veri taşıma bu çalışmada da yapılmadı.
 Önce `git status --short` oku; toplu reset/discard/stash yapma.
 
 ## Kodda tamamlanan parçalar
+
+### 24–26 Ekim — 5–21, 23, 24, 26. maddeler ve 22'nin sayaç parçası
+
+Hepsi commit'li (aksi belirtilmedikçe) ve 31 Ekim'de kodda doğrulandı.
+
+- **5 — yetişkin içerik:** `targetAudience` seçimi hikâye bilgi formuna geri geldi
+  (`c9b8b68`, `StoryInfoForm.tsx`).
+- **6 — etiketler:** en fazla 5 etiketli giriş yazma/düzenleme ve gösterimde
+  (`c0077c8`).
+- **7 — hikâye dili:** yazar dil seçiyor; 11 uygulama dili + "Diğer"
+  (`240315e`, `e28e908`, `1da549b`).
+- **8 — içerik uyarıları:** yazar seçimi (`5b8b10b`) ve okur/önizleme gösterimi
+  (`a275bf7`) birlikte.
+- **9 — okuma listeleri:** Ayarlar → `/profile/lists` girişi (`5a8ab22`).
+- **10 — beğenilenler/kaydedilenler:** Kitaplıkta "tümünü gör" →
+  `/profile/favorites`, `/profile/saved` (`4249c46`).
+- **11 — içe aktarma:** stüdyo hub başlığından `/story/import` girişi
+  (`8e39626`, `useWriteStudio.importStory`).
+- **12 — yazar duyurusu:** kendi profilden `/conversation/create` erişimi ve
+  yazma yetkisine göre akış (`3b5a54c`, `0d6f56f`).
+- **13 — imkânsız görevler:** `tracker: 'manual'` tamamen kalktı; c4 artık
+  `commentFeatured` ile ilerliyor (`5421f83` + commit'siz rötuş).
+- **14 — haftalık ödüller:** `claimedChallenges` hafta başında sıfırlanıyor
+  (`e414d8c`, `challengeState.ts:39`).
+- **15 — görev anlamı/sayaç:** sayaçlar kendi içeriğini saymayacak şekilde
+  düzeltildi (`ee3eb5e` + commit'siz yorum sayacı rötuşu).
+- **16 — hafta sonu kartı:** dinamik gün sayısı, hedef 5→3, ödül alınabilir
+  (`1c52f81`; `endsToday`/`endsInDays` çevirileri commit'siz).
+- **17 — e-posta ayarı:** uygulanmayan anahtar kaldırıldı (`65c4f79`). Gerçek
+  e-posta bildirimi istenirse yeni bir iştir, bu madde değil.
+- **18 — mention:** yorumlarda @bahsetme bildirimi üretiliyor; yönlendirme,
+  vurgulama ve öneri listesi ardından düzeltildi (`13a0810` ve takip commit'leri).
+- **19 — hikâye bitişi:** son bölüm kartı yalnız `isCompleted === true` ise
+  "Hikâyeyi bitirdin" gösteriyor (`ReaderChapterTail.tsx:75`).
+- **20 — yazar dürtmeleri:** `writerReminders.ts:14` ve `useWriterActivation`
+  `intent === 'reader'` seçenleri dışlıyor (hook değişikliği commit'siz).
+- **21 — boş taslaklar:** aynı boş taslak yeniden kullanılıyor, her dokunuşta
+  "Adsız hikâye" açılmıyor (`75ad270`).
+- **22 — sosyal/hikâye sayaçları:** sayaç artışı yalnızca gerçek beğeni/takip
+  dokümanıyla kabul ediliyor (`445cb1c`, `97ed61f`). XP parçası (22b) açık.
+- **23 — çeviriler:** lansman anahtarları 11 dilde (`a82f5dc`).
+- **24 — sabit metinler:** i18n'e taşındı (`27c688a`).
+- **26 — profil alanları:** web sitesi ve konum profil başlığında gösteriliyor,
+  adres doğrulaması eklendi (`1906876`, `95d111c`).
 
 ### 24 Ekim — 4. madde: hikâyenin tamamlanma kontrolü
 
@@ -204,36 +247,48 @@ Kullanıcı kabul testi (bluma Yerel):
   yazımını engelleyebiliyor; bu daha çok veri durumu. XP açığı ayrı bir parçada
   ele alınabilir. Canlı deploy / migration yapılmadı.
 
-## Kalan hatalar — özgün madde numaraları
+## Madde durumları — özgün numaralar
 
-Aşağıdaki 4–26 maddeler ilk taramadan devralındı; tümü bu oturumda yeniden denetlenmedi.
-Her parçanın başında mevcut kodda doğrula. Özellik tercihleri belirsizse kaldırıldı diye varsayma.
+12 Ekim taramasının 26 maddesi. "✅ kod" = kodda doğrulandı; canlı deploy/binary
+gerektirenler ayrıca işaretli. Yeni bir parçaya başlarken durumu kodda tekrar
+doğrula; özellik tercihleri belirsizse kaldırıldı diye varsayma.
 
-| No | Öncelik / konu | Sorun ve beklenen düzeltme |
+| No | Konu | Durum |
 | --- | --- | --- |
-| 4 | Yüksek — tamamlanma durumu | Yazar kontrolünün kullanıcı kabulü geçti. Ardından seçim UI'ı ve 11 dilde başlık yerelleştirmesi düzeltildi; görsel kontrol bekliyor. `w3` görev takibi ayrı 13. maddede açık. |
-| 5 | Yüksek — yetişkin içerik | Eski `isMature` → `targetAudience: 'adult'` kontrolü kaybolmuş. Yeni hikâyelerde +18 seçilemediği için yetişkin içerik filtresi çalışmıyor. |
-| 6 | Yüksek — etiketler | TagEditor kaldırılmış; yeni hikâyeler `tags: []`. Öneri ve arama eşleşmesi için yazma/düzenleme kontrolü geri gelmeli. |
-| 7 | Yüksek — hikâye dili | Yazar dil seçemiyor; `createStory` arayüz dilini yazıyor. Eski `language: 'Türkçe'` gibi etiketler `tr` ile eşleşmiyor. Seçim ve eski veri normalizasyonu gerekli. |
-| 8 | Yüksek — içerik uyarıları | `contentWarnings` artık ne yazılıyor ne okunuyor. Yazar kontrolü ve okura gösterim birlikte ele alınmalı. |
-| 9 | Yüksek — okuma listeleri | Okuyucuda Listeye ekle var ama `/profile/lists` ekranına giriş yok. Listelere erişim tamamlanmalı. |
-| 10 | Yüksek — beğenilenler | Kitaplık yalnız 10 beğeniyi gösteriyor; tümünü gör yok. `/profile/favorites` ve `/profile/saved` yetim. |
-| 11 | Yüksek — içe aktarma | `/story/import` duruyor, giriş düğmesi kaldırılmış. Kasıtlı ürün kararı olup olmadığı belirsiz. 2. parçada içe aktarmanın servisleri taslak/yayın modeline uyarlandı; **ekrana giriş çözülmedi**. |
-| 12 | Yüksek — yazar duyurusu | `/conversation/create` girişinin hiç bağlanmadığı raporlandı. Erişim ve kimlerin duyuru oluşturabildiği doğrulanmalı. |
-| 13 | Orta — imkânsız görevler | w3, r4, c3, c4 `tracker: 'manual'`; ilerleten kod yok. Dört görev ve bağlı XP/rozetler tamamlanamıyor. |
-| 14 | Orta — haftalık ödüller | `claimedChallenges` haftalık sıfırlanmıyor; haftalık görev ödülleri yalnız bir kez alınabiliyor. |
-| 15 | Orta — görev anlamı/sayaç | w2 günlük yayın yerine streak; r2 hikâye bitirme yerine 3 bölüm; r3 10 hikâye yerine 10 bölüm; c1 farklı hikâyeler yerine aynı hikâyedeki yorumları sayıyor. İlk/tek bölüm sayılmıyor, tekrar okuma yeniden sayılıyor. |
-| 16 | Orta — hafta sonu kartı | Sabit 2 gün; ilerleme tüm haftadan r1+c1; hedef/açıklama uyumsuz; ödül butonu yok. |
-| 17 | Orta — e-posta ayarı | E-posta bildirimleri anahtarı kaydediliyor ama okunmuyor/uygulanmıyor. Gerçek tüketici veya doğru ürün davranışı gerekli. |
-| 18 | Orta — mention | Alıcı/gösterim tarafı var, `mention` bildirimi üreten kod yok. |
-| 19 | Orta — hikâye bitişi | Okuyucu son bölümü `isCompleted` kontrol etmeden Hikâyeyi bitirdin diye gösteriyor; devam eden hikâyede de çıkıyor. |
-| 20 | Orta — yazar dürtmeleri | `syncWriterReminders` ve `HomeWriterNudge`, `intent: 'reader'` seçenlere de gidiyor. |
-| 21 | Orta — boş taslaklar | Yeni hikâye her dokunuşta `useQuickDraft` ile Adsız hikâye oluşturuyor; vazgeçilince kalıyor ve hatırlatmaların hedefi olabiliyor. |
-| 22 | Güvenlik — kısmen tamamlandı | `isHidden`/`isEditorsPick` koruması (22a) tamamlandı; canlı deploy bekliyor. Kullanıcının XP ve yazarın hikâye sayaç yetkileri sonraki parça. |
-| 23 | Düşük — çeviriler | Lansman ekranındaki 20 anahtar yalnız tr/en'de; diğer 9 dil İngilizceye düşüyor. |
-| 24 | Düşük — sabit metinler | `EditProfileScreen.tsx` ve `useMessageRemoval.ts` içinde sabit Türkçe metinler. Mevcut konumları yeniden bulup i18n'e taşı. |
-| 25 | Düşük — premium | `isPremium` hep false; rozet ve %20 bonus etkisiz. Ürün kararı netleşmeden ödeme/premium sistemi icat etme. |
-| 26 | Düşük — profil alanları | Web sitesi ve konum düzenlenebiliyor ama gösterilmiyor; görünürlük/ürün davranışı tamamlanmalı. |
+| 1 | Açık profillerde özel bilgiler | ✅ kod — migration + kural deploy bekliyor |
+| 2 | Taslakların hemen okura/bildirime gitmesi | ✅ kod — kural deploy bekliyor |
+| 3 | Görev ilerlemesinin korunması | ✅ kullanıcı kabulü geçti |
+| 4 | Hikâyenin tamamlanma durumu | ✅ — son görsel düzenleme kullanıcı kontrolünde |
+| 5 | Yetişkin içerik (+18) | ✅ |
+| 6 | Etiketler | ✅ |
+| 7 | Hikâye dili | ✅ |
+| 8 | İçerik uyarıları | ✅ |
+| 9 | Okuma listeleri | ✅ |
+| 10 | Beğenilenler/kaydedilenler | ✅ |
+| 11 | İçe aktarma girişi | ✅ |
+| 12 | Yazar duyurusu | ✅ |
+| 13 | İmkânsız görevler | ✅ (commit'siz rötuş) |
+| 14 | Haftalık ödül sıfırlaması | ✅ |
+| 15 | Görev anlamı/sayaçlar | ✅ (commit'siz rötuş) |
+| 16 | Hafta sonu kartı | ✅ (commit'siz rötuş) |
+| 17 | E-posta bildirim ayarı | ✅ — anahtar kaldırılarak çözüldü |
+| 18 | Mention bildirimi | ✅ |
+| 19 | Hikâye bitişi | ✅ |
+| 20 | Yazar dürtmeleri | ✅ (commit'siz rötuş) |
+| 21 | Boş taslaklar | ✅ |
+| 22 | Güvenlik: yönetim alanları / sayaçlar / XP | ⚠️ **kısmi** — 22a ve sayaçlar bitti, **22b XP açık** |
+| 23 | Lansman çevirileri | ✅ |
+| 24 | Sabit metinler | ✅ |
+| 25 | Premium | ⛔ **ürün kararıyla kapatıldı** — abonelik/premium olmayacak, `isPremium` sabit `false` |
+| 26 | Profil alanları (web sitesi, konum) | ✅ |
+
+### Açık tek iş: 22b — XP yazma yetkisi
+
+`firestore.rules:127` kullanıcı belgesinde sahibe tam güncelleme veriyor, yani
+istemci `xp`'yi istediği değere yazabilir. 24 Ekim'de denenen kapsamlı kural
+düzeltmesi Firestore Rules derleme sınırını aştığı için geri alındı; bu parça
+farklı bir yaklaşım gerektiriyor (ör. XP'yi ayrı belgeye/işleve taşımak).
+Ayrıntı: yukarıdaki "22b — XP ve görev ödülü yetkileri" bölümü.
 
 ### Ek doğrulama: hesaplar arası veri taşınması
 
@@ -266,9 +321,8 @@ Aşağıdaki ilerleme karşılaştırmalarını aynı hafta içinde yap.
 
 İlk yükleme/yazma gecikmesi, transaction tekrarı, hesap değişimi ve kayıt
 hatasında geri alma ayrıca `__tests__/challengeProgress.test.ts` ile sınanır.
-22a yönetim alanları tamamlandı. Sonraki parça 22. maddedeki sosyal/hikâye sayaç
-yetkileridir; ardından 4–8 arasındaki yazar kontrolleri küçük gruplar hâlinde ele
-alınır.
+22a yönetim alanları, sosyal/hikâye sayaç yetkileri ve 4–8 arasındaki yazar
+kontrolleri tamamlandı; kalan tek güvenlik parçası 22b XP yazma yetkisidir.
 
 ## Test durumu ve verimli devam
 
@@ -316,11 +370,12 @@ alınır.
 
 ## Yeni oturuma verilebilecek istek
 
-> `docs/HATA-COZUM-DEVIR.md` dosyasını ve proje talimatlarını oku. 22b XP ve
-> görev ödülü yetkileri kodda tamamlandı; sıradaki iş 22'nin sosyal/hikâye sayaç
-> yetkileri. Önce mevcut sayaç açığını emülatörde doğrula, normal beğeni/yorum/
-> takip akışlarını bozmadan küçük parçayı çöz. XP parçasına geri dönme. Token/quota
+> `docs/HATA-COZUM-DEVIR.md` dosyasını ve proje talimatlarını oku. 26 maddelik
+> hata listesinin 25'i kapandı; kodda açık tek iş 22b — kullanıcı belgesindeki
+> `xp` alanının istemciden yazılabilmesi. Madde 25'e (premium) dokunma: abonelik
+> olmayacak, kapandı. Önce açığı emülatörde doğrula, sonra Rules derleme sınırını
+> aşmayan küçük bir çözüm kur; normal görev/ödül akışlarını bozma. Token/quota
 > tüketimini düşük tut; UI testlerini ben yapacağım. Gerekli kod kontrollerini
-> çalıştır, sonra hangi hesapla nasıl test edeceğimi adım adım yazıp dur. Mevcut
-> değişiklikleri ve test verilerini koru; canlıya deploy, toplu veri sıfırlama
-> veya migration yapma.
+> çalıştır (`npx tsc --noEmit` zorunlu), sonra hangi hesapla nasıl test edeceğimi
+> adım adım yazıp dur. Commit edilmemiş 7 dosyayı ve test verilerini koru; canlıya
+> deploy, toplu veri sıfırlama veya migration yapma.
