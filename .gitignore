@@ -80,3 +80,6 @@ goldie/goldie.design.json
 
 # goldie capture icin sabitlenen release simulator build'i
 goldie/build/
+
+# pazarlama videosu/gorsel ciktilari (uretilen medya, ~10 MB)
+/marketing/
