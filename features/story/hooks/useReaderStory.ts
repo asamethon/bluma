@@ -1,6 +1,5 @@
 import { readParams } from '@/features/discovery/services/feedEvents';
 import { useChapterContent } from './useChapterContent';
-import { useReadingReviewMoments } from '@/features/review/hooks/useReadingReviewMoments';
 import { readingProgressActions } from '@/features/story/services/readingProgress';
 import { storyActions } from '@/store/storyStore';
 import { useAppSelector } from '@/store/hooks';
@@ -9,6 +8,7 @@ import { getAnalytics, logEvent } from '@react-native-firebase/analytics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { buildReaderParagraphs, estimateReadingMinutes, splitStoryChapters } from '../utils/readerContent';
+import { useReadingMilestones } from './useReadingMilestones';
 
 type Params = {
   storyId: string;
@@ -29,11 +29,7 @@ export function useReaderStory({ storyId, requestedChapter, isGuest }: Params) {
   const lastScrollSave = useRef(0);
   const resumedStoryId = useRef<string | null>(null);
   const story = liveStory?.id === storyId ? liveStory : loadedStory;
-  const trackReviewMoment = useReadingReviewMoments({
-    storyId,
-    chapterCount: story?.chapterTitles?.length || story?.chaptersCount || 1,
-    enabled: !isGuest,
-  });
+  const reachMilestone = useReadingMilestones({ story, enabled: !isGuest });
   const {
     body: chapterBody,
     like: chapterLike,
@@ -101,14 +97,23 @@ export function useReaderStory({ storyId, requestedChapter, isGuest }: Params) {
   }, [isGuest, storyId]);
 
   const saveScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (isGuest || Date.now() - lastScrollSave.current < 2000) return;
-    lastScrollSave.current = Date.now();
+    if (isGuest) return;
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
     const scrollable = contentSize.height - layoutMeasurement.height;
     const ratio = scrollable > 0 ? Math.max(0, Math.min(1, contentOffset.y / scrollable)) : 0;
+    // Bölüm sonu kısıtlamasız denetlenir: hızla sona kaydırılıp orada
+    // durulduğunda 2 sn'lik kayıt aralığı son konumu kaçırıyordu.
+    if (!isChapterLoading) reachMilestone(chapterIndex, ratio);
+    if (Date.now() - lastScrollSave.current < 2000) return;
+    lastScrollSave.current = Date.now();
     void readingProgressActions.saveReadingProgress(storyId, chapterIndex, ratio);
-    trackReviewMoment(chapterIndex, ratio);
-  }, [chapterIndex, isGuest, storyId, trackReviewMoment]);
+  }, [chapterIndex, isChapterLoading, isGuest, reachMilestone, storyId]);
+
+  /** Ekrana sığan kısa bölümde kaydırma olayı gelmez; görünen bölüm bitmiştir. */
+  const checkFits = useCallback((contentHeight: number, viewportHeight: number) => {
+    if (isGuest || isChapterLoading || !contentHeight || !viewportHeight) return;
+    if (contentHeight <= viewportHeight + 1) reachMilestone(chapterIndex, 1);
+  }, [chapterIndex, isChapterLoading, isGuest, reachMilestone]);
 
   const toggleChapterLike = useCallback(() => {
     if (!chapterLike) return;
@@ -129,6 +134,7 @@ export function useReaderStory({ storyId, requestedChapter, isGuest }: Params) {
     pendingScrollRatio,
     readerContent,
     saveScroll,
+    checkFits,
     selectChapter,
     story,
     toggleChapterLike,

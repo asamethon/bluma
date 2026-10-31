@@ -1,6 +1,7 @@
 import { assertEmailVerified } from '@/features/auth/services/emailVerification';
 import i18n from '@/i18n';
 import { store } from '@/store';
+import { challengeActions } from '@/store/challengeStore';
 import { notificationActions } from '@/store/notificationStore';
 import { patchStory } from '@/store/slices/storySlice';
 import type { Story } from '@/types';
@@ -8,6 +9,7 @@ import { logger } from '@/utils/logger';
 import { getAnalytics, logEvent } from '@react-native-firebase/analytics';
 import { addDoc, collection, doc, getDoc, getFirestore, increment, serverTimestamp, updateDoc } from '@react-native-firebase/firestore';
 import { applyStoryChange, loadStoriesFeed } from './listeners/storyFeedListeners';
+import { normalizeLanguage } from '../utils/storyDetails';
 import { forgetStory } from './storyCache';
 
 export async function updateUserStoriesCount(userId: string, delta: number) {
@@ -18,14 +20,22 @@ export async function updateUserStoriesCount(userId: string, delta: number) {
   }
 }
 
-export const publishSideEffects = (user: NonNullable<ReturnType<typeof store.getState>['auth']['user']>, storyId: string, title: string) => {
-  void notificationActions.announceStoryToFollowers(
-    user.id,
-    user.displayName || user.username || i18n.t('notifications.anAuthorYouFollow'),
-    storyId,
-    title,
-    'new_story',
-  );
+/** `announce` false: yeniden yayın — takipçilere ikinci kez duyurulmaz. */
+export const publishSideEffects = (
+  user: NonNullable<ReturnType<typeof store.getState>['auth']['user']>,
+  storyId: string,
+  title: string,
+  announce = true,
+) => {
+  if (announce) {
+    void notificationActions.announceStoryToFollowers(
+      user.id,
+      user.displayName || user.username || i18n.t('notifications.anAuthorYouFollow'),
+      storyId,
+      title,
+      'new_story',
+    );
+  }
   void logEvent(getAnalytics(), 'story_publish', { story_id: storyId });
   // Akış artık canlı dinlenmiyor: yazar yeni hikâyesini hemen görsün.
   void loadStoriesFeed({ force: true });
@@ -44,7 +54,8 @@ export async function createStory(
       value !== undefined && value !== null && value !== '' && (!Array.isArray(value) || value.length > 0)
     )));
     const reference = await addDoc(collection(getFirestore(), 'stories'), {
-      language: i18n.language,
+      // Varsayılan dil arayüz dilinin KODU ('pt-BR' → 'pt'); yazar formdan seçer.
+      language: normalizeLanguage(i18n.language) ?? 'tr',
       ...cleanData,
       authorId: user.id,
       likesCount: 0,
@@ -78,11 +89,19 @@ export async function updateStory(storyId: string, updates: Partial<Story>) {
     forgetStory(storyId);
     applyStoryChange(storyId, updates);
     const becamePublished = updates.isPublished === true && !current.isPublished;
+    // Yayından kaldırma sayacı geri almazsa her kaldır→yayınla döngüsü
+    // profildeki hikâye sayısını bir artırıyordu.
+    const becameUnpublished = updates.isPublished === false && current.isPublished;
     if (becamePublished) await updateUserStoriesCount(current.authorId, 1);
+    if (becameUnpublished) await updateUserStoriesCount(current.authorId, -1);
     const user = store.getState().auth.user;
     if (user?.id === current.authorId) {
+      // "Yarım kalan bir hikâyeyi tamamla": yayındaki hikâye Tamamlandı'ya geçti.
+      if (updates.isCompleted === true && !current.isCompleted && current.isPublished) {
+        void challengeActions.trackAction(user.id, 'storiesCompleted', storyId);
+      }
       const title = updates.title || current.title;
-      if (becamePublished) publishSideEffects(user, storyId, title);
+      if (becamePublished) publishSideEffects(user, storyId, title, !current.lastNotifiedChapterCount);
     }
     return { success: true };
   } catch (error) {

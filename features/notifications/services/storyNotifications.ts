@@ -120,6 +120,32 @@ export async function createCommentNotification(
   }
 }
 
+/** Yorumda `@kullanıcıadı` ile anılan kişiye (bkz. story/services/commentMentions). */
+export function createMentionNotification(
+  senderId: string,
+  recipientId: string,
+  senderName: string,
+  storyTitle: string,
+  storyId: string,
+  commentId: string,
+) {
+  const params = { name: senderName, story: storyTitle };
+  return createNotification({
+    userId: recipientId,
+    senderId,
+    type: 'mention',
+    title: i18n.t('notifications.mentionTitle'),
+    message: i18n.t('notifications.mentionMessage', params),
+    data: {
+      storyId,
+      storyTitle,
+      commentId,
+      i18n: { titleKey: 'notifications.mentionTitle', messageKey: 'notifications.mentionMessage', params },
+    },
+    isRead: false,
+  });
+}
+
 export function createWelcomeNotification(userId: string, userName: string) {
   const params = { name: userName };
   return createNotification({

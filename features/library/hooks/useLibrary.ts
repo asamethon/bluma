@@ -6,7 +6,12 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export type LibrarySection = { title: string; data: Story[] };
+/**
+ * `route`: bölümün tamamını gösteren ve kaldırma/düzenleme sunan ekran.
+ * Kitaplık beğenilenlerin yalnızca son 10'unu gösterdiği için "Tümü"
+ * olmadan geri kalanına ulaşılamıyordu.
+ */
+export type LibrarySection = { title: string; data: Story[]; route: '/profile/saved' | '/profile/favorites' };
 
 /** En son beğenilenlerden kitaplıkta gösterilen sayı. */
 const LIKED_PREVIEW_COUNT = 10;
@@ -33,11 +38,12 @@ export function useLibrary() {
 
   const sections = useMemo(() => {
     const list: LibrarySection[] = [];
-    if (savedStories.length) list.push({ title: t('library.saved'), data: savedStories });
+    if (savedStories.length) list.push({ title: t('library.saved'), data: savedStories, route: '/profile/saved' });
     if (likedStories.length) {
       list.push({
         title: t('library.liked'),
         data: likedStories.slice(0, LIKED_PREVIEW_COUNT),
+        route: '/profile/favorites',
       });
     }
     return list;

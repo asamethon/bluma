@@ -13,8 +13,7 @@ const slice = createSlice({
       state.summaries[action.payload.storyId] = action.payload.summary;
     },
     forgetDraftSummary(state, action: PayloadAction<string>) { delete state.summaries[action.payload]; },
-    resetStoryDrafts: () => initialState,
   },
 });
-export const { replaceDraftSummaries, rememberDraftSummary, forgetDraftSummary, resetStoryDrafts } = slice.actions;
+export const { replaceDraftSummaries, rememberDraftSummary, forgetDraftSummary } = slice.actions;
 export default slice.reducer;

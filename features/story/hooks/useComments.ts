@@ -70,7 +70,9 @@ export function useComments(storyId: string, chapterIndex?: number) {
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('common.delete'), style: 'destructive', onPress: () => {
-          void storyActions.deleteComment(storyId, commentId).catch(error => logger.error('Delete comment error:', error));
+          void storyActions.deleteComment(storyId, commentId).then(result => {
+            if (!result.success) Alert.alert(t('common.error'), result.error || t('comments.deleteFailed'));
+          }).catch(error => logger.error('Delete comment error:', error));
         },
       },
     ],

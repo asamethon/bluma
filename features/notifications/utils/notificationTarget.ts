@@ -37,7 +37,8 @@ export function notificationTarget(input: {
   if (conversation && ['like', 'comment', 'conversation_announcement'].includes(type || '')) {
     return route(`/conversation/${conversation}`);
   }
-  if (story && type === 'comment') {
+  // Anma bir yorumda geçer: okur onu yorumlar ekranında bulur.
+  if (story && (type === 'comment' || (type === 'mention' && data?.commentId))) {
     const suffix = chapterIndex === undefined ? '' : `?chapter=${chapterIndex}`;
     return route(`/story/${story}/comments${suffix}`);
   }

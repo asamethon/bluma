@@ -4,10 +4,13 @@
     "app/**/*.{ts,tsx}",
     "plugins/**/*.js",
     "goldie/*.config.ts",
-    "scripts/**/*.{js,cjs}"
+    "scripts/**/*.{js,cjs}",
+    "__tests__/support/**/*.ts"
   ],
   "project": [
     "**/*.{ts,tsx,js,cjs}",
     "!server/**"
-  ]
+  ],
+  "ignoreBinaries": ["firebase"],
+  "ignoreDependencies": ["expo-modules-jsi"]
 }

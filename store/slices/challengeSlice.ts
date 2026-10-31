@@ -1,5 +1,9 @@
 import { createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { applyChallengeOperation, emptyChallengeData, type ChallengeData, type ChallengeOperation } from '@/features/challenges/services/challengeState';
+import { CHALLENGE_DEFS, WEEKEND_CHALLENGE } from '@/features/challenges/definitions';
+import {
+  applyChallengeOperation, emptyChallengeData, isClaimed, weekendProgress,
+  type ChallengeData, type ChallengeOperation,
+} from '@/features/challenges/services/challengeState';
 import { patchAuth } from './authSlice';
 
 interface PendingOperation { id: number; operation: ChallengeOperation }
@@ -32,7 +36,7 @@ const challengeSlice = createSlice({
 });
 
 export const { resetChallenges, beginChallenges, queueChallenge, settleChallenge } = challengeSlice.actions;
-const selectChallengeView = createSelector(
+export const selectChallengeView = createSelector(
   [(state: { challenge: ChallengeState }) => state.challenge.confirmed,
     (state: { challenge: ChallengeState }) => state.challenge.pending],
   (confirmed, pending) => pending.reduce((data, item) => applyChallengeOperation(data, item.operation), confirmed),
@@ -40,5 +44,10 @@ const selectChallengeView = createSelector(
 export const selectChallengeXp = (state: { challenge: ChallengeState }) => selectChallengeView(state).xp;
 export const selectChallengeStreak = (state: { challenge: ChallengeState }) => selectChallengeView(state).streak;
 export const selectChallengeProgress = (state: { challenge: ChallengeState }) => selectChallengeView(state).challengeProgress;
-export const selectClaimedChallenges = (state: { challenge: ChallengeState }) => selectChallengeView(state).claimedChallenges;
+const CLAIMABLE_IDS = [...CHALLENGE_DEFS.map(def => def.id), WEEKEND_CHALLENGE.id];
+/** Şu an "alındı" sayılan ödüller: kalıcılar + yalnızca BU haftanın haftalıkları. */
+export const selectClaimedIds = createSelector([selectChallengeView], view =>
+  CLAIMABLE_IDS.filter(id => isClaimed(view, id)));
+export const selectWeekendProgress = (state: { challenge: ChallengeState }) =>
+  weekendProgress(selectChallengeView(state));
 export default challengeSlice.reducer;

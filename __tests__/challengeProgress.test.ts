@@ -3,7 +3,7 @@ import { startChallengeSession } from '@/features/challenges/services/challengeS
 import { todayKey, weekStartKey, yesterdayKey } from '@/features/challenges/services/challengeCalendar';
 import { reviewPromptActions } from '@/features/review/services/reviewPrompt';
 import { patchAuth, type User } from '@/store/slices/authSlice';
-import { selectChallengeProgress, selectChallengeXp, selectClaimedChallenges } from '@/store/slices/challengeSlice';
+import { selectChallengeProgress, selectChallengeXp, selectClaimedIds } from '@/store/slices/challengeSlice';
 import { appState, database, deferred, firestoreMock, identity, scenario, seed, testStore } from './support/challengeFirestore';
 
 jest.mock('@react-native-firebase/firestore', () => jest.requireActual('./support/challengeFirestore').firestoreMock);
@@ -29,13 +29,13 @@ beforeEach(() => {
   scenario.beforeRead = null; scenario.beforeCommit = null; scenario.retry = null;
   jest.clearAllMocks();
   seed('A', { xp: 150, challengeProgress: { r1: 2, r3: 2, c1: 1, w3: 1, w2: 2 }, claimedChallenges: ['w3'] });
-  seed('B', { xp: 40, challengeProgress: { c2: 1 }, claimedChallenges: ['c3'] });
+  seed('B', { xp: 40, challengeProgress: { c2: 1 }, claimedChallenges: ['c4'] });
 });
 afterEach(() => jest.useRealTimers());
 
 it('profil açılmadan yapılan aksiyon eski ilerlemeyi, XP ve ödülleri korur', async () => {
   login('A');
-  await challengeActions.trackAction('A', 'commentsPosted');
+  await challengeActions.trackAction('A', 'commentsPosted', 'story-1');
   expect(database.get('A')).toMatchObject({ xp: 150, challengeProgress: { r1: 2, c1: 2, w3: 1 }, claimedChallenges: ['w3'] });
   expect(progress()).toMatchObject({ r1: 2, c1: 2, w3: 1 });
 });
@@ -44,8 +44,8 @@ it('ilk yükleme gecikirken gelen peş peşe aksiyonlar kaybolmaz', async () => 
   login('A');
   const gate = deferred(); scenario.beforeRead = () => gate.promise;
   const load = challengeActions.loadProgress('A');
-  const actions = [challengeActions.trackAction('A', 'chaptersRead'), challengeActions.trackAction('A', 'commentsPosted'),
-    challengeActions.trackAction('A', 'chaptersRead')];
+  const actions = [challengeActions.trackAction('A', 'chaptersRead', 's:0'),
+    challengeActions.trackAction('A', 'commentsPosted', 's'), challengeActions.trackAction('A', 'chaptersRead', 's:1')];
   gate.resolve(); await Promise.all([load, ...actions]);
   expect(progress()).toMatchObject({ r1: 4, r3: 4, c1: 2, w3: 1 });
   expect(database.get('A')?.challengeProgress).toEqual(progress());
@@ -73,8 +73,8 @@ it('gün yenilerken ilk okumadan sonra başka cihazın yazdığı veriyi yeniden
 it('başarısız optimistic artış geri alınır, sınırdaki sonraki aksiyon korunur', async () => {
   seed('A', { challengeProgress: { r1: 4 } }); login('A'); await challengeActions.loadProgress('A');
   const gate = deferred(); scenario.beforeCommit = async () => { await gate.promise; throw Error('bağlantı'); };
-  const first = challengeActions.trackAction('A', 'chaptersRead');
-  const second = challengeActions.trackAction('A', 'chaptersRead');
+  const first = challengeActions.trackAction('A', 'chaptersRead', 's:0');
+  const second = challengeActions.trackAction('A', 'chaptersRead', 's:1');
   expect(progress().r1).toBe(5);
   gate.resolve(); await Promise.all([first, second]);
   expect(progress().r1).toBe(5);
@@ -86,13 +86,13 @@ it('yükleme hatasında boş store sunucu ilerlemesinin üzerine yazılmaz', asy
   login('A'); scenario.beforeRead = async () => { throw Error('ağ yok'); };
   await challengeActions.loadProgress('A');
   expect(testStore.getState().challenge.isLoaded).toBe(false);
-  await challengeActions.trackAction('A', 'newFollows');
+  await challengeActions.trackAction('A', 'newFollows', 'B');
   expect(progress()).toMatchObject({ r1: 2, c1: 1, c2: 1 });
 });
 
 it('transaction tekrarında başka cihazın ilerlemesi korunur ve tamamlanma bir kez bildirilir', async () => {
   login('A'); scenario.retry = () => seed('A', { challengeProgress: { r1: 4, c1: 4, custom: 7 } });
-  await challengeActions.trackAction('A', 'chaptersRead');
+  await challengeActions.trackAction('A', 'chaptersRead', 's:0');
   expect(database.get('A')?.challengeProgress).toMatchObject({ r1: 5, c1: 4, custom: 7 });
   expect(reviewPromptActions.recordMoment).toHaveBeenCalledTimes(1);
 });
@@ -106,7 +106,8 @@ it('ödül alma güncel hesabı okur, tamamlanmamış görevi reddeder ve çift 
   seed('A', { xp: 150, challengeProgress: { c1: 5 } });
   await Promise.all([challengeActions.claimChallenge('A', 'c1'), challengeActions.claimChallenge('A', 'c1')]);
   expect(database.get('A')?.xp).toBe(240);
-  expect(selectClaimedChallenges(testStore.getState())).toEqual(['c1']);
+  expect(selectClaimedIds(testStore.getState())).toEqual(['c1']);
+  expect(database.get('A')).toMatchObject({ weeklyClaims: ['c1'], claimedChallenges: [] });
 });
 
 it('başarısız ödül yazımı XP ve alındı durumunu geri alır', async () => {
@@ -116,7 +117,7 @@ it('başarısız ödül yazımı XP ve alındı durumunu geri alır', async () =
   expect(selectChallengeXp(testStore.getState())).toBe(90);
   await claim;
   expect(selectChallengeXp(testStore.getState())).toBe(0);
-  expect(selectClaimedChallenges(testStore.getState())).toEqual([]);
+  expect(selectClaimedIds(testStore.getState())).toEqual([]);
 });
 
 it('A yüklemesi geç dönerken B hesabının verisi karışmaz', async () => {
@@ -125,16 +126,16 @@ it('A yüklemesi geç dönerken B hesabının verisi karışmaz', async () => {
   challengeActions.resetSession(); login('B'); await challengeActions.loadProgress('B');
   gate.resolve(); await load;
   expect(selectChallengeXp(testStore.getState())).toBe(40);
-  expect(selectClaimedChallenges(testStore.getState())).toEqual(['c3']);
+  expect(selectClaimedIds(testStore.getState())).toEqual(['c4']);
   expect(progress().r1).toBeUndefined();
-  await challengeActions.trackAction('A', 'commentsPosted');
+  await challengeActions.trackAction('A', 'commentsPosted', 's');
   expect(database.get('A')?.challengeProgress.c1).toBe(1);
 });
 
 it('aynı hesaba yeniden girişte önceki oturumun bekleyen aksiyonları iptal edilir', async () => {
   login('A'); const gate = deferred(); scenario.beforeRead = () => gate.promise;
   const load = challengeActions.loadProgress('A'); await Promise.resolve();
-  const action = challengeActions.trackAction('A', 'commentsPosted');
+  const action = challengeActions.trackAction('A', 'commentsPosted', 's');
   challengeActions.resetSession(); login('B'); login('A'); await challengeActions.loadProgress('A');
   gate.resolve(); await Promise.all([load, action]);
   expect(progress().c1).toBe(1);
@@ -144,7 +145,7 @@ it('A yazımı tamamlanırken B açılırsa geç gelen sonuç B arayüzüne uygu
   login('A'); await challengeActions.loadProgress('A');
   const gate = deferred(); const started = deferred();
   scenario.beforeCommit = async () => { started.resolve(); await gate.promise; };
-  const action = challengeActions.trackAction('A', 'commentsPosted');
+  const action = challengeActions.trackAction('A', 'commentsPosted', 's');
   await started.promise;
   challengeActions.resetSession(); login('B'); await challengeActions.loadProgress('B');
   gate.resolve(); await action;
@@ -156,7 +157,7 @@ it('A yazımı tamamlanırken B açılırsa geç gelen sonuç B arayüzüne uygu
 it('tek aksiyonun kaydı reddedilirse optimistic sayaç önceki değerine döner', async () => {
   login('A'); await challengeActions.loadProgress('A');
   scenario.beforeCommit = async () => { throw Error('izin reddedildi'); };
-  const action = challengeActions.trackAction('A', 'commentsPosted');
+  const action = challengeActions.trackAction('A', 'commentsPosted', 's');
   expect(progress().c1).toBe(2);
   await action;
   expect(progress().c1).toBe(1);
@@ -165,10 +166,14 @@ it('tek aksiyonun kaydı reddedilirse optimistic sayaç önceki değerine döner
 
 it('hafta geçişi aksiyonda yenilenir ve kalıcı görev korunur', async () => {
   seed('A', { challengeWeekStart: '2026-10-05', lastActiveDate: yesterdayKey(), streak: 3,
-    challengeProgress: { r1: 5, c1: 5, w3: 1 } }); login('A');
-  await challengeActions.trackAction('A', 'commentsPosted');
+    challengeProgress: { r1: 5, c1: 5, w3: 1 }, challengeKeys: { c1: ['a', 'b', 'c', 'd', 's'] },
+    weeklyClaims: ['c1'], claimedChallenges: ['w3'] }); login('A');
+  await challengeActions.trackAction('A', 'commentsPosted', 's');
+  // Haftalık ilerleme, anahtarlar ve ödüller yeni haftada sıfırlanır; geçen
+  // hafta sayılan hikâye bu hafta yeniden sayılır, kalıcı ödül korunur.
   expect(database.get('A')).toMatchObject({ streak: 4, lastActiveDate: todayKey(), challengeWeekStart: weekStartKey(),
-    challengeProgress: { r1: 0, c1: 1, w3: 1 } });
+    challengeProgress: { r1: 0, c1: 1, w3: 1 }, challengeKeys: { c1: ['s'] },
+    weeklyClaims: [], claimedChallenges: ['w3'] });
 });
 
 it('oturum aboneliği profili açmadan yükler, dönüşte günü yeniler ve çıkışta temizler', async () => {

@@ -1,5 +1,6 @@
 import i18n from '@/i18n';
 import { Story } from '@/types';
+import { isUntitledTitle } from '../utils/draftState';
 import * as Notifications from 'expo-notifications';
 import { logger } from '@/utils/logger';
 
@@ -7,7 +8,12 @@ const FIRST_STORY_ID = 'writer-first-story';
 const DRAFT_ID = 'writer-draft-reminder';
 const DAY_SECONDS = 24 * 60 * 60;
 
-export async function syncWriterReminders(stories: Story[]) {
+/**
+ * Yazma hatırlatıcıları. Onboarding'de "okur" seçen kullanıcıya ilk hikâye
+ * dürtmesi gönderilmez; yine de bir taslağa başladıysa taslak hatırlatması
+ * anlamlıdır. Hiç yazılmamış "Adsız hikâye" taslakları hedeflenmez.
+ */
+export async function syncWriterReminders(stories: Story[], intent?: 'reader' | 'writer' | 'both') {
   try {
     const { status } = await Notifications.getPermissionsAsync();
     if (status !== 'granted') return;
@@ -16,6 +22,7 @@ export async function syncWriterReminders(stories: Story[]) {
     await Notifications.cancelScheduledNotificationAsync(DRAFT_ID).catch(() => {});
 
     if (stories.length === 0) {
+      if (intent === 'reader') return;
       await Notifications.scheduleNotificationAsync({
         identifier: FIRST_STORY_ID,
         content: {
@@ -31,7 +38,7 @@ export async function syncWriterReminders(stories: Story[]) {
       return;
     }
 
-    const draft = stories.find(s => !s.isPublished);
+    const draft = stories.find(s => !s.isPublished && !isUntitledTitle(s.title));
     if (draft) {
       await Notifications.scheduleNotificationAsync({
         identifier: DRAFT_ID,

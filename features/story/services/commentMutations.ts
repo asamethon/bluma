@@ -19,6 +19,7 @@ import {
   updateDoc,
   where,
 } from '@react-native-firebase/firestore';
+import { notifyMentions } from './commentMentions';
 import { getCommentById } from './commentRecords';
 import { getStoryById } from './storyApi';
 
@@ -30,18 +31,33 @@ async function notifyComment(storyId: string, commentId: string, parentId: strin
     parentId ? getCommentById(storyId, parentId) : Promise.resolve(null),
   ]);
   const recipientId = parentId ? parent?.userId : story?.authorId;
+  const senderName = user.displayName || user.username || i18n.t('notifications.someone');
+  const storyTitle = story?.title || i18n.t('common.story');
+  // Anmalar, yorum bildirimi gitmese de (kendi hikâyene yorum) gönderilir.
+  void notifyMentions({ content, senderId: user.id, senderName, storyId, storyTitle, commentId,
+    alreadyNotifiedId: recipientId });
   if (!recipientId || recipientId === user.id) return;
   void notificationActions.createCommentNotification(
     user.id,
     recipientId,
-    user.displayName || user.username || i18n.t('notifications.someone'),
-    story?.title || i18n.t('common.story'),
+    senderName,
+    storyTitle,
     storyId,
     content,
     commentId,
     parentId,
     chapterIndex,
   );
+}
+
+/**
+ * Yorum görevleri yalnızca BAŞKASININ hikâyesinde ilerler (kendi hikâyene
+ * yorum yazarak görev doldurulmasın). `before`: bu yorumdan önceki hikâye.
+ */
+function trackCommentChallenges(userId: string, storyId: string, before?: { authorId?: string; commentsCount?: number }) {
+  if (!before?.authorId || before.authorId === userId) return;
+  void challengeActions.trackAction(userId, 'commentsPosted', storyId);
+  if (!before.commentsCount) void challengeActions.trackAction(userId, 'firstComments', storyId);
 }
 
 export async function addComment(storyId: string, content: string, parentId?: string, chapterIndex?: number) {
@@ -51,21 +67,27 @@ export async function addComment(storyId: string, content: string, parentId?: st
     const verified = await assertEmailVerified();
     if (!verified.ok) return { success: false, error: verified.error };
     const db = getFirestore();
-    const reference = await addDoc(collection(db, 'stories', storyId, 'comments'), {
-      storyId,
-      userId: user.id,
-      content,
-      likesCount: 0,
-      isEdited: false,
-      parentId: parentId || null,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      ...(typeof chapterIndex === 'number' ? { chapterIndex } : {}),
-    });
-    await updateDoc(doc(db, 'stories', storyId), { commentsCount: increment(1) });
+    const storyRef = doc(db, 'stories', storyId);
+    // Hikâye, sayaç artmadan önce okunur: "ilk yorum" görevi ve yazar
+    // kontrolü buna bakar. Yorum yazımıyla paralel olduğu için gecikme eklemez.
+    const [reference, before] = await Promise.all([
+      addDoc(collection(db, 'stories', storyId, 'comments'), {
+        storyId,
+        userId: user.id,
+        content,
+        likesCount: 0,
+        isEdited: false,
+        parentId: parentId || null,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        ...(typeof chapterIndex === 'number' ? { chapterIndex } : {}),
+      }),
+      getDoc(storyRef).then(snapshot => snapshot.data()).catch(() => undefined),
+    ]);
+    await updateDoc(storyRef, { commentsCount: increment(1) });
     void notifyComment(storyId, reference.id, parentId, content, chapterIndex)
       .catch(error => logger.error('Comment notification error:', error));
-    if (!parentId) void challengeActions.trackAction(user.id, 'commentsPosted');
+    if (!parentId) trackCommentChallenges(user.id, storyId, before);
     return { success: true, commentId: reference.id };
   } catch (error) {
     logger.error('Add comment error:', error);
@@ -73,16 +95,24 @@ export async function addComment(storyId: string, content: string, parentId?: st
   }
 }
 
-async function deleteCommentDocument(storyId: string, reference: any) {
+/**
+ * Sayaç her silinen belge için ayrı `-1` ile düşer: güvenlik kuralı tek
+ * yazımda yalnızca bir adıma izin verir (eskiden sınırsız azaltma, herkesin
+ * başkasının sayacını sıfırlamasına açıktı).
+ */
+async function deleteCommentDocument(storyId: string, reference: any): Promise<boolean> {
   try {
-    const likes = await getDocs(collection(getFirestore(), 'stories', storyId, 'comments', reference.id, 'likes'));
+    const db = getFirestore();
+    const likes = await getDocs(collection(db, 'stories', storyId, 'comments', reference.id, 'likes'));
     await Promise.all(likes.docs.map(item => deleteDoc(item.ref)));
     await deleteDoc(reference);
-    return 1;
   } catch (error) {
     logger.warn('Comment cleanup skipped:', reference.id, error);
-    return 0;
+    return false;
   }
+  await updateDoc(doc(getFirestore(), 'stories', storyId), { commentsCount: increment(-1) })
+    .catch(error => logger.warn('Yorum sayacı düşürülemedi:', error));
+  return true;
 }
 
 export async function deleteComment(storyId: string, commentId: string) {
@@ -91,12 +121,13 @@ export async function deleteComment(storyId: string, commentId: string) {
     const comments = collection(db, 'stories', storyId, 'comments');
     const reference = doc(comments, commentId);
     const replies = await getDocs(query(comments, where('parentId', '==', commentId)));
-    const deleted = await Promise.all([
-      ...replies.docs.map(reply => deleteCommentDocument(storyId, reply.ref)),
+    // Başkasına ait yanıtları yalnızca hikâye yazarı silebilir; onlar kalırsa
+    // sorun değil. Asıl yorum silinemezse kullanıcıya başarı gösterilmez.
+    const [deleted] = await Promise.all([
       deleteCommentDocument(storyId, reference),
+      ...replies.docs.map(reply => deleteCommentDocument(storyId, reply.ref)),
     ]);
-    const count = deleted.reduce<number>((total, value) => total + value, 0);
-    if (count) await updateDoc(doc(db, 'stories', storyId), { commentsCount: increment(-count) });
+    if (!deleted) return { success: false, error: i18n.t('comments.deleteFailed') };
     return { success: true };
   } catch (error) {
     logger.error('Delete comment error:', error);

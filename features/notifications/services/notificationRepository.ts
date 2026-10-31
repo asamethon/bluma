@@ -81,7 +81,6 @@ export async function loadNotificationSettings(userId: string) {
       commentNotifications: true,
       mentionNotifications: true,
       storyNotifications: true,
-      emailNotifications: false,
       pushNotifications: true,
       updatedAt: serverTimestamp(),
     };

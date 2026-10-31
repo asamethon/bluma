@@ -24,6 +24,8 @@ export function StoryPreviewDetails({ story, styles, onAuthorPress }: Props) {
   const { t } = useTranslation();
   const author = story.author;
   const meta = [
+    // Künye sabit yükseklikte; yetişkin işareti ölçü satırında durur.
+    story.targetAudience === 'adult' ? '18+' : null,
     t('studio.chapterCount', { count: story.chaptersCount || 1 }),
     t('story.readingMinutesShort', { count: story.readingTime || 5 }),
     story.viewsCount ? t('storyScreen.viewsCount', { value: formatCount(story.viewsCount) }) : null,

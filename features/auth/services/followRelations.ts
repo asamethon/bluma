@@ -71,7 +71,7 @@ async function followUser(userIdToFollow: string): Promise<FollowResult> {
     notificationActions
       .createFollowNotification(currentUser.id, userIdToFollow, currentUser.displayName)
       .catch(error => logger.error('Follow notification error:', error));
-    challengeActions.trackAction(currentUser.id, 'newFollows').catch(() => {});
+    challengeActions.trackAction(currentUser.id, 'newFollows', userIdToFollow).catch(() => {});
 
     return { success: true };
   } catch (error) {

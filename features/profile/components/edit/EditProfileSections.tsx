@@ -74,7 +74,7 @@ export function EditProfileAboutSection({ form, update }: FormProps) {
           label={t('editProfile.websiteLabel')}
           value={form.website}
           onChangeText={value => update('website', value)}
-          placeholder="https://siten.com"
+          placeholder={t('editProfile.websitePlaceholder')}
           keyboardType="url"
           autoCapitalize="none"
           icon="globe-outline"

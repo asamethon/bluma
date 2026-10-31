@@ -1,4 +1,5 @@
 import { Story } from '@/types';
+import { sameLanguage } from '../utils/storyDetails';
 
 interface TasteProfile {
   categoryWeights: Record<string, number>;
@@ -81,17 +82,13 @@ function scoreStory(story: Story, profile: TasteProfile, appLanguage: string): n
 
   const languageFactor = !story.language
     ? 1.0
-    : matchesLanguage(story.language, appLanguage)
+    : sameLanguage(story.language, appLanguage)
       ? 1.3
       : 0.5;
 
   return (affinity + popularity) * languageFactor;
 }
 
-function matchesLanguage(storyLang: string, appLang: string): boolean {
-  const base = (l: string) => l.toLowerCase().split('-')[0];
-  return base(storyLang) === base(appLang);
-}
 
 export function getRecommendations(
   candidates: Story[],

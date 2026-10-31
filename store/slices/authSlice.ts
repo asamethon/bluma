@@ -8,6 +8,8 @@ export interface User {
   username?: string;
   bio?: string;
   interests?: string[];
+  /** Onboarding'de seçilen niyet; 'reader' olana yazar dürtmesi gönderilmez. */
+  intent?: 'reader' | 'writer' | 'both';
   website?: string;
   location?: string;
   authProvider: 'email' | 'google' | 'apple';

@@ -11,6 +11,7 @@ export function useWriterActivation() {
   const { t } = useTranslation();
   const uid = useAppSelector(s => s.auth.user?.id);
   const isGuest = useAppSelector(s => s.auth.isGuest);
+  const intent = useAppSelector(s => s.auth.user?.intent);
   const storyCount = useAppSelector(s => s.story.userStories.length);
   const { starting, startQuickDraft } = useQuickDraft();
 
@@ -23,12 +24,12 @@ export function useWriterActivation() {
       await storyActions.loadUserStories(uid);
       if (!lifecycle.active) return;
       setLoaded(true);
-      void syncWriterReminders(store.getState().story.userStories);
+      void syncWriterReminders(store.getState().story.userStories, intent);
     })();
     return () => {
       lifecycle.active = false;
     };
-  }, [uid]);
+  }, [intent, uid]);
 
   const prompt = t(dailyPromptKey());
 
@@ -39,7 +40,8 @@ export function useWriterActivation() {
   );
 
   return {
-    showCard: !!uid && !isGuest && loaded && storyCount === 0,
+    // "Okur" niyeti seçene ana sayfada yazma kartı gösterilmez.
+    showCard: !!uid && !isGuest && loaded && storyCount === 0 && intent !== 'reader',
     prompt,
     starting,
     startBlank,

@@ -38,6 +38,8 @@ function transaction() {
         const data = JSON.parse(JSON.stringify(database.get(userId)));
         for (const [path, value] of Object.entries(updates)) {
           const [field, key] = path.split('.');
+          // Gerçek Firestore gibi: `alan.anahtar` yolu eksik haritayı oluşturur.
+          if (key) data[field] ??= {};
           const target = key ? data[field] : data;
           const property = key ?? field;
           target[property] = value && typeof value === 'object' && 'delta' in value

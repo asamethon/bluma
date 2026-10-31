@@ -103,7 +103,10 @@
     "infoSent": "Gesendet",
     "infoDelivered": "Zugestellt",
     "infoRead": "Gelesen",
-    "infoPending": "Noch nicht"
+    "infoPending": "Noch nicht",
+    "removeFailedTitle": "Nachricht konnte nicht gelöscht werden",
+    "removeFailedMessage": "Die Nachricht wurde wiederhergestellt. Bitte versuche es erneut.",
+    "hideKeyboard": "Tastatur ausblenden"
   },
   "storyStatus": {
     "completed": "Abgeschlossen",
@@ -192,7 +195,18 @@
     "publishEmptyChapters": "Leere Kapitel können nicht veröffentlicht werden. Füge Inhalt hinzu oder lösche das leere Kapitel.",
     "publishStoryMissing": "Story nicht gefunden.",
     "publishNotAuthor": "Nur der Autor kann diese Story veröffentlichen.",
-    "publishError": "Kapitel konnten nicht veröffentlicht werden. Bitte versuche es erneut."
+    "publishError": "Kapitel konnten nicht veröffentlicht werden. Bitte versuche es erneut.",
+    "audienceLabel": "Zielgruppe",
+    "adultTitle": "Inhalte für Erwachsene (18+)",
+    "adultHint": "Wenn aktiviert, wird die Geschichte Gästen und Lesern ohne aktivierte Erwachseneninhalte nicht angezeigt.",
+    "languageLabel": "Sprache der Geschichte",
+    "tagsLabel": "Tags",
+    "tagsPlaceholder": "Tag eingeben und hinzufügen",
+    "tagsHint": "Bis zu {{count}} Tags. Werden für Empfehlungen und Suche genutzt.",
+    "tagAdd": "Tag hinzufügen",
+    "warningsLabel": "Inhaltswarnungen",
+    "warningsHint": "Leser sehen sie, bevor sie beginnen.",
+    "importCtaSub": "Füge eine anderswo geschriebene Geschichte ein – wir teilen sie in Kapitel auf."
   },
   "saved": {
     "title": "Gespeicherte Geschichten",
@@ -237,11 +251,17 @@
     "shareStory": "Geschichte teilen",
     "previousChapter": "Vorheriges Kapitel",
     "storyFinished": "Du hast die Geschichte beendet",
+    "storyToBeContinued": "Vorerst das letzte Kapitel · Fortsetzung folgt",
     "sampleText": "Wörter öffnen einen Pfad auf der Seite; die Lesenden hinterlassen darauf ihre eigene Spur.",
     "themeLight": "Hell",
     "themeSepia": "Sepia",
     "themeDark": "Dunkel",
-    "themeBlack": "Schwarz"
+    "themeBlack": "Schwarz",
+    "contentWarnings": "Inhaltswarnung: {{list}}",
+    "matureGateTitle": "Inhalte für Erwachsene (18+)",
+    "matureGateBody": "Diese Geschichte ist für erwachsene Leser. Aktiviere Inhalte für Erwachsene in den Einstellungen, um sie zu lesen.",
+    "matureGateGuest": "Diese Geschichte ist für erwachsene Leser. Melde dich an und aktiviere Inhalte für Erwachsene in den Einstellungen.",
+    "matureGateAction": "Einstellungen öffnen"
   },
   "commentsScreen": {
     "title": "Kommentare ({{count}})",
@@ -309,7 +329,8 @@
     "accountSection": "Kontoeinstellungen",
     "saveChanges": "Änderungen speichern",
     "available": "Verfügbar",
-    "taken": "Vergeben"
+    "taken": "Vergeben",
+    "websitePlaceholder": "https://deineseite.de"
   },
   "favorites": {
     "title": "Meine Favoriten",
@@ -356,8 +377,6 @@
     "activity": "Aktivität",
     "push": "Push-Benachrichtigungen",
     "pushSub": "Wir senden dir sofortige Benachrichtigungen an dein Telefon",
-    "email": "E-Mail-Benachrichtigungen",
-    "emailSub": "Erhalte wichtige Updates per E-Mail",
     "newChapter": "Neues Kapitel",
     "newChapterSub": "Wenn Autoren, denen du folgst, ein Kapitel veröffentlichen",
     "likes": "Gefällt mir",
@@ -366,7 +385,9 @@
     "commentsSub": "Wenn jemand deine Inhalte kommentiert",
     "newFollower": "Neuer Follower",
     "newFollowerSub": "Wenn dir jemand zu folgen beginnt",
-    "enablePushFirst": "Aktiviere zuerst Push-Benachrichtigungen, um Aktivitätsbenachrichtigungen einzuschalten."
+    "enablePushFirst": "Aktiviere zuerst Push-Benachrichtigungen, um Aktivitätsbenachrichtigungen einzuschalten.",
+    "mentions": "Erwähnungen",
+    "mentionsSub": "Wenn dich jemand in einem Kommentar mit @ erwähnt"
   },
   "changePassword": {
     "title": "Passwort ändern",
@@ -485,27 +506,7 @@
     "commentFailed": "Beim Hinzufügen des Kommentars ist etwas schiefgelaufen.",
     "deleteFailed": "Beim Löschen der Unterhaltung ist etwas schiefgelaufen.",
     "yourConversation": "Deine Unterhaltung",
-    "enterTitle": "Bitte gib einen Titel für die Unterhaltung ein.",
-    "enterContent": "Bitte gib den Inhalt der Unterhaltung ein.",
-    "created": "Die Unterhaltung wurde erfolgreich erstellt!",
-    "createdAnnounced": "Die Unterhaltung wurde erstellt und deinen Followern angekündigt!",
-    "exitTitle": "Verlassen",
-    "exitConfirm": "Deine Änderungen werden nicht gespeichert. Möchtest du wirklich verlassen?",
-    "exit": "Verlassen",
-    "startConversation": "Unterhaltung starten",
-    "creating": "Wird erstellt...",
-    "titleLabel": "Titel",
-    "titlePlaceholder": "Gib den Titel der Unterhaltung ein...",
-    "contentLabel": "Inhalt",
-    "contentPlaceholder": "Was geht dir durch den Kopf? Teile es mit deinen Followern...",
-    "imageOptional": "Bild (optional)",
-    "addImage": "Bild hinzufügen",
-    "announceTitle": "Dies ankündigen",
-    "announceSubtitle": "Sende deinen Followern eine Benachrichtigung, dass du diese Unterhaltung gestartet hast",
-    "tipsTitle": "Tipps:",
-    "tip1": "Stelle Fragen, um mit deinen Followern in Kontakt zu treten",
-    "tip2": "Teile deine Gedanken zu aktuellen Themen",
-    "tip3": "Ermutige deine Follower zu kommentieren"
+    "creating": "Wird erstellt..."
   },
   "challenges": {
     "ranks": {
@@ -523,12 +524,12 @@
         "desc": "Deine Leser warten auf mehr."
       },
       "w2": {
-        "title": "5-Tage-Schreib-Serie",
-        "desc": "Veröffentliche jeden Tag mindestens eine Geschichte."
+        "title": "Schreibe diese Woche an 5 Tagen",
+        "desc": "Veröffentliche an 5 verschiedenen Tagen eine Geschichte oder ein Kapitel."
       },
       "w3": {
         "title": "Schließe eine unvollendete Geschichte ab",
-        "desc": "Markiere sie als „Abgeschlossen“.",
+        "desc": "Markiere eine deiner veröffentlichten Geschichten als „Abgeschlossen“.",
         "badge": "Vollender"
       },
       "w4": {
@@ -541,15 +542,15 @@
       },
       "r2": {
         "title": "Lies eine Geschichte bis zum Ende",
-        "desc": "Gehe bis zum letzten Kapitel."
+        "desc": "Beende das letzte Kapitel einer abgeschlossenen Geschichte."
       },
       "r3": {
-        "title": "Lies 10 Geschichten",
-        "desc": "Schließe diese Woche mindestens 10 verschiedene Kapitel ab."
+        "title": "Beende diese Woche 10 Kapitel",
+        "desc": "Lies mindestens 10 verschiedene Kapitel bis zum Ende."
       },
       "r4": {
         "title": "Entdecke einen neuen Autor",
-        "desc": "Öffne eine Geschichte von jemandem, den du noch nie gelesen hast."
+        "desc": "Beende ein Kapitel von jemandem, dem du nicht folgst."
       },
       "c1": {
         "title": "Kommentiere 5 Geschichten",
@@ -560,19 +561,24 @@
         "desc": "Erweitere deinen Lesekreis."
       },
       "c3": {
-        "title": "Vergib 10 „Gefällt mir“",
+        "title": "Markiere 10 Geschichten mit „Gefällt mir“",
         "desc": "Fördere die Geschichten, die dir gefallen."
       },
       "c4": {
         "title": "Inspiriere einen Autor",
-        "desc": "Lass deinen Kommentar als „hervorgehoben“ auswählen.",
+        "desc": "Schreibe den ersten Kommentar zu einer Geschichte.",
         "badge": "Inspirator"
       }
     },
     "weekly": {
       "title": "Wochenend-Lesemarathon",
-      "desc": "Schließe zwischen Freitag und Sonntag 3 Kapitel ab und hinterlasse 2 Kommentare.",
-      "endsIn": "2 Tage"
+      "desc": "Schließe zwischen Freitag und Sonntag 3 Kapitel ab und kommentiere 2 verschiedene Geschichten.",
+      "endsIn_one": "Noch {{count}} Tag",
+      "endsIn_other": "Noch {{count}} Tage",
+      "endsToday": "Endet heute",
+      "startsIn_one": "Beginnt in {{count}} Tag",
+      "startsIn_other": "Beginnt in {{count}} Tagen",
+      "startsTomorrow": "Beginnt morgen"
     },
     "errors": {
       "sessionChanged": "Aufgabensitzung geändert.",
@@ -731,7 +737,8 @@
     "title": "Meine Bibliothek",
     "saved": "Gespeichert",
     "liked": "Meine Likes",
-    "emptySub": "Speichere Geschichten, die dir gefallen; sie warten alle hier auf dich."
+    "emptySub": "Speichere Geschichten, die dir gefallen; sie warten alle hier auf dich.",
+    "readingListsSub": "Deine eigenen Listen und die Geschichten, die du im Lesemodus hinzugefügt hast."
   },
   "home": {
     "guestReader": "Gastleser",
@@ -1068,5 +1075,39 @@
     "alertBody": "Your email address isn't verified. If you don't verify it within {{days}} days, your account will be suspended. If the address is wrong, you can fix it on the verification screen.",
     "alertLater": "Later",
     "alertGo": "Verify now"
+  },
+  "contentWarnings": {
+    "violence": "Gewalt",
+    "sexual": "Sexuelle Inhalte",
+    "profanity": "Vulgäre Sprache",
+    "substances": "Drogenkonsum",
+    "selfHarm": "Selbstverletzung",
+    "eatingDisorder": "Essstörungen",
+    "racism": "Rassismus",
+    "homophobia": "Homophobie",
+    "transphobia": "Transphobie",
+    "animalHarm": "Tierleid"
+  },
+  "launch": {
+    "title": "Dein Buch-Launch",
+    "subtitle": "Das Cover ist fertig. Die Bühne gehört dir.",
+    "newStory": "NEUE GESCHICHTE",
+    "nowOnBluma": "Jetzt auf Bluma",
+    "byAuthor": "Von {{author}}",
+    "readNow": "Jetzt lesen",
+    "storyFormat": "Story · Vollbild",
+    "postFormat": "Beitrag · 4:5",
+    "shareWhere": "WO MÖCHTEST DU TEILEN?",
+    "instagramStory": "In Instagram-Story teilen",
+    "instagramPost": "Beitrag",
+    "message": "Nachricht",
+    "shareMessage": "„{{title}}“ ist jetzt auf Bluma. Jetzt lesen:\n{{url}}",
+    "shareFailedTitle": "Teilen konnte nicht abgeschlossen werden",
+    "shareFailedMessage": "Wenn Instagram nicht installiert ist, versuche es per Nachricht.",
+    "linkHint": "Der Link wird in die Zwischenablage kopiert. Füge in Instagram nach dem Öffnen der Story den „Link“-Sticker hinzu und setze ihn ein. Instagram erlaubt Apps nicht, ihn automatisch hinzuzufügen.",
+    "makeLaunch": "Buch-Launch erstellen",
+    "later": "Später",
+    "unavailable": "Launch nicht verfügbar",
+    "ownerOnly": "Nur wer das Buch veröffentlicht hat, kann einen Launch vorbereiten."
   }
 }

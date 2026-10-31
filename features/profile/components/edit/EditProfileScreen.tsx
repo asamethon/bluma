@@ -60,6 +60,7 @@ function EditProfileForm({ user }: { user: User }) {
 
 export function EditProfileScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const user = useAppSelector(state => state.auth.user);
   const styles = useMemo(() => createEditProfileStyles(colors), [colors]);
   if (user) return <EditProfileForm key={user.id} user={user} />;
@@ -68,7 +69,7 @@ export function EditProfileScreen() {
     <Screen style={styles.container}>
       <View style={styles.centerFill}>
         <ActivityIndicator color={colors.primary} />
-        <Text variant="body" tone="textSecondary" style={styles.loadingText}>Kullanıcı bilgileri yükleniyor...</Text>
+        <Text variant="body" tone="textSecondary" style={styles.loadingText}>{t('profileScreen.loadingUser')}</Text>
       </View>
     </Screen>
   );

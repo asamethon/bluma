@@ -16,6 +16,7 @@ import {
   setDoc,
   updateDoc,
 } from '@react-native-firebase/firestore';
+import { challengeActions } from '@/store/challengeStore';
 import { notificationActions } from '@/store/notificationStore';
 import { applyLikeDelta, setLikedOptimistically } from './likes/likeState';
 import { getStoryForShelf } from './storyReads';
@@ -82,7 +83,7 @@ async function writeLike(storyId: string, userId: string, liked: boolean): Promi
             updateDoc(refs.story, { likesCount: increment(-1) }),
           ],
     );
-    if (liked) notifyAuthor(storyId, userId).catch(error => logger.error('Like notification error:', error));
+    if (liked) afterLike(storyId, userId).catch(error => logger.error('Like notification error:', error));
     return true;
   } catch (error) {
     logger.error('Like write error:', error);
@@ -92,10 +93,12 @@ async function writeLike(storyId: string, userId: string, liked: boolean): Promi
   }
 }
 
-async function notifyAuthor(storyId: string, userId: string) {
+/** Beğeni sonrası, yalnızca başkasının hikâyesinde: görev ilerlemesi ve yazara bildirim. */
+async function afterLike(storyId: string, userId: string) {
   const user = store.getState().auth.user;
   const story = await getStoryForShelf(storyId);
   if (!user || !story || story.authorId === userId) return;
+  void challengeActions.trackAction(userId, 'storiesLiked', storyId);
   await notificationActions.createLikeNotification(
     userId,
     story.authorId,

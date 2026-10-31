@@ -103,7 +103,10 @@
     "infoSent": "送信済み",
     "infoDelivered": "配信済み",
     "infoRead": "既読",
-    "infoPending": "まだ"
+    "infoPending": "まだ",
+    "removeFailedTitle": "メッセージを削除できませんでした",
+    "removeFailedMessage": "メッセージを元に戻しました。もう一度お試しください。",
+    "hideKeyboard": "キーボードを閉じる"
   },
   "storyStatus": {
     "completed": "完結",
@@ -192,7 +195,18 @@
     "publishEmptyChapters": "空の章は公開できません。内容を追加するか、空の章を削除してください。",
     "publishStoryMissing": "ストーリーが見つかりません。",
     "publishNotAuthor": "このストーリーを公開できるのは作者だけです。",
-    "publishError": "章を公開できませんでした。もう一度お試しください。"
+    "publishError": "章を公開できませんでした。もう一度お試しください。",
+    "audienceLabel": "対象読者",
+    "adultTitle": "成人向けコンテンツ（18+）",
+    "adultHint": "オンにすると、ゲストや成人向けコンテンツを有効にしていない読者には表示されません。",
+    "languageLabel": "作品の言語",
+    "tagsLabel": "タグ",
+    "tagsPlaceholder": "タグを入力して追加",
+    "tagsHint": "最大{{count}}個まで。おすすめや検索に使われます。",
+    "tagAdd": "タグを追加",
+    "warningsLabel": "コンテンツ警告",
+    "warningsHint": "読者が読み始める前に表示されます。",
+    "importCtaSub": "ほかで書いた作品を貼り付けると、章に分けて取り込みます。"
   },
   "saved": {
     "title": "保存したストーリー",
@@ -237,11 +251,17 @@
     "shareStory": "作品を共有",
     "previousChapter": "前の章",
     "storyFinished": "作品を読み終えました",
+    "storyToBeContinued": "現時点の最新章 · 続きをお楽しみに",
     "sampleText": "言葉はページに道をひらき、読む人はその道に自分の足あとを残す。",
     "themeLight": "ライト",
     "themeSepia": "セピア",
     "themeDark": "ダーク",
-    "themeBlack": "ブラック"
+    "themeBlack": "ブラック",
+    "contentWarnings": "コンテンツ警告：{{list}}",
+    "matureGateTitle": "成人向けコンテンツ（18+）",
+    "matureGateBody": "この作品は成人の読者向けです。読むには設定で成人向けコンテンツを有効にしてください。",
+    "matureGateGuest": "この作品は成人の読者向けです。読むにはログインして、設定で成人向けコンテンツを有効にしてください。",
+    "matureGateAction": "設定を開く"
   },
   "commentsScreen": {
     "title": "コメント({{count}})",
@@ -309,7 +329,8 @@
     "accountSection": "アカウント設定",
     "saveChanges": "変更を保存",
     "available": "使用可能",
-    "taken": "使用済み"
+    "taken": "使用済み",
+    "websitePlaceholder": "https://example.com"
   },
   "favorites": {
     "title": "お気に入り",
@@ -356,8 +377,6 @@
     "activity": "アクティビティ",
     "push": "プッシュ通知",
     "pushSub": "スマートフォンに即時通知をお送りします",
-    "email": "メール通知",
-    "emailSub": "重要な更新情報をメールで受け取る",
     "newChapter": "新しい章",
     "newChapterSub": "フォロー中の作者が章を公開したとき",
     "likes": "いいね",
@@ -366,7 +385,9 @@
     "commentsSub": "誰かがあなたのコンテンツにコメントしたとき",
     "newFollower": "新しいフォロワー",
     "newFollowerSub": "誰かがあなたをフォローし始めたとき",
-    "enablePushFirst": "アクティビティ通知をオンにするには、まずプッシュ通知を有効にしてください。"
+    "enablePushFirst": "アクティビティ通知をオンにするには、まずプッシュ通知を有効にしてください。",
+    "mentions": "メンション",
+    "mentionsSub": "誰かがコメントで@を使ってあなたに言及したとき"
   },
   "changePassword": {
     "title": "パスワードを変更",
@@ -485,27 +506,7 @@
     "commentFailed": "コメントの追加中に問題が発生しました。",
     "deleteFailed": "会話の削除中に問題が発生しました。",
     "yourConversation": "あなたの会話",
-    "enterTitle": "会話のタイトルを入力してください。",
-    "enterContent": "会話の内容を入力してください。",
-    "created": "会話が正常に作成されました!",
-    "createdAnnounced": "会話が作成され、フォロワーに通知されました!",
-    "exitTitle": "終了",
-    "exitConfirm": "変更内容は保存されません。終了してもよろしいですか?",
-    "exit": "終了",
-    "startConversation": "会話を始める",
-    "creating": "作成中...",
-    "titleLabel": "タイトル",
-    "titlePlaceholder": "会話のタイトルを入力...",
-    "contentLabel": "内容",
-    "contentPlaceholder": "何を考えていますか?フォロワーと共有しましょう...",
-    "imageOptional": "画像(任意)",
-    "addImage": "画像を追加",
-    "announceTitle": "これを通知する",
-    "announceSubtitle": "この会話を始めたことをフォロワーに通知します",
-    "tipsTitle": "ヒント:",
-    "tip1": "質問をしてフォロワーとの交流を深めましょう",
-    "tip2": "最近の話題について考えを共有しましょう",
-    "tip3": "フォロワーにコメントを促しましょう"
+    "creating": "作成中..."
   },
   "challenges": {
     "ranks": {
@@ -523,12 +524,12 @@
         "desc": "読者はもっと読みたいと待っています。"
       },
       "w2": {
-        "title": "5日連続の執筆記録",
-        "desc": "毎日少なくとも1本のストーリーを公開しましょう。"
+        "title": "今週5日間執筆する",
+        "desc": "5つの異なる日に作品か章を公開しよう。"
       },
       "w3": {
         "title": "未完のストーリーを完結させる",
-        "desc": "「完結」としてマークしましょう。",
+        "desc": "公開中の作品を「完結」にしよう。",
         "badge": "完結請負人"
       },
       "w4": {
@@ -541,15 +542,15 @@
       },
       "r2": {
         "title": "ストーリーを最後まで読む",
-        "desc": "最終章まで読み進めましょう。"
+        "desc": "完結した作品の最終章を読み終えよう。"
       },
       "r3": {
-        "title": "10本のストーリーを読む",
-        "desc": "今週、少なくとも10の異なる章を読み終えましょう。"
+        "title": "今週10章を読み終える",
+        "desc": "異なる10章以上を最後まで読もう。"
       },
       "r4": {
         "title": "新しい作者を発見する",
-        "desc": "まだ読んだことのない人のストーリーを開いてみましょう。"
+        "desc": "フォローしていない作家の章を最後まで読もう。"
       },
       "c1": {
         "title": "5本のストーリーにコメントする",
@@ -560,19 +561,24 @@
         "desc": "読書の輪を広げましょう。"
       },
       "c3": {
-        "title": "10件の「いいね」を送る",
+        "title": "10作品にいいねする",
         "desc": "お気に入りのストーリーを応援しましょう。"
       },
       "c4": {
         "title": "作者を励ます",
-        "desc": "あなたのコメントが「注目」に選ばれるようにしましょう。",
+        "desc": "作品に最初のコメントを書こう。",
         "badge": "インスパイア賞"
       }
     },
     "weekly": {
       "title": "週末読書マラソン",
-      "desc": "金曜日から日曜日までに3章を読み終え、2件のコメントを残しましょう。",
-      "endsIn": "残り2日"
+      "desc": "金曜から日曜の間に3章を読み終え、2つの異なる作品にコメントしよう。",
+      "endsIn_one": "残り{{count}}日",
+      "endsIn_other": "残り{{count}}日",
+      "endsToday": "今日まで",
+      "startsIn_one": "{{count}}日後に開始",
+      "startsIn_other": "{{count}}日後に開始",
+      "startsTomorrow": "明日開始"
     },
     "errors": {
       "sessionChanged": "チャレンジセッションが変更されました。",
@@ -731,7 +737,8 @@
     "title": "自分のライブラリ",
     "saved": "保存済み",
     "liked": "いいねしたもの",
-    "emptySub": "お気に入りのストーリーを保存すると、すべてここにまとまります。"
+    "emptySub": "お気に入りのストーリーを保存すると、すべてここにまとまります。",
+    "readingListsSub": "自分のリストと、リーダーから追加した作品。"
   },
   "home": {
     "guestReader": "ゲスト読者",
@@ -1068,5 +1075,39 @@
     "alertBody": "Your email address isn't verified. If you don't verify it within {{days}} days, your account will be suspended. If the address is wrong, you can fix it on the verification screen.",
     "alertLater": "Later",
     "alertGo": "Verify now"
+  },
+  "contentWarnings": {
+    "violence": "暴力",
+    "sexual": "性的な内容",
+    "profanity": "不適切な言葉",
+    "substances": "薬物の使用",
+    "selfHarm": "自傷行為",
+    "eatingDisorder": "摂食障害",
+    "racism": "人種差別",
+    "homophobia": "同性愛嫌悪",
+    "transphobia": "トランスフォビア",
+    "animalHarm": "動物への危害"
+  },
+  "launch": {
+    "title": "作品をローンチしよう",
+    "subtitle": "表紙は完成。主役はあなたです。",
+    "newStory": "新作",
+    "nowOnBluma": "Blumaで公開中",
+    "byAuthor": "{{author}} 著",
+    "readNow": "今すぐ読む",
+    "storyFormat": "ストーリー · 全画面",
+    "postFormat": "投稿 · 4:5",
+    "shareWhere": "どこでシェアしますか？",
+    "instagramStory": "Instagramストーリーでシェア",
+    "instagramPost": "投稿",
+    "message": "メッセージ",
+    "shareMessage": "「{{title}}」がBlumaで公開中。今すぐ読む：\n{{url}}",
+    "shareFailedTitle": "シェアを完了できませんでした",
+    "shareFailedMessage": "Instagramがインストールされていない場合は、メッセージでシェアしてください。",
+    "linkHint": "リンクはクリップボードにコピーされます。Instagramでストーリーが開いたら「リンク」スタンプを追加して貼り付けてください。Instagramではアプリが自動で追加することはできません。",
+    "makeLaunch": "ローンチする",
+    "later": "あとで",
+    "unavailable": "ローンチを利用できません",
+    "ownerOnly": "公開済み作品の作者だけがローンチを準備できます。"
   }
 }

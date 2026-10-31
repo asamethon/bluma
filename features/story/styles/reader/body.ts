@@ -18,6 +18,9 @@ export const readerBodyStyles = StyleSheet.create({
     paddingHorizontal: Spacing.sm, paddingVertical: 3, borderRadius: Radius.xs,
   },
   adultText: { fontSize: 11, lineHeight: 15, fontWeight: '700' },
+  // İçerik uyarısı başlığın hemen altında, yazar satırından önce durur.
+  warningRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.xs, marginTop: -Spacing.sm, marginBottom: Spacing.lg },
+  warningText: { flex: 1 },
   storyTitle: {
     fontSize: 33, lineHeight: 43, fontWeight: '700', letterSpacing: -0.6,
     marginTop: Spacing.lg, marginBottom: Spacing.lg,

@@ -1,6 +1,7 @@
 import { storyActions } from '@/store/storyStore';
 import type { Story, StoryCategory } from '@/types';
 import { defaultChapterTitle } from '../utils/chapterContent';
+import type { ContentWarning } from '../utils/storyDetails';
 import { resolveCoverUrl } from './coverImage';
 
 export type StoryInfoDraft = {
@@ -9,14 +10,27 @@ export type StoryInfoDraft = {
   description: string;
   coverImage: string | null;
   isCompleted: boolean;
+  /** +18: ayarlardaki yetişkin içerik anahtarı ve misafir filtresi buna bakar. */
+  isAdult: boolean;
+  /** Temel dil kodu ('tr', 'en'…) — etiket metni değil. */
+  language: string;
+  tags: string[];
+  contentWarnings: ContentWarning[];
 };
+
+/** Yazar kontrollerinin Firestore alanları (oluşturma ve güncelleme aynı). */
+const detailFields = (draft: StoryInfoDraft) => ({
+  targetAudience: draft.isAdult ? 'adult' as const : 'all' as const,
+  language: draft.language,
+  tags: draft.tags,
+  contentWarnings: draft.contentWarnings,
+});
 
 type SaveParams = { storyId?: string; authorId: string; draft: StoryInfoDraft };
 type SaveResult = { success: boolean; error?: string; createdStoryId?: string };
 
 const NEW_STORY_DEFAULTS = {
   content: '',
-  tags: [] as string[],
   isPublished: false,
   chaptersCount: 1,
   readingTime: 1,
@@ -36,6 +50,7 @@ export async function saveStoryInfo({ storyId, authorId, draft }: SaveParams): P
       description,
       category: draft.category,
       isCompleted: draft.isCompleted,
+      ...detailFields(draft),
       ...(coverImage ? { coverImage } : {}),
     });
     return { success: result.success, error: result.error };
@@ -47,6 +62,7 @@ export async function saveStoryInfo({ storyId, authorId, draft }: SaveParams): P
     description,
     category: draft.category,
     isCompleted: draft.isCompleted,
+    ...detailFields(draft),
     chapterTitles: [defaultChapterTitle(1)],
     authorId,
   } as Partial<Story> as Story);

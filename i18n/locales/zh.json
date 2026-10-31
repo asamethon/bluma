@@ -103,7 +103,10 @@
     "infoSent": "已发送",
     "infoDelivered": "已送达",
     "infoRead": "已读",
-    "infoPending": "暂无"
+    "infoPending": "暂无",
+    "removeFailedTitle": "无法删除消息",
+    "removeFailedMessage": "消息已恢复，请重试。",
+    "hideKeyboard": "隐藏键盘"
   },
   "storyStatus": {
     "completed": "已完成",
@@ -192,7 +195,18 @@
     "publishEmptyChapters": "空章节无法发布。请添加内容或删除空章节。",
     "publishStoryMissing": "未找到故事。",
     "publishNotAuthor": "只有作者可以发布这个故事。",
-    "publishError": "章节发布失败。请重试。"
+    "publishError": "章节发布失败。请重试。",
+    "audienceLabel": "读者群",
+    "adultTitle": "成人内容（18+）",
+    "adultHint": "开启后，访客和未开启成人内容的读者将看不到此故事。",
+    "languageLabel": "故事语言",
+    "tagsLabel": "标签",
+    "tagsPlaceholder": "输入标签并添加",
+    "tagsHint": "最多 {{count}} 个标签，用于推荐和搜索。",
+    "tagAdd": "添加标签",
+    "warningsLabel": "内容警告",
+    "warningsHint": "读者在开始阅读前会看到。",
+    "importCtaSub": "粘贴你在别处写的故事，我们会帮你分成章节。"
   },
   "saved": {
     "title": "已保存的故事",
@@ -237,11 +251,17 @@
     "shareStory": "分享故事",
     "previousChapter": "上一章",
     "storyFinished": "你读完了这个故事",
+    "storyToBeContinued": "目前最新章节 · 未完待续",
     "sampleText": "文字在纸上开出一条路，读的人在路上留下自己的脚印。",
     "themeLight": "浅色",
     "themeSepia": "护眼",
     "themeDark": "深色",
-    "themeBlack": "纯黑"
+    "themeBlack": "纯黑",
+    "contentWarnings": "内容警告：{{list}}",
+    "matureGateTitle": "成人内容（18+）",
+    "matureGateBody": "此故事面向成年读者。请在设置中开启成人内容后阅读。",
+    "matureGateGuest": "此故事面向成年读者。请登录并在设置中开启成人内容后阅读。",
+    "matureGateAction": "打开设置"
   },
   "commentsScreen": {
     "title": "评论（{{count}}）",
@@ -309,7 +329,8 @@
     "accountSection": "账户设置",
     "saveChanges": "保存更改",
     "available": "可用",
-    "taken": "已被占用"
+    "taken": "已被占用",
+    "websitePlaceholder": "https://example.com"
   },
   "favorites": {
     "title": "我的收藏",
@@ -356,8 +377,6 @@
     "activity": "动态",
     "push": "推送通知",
     "pushSub": "我们会即时向你的手机发送通知",
-    "email": "邮件通知",
-    "emailSub": "通过邮件接收重要更新",
     "newChapter": "新章节",
     "newChapterSub": "你关注的作者发布章节时",
     "likes": "点赞",
@@ -366,7 +385,9 @@
     "commentsSub": "有人评论你的内容时",
     "newFollower": "新关注者",
     "newFollowerSub": "有人开始关注你时",
-    "enablePushFirst": "请先开启推送通知，才能启用动态通知。"
+    "enablePushFirst": "请先开启推送通知，才能启用动态通知。",
+    "mentions": "提及",
+    "mentionsSub": "有人在评论中用 @ 提到你时"
   },
   "changePassword": {
     "title": "修改密码",
@@ -485,27 +506,7 @@
     "commentFailed": "添加评论时出错。",
     "deleteFailed": "删除对话时出错。",
     "yourConversation": "你的对话",
-    "enterTitle": "请输入对话标题。",
-    "enterContent": "请输入对话内容。",
-    "created": "对话创建成功！",
-    "createdAnnounced": "对话已创建，并已通知你的关注者！",
-    "exitTitle": "退出",
-    "exitConfirm": "更改不会保存。确定要退出吗？",
-    "exit": "退出",
-    "startConversation": "开始对话",
-    "creating": "创建中…",
-    "titleLabel": "标题",
-    "titlePlaceholder": "输入对话标题…",
-    "contentLabel": "内容",
-    "contentPlaceholder": "你在想什么？和关注者分享吧…",
-    "imageOptional": "图片（可选）",
-    "addImage": "添加图片",
-    "announceTitle": "发布通知",
-    "announceSubtitle": "向关注者发送你开始此对话的通知",
-    "tipsTitle": "提示：",
-    "tip1": "提出问题，与关注者互动",
-    "tip2": "分享你对当前话题的看法",
-    "tip3": "鼓励关注者发表评论"
+    "creating": "创建中…"
   },
   "challenges": {
     "ranks": {
@@ -523,12 +524,12 @@
         "desc": "读者正在等待更多故事。"
       },
       "w2": {
-        "title": "连续写作 5 天",
-        "desc": "每天至少发布一个故事。"
+        "title": "本周写作 5 天",
+        "desc": "在 5 个不同的日子发布故事或章节。"
       },
       "w3": {
         "title": "完成一个未完成的故事",
-        "desc": "将其标记为“已完成”。",
+        "desc": "将你已发布的一个故事标记为“已完结”。",
         "badge": "完结者"
       },
       "w4": {
@@ -541,15 +542,15 @@
       },
       "r2": {
         "title": "读完一个故事",
-        "desc": "一直读到最后一章。"
+        "desc": "读完一个已完结故事的最后一章。"
       },
       "r3": {
-        "title": "阅读 10 个故事",
-        "desc": "本周读完至少 10 个不同的章节。"
+        "title": "本周读完 10 章",
+        "desc": "至少读完 10 个不同的章节。"
       },
       "r4": {
         "title": "发现一位新作者",
-        "desc": "打开一位你从未读过的作者的故事。"
+        "desc": "读完一位你未关注作者的一个章节。"
       },
       "c1": {
         "title": "评论 5 个故事",
@@ -560,19 +561,24 @@
         "desc": "扩大你的阅读圈。"
       },
       "c3": {
-        "title": "送出 10 个赞",
+        "title": "点赞 10 个故事",
         "desc": "为喜欢的故事加油。"
       },
       "c4": {
         "title": "激励一位作者",
-        "desc": "让你的评论被选为“精选”。",
+        "desc": "成为第一个评论某个故事的人。",
         "badge": "激励者"
       }
     },
     "weekly": {
       "title": "周末阅读马拉松",
-      "desc": "在周五至周日之间读完 3 个章节并留下 2 条评论。",
-      "endsIn": "还剩 2 天"
+      "desc": "周五至周日期间，读完 3 章并评论 2 个不同的故事。",
+      "endsIn_one": "剩余 {{count}} 天",
+      "endsIn_other": "剩余 {{count}} 天",
+      "endsToday": "今天结束",
+      "startsIn_one": "{{count}} 天后开始",
+      "startsIn_other": "{{count}} 天后开始",
+      "startsTomorrow": "明天开始"
     },
     "errors": {
       "sessionChanged": "挑战会话已更改。",
@@ -731,7 +737,8 @@
     "title": "我的书库",
     "saved": "已保存",
     "liked": "我的点赞",
-    "emptySub": "保存喜欢的故事，它们都会在这里等你。"
+    "emptySub": "保存喜欢的故事，它们都会在这里等你。",
+    "readingListsSub": "你的书单以及你在阅读器中添加的故事。"
   },
   "home": {
     "guestReader": "游客读者",
@@ -1068,5 +1075,39 @@
     "alertBody": "Your email address isn't verified. If you don't verify it within {{days}} days, your account will be suspended. If the address is wrong, you can fix it on the verification screen.",
     "alertLater": "Later",
     "alertGo": "Verify now"
+  },
+  "contentWarnings": {
+    "violence": "暴力",
+    "sexual": "性内容",
+    "profanity": "粗俗语言",
+    "substances": "药物滥用",
+    "selfHarm": "自我伤害",
+    "eatingDisorder": "饮食失调",
+    "racism": "种族歧视",
+    "homophobia": "恐同",
+    "transphobia": "跨性别恐惧",
+    "animalHarm": "虐待动物"
+  },
+  "launch": {
+    "title": "发布你的作品",
+    "subtitle": "封面已就绪，舞台属于你。",
+    "newStory": "新作",
+    "nowOnBluma": "现已登陆 Bluma",
+    "byAuthor": "{{author}} 著",
+    "readNow": "立即阅读",
+    "storyFormat": "快拍 · 全屏",
+    "postFormat": "帖子 · 4:5",
+    "shareWhere": "你想分享到哪里？",
+    "instagramStory": "分享到 Instagram 快拍",
+    "instagramPost": "帖子",
+    "message": "消息",
+    "shareMessage": "《{{title}}》现已登陆 Bluma，立即阅读：\n{{url}}",
+    "shareFailedTitle": "分享未能完成",
+    "shareFailedMessage": "如果未安装 Instagram，可以尝试通过消息分享。",
+    "linkHint": "链接已复制到剪贴板。在 Instagram 打开快拍后，添加“链接”贴纸并粘贴。Instagram 不允许应用自动添加。",
+    "makeLaunch": "发布作品",
+    "later": "稍后",
+    "unavailable": "无法发布",
+    "ownerOnly": "只有已发布作品的作者才能准备发布。"
   }
 }

@@ -7,6 +7,7 @@ describe('notificationTarget', () => {
     [{ type: 'message', data: { senderId: 'u2' } }, '/messages/u2'],
     [{ type: 'comment', data: { storyId: 's1', chapterIndex: '2', parentId: 'c1' } }, '/story/s1/comments?chapter=2'],
     [{ type: 'like', data: { storyId: 's1', chapterIndex: '0' } }, '/story/s1?chapter=0'],
+    [{ type: 'mention', data: { storyId: 's1', commentId: 'c9' } }, '/story/s1/comments'],
     [{ type: 'new_chapter', data: { storyId: 's1', chapterNumber: '3' } }, '/story/s1?chapter=2'],
     [{ type: 'conversation_announcement', data: { conversationId: 'c1' } }, '/conversation/c1'],
     [{ type: 'verify_email' }, '/profile/verify-email'],

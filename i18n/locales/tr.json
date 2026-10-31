@@ -103,7 +103,10 @@
     "infoSent": "Gönderildi",
     "infoDelivered": "İletildi",
     "infoRead": "Görüldü",
-    "infoPending": "Henüz yok"
+    "infoPending": "Henüz yok",
+    "removeFailedTitle": "Mesaj silinemedi",
+    "removeFailedMessage": "Mesaj geri getirildi. Lütfen tekrar dene.",
+    "hideKeyboard": "Klavyeyi gizle"
   },
   "launch": {
     "title": "Kitabının Lansmanı",
@@ -214,7 +217,18 @@
     "publishEmptyChapters": "Boş bölümler yayımlanamaz. İçerik ekleyebilir veya boş bölümü silebilirsin.",
     "publishStoryMissing": "Hikâye bulunamadı.",
     "publishNotAuthor": "Bu hikâyeyi yalnızca yazarı yayımlayabilir.",
-    "publishError": "Bölümler yayımlanamadı. Lütfen tekrar dene."
+    "publishError": "Bölümler yayımlanamadı. Lütfen tekrar dene.",
+    "audienceLabel": "Okur kitlesi",
+    "adultTitle": "Yetişkin içerik (18+)",
+    "adultHint": "Açıkken hikâye misafirlere ve yetişkin içeriği kapalı okurlara gösterilmez.",
+    "languageLabel": "Hikâyenin dili",
+    "tagsLabel": "Etiketler",
+    "tagsPlaceholder": "Etiket yaz ve ekle",
+    "tagsHint": "En fazla {{count}} etiket. Önerilerde ve aramada kullanılır.",
+    "tagAdd": "Etiketi ekle",
+    "warningsLabel": "İçerik uyarıları",
+    "warningsHint": "Okurlar hikâyeye başlamadan önce görür.",
+    "importCtaSub": "Başka yerde yazdığın hikâyeyi yapıştır, bölümlerine ayıralım."
   },
   "saved": {
     "title": "Kaydedilen Hikayeler",
@@ -259,11 +273,17 @@
     "shareStory": "Hikâyeyi paylaş",
     "previousChapter": "Önceki Bölüm",
     "storyFinished": "Hikâyeyi bitirdin",
+    "storyToBeContinued": "Şimdilik son bölüm · Devamı yolda",
     "sampleText": "Kelimeler sayfada bir yol açar; okur o yolda kendi izini bırakır.",
     "themeLight": "Aydınlık",
     "themeSepia": "Sepya",
     "themeDark": "Koyu",
-    "themeBlack": "Siyah"
+    "themeBlack": "Siyah",
+    "contentWarnings": "İçerik uyarısı: {{list}}",
+    "matureGateTitle": "Yetişkin içerik (18+)",
+    "matureGateBody": "Bu hikâye yetişkin okurlar içindir. Okumak için Ayarlar'dan yetişkin içeriği aç.",
+    "matureGateGuest": "Bu hikâye yetişkin okurlar içindir. Okumak için giriş yapıp Ayarlar'dan yetişkin içeriği açmalısın.",
+    "matureGateAction": "Ayarları aç"
   },
   "commentsScreen": {
     "title": "Yorumlar ({{count}})",
@@ -331,7 +351,8 @@
     "accountSection": "Hesap Ayarları",
     "saveChanges": "Değişiklikleri Kaydet",
     "available": "Uygun",
-    "taken": "Kullanılıyor"
+    "taken": "Kullanılıyor",
+    "websitePlaceholder": "https://siten.com"
   },
   "favorites": {
     "title": "Favorilerim",
@@ -378,8 +399,6 @@
     "activity": "Etkinlik",
     "push": "Push Bildirimleri",
     "pushSub": "Telefonuna anlık bildirim gönderelim",
-    "email": "E-posta Bildirimleri",
-    "emailSub": "Önemli güncellemeleri e-posta ile al",
     "newChapter": "Yeni Bölüm",
     "newChapterSub": "Takip ettiğin yazarlar bölüm yayınlayınca",
     "likes": "Beğeniler",
@@ -388,7 +407,9 @@
     "commentsSub": "İçeriklerine yorum yapıldığında",
     "newFollower": "Yeni Takipçi",
     "newFollowerSub": "Biri seni takip etmeye başladığında",
-    "enablePushFirst": "Etkinlik bildirimlerini açmak için önce Push Bildirimlerini etkinleştir."
+    "enablePushFirst": "Etkinlik bildirimlerini açmak için önce Push Bildirimlerini etkinleştir.",
+    "mentions": "Anmalar",
+    "mentionsSub": "Biri yorumunda senden @ ile bahsettiğinde"
   },
   "changePassword": {
     "title": "Şifre Değiştir",
@@ -507,27 +528,7 @@
     "commentFailed": "Yorum eklenirken bir hata oluştu.",
     "deleteFailed": "Konuşma silinirken bir hata oluştu.",
     "yourConversation": "Konuşmanız",
-    "enterTitle": "Lütfen konuşma başlığı girin.",
-    "enterContent": "Lütfen konuşma içeriği girin.",
-    "created": "Konuşma başarıyla oluşturuldu!",
-    "createdAnnounced": "Konuşma başarıyla oluşturuldu ve takipçilerinize duyuruldu!",
-    "exitTitle": "Çıkış",
-    "exitConfirm": "Değişiklikleriniz kaydedilmeyecek. Çıkmak istediğinizden emin misiniz?",
-    "exit": "Çık",
-    "startConversation": "Konuşma Başlat",
-    "creating": "Oluşturuluyor...",
-    "titleLabel": "Başlık",
-    "titlePlaceholder": "Konuşma başlığını girin...",
-    "contentLabel": "İçerik",
-    "contentPlaceholder": "Ne düşünüyorsun? Takipçilerinle paylaş...",
-    "imageOptional": "Resim (Opsiyonel)",
-    "addImage": "Resim Ekle",
-    "announceTitle": "Bunu duyur",
-    "announceSubtitle": "Takipçilerinize bu konuşmayı başlattığınıza dair bildirim gönder",
-    "tipsTitle": "İpuçları:",
-    "tip1": "Takipçilerinle etkileşim kurmak için sorular sorun",
-    "tip2": "Güncel konular hakkında düşüncelerinizi paylaşın",
-    "tip3": "Takipçilerinizin yorum yapmasını teşvik edin"
+    "creating": "Oluşturuluyor..."
   },
   "challenges": {
     "ranks": {
@@ -545,12 +546,12 @@
         "desc": "Okurların devamını bekliyor."
       },
       "w2": {
-        "title": "5 günlük yazma serisi",
-        "desc": "Her gün en az bir hikaye yayınla."
+        "title": "Bu hafta 5 gün yaz",
+        "desc": "5 farklı günde hikâye ya da bölüm yayınla."
       },
       "w3": {
         "title": "Yarım kalan bir hikayeyi tamamla",
-        "desc": "\"Tamamlandı\" olarak işaretle.",
+        "desc": "Yayındaki bir hikâyeni \"Tamamlandı\" olarak işaretle.",
         "badge": "Tamamlayıcı"
       },
       "w4": {
@@ -563,15 +564,15 @@
       },
       "r2": {
         "title": "Bir hikayeyi sonuna kadar oku",
-        "desc": "Son bölüme kadar git."
+        "desc": "Tamamlanmış bir hikâyenin son bölümünü bitir."
       },
       "r3": {
-        "title": "10 hikaye oku",
-        "desc": "Bu hafta en az 10 farklı bölümü bitir."
+        "title": "Bu hafta 10 bölüm bitir",
+        "desc": "En az 10 farklı bölümü sonuna kadar oku."
       },
       "r4": {
         "title": "Yeni bir yazar keşfet",
-        "desc": "Hiç okumadığın birinin hikayesini aç."
+        "desc": "Takip etmediğin bir yazarın bir bölümünü sonuna kadar oku."
       },
       "c1": {
         "title": "5 hikayeye yorum bırak",
@@ -582,19 +583,24 @@
         "desc": "Okuma çevreni genişlet."
       },
       "c3": {
-        "title": "10 beğeni yap",
+        "title": "10 hikâye beğen",
         "desc": "Sevdiğin hikayeleri öne çıkar."
       },
       "c4": {
         "title": "Bir yazara ilham ver",
-        "desc": "Yorumun \"öne çıkan\" seçilsin.",
+        "desc": "Bir hikâyeye ilk yorumu sen bırak.",
         "badge": "İlham Veren"
       }
     },
     "weekly": {
       "title": "Hafta Sonu Okuma Maratonu",
-      "desc": "Cuma-Pazar arası 3 bölüm bitir, 2 yorum bırak.",
-      "endsIn": "2 gün"
+      "desc": "Cuma–Pazar arası 3 bölüm bitir, 2 farklı hikâyeye yorum bırak.",
+      "endsIn_one": "{{count}} gün kaldı",
+      "endsIn_other": "{{count}} gün kaldı",
+      "endsToday": "Bugün bitiyor",
+      "startsIn_one": "{{count}} gün sonra başlıyor",
+      "startsIn_other": "{{count}} gün sonra başlıyor",
+      "startsTomorrow": "Yarın başlıyor"
     },
     "errors": {
       "sessionChanged": "Görev oturumu değişti.",
@@ -753,7 +759,8 @@
     "title": "Kütüphanem",
     "saved": "Kaydedilenler",
     "liked": "Beğendiklerim",
-    "emptySub": "Beğendiğin hikâyeleri kaydet; hepsi burada seni bekler."
+    "emptySub": "Beğendiğin hikâyeleri kaydet; hepsi burada seni bekler.",
+    "readingListsSub": "Kendi listelerin ve okuyucuda eklediğin hikâyeler."
   },
   "home": {
     "guestReader": "Misafir okur",
@@ -1090,5 +1097,17 @@
     "alertBody": "Hesabının e-posta adresi doğrulanmamış. {{days}} gün içinde doğrulamazsan hesabın askıya alınacak. Adresi yanlış yazdıysan doğrulama ekranından düzeltebilirsin.",
     "alertLater": "Daha sonra",
     "alertGo": "Şimdi doğrula"
+  },
+  "contentWarnings": {
+    "violence": "Şiddet",
+    "sexual": "Cinsel içerik",
+    "profanity": "Küfür",
+    "substances": "Madde kullanımı",
+    "selfHarm": "Kendine zarar verme",
+    "eatingDisorder": "Yeme bozukluğu",
+    "racism": "Irkçılık",
+    "homophobia": "Homofobi",
+    "transphobia": "Transfobi",
+    "animalHarm": "Hayvana zarar"
   }
 }

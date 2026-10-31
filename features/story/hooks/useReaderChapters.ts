@@ -1,7 +1,5 @@
 import { useGuestGate } from '@/contexts/GuestContext';
 import { buildChapterList } from '@/features/story/utils/readerContent';
-import { challengeActions } from '@/store/challengeStore';
-import { useAppSelector } from '@/store/hooks';
 import type { Story } from '@/types';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +21,6 @@ type Params = {
 export function useReaderChapters(params: Params) {
   const { t } = useTranslation();
   const { requireAuth } = useGuestGate();
-  const currentUserId = useAppSelector(state => state.auth.user?.id);
   const { story, legacyCount, chapterIndex, isGuest } = params;
 
   const total = story?.chaptersInSubcollection
@@ -46,12 +43,10 @@ export function useReaderChapters(params: Params) {
       return;
     }
     if (index < 0 || index >= total || index === chapterIndex) return;
+    // Görev sayımı gezinmede değil, bölüm SONUNDA yapılır (useReadingMilestones).
     selectChapter(index);
     onNavigated();
-    if (index > chapterIndex && currentUserId) {
-      void challengeActions.trackAction(currentUserId, 'chaptersRead');
-    }
-  }, [chapterIndex, currentUserId, isGuest, onNavigated, requireAuth, selectChapter, total]);
+  }, [chapterIndex, isGuest, onNavigated, requireAuth, selectChapter, total]);
 
   return {
     chapters,

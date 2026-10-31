@@ -103,7 +103,10 @@
     "infoSent": "Enviado",
     "infoDelivered": "Entregado",
     "infoRead": "Leído",
-    "infoPending": "Todavía no"
+    "infoPending": "Todavía no",
+    "removeFailedTitle": "No se pudo eliminar el mensaje",
+    "removeFailedMessage": "El mensaje se ha restaurado. Inténtalo de nuevo.",
+    "hideKeyboard": "Ocultar teclado"
   },
   "storyStatus": {
     "completed": "Completada",
@@ -192,7 +195,18 @@
     "publishEmptyChapters": "No se pueden publicar capítulos vacíos. Añade contenido o elimina el capítulo vacío.",
     "publishStoryMissing": "Historia no encontrada.",
     "publishNotAuthor": "Solo el autor puede publicar esta historia.",
-    "publishError": "No se pudieron publicar los capítulos. Inténtalo de nuevo."
+    "publishError": "No se pudieron publicar los capítulos. Inténtalo de nuevo.",
+    "audienceLabel": "Público",
+    "adultTitle": "Contenido para adultos (+18)",
+    "adultHint": "Si está activado, la historia no se muestra a invitados ni a lectores sin el contenido para adultos activado.",
+    "languageLabel": "Idioma de la historia",
+    "tagsLabel": "Etiquetas",
+    "tagsPlaceholder": "Escribe una etiqueta y añádela",
+    "tagsHint": "Hasta {{count}} etiquetas. Se usan en recomendaciones y búsquedas.",
+    "tagAdd": "Añadir etiqueta",
+    "warningsLabel": "Advertencias de contenido",
+    "warningsHint": "Los lectores las ven antes de empezar.",
+    "importCtaSub": "Pega una historia que escribiste en otro lugar y la dividiremos en capítulos."
   },
   "saved": {
     "title": "Historias guardadas",
@@ -237,11 +251,17 @@
     "shareStory": "Compartir historia",
     "previousChapter": "Capítulo anterior",
     "storyFinished": "Has terminado la historia",
+    "storyToBeContinued": "Último capítulo por ahora · Continuará",
     "sampleText": "Las palabras abren un camino en la página; quien lee deja en él su propia huella.",
     "themeLight": "Claro",
     "themeSepia": "Sepia",
     "themeDark": "Oscuro",
-    "themeBlack": "Negro"
+    "themeBlack": "Negro",
+    "contentWarnings": "Advertencia de contenido: {{list}}",
+    "matureGateTitle": "Contenido para adultos (+18)",
+    "matureGateBody": "Esta historia es para lectores adultos. Activa el contenido para adultos en Ajustes para leerla.",
+    "matureGateGuest": "Esta historia es para lectores adultos. Inicia sesión y activa el contenido para adultos en Ajustes para leerla.",
+    "matureGateAction": "Abrir Ajustes"
   },
   "commentsScreen": {
     "title": "Comentarios ({{count}})",
@@ -309,7 +329,8 @@
     "accountSection": "Configuración de la cuenta",
     "saveChanges": "Guardar cambios",
     "available": "Disponible",
-    "taken": "En uso"
+    "taken": "En uso",
+    "websitePlaceholder": "https://tusitio.com"
   },
   "favorites": {
     "title": "Mis favoritos",
@@ -356,8 +377,6 @@
     "activity": "Actividad",
     "push": "Notificaciones push",
     "pushSub": "Te enviaremos notificaciones instantáneas a tu teléfono",
-    "email": "Notificaciones por correo electrónico",
-    "emailSub": "Recibe actualizaciones importantes por correo electrónico",
     "newChapter": "Nuevo capítulo",
     "newChapterSub": "Cuando los autores que sigues publiquen un capítulo",
     "likes": "Me gusta",
@@ -366,7 +385,9 @@
     "commentsSub": "Cuando alguien comente en tu contenido",
     "newFollower": "Nuevo seguidor",
     "newFollowerSub": "Cuando alguien empiece a seguirte",
-    "enablePushFirst": "Activa primero las notificaciones push para recibir notificaciones de actividad."
+    "enablePushFirst": "Activa primero las notificaciones push para recibir notificaciones de actividad.",
+    "mentions": "Menciones",
+    "mentionsSub": "Cuando alguien te menciona con @ en un comentario"
   },
   "changePassword": {
     "title": "Cambiar contraseña",
@@ -485,27 +506,7 @@
     "commentFailed": "Algo salió mal al añadir el comentario.",
     "deleteFailed": "Algo salió mal al eliminar la conversación.",
     "yourConversation": "Tu conversación",
-    "enterTitle": "Introduce un título para la conversación.",
-    "enterContent": "Introduce el contenido de la conversación.",
-    "created": "¡La conversación se creó correctamente!",
-    "createdAnnounced": "¡La conversación se creó y se anunció a tus seguidores!",
-    "exitTitle": "Salir",
-    "exitConfirm": "Tus cambios no se guardarán. ¿Seguro que quieres salir?",
-    "exit": "Salir",
-    "startConversation": "Iniciar una conversación",
-    "creating": "Creando...",
-    "titleLabel": "Título",
-    "titlePlaceholder": "Introduce el título de la conversación...",
-    "contentLabel": "Contenido",
-    "contentPlaceholder": "¿En qué estás pensando? Compártelo con tus seguidores...",
-    "imageOptional": "Imagen (opcional)",
-    "addImage": "Añadir imagen",
-    "announceTitle": "Anunciar esto",
-    "announceSubtitle": "Envía a tus seguidores una notificación de que iniciaste esta conversación",
-    "tipsTitle": "Consejos:",
-    "tip1": "Haz preguntas para interactuar con tus seguidores",
-    "tip2": "Comparte tus opiniones sobre temas de actualidad",
-    "tip3": "Anima a tus seguidores a comentar"
+    "creating": "Creando..."
   },
   "challenges": {
     "ranks": {
@@ -523,12 +524,12 @@
         "desc": "Tus lectores esperan más."
       },
       "w2": {
-        "title": "Racha de escritura de 5 días",
-        "desc": "Publica al menos una historia cada día."
+        "title": "Escribe 5 días esta semana",
+        "desc": "Publica una historia o un capítulo en 5 días distintos."
       },
       "w3": {
         "title": "Termina una historia inconclusa",
-        "desc": "Márcala como \"Completada\".",
+        "desc": "Marca una de tus historias publicadas como \"Completada\".",
         "badge": "Finalizador"
       },
       "w4": {
@@ -541,15 +542,15 @@
       },
       "r2": {
         "title": "Lee una historia hasta el final",
-        "desc": "Llega hasta el último capítulo."
+        "desc": "Termina el último capítulo de una historia completada."
       },
       "r3": {
-        "title": "Lee 10 historias",
-        "desc": "Termina al menos 10 capítulos diferentes esta semana."
+        "title": "Termina 10 capítulos esta semana",
+        "desc": "Lee al menos 10 capítulos distintos hasta el final."
       },
       "r4": {
         "title": "Descubre a un nuevo autor",
-        "desc": "Abre una historia de alguien que nunca hayas leído."
+        "desc": "Termina un capítulo de un autor al que no sigues."
       },
       "c1": {
         "title": "Comenta en 5 historias",
@@ -560,19 +561,24 @@
         "desc": "Haz crecer tu círculo de lectura."
       },
       "c3": {
-        "title": "Da 10 me gusta",
+        "title": "Dale me gusta a 10 historias",
         "desc": "Impulsa las historias que te encantan."
       },
       "c4": {
         "title": "Inspira a un autor",
-        "desc": "Haz que tu comentario sea elegido como \"destacado\".",
+        "desc": "Sé la primera persona en comentar una historia.",
         "badge": "Inspirador"
       }
     },
     "weekly": {
       "title": "Maratón de lectura del fin de semana",
-      "desc": "Termina 3 capítulos y deja 2 comentarios entre el viernes y el domingo.",
-      "endsIn": "2 días"
+      "desc": "Entre el viernes y el domingo, termina 3 capítulos y comenta en 2 historias distintas.",
+      "endsIn_one": "Queda {{count}} día",
+      "endsIn_other": "Quedan {{count}} días",
+      "endsToday": "Termina hoy",
+      "startsIn_one": "Empieza en {{count}} día",
+      "startsIn_other": "Empieza en {{count}} días",
+      "startsTomorrow": "Empieza mañana"
     },
     "errors": {
       "sessionChanged": "La sesión del desafío cambió.",
@@ -731,7 +737,8 @@
     "title": "Mi biblioteca",
     "saved": "Guardadas",
     "liked": "Mis me gusta",
-    "emptySub": "Guarda las historias que te encantan; todas te estarán esperando aquí."
+    "emptySub": "Guarda las historias que te encantan; todas te estarán esperando aquí.",
+    "readingListsSub": "Tus listas y las historias que añadiste desde el lector."
   },
   "home": {
     "guestReader": "Lector invitado",
@@ -1068,5 +1075,39 @@
     "alertBody": "Your email address isn't verified. If you don't verify it within {{days}} days, your account will be suspended. If the address is wrong, you can fix it on the verification screen.",
     "alertLater": "Later",
     "alertGo": "Verify now"
+  },
+  "contentWarnings": {
+    "violence": "Violencia",
+    "sexual": "Contenido sexual",
+    "profanity": "Lenguaje soez",
+    "substances": "Consumo de sustancias",
+    "selfHarm": "Autolesiones",
+    "eatingDisorder": "Trastornos alimentarios",
+    "racism": "Racismo",
+    "homophobia": "Homofobia",
+    "transphobia": "Transfobia",
+    "animalHarm": "Maltrato animal"
+  },
+  "launch": {
+    "title": "Lanza tu libro",
+    "subtitle": "La portada está lista. El escenario es tuyo.",
+    "newStory": "NUEVA HISTORIA",
+    "nowOnBluma": "Ya en Bluma",
+    "byAuthor": "Por {{author}}",
+    "readNow": "Empieza a leer",
+    "storyFormat": "Historia · Pantalla completa",
+    "postFormat": "Publicación · 4:5",
+    "shareWhere": "¿DÓNDE QUIERES COMPARTIRLO?",
+    "instagramStory": "Compartir en una historia de Instagram",
+    "instagramPost": "Publicación",
+    "message": "Mensaje",
+    "shareMessage": "«{{title}}» ya está en Bluma. Empieza a leer:\n{{url}}",
+    "shareFailedTitle": "No se pudo completar el envío",
+    "shareFailedMessage": "Si no tienes Instagram instalado, prueba a compartirlo por mensaje.",
+    "linkHint": "El enlace se copia al portapapeles. Cuando se abra la historia en Instagram, añade el sticker «Enlace» y pégalo. Instagram no permite que las apps lo añadan automáticamente.",
+    "makeLaunch": "Lanza tu libro",
+    "later": "Más tarde",
+    "unavailable": "Lanzamiento no disponible",
+    "ownerOnly": "Solo quien publicó el libro puede preparar su lanzamiento."
   }
 }

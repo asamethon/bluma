@@ -1,10 +1,12 @@
 import i18n from '@/i18n';
 import { storyActions } from '@/store/storyStore';
 import type { Story, StoryCategory } from '@/types';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { Alert } from 'react-native';
+import { discardDraft } from '../services/chapterDraft';
 import { newChapter, openStory } from '../services/storyDraft';
+import { isAbandonedDraft } from '../utils/draftState';
 import type { StudioChapter } from '../utils/chapterContent';
 import { useChapterAutosave } from './useChapterAutosave';
 import { useChapterEditor } from './useChapterEditor';
@@ -33,11 +35,12 @@ const INITIAL: DocumentState = {
 /** Bölüm içeriği, otomatik kayıt ve zengin metin editörünü tek yerde tutar. */
 export function useComposerDocument(storyId: string, chapterParam?: string) {
   const router = useRouter();
+  const navigation = useNavigation();
   const [state, patch] = useReducer(
     (current: DocumentState, next: Partial<DocumentState>) => ({ ...current, ...next }),
     INITIAL,
   );
-  const { saveState, schedule, saveNow, retry } = useChapterAutosave(storyId);
+  const { saveState, schedule, saveNow, retry, discard } = useChapterAutosave(storyId);
   const hasUnpublishedChanges = useMemo(() => !state.isPublished || !sameChapters(state.chapters, state.publishedChapters),
     [state.chapters, state.isPublished, state.publishedChapters]);
 
@@ -77,6 +80,19 @@ export function useComposerDocument(storyId: string, chapterParam?: string) {
       lifecycle.active = false;
     };
   }, [chapterParam, loadEditor, router, storyId]);
+
+  // "Yeni hikâye" dokunuşu hemen taslak açar. Hiçbir şey yazılmadan çıkılırsa
+  // (geri düğmesi ya da kaydırma hareketi) silinir; stüdyoda ve taslak
+  // hatırlatıcısında "Adsız hikâye" yığılmasın. Navigasyon olayı dış bir
+  // sisteme aboneliktir.
+  const abandoned = !state.loading && !state.isPublished && isAbandonedDraft(state.story, state.chapters);
+  useEffect(() => {
+    if (!abandoned) return;
+    return navigation.addListener('beforeRemove', () => {
+      discard();
+      void discardDraft(storyId);
+    });
+  }, [abandoned, discard, navigation, storyId]);
 
   // Bilgi ekranından dönüldüğünde başlık/kategori tazelenir.
   useFocusEffect(useCallback(() => {

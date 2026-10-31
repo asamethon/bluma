@@ -1,8 +1,62 @@
 # Bluma — hata çözümü devir dosyası
 
-Güncelleme: **24 Ekim 2026**. Proje: `/Users/sametbalci/Desktop/fantasy/bluma_LATEST`.
+Güncelleme: **31 Ekim 2026**. Proje: `/Users/sametbalci/Desktop/fantasy/bluma_LATEST`.
 Kaynak: kullanıcının 12 Ekim 2026 tarihli, 26 maddelik hata taraması.
 Bu dosya kalan işleri ve önceki oturumun durumunu birlikte taşır.
+
+## 31 Ekim 2026 — 26 maddenin tamamı kodda kapatıldı
+
+`claude/quirky-bell-46oajz` dalında, madde gruplarına göre ayrı commit'ler:
+
+| Commit | Maddeler |
+| --- | --- |
+| `e3745e1` | 22b-1, 25 — sayaç/yazarlık/`isPremium` kuralları; tek adımlı sayaç azaltma; profil kaydı yalnızca profil alanlarını yazar; kendi beğenilmiş yorumunu silme; yeniden yayında tekrar duyuru ve `storiesCount` kayması |
+| `d8a9076` | Ek doğrulama — çıkışta kullanıcıya bağlı tüm dilimler sıfırlanır (`sessionEnded`) |
+| `bfc0630` | 13–16, 19, 22b-2 — görev modeli: tekil anahtarlı sayım, haftalık/kalıcı ödül ayrımı, hafta sonu maratonu, XP kuralları; okuyucu "bitirdin" yalnızca tamamlanmış hikâyede |
+| `981d54e` | 5–8 — +18, dil (kod olarak), etiketler, içerik uyarıları; okuyucuda yetişkin içerik kapısı |
+| `912cf31` | 9–12 — okuma listeleri, "Tümü" bağlantıları, içe aktarma girişi; ölü `/conversation/create` kaldırıldı |
+| `be5a151` | 17, 18, 20, 21 — e-posta anahtarı kaldırıldı, `@anma` bildirimi, okur niyeti, boş taslak silme |
+| `2492acf` | 23, 24, 26 — lansman çevirileri (+ i18n eşitlik testi), sabit metinler, profilde konum/web sitesi |
+
+Doğrulama: `yarn check` yeşil (tip + lint + knip kök/server/push-worker),
+`yarn test` 209 test, `yarn test:rules` 36 kural testi (emülatör).
+
+### Canlıya alma sırası
+
+Bağımlılık iki yönlü: yeni uygulama `users/{uid}/private/account`'a yazar ve
+eski kurallarda bu yol kapalıdır — kurallar geç kalırsa **yeni kullanıcı kayıt
+olamaz**. Eski uygulama ise yeni kurallarda profil kaydı ve haftalık ödül
+alırken reddedilir. Bu yüzden kurallar, yeni sürümün mağazada yayına çıktığı
+anda dağıtılır (PRIVATE-PROFILES-MIGRATION.md ile aynı sıra):
+
+1. Yeni native build (main'de Xcode 27 / ayrı Yaz sekmesi native değişikliği
+   var; OTA yetmez). Mağazalara "elle yayınla" seçeneğiyle gönder.
+2. Onay gelince, aynı oturumda: taşıma önizlemesi → `--apply` →
+   `firebase deploy --only firestore:rules` → `--apply` tekrar → sürümü
+   mağazalarda yayınla.
+3. `server/push-worker` (anma bildirimi anma ayarına uyar): VPS'e dağıt.
+   Bağımsızdır, istenen zaman yapılabilir.
+
+### Bilinçli ürün kararları
+
+- c4 "Yorumun öne çıkan seçilsin": uygulamada öyle bir özellik yok; görev
+  "bir hikâyeye ilk yorumu sen bırak" oldu. r4 "yeni yazar" = takip etmediğin
+  yazarın bölümünü bitirmek. w2 "5 farklı günde yayın", r3 "10 bölüm".
+- E-posta bildirimi altyapısı yok; işlevsiz anahtar kaldırıldı.
+- `/conversation/create` profil oluşturucusunun ölü kopyasıydı; silindi.
+- `isPremium` ödeme sistemi değil, admin'in verdiği editoryal işaret.
+
+### Kalan riskler (sunucu tarafı gerektirir)
+
+- Sayaçlar istemciden atomik bump'la yazılır: kötü niyetli bir istemci
+  tek adımlık artışı tekrarlayabilir. `push-worker/reconcile-counters.js`
+  periyodik düzeltme için kullanılabilir; tam çözüm sunucu tarafı sayaç.
+- Görev ilerlemesi istemciden yazılır: haftalık ödüller sahte ilerlemeyle
+  haftada bir alınabilir (sınırsız XP kapalı). Tam çözüm sunucuda ödül.
+- Çevrimdışı indirmeler cihaz düzeyindedir (hesaba değil); aynı cihazda
+  hesap değişince görünür kalır — tarama kapsamında değildi.
+
+Aşağıdaki bölümler tarihsel kayıttır.
 
 ## Yeni oturum için kısa durum
 
@@ -191,7 +245,7 @@ Kullanıcı kabul testi (bluma Yerel):
    Panel Admin erişimi kullandığından buradan alan değiştirmenin başarılı
    olması yetki açığı sayılmaz; yetkisiz istemci denemeleri kural testindedir.
 
-## Kalan hatalar — özgün madde numaraları
+## Kalan hatalar — özgün madde numaraları (31 Ekim'de kapatıldı, bkz. en üst)
 
 Aşağıdaki 4–26 maddeler ilk taramadan devralındı; tümü bu oturumda yeniden denetlenmedi.
 Her parçanın başında mevcut kodda doğrula. Özellik tercihleri belirsizse kaldırıldı diye varsayma.

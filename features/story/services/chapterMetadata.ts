@@ -22,11 +22,16 @@ export function sameChapters(first: StudioChapter[], second: StudioChapter[]) {
   });
 }
 
-/** Silip tekrar eklemek, daha önce duyurulmuş bölüm sayısını geriye çekmez. */
+/**
+ * Silip tekrar eklemek, daha önce duyurulmuş bölüm sayısını geriye çekmez.
+ * Yayından kaldırılıp yeniden yayınlanan hikâye de takipçilere ikinci kez
+ * "yeni hikâye" olarak duyurulmaz (`announceStory`).
+ */
 export function chapterPublication(current: Pick<Story, 'isPublished' | 'chaptersCount' | 'lastNotifiedChapterCount'>, count: number) {
   const previous = Math.max(current.lastNotifiedChapterCount || 0, current.isPublished ? current.chaptersCount || 1 : 0);
   return {
     firstPublish: !current.isPublished,
+    announceStory: !current.isPublished && !current.lastNotifiedChapterCount,
     newChapterNumber: current.isPublished && count > previous ? count : undefined,
     lastNotifiedChapterCount: Math.max(previous, count),
   };

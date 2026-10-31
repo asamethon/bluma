@@ -103,7 +103,10 @@
     "infoSent": "Terkirim",
     "infoDelivered": "Sampai",
     "infoRead": "Dibaca",
-    "infoPending": "Belum"
+    "infoPending": "Belum",
+    "removeFailedTitle": "Pesan tidak dapat dihapus",
+    "removeFailedMessage": "Pesan dikembalikan. Silakan coba lagi.",
+    "hideKeyboard": "Sembunyikan keyboard"
   },
   "storyStatus": {
     "completed": "Selesai",
@@ -192,7 +195,18 @@
     "publishEmptyChapters": "Bab kosong tidak dapat diterbitkan. Tambahkan konten atau hapus bab kosong.",
     "publishStoryMissing": "Cerita tidak ditemukan.",
     "publishNotAuthor": "Hanya penulis yang dapat menerbitkan cerita ini.",
-    "publishError": "Bab tidak dapat diterbitkan. Silakan coba lagi."
+    "publishError": "Bab tidak dapat diterbitkan. Silakan coba lagi.",
+    "audienceLabel": "Pembaca",
+    "adultTitle": "Konten dewasa (18+)",
+    "adultHint": "Jika aktif, cerita disembunyikan dari tamu dan pembaca yang belum mengaktifkan konten dewasa.",
+    "languageLabel": "Bahasa cerita",
+    "tagsLabel": "Tag",
+    "tagsPlaceholder": "Ketik tag lalu tambahkan",
+    "tagsHint": "Maksimal {{count}} tag. Dipakai untuk rekomendasi dan pencarian.",
+    "tagAdd": "Tambahkan tag",
+    "warningsLabel": "Peringatan konten",
+    "warningsHint": "Pembaca melihatnya sebelum mulai membaca.",
+    "importCtaSub": "Tempel cerita yang kamu tulis di tempat lain, kami bagi menjadi bab."
   },
   "saved": {
     "title": "Cerita tersimpan",
@@ -237,11 +251,17 @@
     "shareStory": "Bagikan cerita",
     "previousChapter": "Bab Sebelumnya",
     "storyFinished": "Kamu menyelesaikan cerita ini",
+    "storyToBeContinued": "Bab terakhir untuk saat ini · Bersambung",
     "sampleText": "Kata-kata membuka jalan di halaman; pembaca meninggalkan jejaknya sendiri di sana.",
     "themeLight": "Terang",
     "themeSepia": "Sepia",
     "themeDark": "Gelap",
-    "themeBlack": "Hitam"
+    "themeBlack": "Hitam",
+    "contentWarnings": "Peringatan konten: {{list}}",
+    "matureGateTitle": "Konten dewasa (18+)",
+    "matureGateBody": "Cerita ini untuk pembaca dewasa. Aktifkan konten dewasa di Pengaturan untuk membacanya.",
+    "matureGateGuest": "Cerita ini untuk pembaca dewasa. Masuk lalu aktifkan konten dewasa di Pengaturan untuk membacanya.",
+    "matureGateAction": "Buka Pengaturan"
   },
   "commentsScreen": {
     "title": "Komentar ({{count}})",
@@ -309,7 +329,8 @@
     "accountSection": "Pengaturan akun",
     "saveChanges": "Simpan perubahan",
     "available": "Tersedia",
-    "taken": "Sudah digunakan"
+    "taken": "Sudah digunakan",
+    "websitePlaceholder": "https://situsmu.com"
   },
   "favorites": {
     "title": "Favoritku",
@@ -356,8 +377,6 @@
     "activity": "Aktivitas",
     "push": "Notifikasi push",
     "pushSub": "Kami akan mengirimkan notifikasi instan ke ponselmu",
-    "email": "Notifikasi email",
-    "emailSub": "Dapatkan pembaruan penting melalui email",
     "newChapter": "Bab baru",
     "newChapterSub": "Saat penulis yang kamu ikuti menerbitkan sebuah bab",
     "likes": "Suka",
@@ -366,7 +385,9 @@
     "commentsSub": "Saat seseorang mengomentari kontenmu",
     "newFollower": "Pengikut baru",
     "newFollowerSub": "Saat seseorang mulai mengikutimu",
-    "enablePushFirst": "Aktifkan notifikasi push terlebih dahulu untuk mendapatkan notifikasi aktivitas."
+    "enablePushFirst": "Aktifkan notifikasi push terlebih dahulu untuk mendapatkan notifikasi aktivitas.",
+    "mentions": "Sebutan",
+    "mentionsSub": "Saat seseorang menyebutmu dengan @ di komentar"
   },
   "changePassword": {
     "title": "Ubah kata sandi",
@@ -485,27 +506,7 @@
     "commentFailed": "Terjadi kesalahan saat menambahkan komentar.",
     "deleteFailed": "Terjadi kesalahan saat menghapus percakapan.",
     "yourConversation": "Percakapanmu",
-    "enterTitle": "Masukkan judul untuk percakapan.",
-    "enterContent": "Masukkan isi percakapan.",
-    "created": "Percakapan berhasil dibuat!",
-    "createdAnnounced": "Percakapan telah dibuat dan diumumkan kepada pengikutmu!",
-    "exitTitle": "Keluar",
-    "exitConfirm": "Perubahanmu tidak akan disimpan. Yakin ingin keluar?",
-    "exit": "Keluar",
-    "startConversation": "Mulai percakapan",
-    "creating": "Membuat...",
-    "titleLabel": "Judul",
-    "titlePlaceholder": "Masukkan judul percakapan...",
-    "contentLabel": "Isi",
-    "contentPlaceholder": "Apa yang sedang kamu pikirkan? Bagikan dengan pengikutmu...",
-    "imageOptional": "Gambar (opsional)",
-    "addImage": "Tambahkan gambar",
-    "announceTitle": "Umumkan ini",
-    "announceSubtitle": "Kirim notifikasi ke pengikutmu bahwa kamu memulai percakapan ini",
-    "tipsTitle": "Tips:",
-    "tip1": "Ajukan pertanyaan untuk berinteraksi dengan pengikutmu",
-    "tip2": "Bagikan pendapatmu tentang topik yang sedang hangat",
-    "tip3": "Dorong pengikutmu untuk berkomentar"
+    "creating": "Membuat..."
   },
   "challenges": {
     "ranks": {
@@ -523,12 +524,12 @@
         "desc": "Pembacamu menantikan lebih banyak lagi."
       },
       "w2": {
-        "title": "Rangkaian menulis 5 hari",
-        "desc": "Terbitkan setidaknya satu cerita setiap hari."
+        "title": "Menulis 5 hari minggu ini",
+        "desc": "Terbitkan cerita atau bab di 5 hari yang berbeda."
       },
       "w3": {
         "title": "Selesaikan cerita yang belum tuntas",
-        "desc": "Tandai sebagai \"Selesai\".",
+        "desc": "Tandai salah satu ceritamu yang sudah terbit sebagai \"Selesai\".",
         "badge": "Penuntas"
       },
       "w4": {
@@ -541,15 +542,15 @@
       },
       "r2": {
         "title": "Baca sebuah cerita sampai selesai",
-        "desc": "Sampai ke bab terakhir."
+        "desc": "Selesaikan bab terakhir dari cerita yang sudah tamat."
       },
       "r3": {
-        "title": "Baca 10 cerita",
-        "desc": "Selesaikan setidaknya 10 bab berbeda minggu ini."
+        "title": "Selesaikan 10 bab minggu ini",
+        "desc": "Baca setidaknya 10 bab berbeda sampai selesai."
       },
       "r4": {
         "title": "Temukan penulis baru",
-        "desc": "Buka cerita dari seseorang yang belum pernah kamu baca."
+        "desc": "Selesaikan satu bab dari penulis yang tidak kamu ikuti."
       },
       "c1": {
         "title": "Komentari 5 cerita",
@@ -560,19 +561,24 @@
         "desc": "Perluas lingkaran bacaanmu."
       },
       "c3": {
-        "title": "Beri 10 suka",
+        "title": "Sukai 10 cerita",
         "desc": "Dukung cerita-cerita yang kamu sukai."
       },
       "c4": {
         "title": "Inspirasi bagi penulis",
-        "desc": "Buat komentarmu terpilih sebagai \"unggulan\".",
+        "desc": "Jadilah yang pertama mengomentari sebuah cerita.",
         "badge": "Penginspirasi"
       }
     },
     "weekly": {
       "title": "Maraton membaca akhir pekan",
-      "desc": "Selesaikan 3 bab dan tinggalkan 2 komentar antara Jumat dan Minggu.",
-      "endsIn": "2 hari"
+      "desc": "Antara Jumat dan Minggu, selesaikan 3 bab dan komentari 2 cerita berbeda.",
+      "endsIn_one": "{{count}} hari lagi",
+      "endsIn_other": "{{count}} hari lagi",
+      "endsToday": "Berakhir hari ini",
+      "startsIn_one": "Mulai dalam {{count}} hari",
+      "startsIn_other": "Mulai dalam {{count}} hari",
+      "startsTomorrow": "Mulai besok"
     },
     "errors": {
       "sessionChanged": "Sesi tantangan berubah.",
@@ -731,7 +737,8 @@
     "title": "Perpustakaanku",
     "saved": "Tersimpan",
     "liked": "Yang kusukai",
-    "emptySub": "Simpan cerita yang kamu sukai, semuanya akan menantimu di sini."
+    "emptySub": "Simpan cerita yang kamu sukai, semuanya akan menantimu di sini.",
+    "readingListsSub": "Daftarmu dan cerita yang kamu tambahkan dari pembaca."
   },
   "home": {
     "guestReader": "Pembaca tamu",
@@ -1068,5 +1075,39 @@
     "alertBody": "Your email address isn't verified. If you don't verify it within {{days}} days, your account will be suspended. If the address is wrong, you can fix it on the verification screen.",
     "alertLater": "Later",
     "alertGo": "Verify now"
+  },
+  "contentWarnings": {
+    "violence": "Kekerasan",
+    "sexual": "Konten seksual",
+    "profanity": "Kata kasar",
+    "substances": "Penggunaan zat terlarang",
+    "selfHarm": "Menyakiti diri sendiri",
+    "eatingDisorder": "Gangguan makan",
+    "racism": "Rasisme",
+    "homophobia": "Homofobia",
+    "transphobia": "Transfobia",
+    "animalHarm": "Kekerasan terhadap hewan"
+  },
+  "launch": {
+    "title": "Luncurkan Bukumu",
+    "subtitle": "Sampul sudah siap. Panggung milikmu.",
+    "newStory": "CERITA BARU",
+    "nowOnBluma": "Kini di Bluma",
+    "byAuthor": "Karya {{author}}",
+    "readNow": "Mulai membaca",
+    "storyFormat": "Story · Layar penuh",
+    "postFormat": "Postingan · 4:5",
+    "shareWhere": "MAU DIBAGIKAN DI MANA?",
+    "instagramStory": "Bagikan ke Instagram Story",
+    "instagramPost": "Postingan",
+    "message": "Pesan",
+    "shareMessage": "“{{title}}” kini ada di Bluma. Mulai membaca:\n{{url}}",
+    "shareFailedTitle": "Gagal membagikan",
+    "shareFailedMessage": "Jika Instagram belum terpasang, coba bagikan lewat pesan.",
+    "linkHint": "Tautan disalin ke papan klip. Setelah story terbuka di Instagram, tambahkan stiker \"Tautan\" lalu tempel. Instagram tidak mengizinkan aplikasi menambahkannya secara otomatis.",
+    "makeLaunch": "Luncurkan Bukumu",
+    "later": "Nanti",
+    "unavailable": "Peluncuran tidak tersedia",
+    "ownerOnly": "Hanya penulis buku yang sudah terbit yang bisa menyiapkan peluncurannya."
   }
 }

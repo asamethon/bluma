@@ -103,7 +103,10 @@
     "infoSent": "보냄",
     "infoDelivered": "전달됨",
     "infoRead": "읽음",
-    "infoPending": "아직"
+    "infoPending": "아직",
+    "removeFailedTitle": "메시지를 삭제하지 못했어요",
+    "removeFailedMessage": "메시지를 되돌렸어요. 다시 시도해 주세요.",
+    "hideKeyboard": "키보드 숨기기"
   },
   "storyStatus": {
     "completed": "완결",
@@ -192,7 +195,18 @@
     "publishEmptyChapters": "빈 챕터는 게시할 수 없습니다. 내용을 추가하거나 빈 챕터를 삭제하세요.",
     "publishStoryMissing": "스토리를 찾을 수 없습니다.",
     "publishNotAuthor": "이 스토리는 작성자만 게시할 수 있습니다.",
-    "publishError": "챕터를 게시하지 못했습니다. 다시 시도하세요."
+    "publishError": "챕터를 게시하지 못했습니다. 다시 시도하세요.",
+    "audienceLabel": "독자층",
+    "adultTitle": "성인 콘텐츠 (18+)",
+    "adultHint": "켜면 게스트와 성인 콘텐츠를 켜지 않은 독자에게는 작품이 표시되지 않습니다.",
+    "languageLabel": "작품 언어",
+    "tagsLabel": "태그",
+    "tagsPlaceholder": "태그를 입력해 추가하세요",
+    "tagsHint": "최대 {{count}}개. 추천과 검색에 사용됩니다.",
+    "tagAdd": "태그 추가",
+    "warningsLabel": "콘텐츠 경고",
+    "warningsHint": "독자가 읽기 전에 볼 수 있습니다.",
+    "importCtaSub": "다른 곳에서 쓴 작품을 붙여 넣으면 챕터로 나눠 드려요."
   },
   "saved": {
     "title": "저장한 스토리",
@@ -237,11 +251,17 @@
     "shareStory": "이야기 공유",
     "previousChapter": "이전 챕터",
     "storyFinished": "이야기를 끝까지 읽었어요",
+    "storyToBeContinued": "현재 마지막 챕터 · 다음 화를 기다려 주세요",
     "sampleText": "낱말은 페이지에 길을 내고, 읽는 이는 그 길에 자기 발자국을 남긴다.",
     "themeLight": "라이트",
     "themeSepia": "세피아",
     "themeDark": "다크",
-    "themeBlack": "블랙"
+    "themeBlack": "블랙",
+    "contentWarnings": "콘텐츠 경고: {{list}}",
+    "matureGateTitle": "성인 콘텐츠 (18+)",
+    "matureGateBody": "이 작품은 성인 독자를 위한 작품입니다. 읽으려면 설정에서 성인 콘텐츠를 켜세요.",
+    "matureGateGuest": "이 작품은 성인 독자를 위한 작품입니다. 읽으려면 로그인한 뒤 설정에서 성인 콘텐츠를 켜세요.",
+    "matureGateAction": "설정 열기"
   },
   "commentsScreen": {
     "title": "댓글 ({{count}})",
@@ -309,7 +329,8 @@
     "accountSection": "계정 설정",
     "saveChanges": "변경사항 저장",
     "available": "사용 가능",
-    "taken": "이미 사용 중"
+    "taken": "이미 사용 중",
+    "websitePlaceholder": "https://example.com"
   },
   "favorites": {
     "title": "즐겨찾기",
@@ -356,8 +377,6 @@
     "activity": "활동",
     "push": "푸시 알림",
     "pushSub": "휴대폰으로 즉시 알림을 보내드립니다",
-    "email": "이메일 알림",
-    "emailSub": "중요한 업데이트를 이메일로 받아보세요",
     "newChapter": "새 챕터",
     "newChapterSub": "팔로우한 작가가 챕터를 게시할 때",
     "likes": "좋아요",
@@ -366,7 +385,9 @@
     "commentsSub": "누군가 내 콘텐츠에 댓글을 남길 때",
     "newFollower": "새 팔로워",
     "newFollowerSub": "누군가 나를 팔로우하기 시작할 때",
-    "enablePushFirst": "활동 알림을 받으려면 먼저 푸시 알림을 활성화하세요."
+    "enablePushFirst": "활동 알림을 받으려면 먼저 푸시 알림을 활성화하세요.",
+    "mentions": "멘션",
+    "mentionsSub": "누군가 댓글에서 @로 나를 언급했을 때"
   },
   "changePassword": {
     "title": "비밀번호 변경",
@@ -485,27 +506,7 @@
     "commentFailed": "댓글을 추가하는 중 문제가 발생했습니다.",
     "deleteFailed": "대화를 삭제하는 중 문제가 발생했습니다.",
     "yourConversation": "내 대화",
-    "enterTitle": "대화 제목을 입력해주세요.",
-    "enterContent": "대화 내용을 입력해주세요.",
-    "created": "대화가 성공적으로 생성되었습니다!",
-    "createdAnnounced": "대화가 생성되어 팔로워에게 알려졌습니다!",
-    "exitTitle": "나가기",
-    "exitConfirm": "변경사항이 저장되지 않습니다. 나가시겠습니까?",
-    "exit": "나가기",
-    "startConversation": "대화 시작하기",
-    "creating": "생성 중...",
-    "titleLabel": "제목",
-    "titlePlaceholder": "대화 제목을 입력하세요...",
-    "contentLabel": "내용",
-    "contentPlaceholder": "무슨 생각을 하고 있나요? 팔로워와 공유해보세요...",
-    "imageOptional": "이미지 (선택사항)",
-    "addImage": "이미지 추가",
-    "announceTitle": "이 소식 알리기",
-    "announceSubtitle": "이 대화를 시작했다는 알림을 팔로워에게 보냅니다",
-    "tipsTitle": "팁:",
-    "tip1": "질문을 던져 팔로워와 소통해보세요",
-    "tip2": "시사 주제에 대한 생각을 공유해보세요",
-    "tip3": "팔로워가 댓글을 남기도록 유도해보세요"
+    "creating": "생성 중..."
   },
   "challenges": {
     "ranks": {
@@ -523,12 +524,12 @@
         "desc": "독자들이 더 많은 이야기를 기다리고 있습니다."
       },
       "w2": {
-        "title": "5일 연속 글쓰기",
-        "desc": "매일 최소 하나의 스토리를 게시하세요."
+        "title": "이번 주 5일 동안 쓰기",
+        "desc": "서로 다른 5일에 작품이나 챕터를 공개하세요."
       },
       "w3": {
         "title": "미완결 스토리 완결하기",
-        "desc": "\"완결\"로 표시하세요.",
+        "desc": "공개 중인 작품을 \"완결\"로 표시하세요.",
         "badge": "완결자"
       },
       "w4": {
@@ -541,15 +542,15 @@
       },
       "r2": {
         "title": "스토리를 끝까지 읽기",
-        "desc": "마지막 화까지 읽어보세요."
+        "desc": "완결된 작품의 마지막 챕터를 끝까지 읽으세요."
       },
       "r3": {
-        "title": "10개의 스토리 읽기",
-        "desc": "이번 주에 최소 10개의 다른 챕터를 완독하세요."
+        "title": "이번 주 챕터 10개 완독",
+        "desc": "서로 다른 챕터 10개 이상을 끝까지 읽으세요."
       },
       "r4": {
         "title": "새로운 작가 발견하기",
-        "desc": "한 번도 읽어본 적 없는 작가의 스토리를 열어보세요."
+        "desc": "팔로우하지 않는 작가의 챕터를 끝까지 읽으세요."
       },
       "c1": {
         "title": "5개의 스토리에 댓글 남기기",
@@ -560,19 +561,24 @@
         "desc": "독서 인맥을 넓혀보세요."
       },
       "c3": {
-        "title": "좋아요 10개 누르기",
+        "title": "작품 10개에 좋아요",
         "desc": "좋아하는 스토리를 응원해보세요."
       },
       "c4": {
         "title": "작가에게 영감 주기",
-        "desc": "내 댓글이 \"베스트 댓글\"로 선정되게 해보세요.",
+        "desc": "작품에 첫 댓글을 남기세요.",
         "badge": "영감을 주는 사람"
       }
     },
     "weekly": {
       "title": "주말 독서 마라톤",
-      "desc": "금요일부터 일요일까지 3화를 읽고 댓글 2개를 남기세요.",
-      "endsIn": "2일 남음"
+      "desc": "금요일부터 일요일 사이에 챕터 3개를 완독하고 서로 다른 작품 2개에 댓글을 남기세요.",
+      "endsIn_one": "{{count}}일 남음",
+      "endsIn_other": "{{count}}일 남음",
+      "endsToday": "오늘 종료",
+      "startsIn_one": "{{count}}일 후 시작",
+      "startsIn_other": "{{count}}일 후 시작",
+      "startsTomorrow": "내일 시작"
     },
     "errors": {
       "sessionChanged": "챌린지 세션이 변경되었습니다.",
@@ -731,7 +737,8 @@
     "title": "내 보관함",
     "saved": "저장됨",
     "liked": "내가 좋아요한 것",
-    "emptySub": "좋아하는 스토리를 저장하면 여기에서 모두 만나볼 수 있습니다."
+    "emptySub": "좋아하는 스토리를 저장하면 여기에서 모두 만나볼 수 있습니다.",
+    "readingListsSub": "내 목록과 리더에서 추가한 작품."
   },
   "home": {
     "guestReader": "게스트 독자",
@@ -1068,5 +1075,39 @@
     "alertBody": "Your email address isn't verified. If you don't verify it within {{days}} days, your account will be suspended. If the address is wrong, you can fix it on the verification screen.",
     "alertLater": "Later",
     "alertGo": "Verify now"
+  },
+  "contentWarnings": {
+    "violence": "폭력",
+    "sexual": "성적인 내용",
+    "profanity": "비속어",
+    "substances": "약물 사용",
+    "selfHarm": "자해",
+    "eatingDisorder": "섭식 장애",
+    "racism": "인종차별",
+    "homophobia": "동성애 혐오",
+    "transphobia": "트랜스젠더 혐오",
+    "animalHarm": "동물 학대"
+  },
+  "launch": {
+    "title": "작품 런칭하기",
+    "subtitle": "표지가 준비됐어요. 무대는 당신의 것입니다.",
+    "newStory": "신작",
+    "nowOnBluma": "지금 Bluma에서",
+    "byAuthor": "{{author}} 작",
+    "readNow": "지금 읽기",
+    "storyFormat": "스토리 · 전체 화면",
+    "postFormat": "게시물 · 4:5",
+    "shareWhere": "어디에 공유할까요?",
+    "instagramStory": "인스타그램 스토리에 공유",
+    "instagramPost": "게시물",
+    "message": "메시지",
+    "shareMessage": "“{{title}}”, 지금 Bluma에서 읽어 보세요:\n{{url}}",
+    "shareFailedTitle": "공유를 완료하지 못했어요",
+    "shareFailedMessage": "인스타그램이 설치되어 있지 않다면 메시지로 공유해 보세요.",
+    "linkHint": "링크가 클립보드에 복사됩니다. 인스타그램에서 스토리가 열리면 \"링크\" 스티커를 추가해 붙여 넣으세요. 인스타그램은 앱이 자동으로 추가하는 것을 허용하지 않아요.",
+    "makeLaunch": "런칭하기",
+    "later": "나중에",
+    "unavailable": "런칭을 사용할 수 없어요",
+    "ownerOnly": "공개된 작품의 작가만 런칭을 준비할 수 있어요."
   }
 }

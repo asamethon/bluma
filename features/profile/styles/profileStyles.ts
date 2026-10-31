@@ -19,6 +19,9 @@ export const profileStyles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   bio: { marginTop: Spacing.md },
+  // Konum ve web sitesi tek tipografik satırda; dar ekranda alta sarar.
+  linksRow: { flexDirection: 'row', flexWrap: 'wrap', columnGap: Spacing.lg, rowGap: Spacing.xs, marginTop: Spacing.md },
+  linkItem: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, maxWidth: '100%' },
   // Aksiyonlar avatarın sağında, kapağın hemen altında: kimlik bir satır kazanır.
   aside: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   // Kutu da ayraç da yok: bant kendi boşluğuyla ayrılır.

@@ -18,7 +18,7 @@ export async function persistChallengeOperation(
     const snapshot = await getDocFromServer(ref);
     if (!isCurrentSession()) throw new Error(i18n.t('challenges.errors.sessionChanged'));
     if (!snapshot.exists()) throw new Error(i18n.t('challenges.errors.profileNotFound'));
-    const stored = snapshot.data() as Partial<ChallengeData>;
+    const stored = snapshot.data() as Partial<ChallengeData> & { storiesCount?: number };
     const next = refreshChallengeDay(stored);
     if (!Object.keys(challengeUpdates(stored, next)).length) return { data: next, completed: false };
   }
@@ -27,7 +27,7 @@ export async function persistChallengeOperation(
     const snapshot = await transaction.get(ref);
     if (!isCurrentSession()) throw new Error(i18n.t('challenges.errors.sessionChanged'));
     if (!snapshot.exists()) throw new Error(i18n.t('challenges.errors.profileNotFound'));
-    const stored = snapshot.data() as Partial<ChallengeData>;
+    const stored = snapshot.data() as Partial<ChallengeData> & { storiesCount?: number };
     const refreshed = refreshChallengeDay(stored);
     const next = operation ? applyChallengeOperation(refreshed, operation) : refreshed;
     const updates = challengeUpdates(stored, next);
@@ -39,6 +39,16 @@ export async function persistChallengeOperation(
   });
 }
 
+/**
+ * Liste yalnızca uzadıysa `arrayUnion` (eşzamanlı yazımlar birbirini
+ * silmez); hafta sıfırlamasında kısalan liste ise bütünüyle yazılır.
+ */
+function listUpdate(previous: string[], next: string[]) {
+  if (previous.length === next.length && previous.every(item => next.includes(item))) return undefined;
+  const added = next.filter(item => !previous.includes(item));
+  return previous.every(item => next.includes(item)) ? arrayUnion(...added) : next;
+}
+
 function challengeUpdates(stored: Partial<ChallengeData>, next: ChallengeData) {
   const updates: Record<string, unknown> = {};
   if (stored.lastActiveDate !== next.lastActiveDate) updates.lastActiveDate = next.lastActiveDate;
@@ -48,8 +58,14 @@ function challengeUpdates(stored: Partial<ChallengeData>, next: ChallengeData) {
     const previous = stored.challengeProgress?.[id] ?? 0;
     if (value !== previous) updates[`challengeProgress.${id}`] = increment(value - previous);
   }
+  for (const [id, keys] of Object.entries(next.challengeKeys)) {
+    const update = listUpdate(stored.challengeKeys?.[id] ?? [], keys);
+    if (update !== undefined) updates[`challengeKeys.${id}`] = update;
+  }
   if (next.xp !== (stored.xp ?? 0)) updates.xp = increment(next.xp - (stored.xp ?? 0));
-  const claimed = next.claimedChallenges.filter(id => !stored.claimedChallenges?.includes(id));
-  if (claimed.length) updates.claimedChallenges = arrayUnion(...claimed);
+  const claimed = listUpdate(stored.claimedChallenges ?? [], next.claimedChallenges);
+  if (claimed !== undefined) updates.claimedChallenges = claimed;
+  const weekly = listUpdate(stored.weeklyClaims ?? [], next.weeklyClaims);
+  if (weekly !== undefined) updates.weeklyClaims = weekly;
   return updates;
 }

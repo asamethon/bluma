@@ -3,6 +3,7 @@ import { useResponsive } from '@/hooks/useResponsive';
 import { useAppSelector } from '@/store/hooks';
 import { READING_LINE_HEIGHT_MULTIPLIER } from '@/store/preferencesStore';
 import type { Story } from '@/types';
+import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { readerStyles as styles } from '../../styles/readerStyles';
 import { ReaderBody } from './ReaderBody';
@@ -31,6 +32,10 @@ export function ReaderCanvas({ story, colors: reading, isGuest, reader, chapters
   const lineSpacing = useAppSelector(state => state.preferences.readingLineSpacing);
   const fontSize = useAppSelector(state => state.preferences.readingFontSize);
   const index = reader.chapterIndex;
+  // Kısa bölüm ekrana sığdığında kaydırma olayı gelmez; "bitti" sayımı bu
+  // iki ölçüyle yapılır. Hangisinin önce geldiği garanti olmadığından ikisi
+  // de tutulur.
+  const [size, setSize] = useState({ content: 0, viewport: 0 });
 
   return (
     <ScrollView
@@ -47,7 +52,14 @@ export function ReaderCanvas({ story, colors: reading, isGuest, reader, chapters
         reader.saveScroll(event);
       }}
       scrollEventThrottle={32}
+      onLayout={event => {
+        const viewport = event.nativeEvent.layout.height;
+        setSize(current => ({ ...current, viewport }));
+        reader.checkFits(size.content, viewport);
+      }}
       onContentSizeChange={(_contentWidth, height) => {
+        setSize(current => ({ ...current, content: height }));
+        reader.checkFits(height, size.viewport);
         const ratio = reader.pendingScrollRatio.current;
         if (ratio == null) return;
         reader.pendingScrollRatio.current = null;
