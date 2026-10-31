@@ -29,12 +29,22 @@ export function setupStoryLibraryListeners() {
   const db = getFirestore();
   listeners.liked = onSnapshot(
     query(collection(db, 'users', userId, 'likedStories'), orderBy('createdAt', 'desc')),
-    snapshot => { void loadStories(snapshot).then(likedStories => store.dispatch(patchStory({ likedStories }))); },
+    snapshot => {
+      // Dinleyici kapandıktan (çıkış/hesap değişimi) sonra çözülen okuma
+      // eski hesabın listesini yeni oturuma yazmasın.
+      void loadStories(snapshot).then(likedStories => {
+        if (listeners.userId === userId) store.dispatch(patchStory({ likedStories }));
+      });
+    },
     error => logger.error('Liked stories listener error:', error),
   );
   listeners.saved = onSnapshot(
     query(collection(db, 'users', userId, 'savedStories'), orderBy('createdAt', 'desc')),
-    snapshot => { void loadStories(snapshot).then(savedStories => store.dispatch(patchStory({ savedStories }))); },
+    snapshot => {
+      void loadStories(snapshot).then(savedStories => {
+        if (listeners.userId === userId) store.dispatch(patchStory({ savedStories }));
+      });
+    },
     error => logger.error('Saved stories listener error:', error),
   );
 }

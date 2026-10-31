@@ -2,13 +2,11 @@ import { challengeActions } from '@/features/challenges/services/challengeProgre
 import { doc, getFirestore, onSnapshot } from '@react-native-firebase/firestore';
 import { getAuth } from '@react-native-firebase/auth';
 import { patchAuth, User } from '@/store/slices/authSlice';
-import { resetPrivacy } from '@/store/slices/privacySlice';
 import { presenceActions } from '@/features/privacy/services/presenceService';
-import { store } from '@/store';
+import { sessionEnded, store } from '@/store';
 import { logger } from '@/utils/logger';
 import { clearCachedSession, writeCachedSession } from './sessionStorage';
 import { sessionUser } from './sessionIdentity';
-import { resetStoryDrafts } from '@/store/slices/storyDraftSlice';
 
 const listener = { unsubscribe: null as (() => void) | null };
 
@@ -16,14 +14,39 @@ export function isOnboarded(user: User | null): boolean {
   return !!(user?.username && user?.interests);
 }
 
+/**
+ * Oturuma bağlı dinleyiciler ve önbellek bayrakları. Durum sıfırlanırken
+ * dinleyiciler açık kalırsa eski hesabın kitaplığı/bildirimleri store'u
+ * yeniden doldurur; bayraklar kalırsa aynı hesapla yeniden girişte raflar
+ * "taze" sanılıp boş kalır.
+ */
+async function stopSessionData() {
+  const [story, notifications, conversations, messaging, following, shelf] = await Promise.all([
+    import('@/store/storyStore'),
+    import('@/store/notificationStore'),
+    import('@/store/conversationStore'),
+    import('@/store/messagingStore'),
+    import('@/features/story/services/discover/followingFeed'),
+    import('@/features/story/services/readingProgress/shelf'),
+  ]);
+  story.storyActions.cleanupRealTimeListeners();
+  notifications.notificationActions.cleanupNotificationsListener();
+  conversations.conversationActions.cleanupListeners();
+  messaging.messagingActions.stopThreadsListener();
+  following.resetFollowingFeed();
+  shelf.markContinueReadingStale();
+}
+
 /** Oturumu kapatır. `asGuest` true ise kullanıcı misafir olarak uygulamada kalır. */
 export async function endSession({ asGuest }: { asGuest: boolean }) {
   cleanupUserListener();
   challengeActions.resetSession();
   presenceActions.stop();
+  // Önce dinleyiciler kapanır, sonra durum sıfırlanır: aksi halde arada gelen
+  // bir anlık görüntü eski hesabın verisini geri yazardı.
+  await stopSessionData().catch(error => logger.debug('Oturum dinleyicileri kapatılamadı:', error));
   await clearCachedSession();
-  store.dispatch(resetPrivacy());
-  store.dispatch(resetStoryDrafts());
+  store.dispatch(sessionEnded());
   store.dispatch(patchAuth({
     isAuthenticated: false,
     hasCompletedOnboarding: false,

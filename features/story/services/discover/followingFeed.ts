@@ -17,6 +17,12 @@ import { getUserById } from '../userCache';
 const FOLLOWING_TTL_MS = 10 * 60 * 1000;
 const following = { loadedAt: 0, userId: null as string | null };
 
+/** Oturum kapanınca: aynı hesapla yeniden girişte raf "taze" sanılmasın. */
+export function resetFollowingFeed() {
+  following.loadedAt = 0;
+  following.userId = null;
+}
+
 export async function loadFollowingStories(options: { force?: boolean } = {}) {
   try {
     const { user } = store.getState().auth;
