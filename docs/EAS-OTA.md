@@ -70,6 +70,51 @@ fingerprint CNG hesabı da bunları dışlar. `modules/*/ios` ve `modules/*/andr
 native kaynakları korunur ve fingerprint'e dahildir. `.fingerprintignore`
 ile native bağımlılıkları dışlayarak uyumluluk kontrolünü zayıflatmayın.
 
+### "Runtime version mismatch" tuzağı (1 Kasım 2026'da çözüldü)
+
+Build şu hatayla düşüyordu:
+
+```
+Runtime version calculated on local machine: dc399e02...
+Runtime version calculated on EAS:           ab2cd8f0...
+```
+
+Kök neden: **fingerprint `node_modules`'ü de hashler**, EAS ise runtime
+sürümünü `prebuild`'den SONRA hesaplar; eas-cli ise ÖNCE. Prebuild sırasında
+node_modules değişiyorsa iki değer asla tutmaz. İki kaynak vardı:
+
+1. `plugins/withIosDetachedWriteTab.js` yamayı prebuild sırasında
+   `node_modules/react-native-screens/.../RNSTabBarController.mm` içine
+   yazıyordu. Çözüm: aynı yama artık `scripts/patchNativeDeps.cjs` ile
+   **postinstall**'da uygulanıyor; prebuild mod'u idempotent olduğu için
+   yazma yapmıyor. Yama kaybolmadı, yalnızca daha erken uygulanıyor.
+2. Expo'nun kendi `expo prebuild` akışı
+   `node_modules/expo-modules-jsi/apple/scripts/build-xcframework.sh`
+   dosyasını değiştiriyor (bir `-quiet` satırı siliniyor). Bu bizim kodumuz
+   değil; o tek dosya `.fingerprintignore` ile dışlandı. Dışlanan şey
+   önceden derlenmiş bir xcframework'ün **build script'i**; native kaynaklar
+   ve podspec hâlâ fingerprint'e dahil, yani uyumluluk kontrolü zayıflamıyor.
+
+Doğrulama: aynı ağaçta `prebuild` öncesi ve sonrası fingerprint artık birebir
+aynı (`360f5eaf...`). Benzer bir hata görürsen önce şunu çalıştır:
+
+```bash
+npx expo-updates fingerprint:generate --platform ios > /tmp/fp-once.json
+npx expo prebuild --platform ios --no-install --clean
+npx expo-updates fingerprint:generate --platform ios > /tmp/fp-twice.json
+```
+
+İki hash farklıysa prebuild node_modules'ü değiştiriyordur; farkı
+`sources` listelerini karşılaştırarak bul.
+
+**Ayrıca:** `node_modules` yerel iOS build'lerinden kirlenebiliyor (Xcode
+`.DerivedData`, `Products`, `.generated` klasörleri modül içine yazılıyor).
+Üretim build'inden önce `rm -rf node_modules && yarn install --frozen-lockfile`
+çalıştır; fingerprint bunları da hashliyor.
+
+`autoIncrement: true` build sırasında `app.json` içindeki `buildNumber`'ı
+değiştirir ve bu da fingerprint'i değiştirir. Yeni numarayı commit et.
+
 ## CI ve erişim
 
 GitHub Actions içinde `EAS OTA` iş akışı manuel başlatılır. Otomatik production

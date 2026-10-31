@@ -22,7 +22,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.asamethon.bluma",
       "usesAppleSignIn": true,
-      "buildNumber": "18",
+      "buildNumber": "19",
       "googleServicesFile": "./GoogleService-Info.plist",
       "associatedDomains": [
         "applinks:bluma-dc10e.web.app"
