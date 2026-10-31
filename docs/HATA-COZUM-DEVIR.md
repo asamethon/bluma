@@ -21,18 +21,21 @@ Bu dosya kalan işleri ve önceki oturumun durumunu birlikte taşır.
 Doğrulama: `yarn check` yeşil (tip + lint + knip kök/server/push-worker),
 `yarn test` 209 test, `yarn test:rules` 36 kural testi (emülatör).
 
-### Canlıya alma sırası (değişti)
+### Canlıya alma sırası
 
-1. **Uygulamayı önce yayınla, kuralları sonra dağıt.** Yeni kurallar eski
-   sürümün bazı yazımlarını reddeder: eski sürüm haftalık ödülü kalıcı
-   listeye yazar (artık yalnız rozetli görevler oraya yazılabilir) ve profil
-   kaydında bayat sayaç/XP gönderir. Bu zaten 1. maddenin özel alan kuralı
-   için de geçerliydi.
-2. `firebase deploy --only firestore:rules`
-3. `server/push-worker` güncellendi (`mention` bildirimi anma ayarına uyar):
-   VPS'e dağıt ve servisi yeniden başlat.
-4. Özel profil taşıması (`scripts/migratePrivateProfiles.cjs`) hâlâ ayrıca
-   çalıştırılmalı (bkz. PRIVATE-PROFILES-MIGRATION.md).
+Bağımlılık iki yönlü: yeni uygulama `users/{uid}/private/account`'a yazar ve
+eski kurallarda bu yol kapalıdır — kurallar geç kalırsa **yeni kullanıcı kayıt
+olamaz**. Eski uygulama ise yeni kurallarda profil kaydı ve haftalık ödül
+alırken reddedilir. Bu yüzden kurallar, yeni sürümün mağazada yayına çıktığı
+anda dağıtılır (PRIVATE-PROFILES-MIGRATION.md ile aynı sıra):
+
+1. Yeni native build (main'de Xcode 27 / ayrı Yaz sekmesi native değişikliği
+   var; OTA yetmez). Mağazalara "elle yayınla" seçeneğiyle gönder.
+2. Onay gelince, aynı oturumda: taşıma önizlemesi → `--apply` →
+   `firebase deploy --only firestore:rules` → `--apply` tekrar → sürümü
+   mağazalarda yayınla.
+3. `server/push-worker` (anma bildirimi anma ayarına uyar): VPS'e dağıt.
+   Bağımsızdır, istenen zaman yapılabilir.
 
 ### Bilinçli ürün kararları
 
