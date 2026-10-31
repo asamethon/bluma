@@ -72,8 +72,12 @@ test('sahibi dahil hiçbir istemci özel alanları açık profile yazamaz', asyn
 });
 
 test('temiz profilde çapraz kullanıcı takipçi sayacı çalışır', async () => {
+  // Sayaç artışı artık gerçek takip dokümanını şart koşuyor (bkz. firestore.rules
+  // users update ve commit 97ed61f); istemci de takip kaydını ÖNCE yazıyor.
+  await db.doc('users/alice/followers/bob').set({ createdAt: new Date() });
   const current = (await db.doc('users/alice').get()).data();
   assert.equal((await request('users/alice', 'bob', { ...current, followersCount: 1 })).status, 200);
+  await db.doc('users/alice/followers/bob').delete();
 });
 
 test('profil kaydının silme maskeli batch işlemi yeni ve eski hesapta çalışır', async () => {
