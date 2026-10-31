@@ -52,6 +52,10 @@ export function useReaderChapters(params: Params) {
       void challengeActions.trackAction(currentUserId, 'chaptersRead');
     } else if (index > chapterIndex && currentUserId && !story?.authorId) {
       void challengeActions.trackAction(currentUserId, 'chaptersRead');
+    } else if (index === 0 && chapterIndex === 0 && currentUserId && story?.authorId && story.authorId !== currentUserId) {
+      void challengeActions.trackAction(currentUserId, 'chaptersRead');
+    } else if (index === 0 && chapterIndex === 0 && currentUserId && !story?.authorId) {
+      void challengeActions.trackAction(currentUserId, 'chaptersRead');
     }
   }, [chapterIndex, currentUserId, isGuest, onNavigated, requireAuth, selectChapter, story?.authorId, total]);
 
