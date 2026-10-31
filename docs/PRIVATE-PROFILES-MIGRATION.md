@@ -32,7 +32,9 @@ kayıt olamaz. İkisini ayıran şey bu anahtar.
    XP, hikâye oluşturma/düzenleme, author.email'li duyuru) emülatörde denendi;
    yedisi de geçti. Canlıda `isHidden`/`isEditorsPick` taşıyan hikâye yok
    (219/219 temiz), bu yüzden yönetim alanı koruması eski sürümü etkilemiyor.
-2. ⬜ 3.0.1'i mağazaya gönderin.
+2. 🔄 3.0.1 **1 Kasım 2026'da TestFlight'a gitti** (buildNumber 19).
+   Mağaza dağıtımı yayılana kadar 2. aşamaya geçmeyin: anahtar true olduğu
+   anda eski sürümdeki kullanıcılar profil kaydı ve sayaç artışında reddedilir.
 
 ### 2. aşama — sürüm yayıldıktan sonra
 
