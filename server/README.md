@@ -19,7 +19,7 @@ varsayılan davranış fail-open'dır (yükleme geçer, reaktif moderasyon devre
 `NSFW_FAIL_CLOSED=true` ile katı moda alınabilir.
 
 > **Canlı kurulum (Tem 2026):** Hostinger VPS (srv1344443, 76.13.254.132),
-> `https://img.d4tecompany.com` — nginx reverse proxy + certbot (Let's Encrypt).
+> `https://blumaimg.d4tecompany.com` — nginx reverse proxy + certbot (Let's Encrypt).
 > Aynı nginx `arabatahmin.com` sitelerini de barındırıyor; Caddy KULLANILMIYOR.
 
 ## 1. Sunucuya kur (Ubuntu/Debian)
@@ -59,7 +59,7 @@ Environment=PORT=8788
 Environment=HOST=127.0.0.1
 Environment=FIREBASE_PROJECT_ID=bluma-dc10e
 Environment=DATA_DIR=/var/lib/bluma-images
-Environment=PUBLIC_BASE_URL=https://img.d4tecompany.com
+Environment=PUBLIC_BASE_URL=https://blumaimg.d4tecompany.com
 # NSFW moderasyon eşikleri (opsiyonel — varsayılanlar nsfw.js'te)
 # Environment=NSFW_PORN_THRESHOLD=0.6
 # Environment=NSFW_HENTAI_THRESHOLD=0.6
@@ -89,7 +89,7 @@ curl -s localhost:8788/health   # {"ok":true}
 ```nginx
 server {
     listen 80;
-    server_name img.d4tecompany.com;
+    server_name blumaimg.d4tecompany.com;
 
     # nginx varsayılanı 1MB — yüklemeler için yetmez
     client_max_body_size 20m;
@@ -107,7 +107,7 @@ server {
 ln -s /etc/nginx/sites-available/bluma-img /etc/nginx/sites-enabled/
 nginx -t && systemctl reload nginx
 apt install -y certbot python3-certbot-nginx
-certbot --nginx -d img.d4tecompany.com --redirect   # sertifika + otomatik yenileme
+certbot --nginx -d blumaimg.d4tecompany.com --redirect   # sertifika + otomatik yenileme
 ```
 
 ## 4. Uygulamayı bağla
@@ -115,7 +115,7 @@ certbot --nginx -d img.d4tecompany.com --redirect   # sertifika + otomatik yenil
 [constants/config.ts](../constants/config.ts):
 
 ```ts
-export const IMAGE_SERVER_URL = 'https://img.d4tecompany.com';
+export const IMAGE_SERVER_URL = 'https://blumaimg.d4tecompany.com';
 ```
 
 Boş bırakılırsa uygulama eski davranışa (sıkıştırılmış base64) düşer —
