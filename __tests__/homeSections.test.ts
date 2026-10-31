@@ -10,8 +10,11 @@ import type { Story } from '@/types';
 const DAY = 24 * 60 * 60 * 1000;
 const NOW = new Date(2026, 9, 10, 12).getTime();
 
+// Vitrin eşiği adı ve (raflarda) kapağı şart koşuyor; varsayılan hikâye bunu karşılar.
 const story = (id: string, overrides: Partial<Story> = {}) => ({
   id,
+  title: `Hikâye ${id}`,
+  coverImage: `https://ornek/${id}.webp`,
   authorId: `author-${id}`,
   likesCount: 0,
   commentsCount: 0,
@@ -99,6 +102,55 @@ describe('buildHomeSections', () => {
     });
     expect(seen[0]).not.toContain('s0');
     expect(seen[0]).not.toContain('s1');
+  });
+
+  // Canlıda görülen sorun: üretken bir yazar bir bölümü tek başına dolduruyordu
+  // ("Yeni Geldi" üst üste aynı şairin beş şiiri). Bkz. docs/KESFET-ALGORITMASI.md §0.5.
+  it('aynı yazar bir rafı dolduramaz', () => {
+    const pool = [
+      ...Array.from({ length: 8 }, (_, index) => story(`p${index}`, {
+        authorId: 'tek-yazar', viewsCount: 100 - index,
+      })),
+      ...Array.from({ length: 3 }, (_, index) => story(`d${index}`, { viewsCount: 50 - index })),
+    ];
+    const ids = idsOf(find(build({ pool }), 'popular_now')!);
+    expect(ids.filter(id => id.startsWith('p'))).toHaveLength(2);
+    expect(ids).toContain('d0');
+  });
+
+  it('Yeni Geldi aynı yazardan tek kart alır ve türü dağıtır', () => {
+    const pool = [
+      ...Array.from({ length: 4 }, (_, index) => story(`sair${index}`, {
+        authorId: 'sair', category: 'poetry' as Story['category'],
+        createdAt: new Date(NOW - index * 1000),
+      })),
+      story('roman', { authorId: 'romanci', category: 'romance' as Story['category'],
+        createdAt: new Date(NOW - 5000) }),
+      story('gizem', { authorId: 'gizemci', category: 'mystery' as Story['category'],
+        createdAt: new Date(NOW - 6000) }),
+    ];
+    const ids = idsOf(find(build({ pool }), 'new_arrivals')!);
+    expect(ids.filter(id => id.startsWith('sair'))).toHaveLength(1);
+    expect(ids).toEqual(['sair0', 'roman', 'gizem']);
+  });
+
+  it('kapağı olmayan hikâye rafa girmez ama Yeni Geldi listesine girer', () => {
+    const pool = [
+      story('kapaksiz', { coverImage: undefined, viewsCount: 999 }),
+      ...Array.from({ length: 4 }, (_, index) => story(`k${index}`, { viewsCount: 10 - index })),
+    ];
+    const sections = build({ pool });
+    expect(idsOf(find(sections, 'popular_now')!)).not.toContain('kapaksiz');
+    expect(idsOf(find(sections, 'new_arrivals')!)).toContain('kapaksiz');
+  });
+
+  it('başlıksız hikâye hiçbir bölümde görünmez', () => {
+    const pool = [
+      story('adsiz', { title: '   ', viewsCount: 999 }),
+      ...Array.from({ length: 4 }, (_, index) => story(`b${index}`, { viewsCount: 10 - index })),
+    ];
+    const everything = build({ pool }).flatMap(idsOf);
+    expect(everything).not.toContain('adsiz');
   });
 
   it('hiç hikâye yoksa boş liste döner', () => {
