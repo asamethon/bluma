@@ -118,8 +118,8 @@ export function OwnProfileScreen({ user, stories, conversations, loading }: Prop
         onDeleteConversation={actions.deleteConversation}
       />
     );
-  }, [actions.deleteConversation, actions.openStoryMenu, openComposer, openConversation, openStory, setImage,
-    state.tab, tabs]);
+  }, [actions.deleteConversation, actions.openStoryMenu, hasAuthored, openComposer, openConversation, openStory,
+    setImage, state.tab, tabs]);
 
   return (
     <Screen edges={[]} style={{ flex: 1, backgroundColor: colors.background }} maxContentWidth={ContentMaxWidth.content}>
