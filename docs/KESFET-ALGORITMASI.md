@@ -15,6 +15,41 @@ Kapsam: ana sayfa (`features/home`), Ara/Keşfet (`features/search`), yeni `feat
 
 ---
 
+## 0.5 Canlı veri — 1 Kasım 2026 (doküman yazılırken erişilemiyordu)
+
+Admin SDK ile salt okunur ölçüm (`bluma-dc10e`):
+
+| Ölçüm | Değer |
+|---|---|
+| Hikâye dokümanı | 241 — **yalnızca 88'i yayında**, 153 taslak |
+| Son 7 günde yayınlanan | **5** |
+| Son 30 günde / daha eski | 44 / 44 (en eskisi 342 günlük) |
+| Toplam etkileşim | 1.734 görüntülenme, 166 beğeni, 90 yorum |
+| Etkileşimi olan hikâye | görüntülenme 86, beğeni 69, yorum 28 |
+| `isEditorsPick` işaretli | **0** |
+| `isCompleted` işaretli | **0** |
+| Farklı yazar | 59 (en çok yazan 3 hesap toplam 16 hikâye — tekel yok) |
+| Kategoriler | romantik 25, gizem 19, korku 11, fantastik 9, dram 8, diğerleri ≤6 |
+| Diller | tr 77, en 4, `Türkçe` 1 (eski değer), boş 5, ar 1 |
+| Kayıtlı kullanıcı | 835 (doküman 453 diyordu) |
+| Belge boyutu | ortalama 23 KB, **en büyüğü 782 KB**; ana akışın indirdiği ilk 50 belge ≈ 200 KB |
+
+**Bu sayıların dokümana etkisi:**
+
+1. **Ana sayfa bugün kataloğun neredeyse tamamını gösteriyor.** 7 bölüm × raf
+   boyutları ≈ 57 slot, havuzda 88 hikâye var (listener 50 ile sınırlı olduğu
+   için fiilen 50). Hangi sıralama kullanılırsa kullanılsın raflar aynı
+   kapakları tekrar eder; bu bir sıralama sorunu değil, **katalog sorunudur**.
+2. **Editör katmanı ölü.** `isEditorsPick` hiçbir hikâyede yok; "Editörün
+   Seçimi" bölümü hiç render edilmiyor. 88 hikâyede elle seçki, her türlü
+   algoritmadan daha iyi sonuç verir ve maliyeti sıfırdır.
+3. **Sinyal çok ince.** Hikâye başına ortalama ~20 görüntülenme, ~2 beğeni.
+   Haftalık gündem hesabı bu sayılarda gürültüden ibaret.
+4. **Asıl darboğaz arz:** 153 taslağa karşılık 88 yayın. Yazarı yayına
+   götürmek, okura daha iyi sıralama sunmaktan daha değerli.
+5. `isCompleted` hiç kullanılmamış; popülerlik formülündeki `completedBonus`
+   ve 4. maddenin tamamlanma kontrolü pratikte etkisiz.
+
 ## 1. Bugünkü durum (kod incelemesi)
 
 Canlı veriye erişilemedi; bulgular koddan ve 6-7 Eylül Goldie simülatör çekimlerinden. Ana sayfa ve arama kodu o tarihten beri değişmemiş.
