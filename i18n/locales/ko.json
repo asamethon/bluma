@@ -103,7 +103,10 @@
     "infoSent": "보냄",
     "infoDelivered": "전달됨",
     "infoRead": "읽음",
-    "infoPending": "아직"
+    "infoPending": "아직",
+    "removeFailedTitle": "메시지를 삭제하지 못했어요",
+    "removeFailedMessage": "메시지를 되돌렸어요. 다시 시도해 주세요.",
+    "hideKeyboard": "키보드 숨기기"
   },
   "storyStatus": {
     "completed": "완결",
@@ -326,7 +329,8 @@
     "accountSection": "계정 설정",
     "saveChanges": "변경사항 저장",
     "available": "사용 가능",
-    "taken": "이미 사용 중"
+    "taken": "이미 사용 중",
+    "websitePlaceholder": "https://example.com"
   },
   "favorites": {
     "title": "즐겨찾기",
@@ -1083,5 +1087,27 @@
     "homophobia": "동성애 혐오",
     "transphobia": "트랜스젠더 혐오",
     "animalHarm": "동물 학대"
+  },
+  "launch": {
+    "title": "작품 런칭하기",
+    "subtitle": "표지가 준비됐어요. 무대는 당신의 것입니다.",
+    "newStory": "신작",
+    "nowOnBluma": "지금 Bluma에서",
+    "byAuthor": "{{author}} 작",
+    "readNow": "지금 읽기",
+    "storyFormat": "스토리 · 전체 화면",
+    "postFormat": "게시물 · 4:5",
+    "shareWhere": "어디에 공유할까요?",
+    "instagramStory": "인스타그램 스토리에 공유",
+    "instagramPost": "게시물",
+    "message": "메시지",
+    "shareMessage": "“{{title}}”, 지금 Bluma에서 읽어 보세요:\n{{url}}",
+    "shareFailedTitle": "공유를 완료하지 못했어요",
+    "shareFailedMessage": "인스타그램이 설치되어 있지 않다면 메시지로 공유해 보세요.",
+    "linkHint": "링크가 클립보드에 복사됩니다. 인스타그램에서 스토리가 열리면 \"링크\" 스티커를 추가해 붙여 넣으세요. 인스타그램은 앱이 자동으로 추가하는 것을 허용하지 않아요.",
+    "makeLaunch": "런칭하기",
+    "later": "나중에",
+    "unavailable": "런칭을 사용할 수 없어요",
+    "ownerOnly": "공개된 작품의 작가만 런칭을 준비할 수 있어요."
   }
 }

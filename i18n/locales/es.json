@@ -103,7 +103,10 @@
     "infoSent": "Enviado",
     "infoDelivered": "Entregado",
     "infoRead": "Leído",
-    "infoPending": "Todavía no"
+    "infoPending": "Todavía no",
+    "removeFailedTitle": "No se pudo eliminar el mensaje",
+    "removeFailedMessage": "El mensaje se ha restaurado. Inténtalo de nuevo.",
+    "hideKeyboard": "Ocultar teclado"
   },
   "storyStatus": {
     "completed": "Completada",
@@ -326,7 +329,8 @@
     "accountSection": "Configuración de la cuenta",
     "saveChanges": "Guardar cambios",
     "available": "Disponible",
-    "taken": "En uso"
+    "taken": "En uso",
+    "websitePlaceholder": "https://tusitio.com"
   },
   "favorites": {
     "title": "Mis favoritos",
@@ -1083,5 +1087,27 @@
     "homophobia": "Homofobia",
     "transphobia": "Transfobia",
     "animalHarm": "Maltrato animal"
+  },
+  "launch": {
+    "title": "Lanza tu libro",
+    "subtitle": "La portada está lista. El escenario es tuyo.",
+    "newStory": "NUEVA HISTORIA",
+    "nowOnBluma": "Ya en Bluma",
+    "byAuthor": "Por {{author}}",
+    "readNow": "Empieza a leer",
+    "storyFormat": "Historia · Pantalla completa",
+    "postFormat": "Publicación · 4:5",
+    "shareWhere": "¿DÓNDE QUIERES COMPARTIRLO?",
+    "instagramStory": "Compartir en una historia de Instagram",
+    "instagramPost": "Publicación",
+    "message": "Mensaje",
+    "shareMessage": "«{{title}}» ya está en Bluma. Empieza a leer:\n{{url}}",
+    "shareFailedTitle": "No se pudo completar el envío",
+    "shareFailedMessage": "Si no tienes Instagram instalado, prueba a compartirlo por mensaje.",
+    "linkHint": "El enlace se copia al portapapeles. Cuando se abra la historia en Instagram, añade el sticker «Enlace» y pégalo. Instagram no permite que las apps lo añadan automáticamente.",
+    "makeLaunch": "Lanza tu libro",
+    "later": "Más tarde",
+    "unavailable": "Lanzamiento no disponible",
+    "ownerOnly": "Solo quien publicó el libro puede preparar su lanzamiento."
   }
 }

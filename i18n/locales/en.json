@@ -103,7 +103,10 @@
     "infoSent": "Sent",
     "infoDelivered": "Delivered",
     "infoRead": "Read",
-    "infoPending": "Not yet"
+    "infoPending": "Not yet",
+    "removeFailedTitle": "Couldn't delete the message",
+    "removeFailedMessage": "The message was restored. Please try again.",
+    "hideKeyboard": "Hide keyboard"
   },
   "launch": {
     "title": "Launch Your Book",
@@ -348,7 +351,8 @@
     "accountSection": "Account Settings",
     "saveChanges": "Save Changes",
     "available": "Available",
-    "taken": "Taken"
+    "taken": "Taken",
+    "websitePlaceholder": "https://yoursite.com"
   },
   "favorites": {
     "title": "My Favorites",

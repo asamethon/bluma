@@ -100,6 +100,9 @@ export function UserProfileHeader(props: Props) {
         name={user.displayName}
         handle={profileHandle(user.username)}
         bio={user.bio}
+        // Gizli hesapta konum yalnızca onaylı takipçilere görünür.
+        location={props.accessLocked ? undefined : user.location}
+        website={user.website}
       />
 
       <ProfileStatsBar

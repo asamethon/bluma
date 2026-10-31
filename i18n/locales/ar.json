@@ -103,7 +103,10 @@
     "infoSent": "أُرسلت",
     "infoDelivered": "وصلت",
     "infoRead": "قُرئت",
-    "infoPending": "ليس بعد"
+    "infoPending": "ليس بعد",
+    "removeFailedTitle": "تعذّر حذف الرسالة",
+    "removeFailedMessage": "تمت استعادة الرسالة. يُرجى المحاولة مرة أخرى.",
+    "hideKeyboard": "إخفاء لوحة المفاتيح"
   },
   "storyStatus": {
     "completed": "مكتملة",
@@ -326,7 +329,8 @@
     "accountSection": "إعدادات الحساب",
     "saveChanges": "حفظ التغييرات",
     "available": "متاح",
-    "taken": "مُستخدم"
+    "taken": "مُستخدم",
+    "websitePlaceholder": "https://example.com"
   },
   "favorites": {
     "title": "مفضلاتي",
@@ -1083,5 +1087,27 @@
     "homophobia": "رهاب المثلية",
     "transphobia": "رهاب العابرين جنسيًا",
     "animalHarm": "إيذاء الحيوانات"
+  },
+  "launch": {
+    "title": "أطلق كتابك",
+    "subtitle": "الغلاف جاهز، والمسرح لك.",
+    "newStory": "قصة جديدة",
+    "nowOnBluma": "متوفر الآن على Bluma",
+    "byAuthor": "بقلم {{author}}",
+    "readNow": "ابدأ القراءة الآن",
+    "storyFormat": "قصة · ملء الشاشة",
+    "postFormat": "منشور · 4:5",
+    "shareWhere": "أين تريد المشاركة؟",
+    "instagramStory": "شارك في قصة إنستغرام",
+    "instagramPost": "منشور",
+    "message": "رسالة",
+    "shareMessage": "«{{title}}» متوفرة الآن على Bluma. ابدأ القراءة:\n{{url}}",
+    "shareFailedTitle": "تعذّر إكمال المشاركة",
+    "shareFailedMessage": "إذا لم يكن إنستغرام مثبتًا، جرّب المشاركة عبر رسالة.",
+    "linkHint": "يُنسخ الرابط إلى الحافظة. بعد فتح القصة في إنستغرام، أضف ملصق \"الرابط\" والصقه. لا يسمح إنستغرام للتطبيقات بإضافته تلقائيًا.",
+    "makeLaunch": "أطلق كتابك",
+    "later": "لاحقًا",
+    "unavailable": "الإطلاق غير متاح",
+    "ownerOnly": "يمكن فقط لمؤلف كتاب منشور تجهيز إطلاقه."
   }
 }

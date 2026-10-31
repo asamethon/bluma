@@ -103,7 +103,10 @@
     "infoSent": "Enviada",
     "infoDelivered": "Entregue",
     "infoRead": "Lida",
-    "infoPending": "Ainda não"
+    "infoPending": "Ainda não",
+    "removeFailedTitle": "Não foi possível excluir a mensagem",
+    "removeFailedMessage": "A mensagem foi restaurada. Tente novamente.",
+    "hideKeyboard": "Ocultar teclado"
   },
   "storyStatus": {
     "completed": "Concluída",
@@ -326,7 +329,8 @@
     "accountSection": "Configurações da conta",
     "saveChanges": "Salvar alterações",
     "available": "Disponível",
-    "taken": "Já em uso"
+    "taken": "Já em uso",
+    "websitePlaceholder": "https://seusite.com.br"
   },
   "favorites": {
     "title": "Meus favoritos",
@@ -1083,5 +1087,27 @@
     "homophobia": "Homofobia",
     "transphobia": "Transfobia",
     "animalHarm": "Maus-tratos a animais"
+  },
+  "launch": {
+    "title": "Lance seu livro",
+    "subtitle": "A capa está pronta. O palco é seu.",
+    "newStory": "NOVA HISTÓRIA",
+    "nowOnBluma": "Agora no Bluma",
+    "byAuthor": "Por {{author}}",
+    "readNow": "Comece a ler",
+    "storyFormat": "Story · Tela cheia",
+    "postFormat": "Post · 4:5",
+    "shareWhere": "ONDE VOCÊ QUER COMPARTILHAR?",
+    "instagramStory": "Compartilhar no Story do Instagram",
+    "instagramPost": "Post",
+    "message": "Mensagem",
+    "shareMessage": "“{{title}}” já está no Bluma. Comece a ler:\n{{url}}",
+    "shareFailedTitle": "Não foi possível concluir o compartilhamento",
+    "shareFailedMessage": "Se o Instagram não estiver instalado, tente compartilhar por mensagem.",
+    "linkHint": "O link é copiado para a área de transferência. Depois que o story abrir no Instagram, adicione a figurinha \"Link\" e cole. O Instagram não permite que os apps a adicionem automaticamente.",
+    "makeLaunch": "Lance seu livro",
+    "later": "Mais tarde",
+    "unavailable": "Lançamento indisponível",
+    "ownerOnly": "Só quem publicou o livro pode preparar o lançamento."
   }
 }

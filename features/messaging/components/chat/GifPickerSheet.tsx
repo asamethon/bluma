@@ -101,7 +101,7 @@ export function GifPickerSheet({ visible, onClose, onSelect }: Props) {
           onSubmitEditing={dismiss}
           right={keyboardVisible ? (
             <IconButton icon="chevron-down" size={32} iconSize={20} glass={false}
-              accessibilityLabel="Klavyeyi gizle" onPress={dismiss} />
+              accessibilityLabel={t('messages.hideKeyboard')} onPress={dismiss} />
           ) : undefined}
         />
       </View>

@@ -103,7 +103,10 @@
     "infoSent": "Gesendet",
     "infoDelivered": "Zugestellt",
     "infoRead": "Gelesen",
-    "infoPending": "Noch nicht"
+    "infoPending": "Noch nicht",
+    "removeFailedTitle": "Nachricht konnte nicht gelöscht werden",
+    "removeFailedMessage": "Die Nachricht wurde wiederhergestellt. Bitte versuche es erneut.",
+    "hideKeyboard": "Tastatur ausblenden"
   },
   "storyStatus": {
     "completed": "Abgeschlossen",
@@ -326,7 +329,8 @@
     "accountSection": "Kontoeinstellungen",
     "saveChanges": "Änderungen speichern",
     "available": "Verfügbar",
-    "taken": "Vergeben"
+    "taken": "Vergeben",
+    "websitePlaceholder": "https://deineseite.de"
   },
   "favorites": {
     "title": "Meine Favoriten",
@@ -1083,5 +1087,27 @@
     "homophobia": "Homophobie",
     "transphobia": "Transphobie",
     "animalHarm": "Tierleid"
+  },
+  "launch": {
+    "title": "Dein Buch-Launch",
+    "subtitle": "Das Cover ist fertig. Die Bühne gehört dir.",
+    "newStory": "NEUE GESCHICHTE",
+    "nowOnBluma": "Jetzt auf Bluma",
+    "byAuthor": "Von {{author}}",
+    "readNow": "Jetzt lesen",
+    "storyFormat": "Story · Vollbild",
+    "postFormat": "Beitrag · 4:5",
+    "shareWhere": "WO MÖCHTEST DU TEILEN?",
+    "instagramStory": "In Instagram-Story teilen",
+    "instagramPost": "Beitrag",
+    "message": "Nachricht",
+    "shareMessage": "„{{title}}“ ist jetzt auf Bluma. Jetzt lesen:\n{{url}}",
+    "shareFailedTitle": "Teilen konnte nicht abgeschlossen werden",
+    "shareFailedMessage": "Wenn Instagram nicht installiert ist, versuche es per Nachricht.",
+    "linkHint": "Der Link wird in die Zwischenablage kopiert. Füge in Instagram nach dem Öffnen der Story den „Link“-Sticker hinzu und setze ihn ein. Instagram erlaubt Apps nicht, ihn automatisch hinzuzufügen.",
+    "makeLaunch": "Buch-Launch erstellen",
+    "later": "Später",
+    "unavailable": "Launch nicht verfügbar",
+    "ownerOnly": "Nur wer das Buch veröffentlicht hat, kann einen Launch vorbereiten."
   }
 }

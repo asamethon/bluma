@@ -103,7 +103,10 @@
     "infoSent": "已发送",
     "infoDelivered": "已送达",
     "infoRead": "已读",
-    "infoPending": "暂无"
+    "infoPending": "暂无",
+    "removeFailedTitle": "无法删除消息",
+    "removeFailedMessage": "消息已恢复，请重试。",
+    "hideKeyboard": "隐藏键盘"
   },
   "storyStatus": {
     "completed": "已完成",
@@ -326,7 +329,8 @@
     "accountSection": "账户设置",
     "saveChanges": "保存更改",
     "available": "可用",
-    "taken": "已被占用"
+    "taken": "已被占用",
+    "websitePlaceholder": "https://example.com"
   },
   "favorites": {
     "title": "我的收藏",
@@ -1083,5 +1087,27 @@
     "homophobia": "恐同",
     "transphobia": "跨性别恐惧",
     "animalHarm": "虐待动物"
+  },
+  "launch": {
+    "title": "发布你的作品",
+    "subtitle": "封面已就绪，舞台属于你。",
+    "newStory": "新作",
+    "nowOnBluma": "现已登陆 Bluma",
+    "byAuthor": "{{author}} 著",
+    "readNow": "立即阅读",
+    "storyFormat": "快拍 · 全屏",
+    "postFormat": "帖子 · 4:5",
+    "shareWhere": "你想分享到哪里？",
+    "instagramStory": "分享到 Instagram 快拍",
+    "instagramPost": "帖子",
+    "message": "消息",
+    "shareMessage": "《{{title}}》现已登陆 Bluma，立即阅读：\n{{url}}",
+    "shareFailedTitle": "分享未能完成",
+    "shareFailedMessage": "如果未安装 Instagram，可以尝试通过消息分享。",
+    "linkHint": "链接已复制到剪贴板。在 Instagram 打开快拍后，添加“链接”贴纸并粘贴。Instagram 不允许应用自动添加。",
+    "makeLaunch": "发布作品",
+    "later": "稍后",
+    "unavailable": "无法发布",
+    "ownerOnly": "只有已发布作品的作者才能准备发布。"
   }
 }

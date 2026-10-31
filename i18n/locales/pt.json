@@ -103,7 +103,10 @@
     "infoSent": "Enviada",
     "infoDelivered": "Entregue",
     "infoRead": "Lida",
-    "infoPending": "Ainda não"
+    "infoPending": "Ainda não",
+    "removeFailedTitle": "Não foi possível eliminar a mensagem",
+    "removeFailedMessage": "A mensagem foi restaurada. Tenta novamente.",
+    "hideKeyboard": "Ocultar teclado"
   },
   "storyStatus": {
     "completed": "Concluída",
@@ -326,7 +329,8 @@
     "accountSection": "Definições da conta",
     "saveChanges": "Guardar alterações",
     "available": "Disponível",
-    "taken": "Já em uso"
+    "taken": "Já em uso",
+    "websitePlaceholder": "https://oteusite.pt"
   },
   "favorites": {
     "title": "Os meus favoritos",
@@ -1083,5 +1087,27 @@
     "homophobia": "Homofobia",
     "transphobia": "Transfobia",
     "animalHarm": "Maus-tratos a animais"
+  },
+  "launch": {
+    "title": "Lança o teu livro",
+    "subtitle": "A capa está pronta. O palco é teu.",
+    "newStory": "NOVA HISTÓRIA",
+    "nowOnBluma": "Agora no Bluma",
+    "byAuthor": "De {{author}}",
+    "readNow": "Começa a ler",
+    "storyFormat": "Story · Ecrã inteiro",
+    "postFormat": "Publicação · 4:5",
+    "shareWhere": "ONDE QUERES PARTILHAR?",
+    "instagramStory": "Partilhar na Story do Instagram",
+    "instagramPost": "Publicação",
+    "message": "Mensagem",
+    "shareMessage": "“{{title}}” já está no Bluma. Começa a ler:\n{{url}}",
+    "shareFailedTitle": "Não foi possível concluir a partilha",
+    "shareFailedMessage": "Se o Instagram não estiver instalado, tenta partilhar por mensagem.",
+    "linkHint": "A ligação é copiada para a área de transferência. Depois de abrir a story no Instagram, adiciona o autocolante \"Link\" e cola-a. O Instagram não permite que as apps o adicionem automaticamente.",
+    "makeLaunch": "Lança o teu livro",
+    "later": "Mais tarde",
+    "unavailable": "Lançamento indisponível",
+    "ownerOnly": "Só quem publicou o livro pode preparar o seu lançamento."
   }
 }

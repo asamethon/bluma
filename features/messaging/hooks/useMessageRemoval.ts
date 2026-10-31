@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { Alert } from 'react-native';
+import i18n from '@/i18n';
 import { store } from '@/store';
 import { messagingActions } from '@/store/messagingStore';
 import { rollbackMessageRemoval } from '@/store/slices/chatSlice';
@@ -20,7 +21,7 @@ export function useMessageRemoval(threadId: string | null, userId?: string) {
     void write.catch(() => {
       cancelRemovalAnimation(threadId, messageId);
       store.dispatch(rollbackMessageRemoval({ threadId, messageId }));
-      Alert.alert('Mesaj silinemedi', 'Mesaj geri getirildi. Lütfen tekrar dene.');
+      Alert.alert(i18n.t('messages.removeFailedTitle'), i18n.t('messages.removeFailedMessage'));
     });
   }, [threadId, userId]);
 }

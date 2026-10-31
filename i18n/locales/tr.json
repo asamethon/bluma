@@ -103,7 +103,10 @@
     "infoSent": "Gönderildi",
     "infoDelivered": "İletildi",
     "infoRead": "Görüldü",
-    "infoPending": "Henüz yok"
+    "infoPending": "Henüz yok",
+    "removeFailedTitle": "Mesaj silinemedi",
+    "removeFailedMessage": "Mesaj geri getirildi. Lütfen tekrar dene.",
+    "hideKeyboard": "Klavyeyi gizle"
   },
   "launch": {
     "title": "Kitabının Lansmanı",
@@ -348,7 +351,8 @@
     "accountSection": "Hesap Ayarları",
     "saveChanges": "Değişiklikleri Kaydet",
     "available": "Uygun",
-    "taken": "Kullanılıyor"
+    "taken": "Kullanılıyor",
+    "websitePlaceholder": "https://siten.com"
   },
   "favorites": {
     "title": "Favorilerim",

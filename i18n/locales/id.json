@@ -103,7 +103,10 @@
     "infoSent": "Terkirim",
     "infoDelivered": "Sampai",
     "infoRead": "Dibaca",
-    "infoPending": "Belum"
+    "infoPending": "Belum",
+    "removeFailedTitle": "Pesan tidak dapat dihapus",
+    "removeFailedMessage": "Pesan dikembalikan. Silakan coba lagi.",
+    "hideKeyboard": "Sembunyikan keyboard"
   },
   "storyStatus": {
     "completed": "Selesai",
@@ -326,7 +329,8 @@
     "accountSection": "Pengaturan akun",
     "saveChanges": "Simpan perubahan",
     "available": "Tersedia",
-    "taken": "Sudah digunakan"
+    "taken": "Sudah digunakan",
+    "websitePlaceholder": "https://situsmu.com"
   },
   "favorites": {
     "title": "Favoritku",
@@ -1083,5 +1087,27 @@
     "homophobia": "Homofobia",
     "transphobia": "Transfobia",
     "animalHarm": "Kekerasan terhadap hewan"
+  },
+  "launch": {
+    "title": "Luncurkan Bukumu",
+    "subtitle": "Sampul sudah siap. Panggung milikmu.",
+    "newStory": "CERITA BARU",
+    "nowOnBluma": "Kini di Bluma",
+    "byAuthor": "Karya {{author}}",
+    "readNow": "Mulai membaca",
+    "storyFormat": "Story · Layar penuh",
+    "postFormat": "Postingan · 4:5",
+    "shareWhere": "MAU DIBAGIKAN DI MANA?",
+    "instagramStory": "Bagikan ke Instagram Story",
+    "instagramPost": "Postingan",
+    "message": "Pesan",
+    "shareMessage": "“{{title}}” kini ada di Bluma. Mulai membaca:\n{{url}}",
+    "shareFailedTitle": "Gagal membagikan",
+    "shareFailedMessage": "Jika Instagram belum terpasang, coba bagikan lewat pesan.",
+    "linkHint": "Tautan disalin ke papan klip. Setelah story terbuka di Instagram, tambahkan stiker \"Tautan\" lalu tempel. Instagram tidak mengizinkan aplikasi menambahkannya secara otomatis.",
+    "makeLaunch": "Luncurkan Bukumu",
+    "later": "Nanti",
+    "unavailable": "Peluncuran tidak tersedia",
+    "ownerOnly": "Hanya penulis buku yang sudah terbit yang bisa menyiapkan peluncurannya."
   }
 }

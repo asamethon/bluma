@@ -103,7 +103,10 @@
     "infoSent": "送信済み",
     "infoDelivered": "配信済み",
     "infoRead": "既読",
-    "infoPending": "まだ"
+    "infoPending": "まだ",
+    "removeFailedTitle": "メッセージを削除できませんでした",
+    "removeFailedMessage": "メッセージを元に戻しました。もう一度お試しください。",
+    "hideKeyboard": "キーボードを閉じる"
   },
   "storyStatus": {
     "completed": "完結",
@@ -326,7 +329,8 @@
     "accountSection": "アカウント設定",
     "saveChanges": "変更を保存",
     "available": "使用可能",
-    "taken": "使用済み"
+    "taken": "使用済み",
+    "websitePlaceholder": "https://example.com"
   },
   "favorites": {
     "title": "お気に入り",
@@ -1083,5 +1087,27 @@
     "homophobia": "同性愛嫌悪",
     "transphobia": "トランスフォビア",
     "animalHarm": "動物への危害"
+  },
+  "launch": {
+    "title": "作品をローンチしよう",
+    "subtitle": "表紙は完成。主役はあなたです。",
+    "newStory": "新作",
+    "nowOnBluma": "Blumaで公開中",
+    "byAuthor": "{{author}} 著",
+    "readNow": "今すぐ読む",
+    "storyFormat": "ストーリー · 全画面",
+    "postFormat": "投稿 · 4:5",
+    "shareWhere": "どこでシェアしますか？",
+    "instagramStory": "Instagramストーリーでシェア",
+    "instagramPost": "投稿",
+    "message": "メッセージ",
+    "shareMessage": "「{{title}}」がBlumaで公開中。今すぐ読む：\n{{url}}",
+    "shareFailedTitle": "シェアを完了できませんでした",
+    "shareFailedMessage": "Instagramがインストールされていない場合は、メッセージでシェアしてください。",
+    "linkHint": "リンクはクリップボードにコピーされます。Instagramでストーリーが開いたら「リンク」スタンプを追加して貼り付けてください。Instagramではアプリが自動で追加することはできません。",
+    "makeLaunch": "ローンチする",
+    "later": "あとで",
+    "unavailable": "ローンチを利用できません",
+    "ownerOnly": "公開済み作品の作者だけがローンチを準備できます。"
   }
 }
