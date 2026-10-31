@@ -109,12 +109,31 @@ export async function addComment(storyId: string, content: string, parentId?: st
       .catch(error => logger.error('Mention notification error:', error));
     if (!parentId) {
       try {
+        const userComments = await getDocs(
+          query(
+            collection(getFirestore(), 'stories', storyId, 'comments'),
+            where('userId', '==', user.id),
+          ),
+        );
+        const hasOtherComment = userComments.docs.some((docSnap) => {
+          const data = docSnap.data() as { parentId?: string };
+          return docSnap.id !== reference.id && !data.parentId;
+        });
+        if (!hasOtherComment) {
+          const story = await getStoryById(storyId);
+          if (story?.authorId && story.authorId !== user.id) {
+            void challengeActions.trackAction(user.id, 'commentsPosted');
+          } else if (!story?.authorId) {
+            void challengeActions.trackAction(user.id, 'commentsPosted');
+          }
+        }
+      } catch {
         const story = await getStoryById(storyId);
         if (story?.authorId && story.authorId !== user.id) {
           void challengeActions.trackAction(user.id, 'commentsPosted');
+        } else {
+          void challengeActions.trackAction(user.id, 'commentsPosted');
         }
-      } catch {
-        void challengeActions.trackAction(user.id, 'commentsPosted');
       }
     }
     return { success: true, commentId: reference.id };
