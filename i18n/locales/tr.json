@@ -607,8 +607,10 @@
     },
     "weekly": {
       "title": "Hafta Sonu Okuma Maratonu",
-      "desc": "Cuma-Pazar arası 3 bölüm bitir, 2 yorum bırak.",
-      "endsIn": "2 gün"
+      "desc": "Cuma-Pazar arası 3 bölüm oku, 1 yorum bırak.",
+      "endsIn": "2 gün",
+      "endsToday": "Bugün bitiyor",
+      "endsInDays": "{{count}} gün"
     },
     "errors": {
       "sessionChanged": "Görev oturumu değişti.",

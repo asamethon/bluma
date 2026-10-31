@@ -17,7 +17,9 @@ export const emptyChallengeData: ChallengeData = {
   xp: 0, streak: 0, lastActiveDate: '', challengeWeekStart: '',
   challengeProgress: {}, claimedChallenges: [],
 };
-const weeklyTrackers: Tracker[] = ['storiesPublished', 'chaptersRead', 'commentsPosted', 'newFollows', 'storyLikes', 'authorsDiscovered', 'storiesCompletedByAuthor'];
+// `storiesCompletedByAuthor` (w3) bilerek DIŞARIDA: rozetli "hikâyeni tamamla"
+// görevi ömür boyu bir kez kazanılır, hafta başında sıfırlanmaz.
+const weeklyTrackers: Tracker[] = ['storiesPublished', 'chaptersRead', 'commentsPosted', 'newFollows', 'storyLikes', 'authorsDiscovered', 'commentFeatured'];
 
 /** Takvim yenilemesi sunucudan okunan ilerleme üzerinde uygulanır. */
 export function refreshChallengeDay(stored: Partial<ChallengeData>): ChallengeData {
@@ -45,8 +47,8 @@ export function applyChallengeOperation(data: ChallengeData, operation: Challeng
   if (operation.kind === 'claim') {
     if (operation.challengeId === 'weekly_marathon') {
       if (data.claimedChallenges.includes('weekly_marathon')) return data;
-      const weeklyProgress = Math.min((data.challengeProgress.r1 || 0) + (data.challengeProgress.c1 || 0), 5);
-      if (weeklyProgress < 5) return data;
+      const weeklyProgress = Math.min((data.challengeProgress.r1 || 0) + (data.challengeProgress.c1 || 0), 3);
+      if (weeklyProgress < 3) return data;
       return { ...data, xp: data.xp + 250, claimedChallenges: [...data.claimedChallenges, 'weekly_marathon'] };
     }
     const def = CHALLENGE_DEFS.find(item => item.id === operation.challengeId);

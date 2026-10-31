@@ -8,7 +8,7 @@ export type Tracker =
   | 'storyLikes'
   | 'authorsDiscovered'
   | 'storiesCompletedByAuthor'
-  | 'manual';
+  | 'commentFeatured';
 
 export interface ChallengeDef {
   id: string;
@@ -44,7 +44,7 @@ export const CHALLENGE_DEFS: ChallengeDef[] = [
   { id: 'c1', pillar: 'comment', icon: 'chatbubble-ellipses-outline', title: 'challenges.defs.c1.title', desc: 'challenges.defs.c1.desc', goal: 5,  xp: 90,  tracker: 'commentsPosted' },
   { id: 'c2', pillar: 'comment', icon: 'person-add-outline',          title: 'challenges.defs.c2.title', desc: 'challenges.defs.c2.desc', goal: 3,  xp: 60,  tracker: 'newFollows' },
   { id: 'c3', pillar: 'comment', icon: 'heart-outline',               title: 'challenges.defs.c3.title', desc: 'challenges.defs.c3.desc', goal: 10, xp: 40,  tracker: 'storyLikes' },
-  { id: 'c4', pillar: 'comment', icon: 'ribbon-outline',              title: 'challenges.defs.c4.title', desc: 'challenges.defs.c4.desc', goal: 1,  xp: 180, tracker: 'manual', badge: 'challenges.defs.c4.badge' },
+  { id: 'c4', pillar: 'comment', icon: 'ribbon-outline',              title: 'challenges.defs.c4.title', desc: 'challenges.defs.c4.desc', goal: 1,  xp: 180, tracker: 'commentFeatured', badge: 'challenges.defs.c4.badge' },
 ];
 
 export const PILLAR_COLORS: Record<Pillar, string> = {
@@ -59,7 +59,7 @@ export const WEEKLY_FEATURED = {
   xp: 250,
   endsIn: 'challenges.weekly.endsIn',
   cur: 0,
-  goal: 5,
+  goal: 3,
 };
 
 /** XP'nin karşılık geldiği rütbe sırası. */

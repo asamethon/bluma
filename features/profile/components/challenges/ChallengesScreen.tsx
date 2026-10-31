@@ -30,10 +30,10 @@ export function ChallengesScreen() {
   const claim = useCallback((challengeId: string) => {
     if (userId) void challengeActions.claimChallenge(userId, challengeId);
   }, [userId]);
-  const weeklyProgress = Math.min((progress.r1 || 0) + (progress.c1 || 0), 5);
+  const weeklyProgress = Math.min((progress.r1 || 0) + (progress.c1 || 0), 3);
   const weeklyClaimed = claimedSet.has('weekly_marathon');
   const claimWeekly = useCallback(() => {
-    if (userId && weeklyProgress >= 5 && !weeklyClaimed) {
+    if (userId && weeklyProgress >= 3 && !weeklyClaimed) {
       void challengeActions.claimChallenge(userId, 'weekly_marathon');
     }
   }, [userId, weeklyClaimed, weeklyProgress]);
