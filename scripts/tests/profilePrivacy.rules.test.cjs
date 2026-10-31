@@ -3,6 +3,11 @@ const { before, after, test } = require('node:test');
 const { initializeApp, deleteApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const { PRIVATE_FIELDS, migrateProfile, cleanConversationAuthor } = require('../migratePrivateProfiles.cjs');
+const { legacyClientsRetired } = require('../challengeRewards.cjs');
+
+// Özel alan yasağı aşamalı açılış anahtarına bağlı: eski mağaza sürümü
+// emekliye ayrılana kadar bu yazmalar kabul edilir (firestore.rules).
+const BLOCKED = legacyClientsRetired() ? 403 : 200;
 
 const projectId = process.env.GCLOUD_PROJECT || 'demo-bluma-privacy';
 const host = process.env.FIRESTORE_EMULATOR_HOST;
@@ -61,11 +66,11 @@ test('özel belgeyi yalnızca sahibi okur ve yazar', async () => {
   assert.equal((await request('users/alice/private/account', 'alice', { email: 'current@example.com' })).status, 200);
 });
 
-test('sahibi dahil hiçbir istemci özel alanları açık profile yazamaz', async () => {
+test('özel alanların açık profile yazılması anahtara bağlıdır', async () => {
   for (const field of PRIVATE_FIELDS) {
-    assert.equal((await request('users/alice', 'alice', { displayName: 'Yazar', [field]: 'secret' })).status, 403, field);
+    assert.equal((await request('users/alice', 'alice', { displayName: 'Yazar', [field]: 'secret' })).status, BLOCKED, field);
     const uid = `new-${field}`;
-    assert.equal((await request(`users/${uid}`, uid, { displayName: 'Yeni', [field]: 'secret' })).status, 403, field);
+    assert.equal((await request(`users/${uid}`, uid, { displayName: 'Yeni', [field]: 'secret' })).status, BLOCKED, field);
   }
   assert.equal((await request('users/alice', 'alice', { displayName: 'Düzenlenen' })).status, 200);
   assert.equal((await request('users/clean-new', 'clean-new', { displayName: 'Yeni' })).status, 200);
@@ -114,7 +119,7 @@ test('taşıma önizlemesi veri değiştirmez; uygulama atomik ve tekrarlanabili
   assert.equal((await request('users/legacy/private/account', 'bob')).status, 403);
 });
 
-test('duyurulara gömülü özel alanlar temizlenir ve yeniden yazılamaz', async () => {
+test('duyurulara gömülü özel alanlar temizlenir; yeniden yazımı anahtara bağlı', async () => {
   const ref = db.doc('conversations/legacy');
   await ref.set({ authorId: 'alice', content: 'Duyuru', author: { displayName: 'Yazar', email: 'old@example.com' } });
   assert.equal(await cleanConversationAuthor(db, ref, false), true);
@@ -124,8 +129,8 @@ test('duyurulara gömülü özel alanlar temizlenir ve yeniden yazılamaz', asyn
   assert.equal(await cleanConversationAuthor(db, ref, true), false);
   for (const field of PRIVATE_FIELDS) {
     const data = { authorId: 'alice', content: 'Duyuru', author: { displayName: 'Yazar', [field]: 'secret' } };
-    assert.equal((await request('conversations/legacy', 'alice', data)).status, 403, field);
-    assert.equal((await request(`conversations/new-${field}`, 'alice', data)).status, 403, field);
+    assert.equal((await request('conversations/legacy', 'alice', data)).status, BLOCKED, field);
+    assert.equal((await request(`conversations/new-${field}`, 'alice', data)).status, BLOCKED, field);
   }
   assert.equal((await request('conversations/legacy', 'alice', { authorId: 'alice', content: 'Temiz', author: { displayName: 'Yazar' } })).status, 200);
 });

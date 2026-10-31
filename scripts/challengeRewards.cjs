@@ -9,4 +9,12 @@ function allowedChallengeRewards(path = 'firestore.rules') {
   return body ? [...body.matchAll(/\b\d+\b/g)].map(match => Number(match[0])) : [];
 }
 
-module.exports = { allowedChallengeRewards };
+// Aşamalı açılış anahtarı: kurallar eski mağaza sürümünü kıran kısıtları
+// uyguluyor mu? Kural testleri beklenen HTTP durumunu buna göre seçer.
+function legacyClientsRetired(path = 'firestore.rules') {
+  const rules = readFileSync(path, 'utf8');
+  const body = rules.match(/function legacyClientsRetired\(\) \{([^}]*)\}/)?.[1] || '';
+  return /return\s+true/.test(body);
+}
+
+module.exports = { allowedChallengeRewards, legacyClientsRetired };

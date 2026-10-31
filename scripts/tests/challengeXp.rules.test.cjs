@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const { legacyClientsRetired } = require('../challengeRewards.cjs');
 const { before, after, test } = require('node:test');
 const { initializeApp, deleteApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
@@ -44,6 +45,11 @@ async function commit(writes, uid) {
   });
   return { status: response.status, body: await response.json() };
 }
+// Kısıtlar yalnızca eski sürüm emekliye ayrıldığında yürürlükte; geçiş
+// döneminde aynı yazma kabul edilir. Bkz. firestore.rules legacyClientsRetired.
+const strict = legacyClientsRetired();
+const BLOCKED = strict ? 403 : 200;
+
 async function expectStatus(writes, status, uid = owner) {
   const result = await commit(writes, uid);
   assert.equal(result.status, status, JSON.stringify(result.body));
@@ -75,17 +81,17 @@ after(async () => {
 
 test('keyfi XP yazımı reddedilir', async () => {
   const path = await ownUser();
-  await expectStatus([update(path, { xp: 999999 })], 403);
+  await expectStatus([update(path, { xp: 999999 })], BLOCKED);
 });
 
 test('tanımlı ödüle karşılık gelmeyen artış reddedilir', async () => {
   const path = await ownUser();
-  await expectStatus([update(path, { xp: 155 })], 403);
+  await expectStatus([update(path, { xp: 155 })], BLOCKED);
 });
 
 test('XP düşürülemez', async () => {
   const path = await ownUser();
-  await expectStatus([update(path, { xp: 50 })], 403);
+  await expectStatus([update(path, { xp: 50 })], BLOCKED);
 });
 
 test('görev ödülü kadar artış kabul edilir', async () => {
@@ -130,7 +136,7 @@ test('ondalık gelen ödül artışı da kabul edilir', async () => {
 test('ondalık ama tanımsız miktar reddedilir', async () => {
   const path = await ownUser();
   await expectStatus([{ update: { name: `${prefix}/${path}`, fields: { xp: { doubleValue: 155.5 } } },
-    updateMask: { fieldPaths: ['xp'] } }], 403);
+    updateMask: { fieldPaths: ['xp'] } }], BLOCKED);
 });
 
 test('XP alanı hiç olmayan eski hesapta ödül kadar artış kabul edilir', async () => {

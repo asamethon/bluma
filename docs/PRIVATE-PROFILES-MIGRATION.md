@@ -7,22 +7,46 @@ Firebase Auth'tur. Profil güncellemeleri özel alanları tekrar yayımlamaz.
 Firestore okuma izni belge düzeyinde olduğu için özel alanlar ayrı belgede
 tutulur ([Firebase rehberi](https://firebase.google.com/docs/firestore/security/rules-fields#allowing_read_access_only_for_specific_fields)).
 
-## Canlıya alma sırası
+## Canlıya alma sırası — aşamalı açılış anahtarıyla
 
-1. Yeni uygulama sürümünü dağıtıma hazırlayın. Aşağıdaki işlemleri ve sürüm
-   dağıtımını aynı geçişte planlayın: yeni sürüm özel belge kuralını gerektirir;
-   eski sürümlerin açık profile özel alan yazması yeni kurallarla reddedilir.
-2. Firebase Admin SDK için yetkili Application Default Credentials bulunan
-   ortamda önizleme çalıştırın (veri değiştirmez):
+Kısıtlar `firestore.rules` içindeki `legacyClientsRetired()` anahtarına bağlı.
+**false** iken yeni kuralların eklediği her şey (özel hesap belgesi, taslak
+bölümler, yönetim alanı koruması) yürürlükte; eski mağaza sürümünü kıran
+kısıtlar (özel alan yasağı, XP sınırı, sayaç kanıtı) beklemede. Bu sayede
+hiçbir aşamada kullanıcı kırılmaz.
+
+**Neden böyle:** yeni sürüm profil kaydını tek `writeBatch` ile yapıyor
+(`features/auth/services/profileRepository.ts`) — açık profil + özel hesap
+belgesi birlikte. Canlıdaki eski kurallarda `private/{docId}` kuralı hiç yok,
+yani batch tümden reddedilir ve **3.0.1 profil kaydedemez**. Öte yandan tüm
+kısıtlarla dağıtım yapılırsa mağazadaki eski binary ile gelen yeni kullanıcılar
+kayıt olamaz. İkisini ayıran şey bu anahtar.
+
+### 1. aşama — şimdi (anahtar false)
+
+1. `firebase deploy --only firestore:rules` (anahtar false halde).
+   Hem eski hem yeni sürüm tam çalışır; yeni sürümün ihtiyaç duyduğu
+   `private/{docId}` ve `draftChapters` kuralları açılır.
+2. 3.0.1'i mağazaya gönderin.
+
+### 2. aşama — sürüm yayıldıktan sonra
+
+3. Önizleme (veri değiştirmez):
    `node scripts/migratePrivateProfiles.cjs --project=bluma-dc10e`
-3. Taşımayı uygulayın:
-   `node scripts/migratePrivateProfiles.cjs --project=bluma-dc10e --apply`
-4. Hemen ardından `firebase deploy --only firestore:rules` çalıştırın.
-5. Betiği tekrar `--apply` ile çalıştırın; aradaki sürede eski istemcilerin
+4. Taşımayı uygulayın: aynı komut `--apply` ile.
+5. `legacyClientsRetired()` → `return true;` yapıp
+   `firebase deploy --only firestore:rules` çalıştırın.
+6. Betiği tekrar `--apply` ile çalıştırın; aradaki sürede eski istemcilerin
    yeniden yazmış olabileceği alanları temizler. Son salt okunur taramada her
-   iki koleksiyonda da `0 değişecek` sonucu beklenir.
-6. Hazırlanan uygulama sürümünü dağıtın. Eski sürümlerde profil kaydı ve
-   duyuru paylaşımı yeni sürüme geçene kadar reddedilebilir.
+   iki koleksiyonda da `0 değişecek` beklenir.
+
+2. aşamadan sonra eski sürümde kalan kullanıcılar profil kaydı, parola
+değiştirme ve sayaç artışında reddedilir; bu yüzden 2. aşamayı sürüm yayılmadan
+başlatmayın. Kural testleri anahtarın iki durumunda da yeşildir (33/33).
+
+**Yan fayda:** 3.0.1 profil kaydederken özel alanları açık profilden `deleteField()`
+ile siliyor. Yani güncelleyen her kullanıcı kendi belgesini kendiliğinden
+temizliyor; 4. adımdaki taşıma yalnızca geride kalanlar için gerekiyor.
 
 ## Ölçek — 1 Kasım 2026 önizlemesi
 

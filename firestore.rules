@@ -29,6 +29,35 @@ service cloud.firestore {
       return data.keys().hasAny(['email', 'appleUserId', 'signupPlatform', 'signupOsVersion',
         'signupAppVersion', 'signupDeviceModel', 'signupLanguage', 'signupRegion']);
     }
+    // AŞAMALI AÇILIŞ ANAHTARI — eski mağaza sürümünün yaşadığı dönem.
+    //
+    // false iken yeni kuralların EKLEDİĞİ her şey yürürlüktedir (özel hesap
+    // belgesi, taslak bölümler, yönetim alanı koruması); ama eski sürümü kıran
+    // KISITLAR beklemeye alınır: açık profile özel alan yazılabilir, `xp`
+    // serbest yazılır ve sayaçlar kanıt dokümanı olmadan artırılabilir.
+    //
+    // Amaç: 3.0.1 mağazaya gönderilebilsin. Yeni sürüm özel hesap belgesini
+    // yazmak ZORUNDA (profil kaydı tek batch; kural yoksa kayıt tümden
+    // reddedilir), eski sürümdeki kullanıcılar da kırılmasın.
+    //
+    // true YAPMADAN ÖNCE ikisi de tamam olmalı:
+    //   1. 3.0.1 mağazada yayılmış olmalı,
+    //   2. `node scripts/migratePrivateProfiles.cjs --project=bluma-dc10e --apply`
+    //      çalışmış olmalı (yoksa e-postası duran kullanıcı profilini yazamaz).
+    // Sıra ve gerekçe: docs/PRIVATE-PROFILES-MIGRATION.md.
+    function legacyClientsRetired() {
+      return false;
+    }
+    // Özel alan yasağı yalnızca eski sürüm emekliye ayrıldığında devreye girer.
+    function blocksPrivateFields(data) {
+      return legacyClientsRetired() && hasPrivateProfileFields(data);
+    }
+    // Sayaç artışının gerçek beğeni/takip kaydına dayandığının kanıtı. Eski
+    // sürüm kaydı ve sayacı paralel yazdığı için yarışı kaybedebiliyor; anahtar
+    // açılana kadar kanıt aranmaz.
+    function counterProof(path) {
+      return !legacyClientsRetired() || exists(path);
+    }
     // True when `field` changes by exactly n (atomic increment/decrement).
     function bumpBy(field, n) {
       return request.resource.data[field] == resource.data.get(field, 0) + n;
@@ -142,22 +171,23 @@ service cloud.firestore {
           || amount == 200 || amount == 250 || amount == 300;
       }
       function xpChangeAllowed() {
-        return !('xp' in request.resource.data.diff(resource.data).affectedKeys())
+        return !legacyClientsRetired()
+          || !('xp' in request.resource.data.diff(resource.data).affectedKeys())
           || (request.resource.data.get('xp', 0) is number
             && resource.data.get('xp', 0) is number
             && isChallengeReward(request.resource.data.get('xp', 0) - resource.data.get('xp', 0)));
       }
 
       allow read: if true;
-      allow create: if isOwner(userId) && !hasPrivateProfileFields(request.resource.data);
+      allow create: if isOwner(userId) && !blocksPrivateFields(request.resource.data);
       allow delete: if isOwner(userId);
-      allow update: if !hasPrivateProfileFields(request.resource.data) && ((isOwner(userId) && xpChangeAllowed())
+      allow update: if !blocksPrivateFields(request.resource.data) && ((isOwner(userId) && xpChangeAllowed())
         || (isSignedIn() && isCounterBump('followersCount')
-            && (exists(/databases/$(database)/documents/users/$(userId)/followers/$(request.auth.uid))
+            && (counterProof(/databases/$(database)/documents/users/$(userId)/followers/$(request.auth.uid))
                 || request.resource.data.followersCount < resource.data.get('followersCount', 0)))
         || (isSignedIn() && isCounterBump('followingCount')
             && ((hasFollowRequest(request.auth.uid, userId)
-                || exists(/databases/$(database)/documents/users/$(request.auth.uid)/following/$(userId)))
+                || counterProof(/databases/$(database)/documents/users/$(request.auth.uid)/following/$(userId)))
                 || request.resource.data.followingCount < resource.data.get('followingCount', 0))));
 
       match /private/{docId} {
@@ -269,7 +299,7 @@ service cloud.firestore {
       allow update: if isSignedIn() && (
         (resource.data.authorId == request.auth.uid && !onBannedDevice() && preservesManagementFields())
         || (isCounterBump('likesCount')
-            && (exists(/databases/$(database)/documents/stories/$(storyId)/likes/$(request.auth.uid))
+            && (counterProof(/databases/$(database)/documents/stories/$(storyId)/likes/$(request.auth.uid))
                 || request.resource.data.likesCount < resource.data.get('likesCount', 0)))
         || isCounterBump('commentsCount')
         || isCounterBump('viewsCount')
@@ -292,7 +322,7 @@ service cloud.firestore {
         allow create, delete: if isStoryAuthor();
         allow update: if isStoryAuthor()
           || (isCounterBump('likesCount')
-              && (exists(/databases/$(database)/documents/stories/$(storyId)/chapters/$(chapterId)/likes/$(request.auth.uid))
+              && (counterProof(/databases/$(database)/documents/stories/$(storyId)/chapters/$(chapterId)/likes/$(request.auth.uid))
                   || request.resource.data.likesCount < resource.data.get('likesCount', 0)));
 
         // Bölüm beğenileri — bir okur yalnızca kendi beğeni dokümanını
@@ -321,7 +351,7 @@ service cloud.firestore {
         allow update: if isSignedIn() && (
           resource.data.userId == request.auth.uid
           || (isCounterBump('likesCount')
-              && (exists(/databases/$(database)/documents/stories/$(storyId)/comments/$(commentId)/likes/$(request.auth.uid))
+              && (counterProof(/databases/$(database)/documents/stories/$(storyId)/comments/$(commentId)/likes/$(request.auth.uid))
                   || request.resource.data.likesCount < resource.data.get('likesCount', 0)))
         );
 
@@ -348,13 +378,13 @@ service cloud.firestore {
     match /conversations/{conversationId} {
       allow read: if true;
       allow create: if canPublish() && request.resource.data.authorId == request.auth.uid
-        && !hasPrivateProfileFields(request.resource.data.get('author', {}));
+        && !blocksPrivateFields(request.resource.data.get('author', {}));
       allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
       // updatedAt is included because commenting bumps it alongside the counter.
-      allow update: if isSignedIn() && !hasPrivateProfileFields(request.resource.data.get('author', {})) && (
+      allow update: if isSignedIn() && !blocksPrivateFields(request.resource.data.get('author', {})) && (
         resource.data.authorId == request.auth.uid
         || (isCounterBump('likesCount')
-            && (exists(/databases/$(database)/documents/conversations/$(conversationId)/likes/$(request.auth.uid))
+            && (counterProof(/databases/$(database)/documents/conversations/$(conversationId)/likes/$(request.auth.uid))
                 || request.resource.data.likesCount < resource.data.get('likesCount', 0)))
         || isCounterBump('viewsCount')
         || (onlyChanges(['commentsCount', 'updatedAt']) && (
@@ -377,7 +407,7 @@ service cloud.firestore {
       allow update: if isSignedIn() && (
         resource.data.userId == request.auth.uid
         || (isCounterBump('likesCount')
-            && (exists(/databases/$(database)/documents/conversationComments/$(commentId)/likes/$(request.auth.uid))
+            && (counterProof(/databases/$(database)/documents/conversationComments/$(commentId)/likes/$(request.auth.uid))
                 || request.resource.data.likesCount < resource.data.get('likesCount', 0)))
       );
     }
