@@ -22,7 +22,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.asamethon.bluma",
       "usesAppleSignIn": true,
-      "buildNumber": "19",
+      "buildNumber": "20",
       "googleServicesFile": "./GoogleService-Info.plist",
       "associatedDomains": [
         "applinks:bluma-dc10e.web.app"
@@ -51,7 +51,7 @@
       },
       "googleServicesFile": "./google-services.json",
       "package": "com.d4tecompany.bluma",
-      "versionCode": 15,
+      "versionCode": 16,
       "playStoreUrl": "https://play.google.com/store/apps/details?id=com.d4tecompany.bluma",
       "intentFilters": [
         {
