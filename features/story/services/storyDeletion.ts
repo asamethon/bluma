@@ -7,6 +7,7 @@ import { applyStoryChange } from './listeners/storyFeedListeners';
 import { forgetStory } from './storyCache';
 import { updateUserStoriesCount } from './storyMutations';
 import { forgetDraftSummary } from '@/store/slices/storyDraftSlice';
+import { patchStory } from '@/store/slices/storySlice';
 
 async function nestedReferences(storyId: string, group: 'chapters' | 'comments') {
   const db = getFirestore();
@@ -55,6 +56,13 @@ export async function deleteStory(storyId: string) {
     forgetStory(storyId);
     store.dispatch(forgetDraftSummary(storyId));
     applyStoryChange(storyId, null);
+    // Stüdyo listesi de anında güncellenir; yeniden yükleme silmeden önce
+    // biterse silinen taslak listede kalıyordu.
+    const { userStories, publishedUserStories } = store.getState().story;
+    store.dispatch(patchStory({
+      userStories: userStories.filter(item => item.id !== storyId),
+      publishedUserStories: publishedUserStories.filter(item => item.id !== storyId),
+    }));
     if ((story.data() as Story).isPublished) await updateUserStoriesCount(userId, -1);
     return { success: true };
   } catch (error) {

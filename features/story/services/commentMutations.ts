@@ -19,6 +19,7 @@ import {
   updateDoc,
   where,
 } from '@react-native-firebase/firestore';
+import { notifyMentions } from './commentMentions';
 import { getCommentById } from './commentRecords';
 import { getStoryById } from './storyApi';
 
@@ -30,12 +31,17 @@ async function notifyComment(storyId: string, commentId: string, parentId: strin
     parentId ? getCommentById(storyId, parentId) : Promise.resolve(null),
   ]);
   const recipientId = parentId ? parent?.userId : story?.authorId;
+  const senderName = user.displayName || user.username || i18n.t('notifications.someone');
+  const storyTitle = story?.title || i18n.t('common.story');
+  // Anmalar, yorum bildirimi gitmese de (kendi hikâyene yorum) gönderilir.
+  void notifyMentions({ content, senderId: user.id, senderName, storyId, storyTitle, commentId,
+    alreadyNotifiedId: recipientId });
   if (!recipientId || recipientId === user.id) return;
   void notificationActions.createCommentNotification(
     user.id,
     recipientId,
-    user.displayName || user.username || i18n.t('notifications.someone'),
-    story?.title || i18n.t('common.story'),
+    senderName,
+    storyTitle,
     storyId,
     content,
     commentId,

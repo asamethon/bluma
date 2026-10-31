@@ -395,8 +395,6 @@
     "activity": "Activity",
     "push": "Push Notifications",
     "pushSub": "We'll send instant notifications to your phone",
-    "email": "Email Notifications",
-    "emailSub": "Get important updates by email",
     "newChapter": "New Chapter",
     "newChapterSub": "When authors you follow publish a chapter",
     "likes": "Likes",
@@ -405,7 +403,9 @@
     "commentsSub": "When someone comments on your content",
     "newFollower": "New Follower",
     "newFollowerSub": "When someone starts following you",
-    "enablePushFirst": "Enable Push Notifications first to turn on activity notifications."
+    "enablePushFirst": "Enable Push Notifications first to turn on activity notifications.",
+    "mentions": "Mentions",
+    "mentionsSub": "When someone mentions you with @ in a comment"
   },
   "changePassword": {
     "title": "Change Password",

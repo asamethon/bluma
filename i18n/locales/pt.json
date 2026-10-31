@@ -373,8 +373,6 @@
     "activity": "Atividade",
     "push": "Notificações push",
     "pushSub": "Vamos enviar-te notificações instantâneas para o telemóvel",
-    "email": "Notificações por email",
-    "emailSub": "Recebe atualizações importantes por email",
     "newChapter": "Novo capítulo",
     "newChapterSub": "Quando os autores que segues publicarem um capítulo",
     "likes": "Gostos",
@@ -383,7 +381,9 @@
     "commentsSub": "Quando alguém comentar o teu conteúdo",
     "newFollower": "Novo seguidor",
     "newFollowerSub": "Quando alguém começar a seguir-te",
-    "enablePushFirst": "Ativa primeiro as notificações push para receberes notificações de atividade."
+    "enablePushFirst": "Ativa primeiro as notificações push para receberes notificações de atividade.",
+    "mentions": "Menções",
+    "mentionsSub": "Quando alguém te menciona com @ num comentário"
   },
   "changePassword": {
     "title": "Alterar palavra-passe",

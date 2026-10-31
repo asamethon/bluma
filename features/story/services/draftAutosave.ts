@@ -54,6 +54,8 @@ export function createDraftAutosave(storyId: string, onState: (state: SaveState)
     },
     saveNow(chapters: StudioChapter[]) { remember(chapters); void run(); },
     retry: () => { void run(); },
+    /** Boş taslak silinirken: bekleyen kayıt atılır, çıkışta yazılmaz. */
+    discard() { work.active = false; clearTimers(); work.pending = null; },
     dispose() { work.active = false; clearTimers(); void run(); },
   };
 }

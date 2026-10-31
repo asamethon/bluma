@@ -19,6 +19,7 @@ import {
   announceStoryToFollowers,
   createCommentNotification,
   createLikeNotification,
+  createMentionNotification,
   createWelcomeNotification,
 } from '@/features/notifications/services/storyNotifications';
 
@@ -30,6 +31,7 @@ export const notificationActions = {
   createFollowNotification,
   createFollowRequestNotification,
   createLikeNotification,
+  createMentionNotification,
   createNotification,
   createWelcomeNotification,
   deleteNotification,

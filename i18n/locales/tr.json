@@ -395,8 +395,6 @@
     "activity": "Etkinlik",
     "push": "Push Bildirimleri",
     "pushSub": "Telefonuna anlık bildirim gönderelim",
-    "email": "E-posta Bildirimleri",
-    "emailSub": "Önemli güncellemeleri e-posta ile al",
     "newChapter": "Yeni Bölüm",
     "newChapterSub": "Takip ettiğin yazarlar bölüm yayınlayınca",
     "likes": "Beğeniler",
@@ -405,7 +403,9 @@
     "commentsSub": "İçeriklerine yorum yapıldığında",
     "newFollower": "Yeni Takipçi",
     "newFollowerSub": "Biri seni takip etmeye başladığında",
-    "enablePushFirst": "Etkinlik bildirimlerini açmak için önce Push Bildirimlerini etkinleştir."
+    "enablePushFirst": "Etkinlik bildirimlerini açmak için önce Push Bildirimlerini etkinleştir.",
+    "mentions": "Anmalar",
+    "mentionsSub": "Biri yorumunda senden @ ile bahsettiğinde"
   },
   "changePassword": {
     "title": "Şifre Değiştir",

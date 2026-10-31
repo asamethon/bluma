@@ -373,8 +373,6 @@
     "activity": "アクティビティ",
     "push": "プッシュ通知",
     "pushSub": "スマートフォンに即時通知をお送りします",
-    "email": "メール通知",
-    "emailSub": "重要な更新情報をメールで受け取る",
     "newChapter": "新しい章",
     "newChapterSub": "フォロー中の作者が章を公開したとき",
     "likes": "いいね",
@@ -383,7 +381,9 @@
     "commentsSub": "誰かがあなたのコンテンツにコメントしたとき",
     "newFollower": "新しいフォロワー",
     "newFollowerSub": "誰かがあなたをフォローし始めたとき",
-    "enablePushFirst": "アクティビティ通知をオンにするには、まずプッシュ通知を有効にしてください。"
+    "enablePushFirst": "アクティビティ通知をオンにするには、まずプッシュ通知を有効にしてください。",
+    "mentions": "メンション",
+    "mentionsSub": "誰かがコメントで@を使ってあなたに言及したとき"
   },
   "changePassword": {
     "title": "パスワードを変更",

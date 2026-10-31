@@ -373,8 +373,6 @@
     "activity": "Aktivitas",
     "push": "Notifikasi push",
     "pushSub": "Kami akan mengirimkan notifikasi instan ke ponselmu",
-    "email": "Notifikasi email",
-    "emailSub": "Dapatkan pembaruan penting melalui email",
     "newChapter": "Bab baru",
     "newChapterSub": "Saat penulis yang kamu ikuti menerbitkan sebuah bab",
     "likes": "Suka",
@@ -383,7 +381,9 @@
     "commentsSub": "Saat seseorang mengomentari kontenmu",
     "newFollower": "Pengikut baru",
     "newFollowerSub": "Saat seseorang mulai mengikutimu",
-    "enablePushFirst": "Aktifkan notifikasi push terlebih dahulu untuk mendapatkan notifikasi aktivitas."
+    "enablePushFirst": "Aktifkan notifikasi push terlebih dahulu untuk mendapatkan notifikasi aktivitas.",
+    "mentions": "Sebutan",
+    "mentionsSub": "Saat seseorang menyebutmu dengan @ di komentar"
   },
   "changePassword": {
     "title": "Ubah kata sandi",

@@ -373,8 +373,6 @@
     "activity": "Aktivität",
     "push": "Push-Benachrichtigungen",
     "pushSub": "Wir senden dir sofortige Benachrichtigungen an dein Telefon",
-    "email": "E-Mail-Benachrichtigungen",
-    "emailSub": "Erhalte wichtige Updates per E-Mail",
     "newChapter": "Neues Kapitel",
     "newChapterSub": "Wenn Autoren, denen du folgst, ein Kapitel veröffentlichen",
     "likes": "Gefällt mir",
@@ -383,7 +381,9 @@
     "commentsSub": "Wenn jemand deine Inhalte kommentiert",
     "newFollower": "Neuer Follower",
     "newFollowerSub": "Wenn dir jemand zu folgen beginnt",
-    "enablePushFirst": "Aktiviere zuerst Push-Benachrichtigungen, um Aktivitätsbenachrichtigungen einzuschalten."
+    "enablePushFirst": "Aktiviere zuerst Push-Benachrichtigungen, um Aktivitätsbenachrichtigungen einzuschalten.",
+    "mentions": "Erwähnungen",
+    "mentionsSub": "Wenn dich jemand in einem Kommentar mit @ erwähnt"
   },
   "changePassword": {
     "title": "Passwort ändern",

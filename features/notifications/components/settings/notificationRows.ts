@@ -6,7 +6,6 @@ export type ToggleKey = keyof Omit<NotificationSettings, 'userId' | 'updatedAt'>
 
 export const DEFAULT_SETTINGS: Record<ToggleKey, boolean> = {
   pushNotifications: true,
-  emailNotifications: false,
   storyNotifications: true,
   likeNotifications: true,
   commentNotifications: true,
@@ -21,9 +20,10 @@ export type SettingRow = {
   caption: string;
 };
 
+// E-posta bildirimi anahtarı kaldırıldı: kaydediliyordu ama hiçbir yerde
+// okunmuyordu (e-posta bildirimi gönderen bir sistem yok).
 export const CHANNEL_ROWS: SettingRow[] = [
   { key: 'pushNotifications', icon: 'notifications-outline', title: 'notifSettings.push', caption: 'notifSettings.pushSub' },
-  { key: 'emailNotifications', icon: 'mail-outline', title: 'notifSettings.email', caption: 'notifSettings.emailSub' },
 ];
 
 export const ACTIVITY_ROWS: SettingRow[] = [
@@ -31,4 +31,5 @@ export const ACTIVITY_ROWS: SettingRow[] = [
   { key: 'likeNotifications', icon: 'heart-outline', title: 'notifSettings.likes', caption: 'notifSettings.likesSub' },
   { key: 'commentNotifications', icon: 'chatbubble-ellipses-outline', title: 'notifSettings.comments', caption: 'notifSettings.commentsSub' },
   { key: 'followNotifications', icon: 'person-add-outline', title: 'notifSettings.newFollower', caption: 'notifSettings.newFollowerSub' },
+  { key: 'mentionNotifications', icon: 'at-outline', title: 'notifSettings.mentions', caption: 'notifSettings.mentionsSub' },
 ];

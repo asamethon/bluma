@@ -373,8 +373,6 @@
     "activity": "动态",
     "push": "推送通知",
     "pushSub": "我们会即时向你的手机发送通知",
-    "email": "邮件通知",
-    "emailSub": "通过邮件接收重要更新",
     "newChapter": "新章节",
     "newChapterSub": "你关注的作者发布章节时",
     "likes": "点赞",
@@ -383,7 +381,9 @@
     "commentsSub": "有人评论你的内容时",
     "newFollower": "新关注者",
     "newFollowerSub": "有人开始关注你时",
-    "enablePushFirst": "请先开启推送通知，才能启用动态通知。"
+    "enablePushFirst": "请先开启推送通知，才能启用动态通知。",
+    "mentions": "提及",
+    "mentionsSub": "有人在评论中用 @ 提到你时"
   },
   "changePassword": {
     "title": "修改密码",

@@ -64,7 +64,6 @@ export interface NotificationSettings {
   commentNotifications: boolean;
   mentionNotifications: boolean;
   storyNotifications: boolean;
-  emailNotifications: boolean;
   pushNotifications: boolean;
   updatedAt: FirestoreDate;
 }
