@@ -4,15 +4,19 @@ Güncelleme: **31 Ekim 2026**. Proje: `/Users/sametbalci/Desktop/fantasy/bluma_L
 Kaynak: kullanıcının 12 Ekim 2026 tarihli, 26 maddelik hata taraması.
 Bu dosya kalan işleri ve önceki oturumların durumunu birlikte taşır.
 
-**Sayaç: 26 maddenin 25'i kapandı.** Kodda açık kalan tek madde, 22'nin XP yazma
-yetkisidir (22b). Madde 25 ürün kararıyla kapatıldı: bu uygulamada abonelik veya
-premium satışı olmayacak. Madde madde durum aşağıdaki tabloda.
+**Sayaç: 26 maddenin tamamı kapandı.** Son kapanan 22b (XP yazma yetkisi) kodda
+bitti ve uygulamada doğrulandı. Madde 25 ürün kararıyla kapatıldı: bu uygulamada
+abonelik veya premium satışı olmayacak. Madde madde durum aşağıdaki tabloda.
+**Kapanmayan iş listesi artık hata değil, yayın işidir:** canlı kural deploy'u,
+profil migration'ı ve ayrı Yaz sekmesinin native binary'si.
 
 ## Yeni oturum için kısa durum
 
-- **26 maddeden 25'i kodda kapandı** (24–26 Ekim commit'leri). Kodda açık kalan
-  tek iş 22b: `firestore.rules:127` hâlâ sahibin `xp` alanını doğrudan yazmasına
-  izin veriyor. Diğer bütün maddeler 31 Ekim'de kodda tek tek doğrulandı.
+- **26 maddenin tamamı kodda kapandı.** 5–21, 23, 24, 26 arası 24–26 Ekim
+  commit'leriyle; 22b 31 Ekim'de. Hepsi 31 Ekim'de kodda tek tek doğrulandı.
+- **22b kapandı:** `xp` artık yalnızca tanımlı bir görev ödülü kadar artabiliyor
+  ve düşürülemiyor. Bu bir hız sınırıdır, açığı tümden kapatmaz — ayrıntı ve
+  sınırlar aşağıdaki 22b bölümünde.
 - **Madde 25 (premium) ürün kararıyla kapatıldı:** bu uygulamada abonelik veya
   premium satışı olmayacak. `isPremium` sabit `false` kalır; bu bir hata değil ve
   ödeme/premium sistemi icat edilmeyecek. Geriye kalan rozet (`StoryCover.tsx`) ve
@@ -238,14 +242,59 @@ Kullanıcı kabul testi (bluma Yerel):
    Panel Admin erişimi kullandığından buradan alan değiştirmenin başarılı
    olması yetki açığı sayılmaz; yetkisiz istemci denemeleri kural testindedir.
 
-### 22b — XP ve görev ödülü yetkileri (24 Ekim 2026)
+### 22b — XP yazma yetkisi (31 Ekim 2026)
 
-- Açık olan `xp`'nin sahibince yazılması tekrar doğrulandı. Karmaşık kurallar
-  Firestore Rules derlemesi sınırını aştığı için mevcut kural dosyasına
-  güvenli ve minimal bir düzeltme eklenemedi; değişiklikler geri alındı.
-- Mevcut kurallarla `local-reader`'daki eksik `w2` durumu gün yenilemesi
-  yazımını engelleyebiliyor; bu daha çok veri durumu. XP açığı ayrı bir parçada
-  ele alınabilir. Canlı deploy / migration yapılmadı.
+24 Ekim'de denenen kapsamlı kural Firestore Rules derleme sınırını aştığı için
+geri alınmıştı. Bu turda iki fonksiyonluk küçük bir kural yazıldı; sınır sorunu
+tekrarlamadı.
+
+- Önce açık gösterildi: commit'li kurallara karşı yeni test dosyasında keyfi
+  `xp: 999999`, tanımsız artış ve `xp` düşürme **kabul ediliyordu** (3 test kırmızı).
+- `firestore.rules` → `users/{userId}` güncellemesine `xpChangeAllowed()` eklendi.
+  `xp` değişmiyorsa yazma serbest; değişiyorsa artış **tanımlı bir görev ödülü**
+  kadar olmalı (`isChallengeReward`), düşürme reddedilir.
+- **Uygulamada bulunan hata:** ilk sürüm `hasAny` ile liste üyeliği kullanıyordu
+  ve gerçek ödül alma `permission-denied` veriyordu. Kök neden: istemci XP'yi
+  `increment()` ile yazıyor ve JS sayısı Firestore'a **ondalık** gidiyor
+  (`250.0`); `hasAny` tür duyarlı olduğu için tam sayı 250 ile eşleşmiyor.
+  Kural sayısal eşitliğe (`amount == 250 || ...`) çevrildi, `is number` koruması
+  eklendi. REST testleri `integerValue` gönderdiği için bu boşluğu görmemişti;
+  iki ondalık test eklendi.
+- Ödül listesi `features/challenges/definitions.ts` ile **elle** eşli. Yeni ödül
+  eklenirse ödül alma izin hatası verir; `__tests__/challenges.test.ts` içindeki
+  üç test kuralı okuyup `CHALLENGE_DEFS[].xp` + `WEEKLY_FEATURED.xp` ile
+  karşılaştırarak bunu yakalar (`scripts/challengeRewards.cjs`).
+- **SINIR:** bu bir hız sınırıdır, açığı tümden kapatmaz — istemci meşru claim
+  yazmasını tekrarlayabilir (yazma başına en çok 300 XP). Kalıcı çözüm XP'yi
+  güvenilir bir yazıcıya taşımaktır (YAPILACAKLAR 3.1, Cloud Functions). XP
+  yalnızca rütbe/rozet besliyor; lider tablosu ve para kazanma yok.
+- Doğrulama: 33/33 kural testi (4 dosya), 12/12 `challenges.test.ts`,
+  TypeScript 0 hata, ilgili ESLint 0 uyarı. Canlı deploy / migration yapılmadı.
+- Dosyalar: `firestore.rules`, `scripts/tests/challengeXp.rules.test.cjs` (yeni),
+  `scripts/challengeRewards.cjs` (yeni), `__tests__/challenges.test.ts`.
+- Tekrar çalıştırma: `FIRESTORE_EMULATOR_HOST=127.0.0.1:8787 GCLOUD_PROJECT=demo-bluma-local node --test scripts/tests/challengeXp.rules.test.cjs`.
+
+#### Uygulamada doğrulama — 31 Ekim 2026
+
+`bluma Yerel`, iPhone 18 Pro / iOS 27 simülatöründe `okur@bluma.test` ile.
+Ödül alabilmek için `c1` ilerlemesi admin SDK ile 5'e çekildi (hesapta tek örnek
+hikâye olduğundan 5 farklı hikâyeye yorum yapılamıyor); **ödül alma uygulamanın
+kendi arayüzünden** yapıldı.
+
+| Adım | Sonuç |
+| --- | --- |
+| Açılışta gün yenilemesi | Geçti — seri 5→1, `lastActiveDate` bugüne, `w2` 5→1 yazıldı |
+| Hafta Sonu Maratonu ödülü (+250) | Geçti — XP 0→250, kart "Tamamlandı", "1/12 tamamlandı" |
+| "5 hikayeye yorum bırak" ödülü (+90) | Geçti — XP 250→340, `claimedChallenges: [weekly_marathon, c1]` |
+| Hikâye açma + beğeni | Geçti — `challengeProgress.c3` 1 oldu, sayaç kuralları bozulmadı |
+| Gerçek oturumla `xp = 999999` | 403 reddedildi |
+| Gerçek oturumla tanımsız artış (+55) | 403 reddedildi |
+| Aynı oturumla biyografi değişikliği | 200 kabul edildi |
+
+Test sonunda hesap eski haline döndürüldü: `xp` ve `claimedChallenges` silindi,
+`challengeProgress` → `{w2: 1, c1: 2, c3: 1}`. `c3: 1` testte gerçekten yapılan
+beğeniden gelir; beğeni kaydı duruyor. `streak`/`lastActiveDate` uygulamanın
+yazdığı güncel değerlerde bırakıldı.
 
 ## Madde durumları — özgün numaralar
 
@@ -276,19 +325,27 @@ doğrula; özellik tercihleri belirsizse kaldırıldı diye varsayma.
 | 19 | Hikâye bitişi | ✅ |
 | 20 | Yazar dürtmeleri | ✅ (commit'siz rötuş) |
 | 21 | Boş taslaklar | ✅ |
-| 22 | Güvenlik: yönetim alanları / sayaçlar / XP | ⚠️ **kısmi** — 22a ve sayaçlar bitti, **22b XP açık** |
+| 22 | Güvenlik: yönetim alanları / sayaçlar / XP | ✅ — 22a, sayaçlar ve 22b bitti; kural deploy'u bekliyor |
 | 23 | Lansman çevirileri | ✅ |
 | 24 | Sabit metinler | ✅ |
 | 25 | Premium | ⛔ **ürün kararıyla kapatıldı** — abonelik/premium olmayacak, `isPremium` sabit `false` |
 | 26 | Profil alanları (web sitesi, konum) | ✅ |
 
-### Açık tek iş: 22b — XP yazma yetkisi
+### Kodda açık madde kalmadı — sırada ne var
 
-`firestore.rules:127` kullanıcı belgesinde sahibe tam güncelleme veriyor, yani
-istemci `xp`'yi istediği değere yazabilir. 24 Ekim'de denenen kapsamlı kural
-düzeltmesi Firestore Rules derleme sınırını aştığı için geri alındı; bu parça
-farklı bir yaklaşım gerektiriyor (ör. XP'yi ayrı belgeye/işleve taşımak).
-Ayrıntı: yukarıdaki "22b — XP ve görev ödülü yetkileri" bölümü.
+Hata listesi bitti. Geriye kalanlar yayın işleri ve doğrulama:
+
+1. **Canlı kural deploy'u + profil migration'ı** (1, 2, 22) — birlikte planlanmalı.
+2. **Ayrı Yaz sekmesi için yeni native binary** — Metro/OTA yetmez.
+3. **Kullanıcı kontrolü bekleyen iki nokta:** 4. maddenin son görsel düzenlemesi;
+   23 Ekim'deki beyaz ekran / native `invalid-argument` hatası (kök neden tekrar
+   üretilemedi, cihazda çözüldüğü varsayılmamalı).
+4. **Kırmızı duran bir test:** `__tests__/challengeProgress.test.ts:170` "kalıcı
+   görev korunur" diyor ama 13. madde sonrası `w3` haftalık sıfırlananlar
+   arasında. Ürün sorusu: rozetli "hikâyeni tamamla" her hafta yeniden
+   kazanılabilir mi olmalı? Cevaba göre test ya da `weeklyTrackers` değişir.
+5. **İleride:** XP'yi Cloud Function'a taşımak (YAPILACAKLAR 3.1) 22b'nin
+   kalıcı çözümüdür.
 
 ### Ek doğrulama: hesaplar arası veri taşınması
 
@@ -333,6 +390,8 @@ kontrolleri tamamlandı; kalan tek güvenlik parçası 22b XP yazma yetkisidir.
   7 adım geçmişti, küçük ekran hareketi nedeniyle `WARN` vardı. Son native yamada henüz tekrar koşulmadı.
 - Bu akışlar açık **yerel okur hesabı ve İngilizce arayüz** bekler; altı iş senaryosunun tüm otomasyonu değildir.
 - Eski tam koşu: 23 paket/133 Jest testi ve 13 Firestore kural testi başarılıydı.
+- 31 Ekim koşusu: 33/33 Firestore kural testi (4 dosya) ve 161/162 Jest testi;
+  kırmızı olan tek test yukarıda 4. maddede anlatılan `challengeProgress.test.ts:170`.
 - Sonraki ek kontroller: raporlayıcı 4 test; ayrı Yaz native yaması 3 test başarılı.
 - Son kod için TypeScript 0 hata ve ilgili ESLint temiz. Yeni native build 0 hata/5 uyarıyla tamamlandı.
 - Uygulamada doğrulanan önceki altı senaryo: taslak izolasyonu, hızlı çıkışta kayıt, yayınlama,
@@ -371,11 +430,10 @@ kontrolleri tamamlandı; kalan tek güvenlik parçası 22b XP yazma yetkisidir.
 ## Yeni oturuma verilebilecek istek
 
 > `docs/HATA-COZUM-DEVIR.md` dosyasını ve proje talimatlarını oku. 26 maddelik
-> hata listesinin 25'i kapandı; kodda açık tek iş 22b — kullanıcı belgesindeki
-> `xp` alanının istemciden yazılabilmesi. Madde 25'e (premium) dokunma: abonelik
-> olmayacak, kapandı. Önce açığı emülatörde doğrula, sonra Rules derleme sınırını
-> aşmayan küçük bir çözüm kur; normal görev/ödül akışlarını bozma. Token/quota
-> tüketimini düşük tut; UI testlerini ben yapacağım. Gerekli kod kontrollerini
-> çalıştır (`npx tsc --noEmit` zorunlu), sonra hangi hesapla nasıl test edeceğimi
-> adım adım yazıp dur. Commit edilmemiş 7 dosyayı ve test verilerini koru; canlıya
+> hata listesinin tamamı kapandı; yeni bir hata parçası yok. Sıradaki işler
+> yayın tarafında: canlı kural deploy'u + profil migration'ı birlikte planlanmalı,
+> ayrı Yaz sekmesi için yeni native binary gerekiyor. Madde 25'e (premium)
+> dokunma: abonelik olmayacak. Token/quota tüketimini düşük tut; UI testini
+> istersem söylerim. Her değişiklikten sonra `npx tsc --noEmit` zorunlu.
+> Commit edilmemiş görev/okur dosyalarını ve yerel test verilerini koru; canlıya
 > deploy, toplu veri sıfırlama veya migration yapma.
