@@ -335,7 +335,12 @@ doğrula; özellik tercihleri belirsizse kaldırıldı diye varsayma.
 
 Hata listesi bitti. Geriye kalanlar yayın işleri ve doğrulama:
 
-1. **Canlı kural deploy'u + profil migration'ı** (1, 2, 22) — birlikte planlanmalı.
+1. **Canlı kural deploy'u — 1. aşama 1 Kasım 2026'da YAPILDI.** Kurallar
+   `legacyClientsRetired()` anahtarı false halde canlıya alındı: yeni sürümün
+   ihtiyaç duyduğu `private/{docId}` ve `draftChapters` açıldı, eski sürümü
+   kıran kısıtlar beklemede. Sırada 3.0.1'in mağazaya gönderilmesi, ardından
+   profil migration'ı ve anahtarın true yapılması var
+   (bkz. [PRIVATE-PROFILES-MIGRATION.md](PRIVATE-PROFILES-MIGRATION.md)).
 2. **Ayrı Yaz sekmesi için yeni native binary** — Metro/OTA yetmez.
 3. **Kullanıcı kontrolü bekleyen iki nokta:** 4. maddenin son görsel düzenlemesi;
    23 Ekim'deki beyaz ekran / native `invalid-argument` hatası (kök neden tekrar

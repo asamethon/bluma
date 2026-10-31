@@ -22,12 +22,17 @@ yani batch tümden reddedilir ve **3.0.1 profil kaydedemez**. Öte yandan tüm
 kısıtlarla dağıtım yapılırsa mağazadaki eski binary ile gelen yeni kullanıcılar
 kayıt olamaz. İkisini ayıran şey bu anahtar.
 
-### 1. aşama — şimdi (anahtar false)
+### 1. aşama — anahtar false
 
-1. `firebase deploy --only firestore:rules` (anahtar false halde).
-   Hem eski hem yeni sürüm tam çalışır; yeni sürümün ihtiyaç duyduğu
-   `private/{docId}` ve `draftChapters` kuralları açılır.
-2. 3.0.1'i mağazaya gönderin.
+1. ✅ **1 Kasım 2026'da yapıldı.** `firebase deploy --only firestore:rules`
+   çalıştırıldı; canlı ruleset `41c4df46` yerel dosyayla birebir aynı,
+   `legacyClientsRetired` false, `private/{docId}` ve `draftChapters`
+   kuralları canlıda. Dağıtım öncesi eski sürümün yedi yazma deseni
+   (girişte e-posta yazımı, kanıtsız beğeni/takip sayacı, eski ödül miktarıyla
+   XP, hikâye oluşturma/düzenleme, author.email'li duyuru) emülatörde denendi;
+   yedisi de geçti. Canlıda `isHidden`/`isEditorsPick` taşıyan hikâye yok
+   (219/219 temiz), bu yüzden yönetim alanı koruması eski sürümü etkilemiyor.
+2. ⬜ 3.0.1'i mağazaya gönderin.
 
 ### 2. aşama — sürüm yayıldıktan sonra
 
