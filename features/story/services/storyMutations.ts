@@ -1,6 +1,7 @@
 import { assertEmailVerified } from '@/features/auth/services/emailVerification';
 import i18n from '@/i18n';
 import { store } from '@/store';
+import { challengeActions } from '@/store/challengeStore';
 import { notificationActions } from '@/store/notificationStore';
 import { patchStory } from '@/store/slices/storySlice';
 import type { Story } from '@/types';
@@ -93,6 +94,10 @@ export async function updateStory(storyId: string, updates: Partial<Story>) {
     if (becameUnpublished) await updateUserStoriesCount(current.authorId, -1);
     const user = store.getState().auth.user;
     if (user?.id === current.authorId) {
+      // "Yarım kalan bir hikâyeyi tamamla": yayındaki hikâye Tamamlandı'ya geçti.
+      if (updates.isCompleted === true && !current.isCompleted && current.isPublished) {
+        void challengeActions.trackAction(user.id, 'storiesCompleted', storyId);
+      }
       const title = updates.title || current.title;
       if (becamePublished) publishSideEffects(user, storyId, title, !current.lastNotifiedChapterCount);
     }

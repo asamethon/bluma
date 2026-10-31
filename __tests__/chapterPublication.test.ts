@@ -4,6 +4,7 @@ import { getChapter, loadAllChapters } from '@/features/story/services/chapters'
 import { notificationActions } from '@/store/notificationStore';
 import { publishSideEffects } from '@/features/story/services/storyMutations';
 import { openStory } from '@/features/story/services/storyDraft';
+import { challengeActions } from '@/store/challengeStore';
 import { storyActions } from '@/store/storyStore';
 import { documents, resetChapterDatabase, scenario } from './support/chapterFirestore';
 
@@ -11,6 +12,7 @@ jest.mock('@react-native-firebase/firestore', () => jest.requireActual('./suppor
 jest.mock('@/store', () => ({ store: jest.requireActual('./support/chapterFirestore').testStore }));
 jest.mock('@/features/auth/services/emailVerification', () => ({ assertEmailVerified: async () => ({ ok: true }) }));
 jest.mock('@/store/notificationStore', () => ({ notificationActions: { announceStoryToFollowers: jest.fn() } }));
+jest.mock('@/store/challengeStore', () => ({ challengeActions: { trackAction: jest.fn() } }));
 jest.mock('@/features/story/services/storyMutations', () => ({ publishSideEffects: jest.fn() }));
 jest.mock('@/store/storyStore', () => ({ storyActions: { getStoryById: jest.fn(), loadAllChapters: jest.fn() } }));
 jest.mock('@/features/story/services/storyCache', () => ({ forgetStory: jest.fn() }));
@@ -69,6 +71,10 @@ it('yeni bölüm duyurusu yalnızca başarılı açık yayından sonra bir kez g
   expect(notificationActions.announceStoryToFollowers).toHaveBeenCalledWith('writer', 'Yazar', 'story', 'Test hikâyesi', 'new_chapter', 2);
   await publishDraft('story', [{ ...first, content: 'Düzeltilmiş metin' }, second]);
   expect(notificationActions.announceStoryToFollowers).toHaveBeenCalledTimes(1);
+  // Görevler: ilk yayın hikâyeyi, ilk yayın ve yeni bölüm yayın gününü sayar;
+  // yalnızca metin düzeltmesi görev ilerletmez.
+  const tracked = jest.mocked(challengeActions.trackAction).mock.calls.map(call => call[1]);
+  expect(tracked).toEqual(['storiesPublished', 'publishDays', 'publishDays']);
 });
 
 it('silinen bölümü yeniden eklemek duyuruyu tekrarlamaz ve bölüm beğenisi korunur', async () => {

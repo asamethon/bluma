@@ -21,19 +21,18 @@ export function isOnboarded(user: User | null): boolean {
  * "taze" sanılıp boş kalır.
  */
 async function stopSessionData() {
-  const [story, notifications, conversations, messaging, following, shelf] = await Promise.all([
+  const [story, notifications, conversations, messaging, shelf] = await Promise.all([
     import('@/store/storyStore'),
     import('@/store/notificationStore'),
     import('@/store/conversationStore'),
     import('@/store/messagingStore'),
-    import('@/features/story/services/discover/followingFeed'),
     import('@/features/story/services/readingProgress/shelf'),
   ]);
   story.storyActions.cleanupRealTimeListeners();
+  story.storyActions.resetFollowingFeed();
   notifications.notificationActions.cleanupNotificationsListener();
   conversations.conversationActions.cleanupListeners();
   messaging.messagingActions.stopThreadsListener();
-  following.resetFollowingFeed();
   shelf.markContinueReadingStale();
 }
 

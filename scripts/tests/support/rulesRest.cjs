@@ -46,6 +46,21 @@ function createRulesClient(label) {
     fieldTransforms: [{ fieldPath: field, increment: { integerValue: String(by) } }] } });
   const arrayUnion = (path, field, items) => ({ transform: { document: `${prefix}/${path}`,
     fieldTransforms: [{ fieldPath: field, appendMissingElements: { values: items.map(value) } }] } });
+  /**
+   * İstemci transaction'ının ürettiği tek yazım: düz alanlar + dönüşümler
+   * (`{ inc: n }` atomik artış, `{ union: [...] }` arrayUnion) birlikte.
+   */
+  function patch(path, data = {}, transforms = {}) {
+    return {
+      update: { name: `${prefix}/${path}`, fields: fields(data) },
+      // Düz alanlar üst düzeydir; iç içe alanlar (ör. challengeProgress.c1)
+      // dönüşümlerle yazılır — dönüşüm yolu noktalı olabilir.
+      updateMask: { fieldPaths: Object.keys(data) },
+      updateTransforms: Object.entries(transforms).map(([fieldPath, op]) => ('inc' in op
+        ? { fieldPath, increment: { integerValue: String(op.inc) } }
+        : { fieldPath, appendMissingElements: { values: op.union.map(value) } })),
+    };
+  }
 
   async function commit(writes, uid, claims) {
     const response = await fetch(`${base}:commit`, { method: 'POST',
@@ -72,7 +87,7 @@ function createRulesClient(label) {
     await deleteApp(app);
   }
 
-  return { db, runId, update, create, increment, arrayUnion, expectStatus, seed, cleanup,
+  return { db, runId, update, create, increment, arrayUnion, patch, expectStatus, seed, cleanup,
     track: path => { created.push(path); return path; } };
 }
 

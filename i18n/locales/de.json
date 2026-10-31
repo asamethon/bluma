@@ -237,6 +237,7 @@
     "shareStory": "Geschichte teilen",
     "previousChapter": "Vorheriges Kapitel",
     "storyFinished": "Du hast die Geschichte beendet",
+    "storyToBeContinued": "Vorerst das letzte Kapitel · Fortsetzung folgt",
     "sampleText": "Wörter öffnen einen Pfad auf der Seite; die Lesenden hinterlassen darauf ihre eigene Spur.",
     "themeLight": "Hell",
     "themeSepia": "Sepia",
@@ -523,12 +524,12 @@
         "desc": "Deine Leser warten auf mehr."
       },
       "w2": {
-        "title": "5-Tage-Schreib-Serie",
-        "desc": "Veröffentliche jeden Tag mindestens eine Geschichte."
+        "title": "Schreibe diese Woche an 5 Tagen",
+        "desc": "Veröffentliche an 5 verschiedenen Tagen eine Geschichte oder ein Kapitel."
       },
       "w3": {
         "title": "Schließe eine unvollendete Geschichte ab",
-        "desc": "Markiere sie als „Abgeschlossen“.",
+        "desc": "Markiere eine deiner veröffentlichten Geschichten als „Abgeschlossen“.",
         "badge": "Vollender"
       },
       "w4": {
@@ -541,15 +542,15 @@
       },
       "r2": {
         "title": "Lies eine Geschichte bis zum Ende",
-        "desc": "Gehe bis zum letzten Kapitel."
+        "desc": "Beende das letzte Kapitel einer abgeschlossenen Geschichte."
       },
       "r3": {
-        "title": "Lies 10 Geschichten",
-        "desc": "Schließe diese Woche mindestens 10 verschiedene Kapitel ab."
+        "title": "Beende diese Woche 10 Kapitel",
+        "desc": "Lies mindestens 10 verschiedene Kapitel bis zum Ende."
       },
       "r4": {
         "title": "Entdecke einen neuen Autor",
-        "desc": "Öffne eine Geschichte von jemandem, den du noch nie gelesen hast."
+        "desc": "Beende ein Kapitel von jemandem, dem du nicht folgst."
       },
       "c1": {
         "title": "Kommentiere 5 Geschichten",
@@ -560,19 +561,24 @@
         "desc": "Erweitere deinen Lesekreis."
       },
       "c3": {
-        "title": "Vergib 10 „Gefällt mir“",
+        "title": "Markiere 10 Geschichten mit „Gefällt mir“",
         "desc": "Fördere die Geschichten, die dir gefallen."
       },
       "c4": {
         "title": "Inspiriere einen Autor",
-        "desc": "Lass deinen Kommentar als „hervorgehoben“ auswählen.",
+        "desc": "Schreibe den ersten Kommentar zu einer Geschichte.",
         "badge": "Inspirator"
       }
     },
     "weekly": {
       "title": "Wochenend-Lesemarathon",
-      "desc": "Schließe zwischen Freitag und Sonntag 3 Kapitel ab und hinterlasse 2 Kommentare.",
-      "endsIn": "2 Tage"
+      "desc": "Schließe zwischen Freitag und Sonntag 3 Kapitel ab und kommentiere 2 verschiedene Geschichten.",
+      "endsIn_one": "Noch {{count}} Tag",
+      "endsIn_other": "Noch {{count}} Tage",
+      "endsToday": "Endet heute",
+      "startsIn_one": "Beginnt in {{count}} Tag",
+      "startsIn_other": "Beginnt in {{count}} Tagen",
+      "startsTomorrow": "Beginnt morgen"
     },
     "errors": {
       "sessionChanged": "Aufgabensitzung geändert.",

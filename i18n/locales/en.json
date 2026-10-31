@@ -259,6 +259,7 @@
     "shareStory": "Share story",
     "previousChapter": "Previous Chapter",
     "storyFinished": "You finished the story",
+    "storyToBeContinued": "Latest chapter for now · More to come",
     "sampleText": "Words open a path across the page; the reader leaves their own trail on it.",
     "themeLight": "Light",
     "themeSepia": "Sepia",
@@ -545,12 +546,12 @@
         "desc": "Your readers are waiting for more."
       },
       "w2": {
-        "title": "5-day writing streak",
-        "desc": "Publish at least one story every day."
+        "title": "Write on 5 days this week",
+        "desc": "Publish a story or chapter on 5 different days."
       },
       "w3": {
         "title": "Finish an unfinished story",
-        "desc": "Mark it as \"Completed\".",
+        "desc": "Mark one of your published stories as \"Completed\".",
         "badge": "Finisher"
       },
       "w4": {
@@ -563,15 +564,15 @@
       },
       "r2": {
         "title": "Read a story to the end",
-        "desc": "Go all the way to the last chapter."
+        "desc": "Finish the last chapter of a completed story."
       },
       "r3": {
-        "title": "Read 10 stories",
-        "desc": "Finish at least 10 different chapters this week."
+        "title": "Finish 10 chapters this week",
+        "desc": "Read at least 10 different chapters to the end."
       },
       "r4": {
         "title": "Discover a new author",
-        "desc": "Open a story by someone you've never read."
+        "desc": "Finish a chapter by an author you don't follow."
       },
       "c1": {
         "title": "Comment on 5 stories",
@@ -582,19 +583,24 @@
         "desc": "Grow your reading circle."
       },
       "c3": {
-        "title": "Give 10 likes",
+        "title": "Like 10 stories",
         "desc": "Boost the stories you love."
       },
       "c4": {
         "title": "Inspire an author",
-        "desc": "Get your comment picked as \"featured\".",
+        "desc": "Be the first to comment on a story.",
         "badge": "Inspirer"
       }
     },
     "weekly": {
       "title": "Weekend Reading Marathon",
-      "desc": "Finish 3 chapters and leave 2 comments between Friday and Sunday.",
-      "endsIn": "2 days"
+      "desc": "Between Friday and Sunday, finish 3 chapters and comment on 2 different stories.",
+      "endsIn_one": "{{count}} day left",
+      "endsIn_other": "{{count}} days left",
+      "endsToday": "Ends today",
+      "startsIn_one": "Starts in {{count}} day",
+      "startsIn_other": "Starts in {{count}} days",
+      "startsTomorrow": "Starts tomorrow"
     },
     "errors": {
       "sessionChanged": "Challenge session changed.",

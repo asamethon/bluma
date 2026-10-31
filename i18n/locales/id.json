@@ -237,6 +237,7 @@
     "shareStory": "Bagikan cerita",
     "previousChapter": "Bab Sebelumnya",
     "storyFinished": "Kamu menyelesaikan cerita ini",
+    "storyToBeContinued": "Bab terakhir untuk saat ini · Bersambung",
     "sampleText": "Kata-kata membuka jalan di halaman; pembaca meninggalkan jejaknya sendiri di sana.",
     "themeLight": "Terang",
     "themeSepia": "Sepia",
@@ -523,12 +524,12 @@
         "desc": "Pembacamu menantikan lebih banyak lagi."
       },
       "w2": {
-        "title": "Rangkaian menulis 5 hari",
-        "desc": "Terbitkan setidaknya satu cerita setiap hari."
+        "title": "Menulis 5 hari minggu ini",
+        "desc": "Terbitkan cerita atau bab di 5 hari yang berbeda."
       },
       "w3": {
         "title": "Selesaikan cerita yang belum tuntas",
-        "desc": "Tandai sebagai \"Selesai\".",
+        "desc": "Tandai salah satu ceritamu yang sudah terbit sebagai \"Selesai\".",
         "badge": "Penuntas"
       },
       "w4": {
@@ -541,15 +542,15 @@
       },
       "r2": {
         "title": "Baca sebuah cerita sampai selesai",
-        "desc": "Sampai ke bab terakhir."
+        "desc": "Selesaikan bab terakhir dari cerita yang sudah tamat."
       },
       "r3": {
-        "title": "Baca 10 cerita",
-        "desc": "Selesaikan setidaknya 10 bab berbeda minggu ini."
+        "title": "Selesaikan 10 bab minggu ini",
+        "desc": "Baca setidaknya 10 bab berbeda sampai selesai."
       },
       "r4": {
         "title": "Temukan penulis baru",
-        "desc": "Buka cerita dari seseorang yang belum pernah kamu baca."
+        "desc": "Selesaikan satu bab dari penulis yang tidak kamu ikuti."
       },
       "c1": {
         "title": "Komentari 5 cerita",
@@ -560,19 +561,24 @@
         "desc": "Perluas lingkaran bacaanmu."
       },
       "c3": {
-        "title": "Beri 10 suka",
+        "title": "Sukai 10 cerita",
         "desc": "Dukung cerita-cerita yang kamu sukai."
       },
       "c4": {
         "title": "Inspirasi bagi penulis",
-        "desc": "Buat komentarmu terpilih sebagai \"unggulan\".",
+        "desc": "Jadilah yang pertama mengomentari sebuah cerita.",
         "badge": "Penginspirasi"
       }
     },
     "weekly": {
       "title": "Maraton membaca akhir pekan",
-      "desc": "Selesaikan 3 bab dan tinggalkan 2 komentar antara Jumat dan Minggu.",
-      "endsIn": "2 hari"
+      "desc": "Antara Jumat dan Minggu, selesaikan 3 bab dan komentari 2 cerita berbeda.",
+      "endsIn_one": "{{count}} hari lagi",
+      "endsIn_other": "{{count}} hari lagi",
+      "endsToday": "Berakhir hari ini",
+      "startsIn_one": "Mulai dalam {{count}} hari",
+      "startsIn_other": "Mulai dalam {{count}} hari",
+      "startsTomorrow": "Mulai besok"
     },
     "errors": {
       "sessionChanged": "Sesi tantangan berubah.",

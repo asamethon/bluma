@@ -1,12 +1,14 @@
 import { reviewPromptActions } from '@/features/review/services/reviewPrompt';
 import { store } from '@/store';
-import { beginChallenges, queueChallenge, resetChallenges, settleChallenge } from '@/store/slices/challengeSlice';
+import {
+  beginChallenges, queueChallenge, resetChallenges, selectChallengeView, settleChallenge,
+} from '@/store/slices/challengeSlice';
 import { logger } from '@/utils/logger';
 import { getAuth } from '@react-native-firebase/auth';
-import { CHALLENGE_DEFS, type Tracker } from '../definitions';
-import { todayKey } from './challengeCalendar';
+import type { Tracker } from '../definitions';
+import { todayKey, weekendStatus, weekStartKey } from './challengeCalendar';
 import { persistChallengeOperation } from './challengeRepository';
-import type { ChallengeOperation } from './challengeState';
+import { isTrackNoop, type ChallengeOperation } from './challengeState';
 
 type Session = { userId: string; tail: Promise<void>; loading?: Promise<void>; loadedDay?: string };
 const runtime = { session: null as Session | null, nextId: 0 };
@@ -61,10 +63,24 @@ function loadProgress(userId: string): Promise<void> {
   session.loading = enqueue(session).finally(() => { session.loading = undefined; });
   return session.loading;
 }
-function trackAction(userId: string, tracker: Tracker, amount = 1): Promise<void> {
-  if (!Number.isFinite(amount) || amount <= 0 || !CHALLENGE_DEFS.some(def => def.tracker === tracker)) return Promise.resolve();
+/**
+ * `key` aksiyonun kimliğidir (bölüm, hikâye, kullanıcı, gün); aynı anahtar
+ * bir görevde ikinci kez sayılmaz. Hafta sonu penceresi aksiyonun kuyruğa
+ * girdiği an belirlenir — Pazar gece yarısına sarkan yazım da sayılır.
+ */
+function trackAction(userId: string, tracker: Tracker, key: string): Promise<void> {
+  if (!key) return Promise.resolve();
   const session = sessionFor(userId);
-  return session ? enqueue(session, { kind: 'track', tracker, amount }) : Promise.resolve();
+  if (!session) return Promise.resolve();
+  const weekend = weekendStatus().active;
+  // Zaten sayılmış aksiyon için sunucuya transaction açılmaz (okuyucu her
+  // kaydırmada aynı bölümü bildirir).
+  // Yalnızca bu haftanın verisiyle karar verilir: hafta dönümünde eski
+  // haftanın anahtarı yeni haftada yeniden sayılmalıdır.
+  const view = selectChallengeView(store.getState());
+  const current = store.getState().challenge.isLoaded && view.challengeWeekStart === weekStartKey();
+  if (current && isTrackNoop(view, tracker, key, weekend)) return Promise.resolve();
+  return enqueue(session, { kind: 'track', tracker, key, weekend });
 }
 function claimChallenge(userId: string, challengeId: string): Promise<void> {
   const session = sessionFor(userId);

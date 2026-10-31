@@ -237,6 +237,7 @@
     "shareStory": "Partilhar história",
     "previousChapter": "Capítulo anterior",
     "storyFinished": "Terminaste a história",
+    "storyToBeContinued": "Último capítulo por agora · Continua",
     "sampleText": "As palavras abrem um caminho na página; quem lê deixa nele a sua própria marca.",
     "themeLight": "Claro",
     "themeSepia": "Sépia",
@@ -523,12 +524,12 @@
         "desc": "Os teus leitores esperam mais."
       },
       "w2": {
-        "title": "Sequência de escrita de 5 dias",
-        "desc": "Publica pelo menos uma história todos os dias."
+        "title": "Escreve em 5 dias esta semana",
+        "desc": "Publica uma história ou capítulo em 5 dias diferentes."
       },
       "w3": {
         "title": "Termina uma história por concluir",
-        "desc": "Marca-a como \"Concluída\".",
+        "desc": "Marca uma das tuas histórias publicadas como \"Concluída\".",
         "badge": "Finalizador"
       },
       "w4": {
@@ -541,15 +542,15 @@
       },
       "r2": {
         "title": "Lê uma história até ao fim",
-        "desc": "Chega até ao último capítulo."
+        "desc": "Termina o último capítulo de uma história concluída."
       },
       "r3": {
-        "title": "Lê 10 histórias",
-        "desc": "Termina pelo menos 10 capítulos diferentes esta semana."
+        "title": "Termina 10 capítulos esta semana",
+        "desc": "Lê pelo menos 10 capítulos diferentes até ao fim."
       },
       "r4": {
         "title": "Descobre um novo autor",
-        "desc": "Abre uma história de alguém que nunca leste."
+        "desc": "Termina um capítulo de um autor que não segues."
       },
       "c1": {
         "title": "Comenta 5 histórias",
@@ -560,19 +561,24 @@
         "desc": "Alarga o teu círculo de leitura."
       },
       "c3": {
-        "title": "Dá 10 gostos",
+        "title": "Gosta de 10 histórias",
         "desc": "Apoia as histórias de que gostas."
       },
       "c4": {
         "title": "Inspira um autor",
-        "desc": "Faz com que o teu comentário seja escolhido como \"destacado\".",
+        "desc": "Sê a primeira pessoa a comentar uma história.",
         "badge": "Inspirador"
       }
     },
     "weekly": {
       "title": "Maratona de leitura de fim de semana",
-      "desc": "Termina 3 capítulos e deixa 2 comentários entre sexta-feira e domingo.",
-      "endsIn": "2 dias"
+      "desc": "Entre sexta e domingo, termina 3 capítulos e comenta 2 histórias diferentes.",
+      "endsIn_one": "Falta {{count}} dia",
+      "endsIn_other": "Faltam {{count}} dias",
+      "endsToday": "Termina hoje",
+      "startsIn_one": "Começa daqui a {{count}} dia",
+      "startsIn_other": "Começa daqui a {{count}} dias",
+      "startsTomorrow": "Começa amanhã"
     },
     "errors": {
       "sessionChanged": "A sessão do desafio mudou.",

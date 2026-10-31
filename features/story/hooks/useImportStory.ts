@@ -1,7 +1,6 @@
 import i18n from '@/i18n';
 import { useAppSelector } from '@/store/hooks';
 import { storyActions } from '@/store/storyStore';
-import { challengeActions } from '@/store/challengeStore';
 import { reviewPromptActions } from '@/features/review/services/reviewPrompt';
 import { StoryCategory } from '@/types';
 import { useRouter } from 'expo-router';
@@ -77,8 +76,6 @@ export function useImportStory() {
         Alert.alert(i18n.t('common.error'), published.error || i18n.t('studio.publishFailed'));
         return;
       }
-
-      if (uid) challengeActions.trackAction(uid, 'storiesPublished').catch(() => {});
 
       // Değerlendirme, kendi uyarımız kapandıktan SONRA istenir ki iki diyalog
       // üst üste binmesin.

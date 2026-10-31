@@ -1,6 +1,5 @@
 import { reviewPromptActions } from '@/features/review/services/reviewPrompt';
 import i18n from '@/i18n';
-import { challengeActions } from '@/store/challengeStore';
 import type { Story } from '@/types';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -52,11 +51,7 @@ export function useComposerPublish(params: Params) {
       return;
     }
 
-    const authorId = params.story?.authorId;
-    const firstPublish = !params.isPublished && !!authorId;
-    if (firstPublish) {
-      challengeActions.trackAction(authorId!, 'storiesPublished').catch(() => {});
-    }
+    const firstPublish = !params.isPublished && !!params.story?.authorId;
     params.onPublished(chapters);
 
     // Değerlendirme, kendi uyarımız kapandıktan SONRA istenir ki iki diyalog

@@ -1,6 +1,8 @@
 import { assertEmailVerified } from '@/features/auth/services/emailVerification';
 import i18n from '@/i18n';
 import { store } from '@/store';
+import { todayKey } from '@/features/challenges/services/challengeCalendar';
+import { challengeActions } from '@/store/challengeStore';
 import { notificationActions } from '@/store/notificationStore';
 import type { Story } from '@/types';
 import { logger } from '@/utils/logger';
@@ -12,6 +14,18 @@ import { chapterCollection, writeChapterSnapshot } from './chapterWrites';
 import { applyStoryChange } from './listeners/storyFeedListeners';
 import { forgetStory } from './storyCache';
 import { publishSideEffects } from './storyMutations';
+
+/**
+ * Görevler stüdyo ve içe aktarma için tek yerden: ilk kez yayınlanan hikâye
+ * (kaldır→yeniden yayınla tekrar sayılmaz) ve yayın yapılan gün.
+ */
+function trackPublishChallenges(userId: string, storyId: string,
+  result: { firstPublish: boolean; announceStory: boolean; newChapterNumber?: number }) {
+  if (result.announceStory) void challengeActions.trackAction(userId, 'storiesPublished', storyId);
+  if (result.firstPublish || result.newChapterNumber) {
+    void challengeActions.trackAction(userId, 'publishDays', todayKey());
+  }
+}
 
 /** Yayındaki gövdeler, üstveri ve ilk yayın sayacı tek transaction ile değişir. */
 export async function publishChapterDraft(storyId: string, chapters: StudioChapter[]) {
@@ -52,6 +66,7 @@ export async function publishChapterDraft(storyId: string, chapters: StudioChapt
         user.displayName || user.username || i18n.t('notifications.anAuthorYouFollow'),
         storyId, result.title, 'new_chapter', result.newChapterNumber);
     }
+    trackPublishChallenges(user.id, storyId, result);
     return { success: true };
   } catch (error) {
     logger.error('Bölüm yayını tamamlanamadı:', error);

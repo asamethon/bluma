@@ -44,6 +44,16 @@ async function notifyComment(storyId: string, commentId: string, parentId: strin
   );
 }
 
+/**
+ * Yorum görevleri yalnızca BAŞKASININ hikâyesinde ilerler (kendi hikâyene
+ * yorum yazarak görev doldurulmasın). `before`: bu yorumdan önceki hikâye.
+ */
+function trackCommentChallenges(userId: string, storyId: string, before?: { authorId?: string; commentsCount?: number }) {
+  if (!before?.authorId || before.authorId === userId) return;
+  void challengeActions.trackAction(userId, 'commentsPosted', storyId);
+  if (!before.commentsCount) void challengeActions.trackAction(userId, 'firstComments', storyId);
+}
+
 export async function addComment(storyId: string, content: string, parentId?: string, chapterIndex?: number) {
   try {
     const user = store.getState().auth.user;
@@ -51,21 +61,27 @@ export async function addComment(storyId: string, content: string, parentId?: st
     const verified = await assertEmailVerified();
     if (!verified.ok) return { success: false, error: verified.error };
     const db = getFirestore();
-    const reference = await addDoc(collection(db, 'stories', storyId, 'comments'), {
-      storyId,
-      userId: user.id,
-      content,
-      likesCount: 0,
-      isEdited: false,
-      parentId: parentId || null,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      ...(typeof chapterIndex === 'number' ? { chapterIndex } : {}),
-    });
-    await updateDoc(doc(db, 'stories', storyId), { commentsCount: increment(1) });
+    const storyRef = doc(db, 'stories', storyId);
+    // Hikâye, sayaç artmadan önce okunur: "ilk yorum" görevi ve yazar
+    // kontrolü buna bakar. Yorum yazımıyla paralel olduğu için gecikme eklemez.
+    const [reference, before] = await Promise.all([
+      addDoc(collection(db, 'stories', storyId, 'comments'), {
+        storyId,
+        userId: user.id,
+        content,
+        likesCount: 0,
+        isEdited: false,
+        parentId: parentId || null,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        ...(typeof chapterIndex === 'number' ? { chapterIndex } : {}),
+      }),
+      getDoc(storyRef).then(snapshot => snapshot.data()).catch(() => undefined),
+    ]);
+    await updateDoc(storyRef, { commentsCount: increment(1) });
     void notifyComment(storyId, reference.id, parentId, content, chapterIndex)
       .catch(error => logger.error('Comment notification error:', error));
-    if (!parentId) void challengeActions.trackAction(user.id, 'commentsPosted');
+    if (!parentId) trackCommentChallenges(user.id, storyId, before);
     return { success: true, commentId: reference.id };
   } catch (error) {
     logger.error('Add comment error:', error);

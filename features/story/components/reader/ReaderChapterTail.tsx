@@ -74,9 +74,17 @@ export function ReaderChapterTail(props: Props) {
 
       {props.isLast && (
         <>
+          {/* "Bitirdin" yalnızca tamamlanmış hikâyede; devam edende son
+              yayınlanmış bölüme gelinmiştir, hikâye bitmemiştir. */}
           <View style={styles.chapterNavEnd}>
-            <Ionicons name="checkmark-circle" size={22} color={colors.success} />
-            <Text variant="label" color={props.colors.textSecondary}>{t('reader.storyFinished')}</Text>
+            <Ionicons
+              name={props.story.isCompleted ? 'checkmark-circle' : 'hourglass-outline'}
+              size={22}
+              color={props.story.isCompleted ? colors.success : props.colors.textSecondary}
+            />
+            <Text variant="label" color={props.colors.textSecondary}>
+              {t(props.story.isCompleted ? 'reader.storyFinished' : 'reader.storyToBeContinued')}
+            </Text>
           </View>
           <NextReadsSection finished={props.story} />
         </>
