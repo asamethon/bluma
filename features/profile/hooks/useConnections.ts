@@ -3,6 +3,7 @@ import { useAppSelector } from '@/store/hooks';
 import type { User } from '@/types';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useProfileAccess } from '@/features/privacy/hooks/useProfileAccess';
+import { healOwnFollowCounters } from '../services/connectionCounters';
 import { getProfileConnections } from '../services/connections';
 import { useProfileUser } from './useProfileUser';
 
@@ -24,11 +25,13 @@ export function useConnections(profileId: string, initialTab: ConnectionTab) {
     setIsLoading(true);
     try {
       const connections = await getProfileConnections(profileId);
-      setFollowers(connections.followers);
-      setFollowing(connections.following);
+      setFollowers(connections.followers.users);
+      setFollowing(connections.following.users);
+      // Kendi profilinde sayaç listedeki gerçek kişi sayısına iner; beklenmez.
+      void healOwnFollowCounters(profileId, connections);
 
       if (currentUserId) {
-        const ids = [...new Set([...connections.followers, ...connections.following].map(user => user.id))]
+        const ids = [...new Set([...connections.followers.users, ...connections.following.users].map(user => user.id))]
           .filter(id => id !== currentUserId);
         const statuses = await Promise.all(ids.map(authActions.isFollowingUser));
         setFollowingById(Object.fromEntries(ids.map((id, index) => [id, statuses[index]])));
