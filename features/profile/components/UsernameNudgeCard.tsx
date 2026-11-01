@@ -50,6 +50,6 @@ export function UsernameNudgeCard() {
 }
 
 const styles = StyleSheet.create({
-  root: { marginHorizontal: Spacing.screenX, marginBottom: Spacing.lg },
+  root: { marginHorizontal: Spacing.screenX, marginTop: Spacing.lg, marginBottom: Spacing.lg },
   actions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.md },
 });

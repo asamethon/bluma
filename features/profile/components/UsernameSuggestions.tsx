@@ -32,7 +32,7 @@ export function UsernameSuggestions({ reason, suggestions, onPick }: Props) {
       {!!suggestions.length && (
         <View style={styles.chips}>
           {suggestions.map(suggestion => (
-            <Chip key={suggestion} label={`@${suggestion}`} shape="pill" onPress={() => onPick(suggestion)} />
+            <Chip key={suggestion} label={`@${suggestion}`} onPress={() => onPick(suggestion)} />
           ))}
         </View>
       )}
