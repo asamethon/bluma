@@ -15,12 +15,12 @@ type Props = {
  * Kayıt ve profil düzenleme aynı parçayı kullanır.
  *
  * Metin kural değil fayda anlatır ve @bahsetmeye bağlanır; "geçersiz" ya da
- * benzeri bir yargı kullanılmaz. Önerisi olmayan durumda yalnızca ipucu kalır
- * (görünen ad da gürültülüyse önerecek temiz bir ad yok).
+ * benzeri bir yargı kullanılmaz. Önerecek ad yoksa HİÇBİR ŞEY gösterilmez:
+ * çıkış yolu sunmadan "adın sorunlu" demek kullanıcıyı yalnızca rahatsız eder.
  */
 export function UsernameSuggestions({ reason, suggestions, onPick }: Props) {
   const { t } = useTranslation();
-  if (!reason && !suggestions.length) return null;
+  if (!suggestions.length) return null;
 
   return (
     <View style={styles.root}>
@@ -29,13 +29,11 @@ export function UsernameSuggestions({ reason, suggestions, onPick }: Props) {
           {reason === 'mangled' ? t('username.hintMangled') : t('username.hintGeneric')}
         </Text>
       )}
-      {!!suggestions.length && (
-        <View style={styles.chips}>
-          {suggestions.map(suggestion => (
-            <Chip key={suggestion} label={`@${suggestion}`} onPress={() => onPick(suggestion)} />
-          ))}
-        </View>
-      )}
+      <View style={styles.chips}>
+        {suggestions.map(suggestion => (
+          <Chip key={suggestion} label={`@${suggestion}`} onPress={() => onPick(suggestion)} />
+        ))}
+      </View>
     </View>
   );
 }

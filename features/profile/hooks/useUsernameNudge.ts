@@ -8,7 +8,9 @@ import { useUsernameSuggestions } from './useUsernameSuggestions';
 /**
  * Kendi profilindeki tek seferlik kullanıcı adı kartının durumu.
  *
- * Kart yalnızca gerekçe VARSA ve kullanıcı daha önce kapatmadıysa görünür.
+ * Kart yalnızca gerekçe VARSA, kullanıcı daha önce kapatmadıysa VE elde en az
+ * bir öneri varsa görünür. Öneri yoksa kart hiç açılmaz: "adın sorunlu" deyip
+ * çıkış yolu göstermemek rahatsız etmekten başka işe yaramaz.
  * "Ad değişince kart kaybolsun" için ek bir şey yapmaya gerek yok: değerlendirme
  * store'daki güncel addan türetiliyor, ad düzelince `flagged` kendiliğinden
  * false oluyor.
@@ -26,8 +28,11 @@ export function useUsernameNudge() {
     () => assessUsername(username ?? '', displayName ?? ''),
     [displayName, username],
   );
-  const visible = assessment.flagged && dismissed === false;
-  const suggestions = useUsernameSuggestions(displayName ?? '', username ?? '', visible);
+  // `eligible` sorguyu tetikler, `visible` kartı açar — öneriler gelmeden kart
+  // açılmaz, ama kart kapalı olduğu için de sorgu durmaz (döngü olmasın).
+  const eligible = assessment.flagged && dismissed === false;
+  const suggestions = useUsernameSuggestions(displayName ?? '', username ?? '', eligible);
+  const visible = eligible && suggestions.length > 0;
 
   useEffect(() => {
     if (!userId) return;
