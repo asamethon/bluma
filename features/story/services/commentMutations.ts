@@ -5,6 +5,7 @@ import { challengeActions } from '@/store/challengeStore';
 import { notificationActions } from '@/store/notificationStore';
 import { logger } from '@/utils/logger';
 import { createMentionNotification } from '@/features/notifications/services/storyNotifications';
+import { getUserByUsername } from '@/features/auth/services/userByUsername';
 import {
   addDoc,
   collection,
@@ -53,16 +54,15 @@ async function notifyMentions(storyId: string, commentId: string, content: strin
     if (!matches) return;
     const usernames = Array.from(new Set(matches.map(m => m.slice(1).toLowerCase()))).slice(0, 10);
     if (usernames.length === 0) return;
-    const db = getFirestore();
     const story = await getStoryById(storyId);
     const storyTitle = story?.title || i18n.t('common.story');
     await Promise.all(
       usernames.map(async (username) => {
         try {
-          const snap = await getDocs(query(collection(db, 'users'), where('username', '==', username)));
-          if (snap.empty) return;
-          const docSnap = snap.docs[0];
-          const mentionedId = docSnap.id;
+          // Tek arama noktası: eski adlara düşme mantığı da buradan gelsin,
+          // yoksa ad değiştiren birine atılan etiket bildirim üretmez.
+          const mentioned = await getUserByUsername(username);
+          const mentionedId = mentioned?.id;
           if (!mentionedId || mentionedId === user.id) return;
           await createMentionNotification(
             user.id,

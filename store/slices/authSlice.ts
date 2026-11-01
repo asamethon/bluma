@@ -6,6 +6,8 @@ export interface User {
   email: string;
   displayName: string;
   username?: string;
+  /** Eski kullanıcı adları (son 5) — bkz. features/auth/utils/usernameHistory.ts */
+  previousUsernames?: string[];
   bio?: string;
   interests?: string[];
   website?: string;
