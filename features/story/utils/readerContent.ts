@@ -1,4 +1,4 @@
-import { parseImageToken, stripImageTokens } from './imageToken';
+import { parseMediaToken, stripMediaTokens } from './mediaToken';
 
 const CHAPTER_SEPARATOR = '\n§§\n';
 
@@ -39,13 +39,13 @@ export function buildReaderParagraphs(content: string, preview: boolean) {
   const paragraphs = preview ? all.slice(0, 2) : all;
   return {
     paragraphs,
-    firstTextIndex: paragraphs.findIndex(paragraph => !parseImageToken(paragraph)),
+    firstTextIndex: paragraphs.findIndex(paragraph => !parseMediaToken(paragraph)),
   };
 }
 
 export const estimateReadingMinutes = (content: string) => Math.max(
   1,
-  Math.ceil(stripImageTokens(content).split(/\s+/).filter(Boolean).length / 200),
+  Math.ceil(stripMediaTokens(content).split(/\s+/).filter(Boolean).length / 200),
 );
 
 export type ReaderChapter = { id: string; index: number; title: string | null };

@@ -48,7 +48,7 @@ export function useComposer(id: string, chParam?: string) {
     setSheet: (sheet: boolean) => setPanels({ sheet }),
     setPreview: (preview: boolean) => setPanels({ preview }),
 
-    imageUploading: editor.imageUploading,
+    media: doc.media,
     words: wordCount(editor.display),
     chars: charCount(editor.display),
     readMin: readingMinutes(editor.display),
@@ -62,7 +62,6 @@ export function useComposer(id: string, chParam?: string) {
     toggleItalic: editor.toggleItalic,
     toggleBullet: editor.toggleBullet,
     insertAtCursor: editor.insertSnippet,
-    insertImage: editor.insertImage,
     editInfo: () => router.push(`/story/edit/${id}`),
     back: () => router.back(),
   };

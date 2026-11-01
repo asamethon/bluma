@@ -1,7 +1,7 @@
 import { Skeleton, Text } from '@/components/ui';
 import { alpha, useTheme } from '@/constants/theme';
-import { StoryImage } from '@/features/story/components/StoryImage';
-import { parseImageToken } from '@/features/story/utils/imageToken';
+import { StoryMedia } from '@/features/story/components/StoryMedia';
+import { parseMediaToken } from '@/features/story/utils/mediaToken';
 import { renderInlineFormatting } from '@/features/story/utils/richText';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -59,8 +59,8 @@ export function ReaderBody(props: Props) {
   return (
     <View style={styles.storyBody}>
       {props.paragraphs.map((paragraph, index) => {
-        const imageUrl = parseImageToken(paragraph);
-        if (imageUrl) return <StoryImage key={`${index}-${imageUrl}`} uri={imageUrl} />;
+        const media = parseMediaToken(paragraph);
+        if (media) return <StoryMedia key={`media-${index}`} media={media} />;
         if (index === props.firstTextIndex) {
           return (
             <View key={index} style={styles.dropCapRow}>

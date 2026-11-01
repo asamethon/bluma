@@ -43,11 +43,12 @@ export function ComposerBottomBar({ c, bottomInset }: { c: ComposerModel; bottom
           <IconButton icon="ellipsis-horizontal" variant="sunk" size={38} onPress={() => c.insertAtCursor('\n\n* * *\n\n')} />
           <IconButton icon="return-down-back-outline" variant="sunk" size={38} onPress={() => c.insertAtCursor('\n\n')} />
           <IconButton
-            icon="image-outline"
+            icon="images-outline"
             variant="sunk"
             size={38}
-            onPress={c.insertImage}
-            color={c.imageUploading ? colors.textLight : undefined}
+            accessibilityLabel={t('studio.mediaSheetTitle')}
+            onPress={c.media.open}
+            color={c.media.uploading ? colors.textLight : undefined}
           />
         </View>
       )}

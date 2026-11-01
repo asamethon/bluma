@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChatComposer } from './ChatComposer';
 import type { MessageActionHandlers } from '../MessageActions';
 import { MessageInfoSheet } from '../MessageInfoSheet';
-import { GifPickerSheet } from './GifPickerSheet';
+import { GifPickerSheet } from '@/features/media/components/GifPickerSheet';
 import { ChatHeader } from './ChatHeader';
 import { ChatMessageList } from './ChatMessageList';
 

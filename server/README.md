@@ -1,8 +1,28 @@
-# Bluma Görsel Servisi — VPS Kurulumu
+# Bluma Medya Servisi — VPS Kurulumu
 
-Uygulamanın profil fotoğrafı / kapak / yorum görsellerini barındıran küçük servis.
-Firebase ID token doğrular (service account gerekmez), görseli webp'e çevirip
-diske yazar, 1 yıl cache ile sunar.
+Uygulamanın profil fotoğrafı / kapak / yorum görsellerini, hikâye içi GIF ve
+videolarını, DM ses kayıtlarını barındıran küçük servis. Firebase ID token
+doğrular (service account gerekmez), görseli webp'e çevirip diske yazar,
+1 yıl cache ile sunar.
+
+Dosya düzeni: `index.js` (rotalar) + `auth.js` (token) + `files.js` (diske
+yazma) + `nsfw.js` (moderasyon) + `ffmpeg.js` (zaman sınırlı, TEK SIRALI ffmpeg)
++ `video.js` / `gif.js` / `voice.js` (tür başına boru hattı).
+
+**Hikâye videosu (`POST /upload-video`, alan adı `file`):** sırayla doğrula →
+moderasyondan geçir → yeniden kodla → poster üret. Döner:
+`{ "video": ".../i/video/<id>.mp4", "poster": ".../i/video/<id>.webp" }`.
+Poster ile video AYNI adı paylaşır; istemci metne yalnızca posteri gömer
+(bkz. `features/story/utils/mediaToken.ts`), böylece mağazadaki eski sürümler
+token metni değil duran kareyi gösterir. En fazla 20 sn / 50 MB giriş; çıktı
+uzun kenarı 1280'e sığdırılmış H.264 + AAC (küçük kaynak BÜYÜTÜLMEZ),
+`-maxrate 2M` ile tavanlı ≈ 3-5 MB. `-map_metadata -1` konum/cihaz üstverisini
+siler.
+
+**Hikâye GIF'i (`POST /upload-gif`, alan adı `file`):** kare örnekle →
+moderasyondan geçir → **animasyonlu webp** üret (en fazla 12 MB / 400 kare,
+genişlik 480). Çıktının webp olması bilinçli: token `[[img:…webp]]` olarak
+kaldığı için eski istemciler de animasyonu `expo-image` ile oynatır.
 
 **Sesli mesajlar (`POST /upload-voice`):** DM'lerdeki ses kayıtları da buraya
 gider (multipart alan adı `file`, m4a/AAC, en fazla 6 MB). Görsel hattından
@@ -13,7 +33,11 @@ değil MPEG-4 kutu imzasına (`ftyp`) bakar.
 **NSFW moderasyonu ([nsfw.js](nsfw.js)):** Her yükleme, diske yazılmadan önce
 `nsfwjs` (TensorFlow.js) ile YEREL olarak sınıflandırılır — dış API yok, ücretsiz.
 Explicit (Porn/Hentai/Sexy eşik üstü) görsel `HTTP 451` ile reddedilir; client bunu
-base64 fallback'e düşmeden kullanıcıya hata olarak gösterir. Model açılışta bir kez
+base64 fallback'e düşmeden kullanıcıya hata olarak gösterir. **Video ve GIF aynı
+kapıdan geçer:** videodan ffmpeg ile süre boyunca eşit aralıklı 5 kare çıkarılır,
+GIF'ten sharp ile 4 kare örneklenir; kareden biri bile explicit ise dosya
+reddedilir ve DİSKE YAZILMAZ. Sıra bilinçli — pahalı transcode, kareler
+moderasyondan geçmeden çalışmaz. Model açılışta bir kez
 belleğe yüklenir (~25MB). Eşikler env ile ayarlanır (aşağıya bak). Model yüklenemezse
 varsayılan davranış fail-open'dır (yükleme geçer, reaktif moderasyon devreye girer);
 `NSFW_FAIL_CLOSED=true` ile katı moda alınabilir.
@@ -27,6 +51,9 @@ varsayılan davranış fail-open'dır (yükleme geçer, reaktif moderasyon devre
 ```bash
 # Node 20+ yoksa:
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs
+
+# Video/GIF için ffmpeg ZORUNLU (yoksa /upload-video HTTP 503 döner):
+sudo apt-get install -y ffmpeg && ffmpeg -version | head -1
 
 sudo mkdir -p /opt/bluma-image-server /var/lib/bluma-images
 # server/ klasörünü sunucuya kopyala (node_modules HARİÇ — platform bağımlı):
@@ -65,6 +92,11 @@ Environment=PUBLIC_BASE_URL=https://blumaimg.d4tecompany.com
 # Environment=NSFW_HENTAI_THRESHOLD=0.6
 # Environment=NSFW_SEXY_THRESHOLD=0.9
 # Environment=NSFW_FAIL_CLOSED=false
+# Video/GIF sınırları (opsiyonel — varsayılanlar video.js / gif.js'te)
+# Environment=VIDEO_MAX_SECONDS=20
+# Environment=VIDEO_MAX_BYTES=52428800
+# Environment=GIF_MAX_BYTES=12582912
+# Environment=FFMPEG_TIMEOUT_MS=90000
 # Sandbox
 NoNewPrivileges=true
 ProtectSystem=full
@@ -91,8 +123,9 @@ server {
     listen 80;
     server_name blumaimg.d4tecompany.com;
 
-    # nginx varsayılanı 1MB — yüklemeler için yetmez
-    client_max_body_size 20m;
+    # nginx varsayılanı 1MB — yüklemeler için yetmez. Video girişi 50 MB
+    # olabildiği için 20m YETMEZ: yükseltilmeden video yüklemesi 413 alır.
+    client_max_body_size 50m;
 
     location / {
         proxy_pass http://127.0.0.1:8788;
@@ -136,6 +169,19 @@ cd /opt/bluma-image-server && npm install --omit=dev && systemctl restart bluma-
 > gör: `journalctl -u bluma-image-server -n 20`. Bu satır yerine "model YÜKLENEMEDİ"
 > görüyorsan model indirilememiştir (fail-open: yüklemeler çalışır ama filtre pasiftir).
 > Testi: bariz explicit bir görsel yüklemeyi dene → `HTTP 451` + logda "upload rejected (explicit)".
+
+## Disk ve trafik (Hostinger KVM2: 8 GB RAM, 100 GB disk, 8 TB/ay)
+
+20 sn / 720p video ≈ **3,7 MB** saklanır:
+
+| | 40 GB ayrılırsa | 100 GB tamamı |
+|---|---|---|
+| Video sayısı | ~10.800 | ~27.000 |
+
+Trafik: 8 TB ÷ 3,7 MB ≈ **2,1 milyon izlenme/ay**. Okuyucu videoyu otomatik
+oynatmaz (poster + dokun-oynat), yani trafik sayfa görüntüleme başına değil
+İZLENME başına harcanır. CPU 2 çekirdek olduğu için `ffmpeg.js` transcode'ları
+tek sıraya alır — paralel kodlama nsfwjs'i ve görsel servisini aç bırakırdı.
 
 ## Yedekleme
 

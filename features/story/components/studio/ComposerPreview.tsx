@@ -3,9 +3,9 @@ import { Fonts, Spacing, useTheme } from '@/constants/theme';
 import { useTranslation } from 'react-i18next';
 import { Modal, ScrollView, StyleSheet, View } from 'react-native';
 import type { ComposerModel } from '../../hooks/useComposer';
-import { parseImageToken } from '../../utils/imageToken';
+import { parseMediaToken } from '../../utils/mediaToken';
 import { renderInlineFormatting } from '../../utils/richText';
-import { StoryImage } from '../StoryImage';
+import { StoryMedia } from '../StoryMedia';
 
 export function ComposerPreview({ c, topInset }: { c: ComposerModel; topInset: number }) {
   const { colors } = useTheme();
@@ -36,8 +36,8 @@ export function ComposerPreview({ c, topInset }: { c: ComposerModel; topInset: n
           </Text>
           {paras.length > 0 ? (
             paras.map((p, i) => {
-              const img = parseImageToken(p);
-              if (img) return <StoryImage key={i} uri={img} />;
+              const media = parseMediaToken(p);
+              if (media) return <StoryMedia key={i} media={media} />;
               return <Text key={i} style={[styles.body, { color: colors.text }]}>{renderInlineFormatting(p)}</Text>;
             })
           ) : (

@@ -1,9 +1,9 @@
 import { EmptyState, IconButton, SegmentedControl, Sheet, Text, TextField } from '@/components/ui';
 import { Motion, Radius, Spacing, useTheme } from '@/constants/theme';
-import { useGifSearch } from '@/features/messaging/hooks/useGifSearch';
-import { useGifPickerKeyboard } from '@/features/messaging/hooks/useGifPickerKeyboard';
+import { useGifSearch } from '@/features/media/hooks/useGifSearch';
+import { useGifPickerKeyboard } from '@/features/media/hooks/useGifPickerKeyboard';
 import type { GifMedia } from '@/services/gif/klipy';
-import type { MessageGif } from '@/types';
+import type { PickedGif } from '../types';
 import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { useCallback, useState } from 'react';
@@ -13,7 +13,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 const COLUMNS = 3;
 const LIST_HEIGHT = 360;
 
-type Props = { visible: boolean; onClose: () => void; onSelect: (gif: MessageGif) => void };
+type Props = { visible: boolean; onClose: () => void; onSelect: (gif: PickedGif) => void };
 
 /**
  * GIF ve çıkartma seçici. Dokunulan öğe DOĞRUDAN gönderilir (WhatsApp/Instagram

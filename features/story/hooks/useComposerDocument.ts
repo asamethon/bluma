@@ -8,6 +8,7 @@ import { newChapter, openStory } from '../services/storyDraft';
 import type { StudioChapter } from '../utils/chapterContent';
 import { useChapterAutosave } from './useChapterAutosave';
 import { useChapterEditor } from './useChapterEditor';
+import { useMediaInsert } from './useMediaInsert';
 import { sameChapters } from '../services/chapterMetadata';
 
 type DocumentState = {
@@ -55,6 +56,7 @@ export function useComposerDocument(storyId: string, chapterParam?: string) {
     commitChapters(state.chapters.map((chapter, i) => (i === state.index ? { ...chapter, ...fields } : chapter)));
 
   const editor = useChapterEditor((content: string) => editCurrent({ content }));
+  const media = useMediaInsert(editor.insertSnippet);
   const loadEditor = editor.load;
 
   useEffect(() => {
@@ -98,6 +100,7 @@ export function useComposerDocument(storyId: string, chapterParam?: string) {
     hasUnpublishedChanges,
     retrySave: retry,
     editor,
+    media,
     markPublished: (chapters: StudioChapter[]) => patch({ isPublished: true, publishedChapters: chapters }),
     setChapterTitle: (title: string) => editCurrent({ title }),
     switchTo: (index: number) => goToChapter(index),

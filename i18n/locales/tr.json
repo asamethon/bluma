@@ -224,7 +224,13 @@
     "contentWarningSuicide": "İntihar",
     "contentWarningDrug": "Uyuşturucu/Alkol",
     "contentWarningLanguage": "Küfür/Argo",
-    "contentWarningDark": "Karanlık temalar"
+    "contentWarningDark": "Karanlık temalar",
+    "mediaSheetTitle": "Medya ekle",
+    "mediaImage": "Görsel",
+    "mediaGifSearch": "Hazır GIF ara",
+    "mediaGif": "Galeriden GIF",
+    "mediaVideo": "Video",
+    "mediaVideoHint": "En fazla {{seconds}} saniye"
   },
   "saved": {
     "title": "Kaydedilen Hikayeler",
@@ -273,7 +279,8 @@
     "themeLight": "Aydınlık",
     "themeSepia": "Sepya",
     "themeDark": "Koyu",
-    "themeBlack": "Siyah"
+    "themeBlack": "Siyah",
+    "playVideo": "Videoyu oynat"
   },
   "commentsScreen": {
     "title": "Yorumlar ({{count}})",
@@ -894,6 +901,20 @@
     "pickError": "Resim seçilirken bir hata oluştu.",
     "captureError": "Fotoğraf çekilirken bir hata oluştu.",
     "coverRetryHint": "Hikâyen kaydedildi; kapağı daha sonra tekrar ekleyebilirsin."
+  },
+  "mediaUpload": {
+    "explicitRejected": "Bu medya topluluk kurallarımıza uygun değil. Lütfen başka bir dosya seç.",
+    "videoTooLong": "Video en fazla {{seconds}} saniye olabilir.",
+    "videoTooLarge": "Bu video çok büyük. Daha kısa bir klip seç.",
+    "videoUnsupported": "Bu video biçimi desteklenmiyor.",
+    "videoError": "Video yüklenemedi. Bağlantını kontrol edip tekrar dene.",
+    "videoPickError": "Video seçilirken bir hata oluştu.",
+    "gifTooLarge": "Bu GIF çok büyük. Daha küçük bir GIF seç.",
+    "gifTooLong": "Bu GIF çok fazla kare içeriyor.",
+    "gifUnsupported": "Bu dosya bir GIF değil.",
+    "gifError": "GIF yüklenemedi. Bağlantını kontrol edip tekrar dene.",
+    "gifPickError": "GIF seçilirken bir hata oluştu.",
+    "tooLarge": "Dosya çok büyük."
   },
   "legal": {
     "privacyPolicy": "Gizlilik Politikası",

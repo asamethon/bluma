@@ -202,7 +202,13 @@
     "contentWarningSuicide": "Suicide",
     "contentWarningDrug": "Drugs/Alcohol",
     "contentWarningLanguage": "Strong language",
-    "contentWarningDark": "Dark themes"
+    "contentWarningDark": "Dark themes",
+    "mediaSheetTitle": "Adicionar mídia",
+    "mediaImage": "Imagem",
+    "mediaGifSearch": "Buscar GIF",
+    "mediaGif": "GIF da galeria",
+    "mediaVideo": "Vídeo",
+    "mediaVideoHint": "Até {{seconds}} segundos"
   },
   "saved": {
     "title": "Histórias salvas",
@@ -251,7 +257,8 @@
     "themeLight": "Claro",
     "themeSepia": "Sépia",
     "themeDark": "Escuro",
-    "themeBlack": "Preto"
+    "themeBlack": "Preto",
+    "playVideo": "Reproduzir vídeo"
   },
   "commentsScreen": {
     "title": "Comentários ({{count}})",
@@ -869,6 +876,20 @@
     "pickError": "Ocorreu um erro ao escolher a imagem.",
     "captureError": "Ocorreu um erro ao tirar a foto.",
     "coverRetryHint": "Sua história foi salva. Você pode adicionar a capa mais tarde."
+  },
+  "mediaUpload": {
+    "explicitRejected": "Este conteúdo não segue nossas diretrizes da comunidade. Escolha outro arquivo.",
+    "videoTooLong": "Os vídeos podem ter no máximo {{seconds}} segundos.",
+    "videoTooLarge": "Este vídeo é muito grande. Escolha um clipe mais curto.",
+    "videoUnsupported": "Este formato de vídeo não é compatível.",
+    "videoError": "Não foi possível enviar o vídeo. Verifique sua conexão e tente novamente.",
+    "videoPickError": "Ocorreu um erro ao selecionar o vídeo.",
+    "gifTooLarge": "Este GIF é muito grande. Escolha um menor.",
+    "gifTooLong": "Este GIF tem quadros demais.",
+    "gifUnsupported": "Este arquivo não é um GIF.",
+    "gifError": "Não foi possível enviar o GIF. Verifique sua conexão e tente novamente.",
+    "gifPickError": "Ocorreu um erro ao selecionar o GIF.",
+    "tooLarge": "O arquivo é muito grande."
   },
   "legal": {
     "privacyPolicy": "Política de privacidade",

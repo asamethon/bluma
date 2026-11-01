@@ -202,7 +202,13 @@
     "contentWarningSuicide": "Suicide",
     "contentWarningDrug": "Drugs/Alcohol",
     "contentWarningLanguage": "Strong language",
-    "contentWarningDark": "Dark themes"
+    "contentWarningDark": "Dark themes",
+    "mediaSheetTitle": "添加媒体",
+    "mediaImage": "图片",
+    "mediaGifSearch": "搜索 GIF",
+    "mediaGif": "相册中的 GIF",
+    "mediaVideo": "视频",
+    "mediaVideoHint": "最长 {{seconds}} 秒"
   },
   "saved": {
     "title": "已保存的故事",
@@ -251,7 +257,8 @@
     "themeLight": "浅色",
     "themeSepia": "护眼",
     "themeDark": "深色",
-    "themeBlack": "纯黑"
+    "themeBlack": "纯黑",
+    "playVideo": "播放视频"
   },
   "commentsScreen": {
     "title": "评论（{{count}}）",
@@ -868,6 +875,20 @@
     "pickError": "选择图片时出错。",
     "captureError": "拍照时出错。",
     "coverRetryHint": "你的故事已保存，可以稍后再添加封面。"
+  },
+  "mediaUpload": {
+    "explicitRejected": "此媒体不符合我们的社区准则，请选择其他文件。",
+    "videoTooLong": "视频最长 {{seconds}} 秒。",
+    "videoTooLarge": "此视频太大，请选择更短的片段。",
+    "videoUnsupported": "不支持此视频格式。",
+    "videoError": "视频上传失败，请检查网络后重试。",
+    "videoPickError": "选择视频时出错。",
+    "gifTooLarge": "此 GIF 太大，请选择更小的。",
+    "gifTooLong": "此 GIF 的帧数过多。",
+    "gifUnsupported": "此文件不是 GIF。",
+    "gifError": "GIF 上传失败，请检查网络后重试。",
+    "gifPickError": "选择 GIF 时出错。",
+    "tooLarge": "文件太大。"
   },
   "legal": {
     "privacyPolicy": "隐私政策",

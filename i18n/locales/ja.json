@@ -202,7 +202,13 @@
     "contentWarningSuicide": "Suicide",
     "contentWarningDrug": "Drugs/Alcohol",
     "contentWarningLanguage": "Strong language",
-    "contentWarningDark": "Dark themes"
+    "contentWarningDark": "Dark themes",
+    "mediaSheetTitle": "メディアを追加",
+    "mediaImage": "画像",
+    "mediaGifSearch": "GIFを検索",
+    "mediaGif": "ギャラリーのGIF",
+    "mediaVideo": "動画",
+    "mediaVideoHint": "最大{{seconds}}秒"
   },
   "saved": {
     "title": "保存したストーリー",
@@ -251,7 +257,8 @@
     "themeLight": "ライト",
     "themeSepia": "セピア",
     "themeDark": "ダーク",
-    "themeBlack": "ブラック"
+    "themeBlack": "ブラック",
+    "playVideo": "動画を再生"
   },
   "commentsScreen": {
     "title": "コメント({{count}})",
@@ -868,6 +875,20 @@
     "pickError": "画像の選択中に問題が発生しました。",
     "captureError": "写真の撮影中に問題が発生しました。",
     "coverRetryHint": "作品は保存されています。カバー画像はあとで追加できます。"
+  },
+  "mediaUpload": {
+    "explicitRejected": "このメディアはコミュニティガイドラインに適合していません。別のファイルを選んでください。",
+    "videoTooLong": "動画は最大{{seconds}}秒までです。",
+    "videoTooLarge": "この動画はサイズが大きすぎます。短いクリップを選んでください。",
+    "videoUnsupported": "この動画形式はサポートされていません。",
+    "videoError": "動画をアップロードできませんでした。接続を確認してもう一度お試しください。",
+    "videoPickError": "動画の選択中にエラーが発生しました。",
+    "gifTooLarge": "このGIFはサイズが大きすぎます。小さいものを選んでください。",
+    "gifTooLong": "このGIFはフレーム数が多すぎます。",
+    "gifUnsupported": "このファイルはGIFではありません。",
+    "gifError": "GIFをアップロードできませんでした。接続を確認してもう一度お試しください。",
+    "gifPickError": "GIFの選択中にエラーが発生しました。",
+    "tooLarge": "ファイルが大きすぎます。"
   },
   "legal": {
     "privacyPolicy": "プライバシーポリシー",

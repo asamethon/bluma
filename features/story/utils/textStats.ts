@@ -1,14 +1,14 @@
-import { stripImageTokens } from './imageToken';
+import { stripMediaTokens } from './mediaToken';
 
 const WORDS_PER_MINUTE = 200;
 
 export function wordCount(text: string): number {
-  const t = stripImageTokens(text).trim();
+  const t = stripMediaTokens(text).trim();
   return t ? t.split(/\s+/).length : 0;
 }
 
 export function charCount(text: string): number {
-  return stripImageTokens(text).length;
+  return stripMediaTokens(text).length;
 }
 
 export function readingMinutes(text: string): number {

@@ -5,6 +5,8 @@ import { ComposerBottomBar } from '@/features/story/components/studio/ComposerBo
 import { ComposerCanvas } from '@/features/story/components/studio/ComposerCanvas';
 import { ComposerHeader } from '@/features/story/components/studio/ComposerHeader';
 import { ComposerPreview } from '@/features/story/components/studio/ComposerPreview';
+import { MediaPickerSheet } from '@/features/story/components/studio/MediaPickerSheet';
+import { GifPickerSheet } from '@/features/media/components/GifPickerSheet';
 import { useComposer } from '@/features/story/hooks/useComposer';
 import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, View } from 'react-native';
@@ -41,6 +43,21 @@ export default function ComposeScreen() {
 
       <ChapterSwitcherSheet c={c} />
       <ComposerPreview c={c} topInset={insets.top} />
+
+      <MediaPickerSheet
+        visible={c.media.panel === 'source'}
+        onClose={c.media.close}
+        onPickImage={c.media.insertImage}
+        onPickGif={c.media.insertGif}
+        onPickVideo={c.media.insertVideo}
+        gifSearchEnabled={c.media.gifSearchEnabled}
+        onSearchGif={c.media.openGifSearch}
+      />
+      <GifPickerSheet
+        visible={c.media.panel === 'gifSearch'}
+        onClose={c.media.close}
+        onSelect={gif => c.media.insertGifUrl(gif.url)}
+      />
     </Screen>
   );
 }

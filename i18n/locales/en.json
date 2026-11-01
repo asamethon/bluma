@@ -224,7 +224,13 @@
     "contentWarningSuicide": "Suicide",
     "contentWarningDrug": "Drugs/Alcohol",
     "contentWarningLanguage": "Strong language",
-    "contentWarningDark": "Dark themes"
+    "contentWarningDark": "Dark themes",
+    "mediaSheetTitle": "Add media",
+    "mediaImage": "Image",
+    "mediaGifSearch": "Search GIFs",
+    "mediaGif": "GIF from gallery",
+    "mediaVideo": "Video",
+    "mediaVideoHint": "Up to {{seconds}} seconds"
   },
   "saved": {
     "title": "Saved Stories",
@@ -273,7 +279,8 @@
     "themeLight": "Light",
     "themeSepia": "Sepia",
     "themeDark": "Dark",
-    "themeBlack": "Black"
+    "themeBlack": "Black",
+    "playVideo": "Play video"
   },
   "commentsScreen": {
     "title": "Comments ({{count}})",
@@ -891,6 +898,20 @@
     "pickError": "Something went wrong while picking the image.",
     "captureError": "Something went wrong while taking the photo.",
     "coverRetryHint": "Your story was saved. You can add the cover again later."
+  },
+  "mediaUpload": {
+    "explicitRejected": "This media doesn't meet our community guidelines. Please choose another file.",
+    "videoTooLong": "Videos can be at most {{seconds}} seconds long.",
+    "videoTooLarge": "This video is too large. Choose a shorter clip.",
+    "videoUnsupported": "This video format isn't supported.",
+    "videoError": "The video couldn't be uploaded. Check your connection and try again.",
+    "videoPickError": "Something went wrong while picking the video.",
+    "gifTooLarge": "This GIF is too large. Choose a smaller one.",
+    "gifTooLong": "This GIF has too many frames.",
+    "gifUnsupported": "This file isn't a GIF.",
+    "gifError": "The GIF couldn't be uploaded. Check your connection and try again.",
+    "gifPickError": "Something went wrong while picking the GIF.",
+    "tooLarge": "The file is too large."
   },
   "legal": {
     "privacyPolicy": "Privacy Policy",

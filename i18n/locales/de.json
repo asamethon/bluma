@@ -202,7 +202,13 @@
     "contentWarningSuicide": "Suicide",
     "contentWarningDrug": "Drugs/Alcohol",
     "contentWarningLanguage": "Strong language",
-    "contentWarningDark": "Dark themes"
+    "contentWarningDark": "Dark themes",
+    "mediaSheetTitle": "Medien hinzufügen",
+    "mediaImage": "Bild",
+    "mediaGifSearch": "GIFs suchen",
+    "mediaGif": "GIF aus der Galerie",
+    "mediaVideo": "Video",
+    "mediaVideoHint": "Bis zu {{seconds}} Sekunden"
   },
   "saved": {
     "title": "Gespeicherte Geschichten",
@@ -251,7 +257,8 @@
     "themeLight": "Hell",
     "themeSepia": "Sepia",
     "themeDark": "Dunkel",
-    "themeBlack": "Schwarz"
+    "themeBlack": "Schwarz",
+    "playVideo": "Video abspielen"
   },
   "commentsScreen": {
     "title": "Kommentare ({{count}})",
@@ -869,6 +876,20 @@
     "pickError": "Bei der Auswahl des Bilds ist etwas schiefgelaufen.",
     "captureError": "Beim Aufnehmen des Fotos ist etwas schiefgelaufen.",
     "coverRetryHint": "Deine Geschichte wurde gespeichert. Du kannst das Cover später erneut hinzufügen."
+  },
+  "mediaUpload": {
+    "explicitRejected": "Dieses Medium entspricht nicht unseren Community-Richtlinien. Bitte wähle eine andere Datei.",
+    "videoTooLong": "Videos dürfen höchstens {{seconds}} Sekunden lang sein.",
+    "videoTooLarge": "Dieses Video ist zu groß. Wähle einen kürzeren Clip.",
+    "videoUnsupported": "Dieses Videoformat wird nicht unterstützt.",
+    "videoError": "Das Video konnte nicht hochgeladen werden. Prüfe deine Verbindung und versuche es erneut.",
+    "videoPickError": "Beim Auswählen des Videos ist ein Fehler aufgetreten.",
+    "gifTooLarge": "Dieses GIF ist zu groß. Wähle ein kleineres.",
+    "gifTooLong": "Dieses GIF hat zu viele Einzelbilder.",
+    "gifUnsupported": "Diese Datei ist kein GIF.",
+    "gifError": "Das GIF konnte nicht hochgeladen werden. Prüfe deine Verbindung und versuche es erneut.",
+    "gifPickError": "Beim Auswählen des GIFs ist ein Fehler aufgetreten.",
+    "tooLarge": "Die Datei ist zu groß."
   },
   "legal": {
     "privacyPolicy": "Datenschutzerklärung",

@@ -1,36 +1,35 @@
-// Bluma görsel servisi.
+// Bluma medya servisi.
 //
-// Uygulama, görselleri base64 olarak Firestore dokümanlarına gömmek yerine
-// buraya yükler; Firestore'da yalnızca dönen URL saklanır. Kimlik doğrulama
-// Firebase ID token'ı ile yapılır (service account gerekmez — token, Google'ın
-// açık JWKS anahtarlarıyla doğrulanır).
+// Uygulama, medyayı base64 olarak Firestore dokümanlarına gömmek yerine buraya
+// yükler; Firestore'da yalnızca dönen URL saklanır. Kimlik doğrulama Firebase
+// ID token'ı ile yapılır (bkz. auth.js).
 //
-// Endpoint'ler:
-//   POST /upload?kind=profile|cover|comment|content   (Authorization: Bearer <idToken>,
-//                                              multipart alan adı: "image")
+// Endpoint'ler (hepsi Authorization: Bearer <idToken>):
+//   POST /upload?kind=profile|cover|comment|content  (multipart alan adı "image")
 //     → { "url": "https://.../i/cover/<id>.webp" }
-//   POST /upload-voice                         (Authorization: Bearer <idToken>,
-//                                              multipart alan adı: "file", m4a/AAC)
-//     → { "url": "https://.../i/voice/<id>.m4a" }
-//   GET  /i/<kind>/<file>                      (1 yıl immutable cache)
+//   POST /upload-voice   (alan adı "file", m4a/AAC)  → { "url": ".../i/voice/<id>.m4a" }
+//   POST /upload-gif     (alan adı "file", gif)      → { "url": ".../i/gif/<id>.webp" }
+//   POST /upload-video   (alan adı "file", mp4/mov)
+//     → { "video": ".../i/video/<id>.mp4", "poster": ".../i/video/<id>.webp" }
+//   GET  /i/<kind>/<file>   (1 yıl immutable cache)
 //   GET  /health
-import crypto from 'node:crypto';
-import fs from 'node:fs';
-import path from 'node:path';
+//
+// Moderasyon: görsel, GIF (kare örnekleme) ve video (kare çıkarma) nsfwjs'ten
+// geçer; explicit içerik HTTP 451 ile reddedilir ve diske YAZILMAZ.
 import express from 'express';
 import rateLimit from 'express-rate-limit';
-import { createRemoteJWKSet, jwtVerify } from 'jose';
 import multer from 'multer';
 import sharp from 'sharp';
+import { FIREBASE_PROJECT_ID, verifyFirebaseToken } from './auth.js';
+import { DATA_DIR, MediaError, PUBLIC_BASE_URL, mediaBasename, writeMedia } from './files.js';
+import { GIF_MAX_BYTES, processGif } from './gif.js';
 import { checkImage, loadNsfwModel } from './nsfw.js';
+import { VIDEO_MAX_BYTES, processVideo } from './video.js';
+import { processVoice } from './voice.js';
 
 const PORT = Number(process.env.PORT || 8788);
 // Yalnızca loopback'i dinle — dış dünyaya nginx/reverse proxy konuşur.
 const HOST = process.env.HOST || '127.0.0.1';
-const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'bluma-dc10e';
-// Dönen URL'lerin taban adresi (Caddy/nginx arkasındaki genel adres).
-const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
-const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
 
 // Tür başına çıktı ayarları — hepsi webp'e çevrilir (expo-image destekler).
 const KINDS = {
@@ -40,31 +39,12 @@ const KINDS = {
   content: { width: 1000, quality: 80 },
 };
 
-const JWKS = createRemoteJWKSet(
-  new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com')
-);
-
-async function verifyFirebaseToken(req) {
-  const header = req.headers.authorization || '';
-  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-  if (!token) return null;
-  try {
-    const { payload } = await jwtVerify(token, JWKS, {
-      issuer: `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`,
-      audience: FIREBASE_PROJECT_ID,
-    });
-    return payload.sub || null; // Firebase uid
-  } catch {
-    return null;
-  }
-}
-
 const app = express();
 app.set('trust proxy', 1); // Caddy/nginx arkasında gerçek IP için
 
-const upload = multer({
+const bodyLimit = (maxBytes) => multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 15 * 1024 * 1024, files: 1 },
+  limits: { fileSize: maxBytes, files: 1 },
 });
 
 const uploadLimiter = rateLimit({
@@ -76,7 +56,7 @@ const uploadLimiter = rateLimit({
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
-app.post('/upload', uploadLimiter, upload.single('image'), async (req, res) => {
+app.post('/upload', uploadLimiter, bodyLimit(15 * 1024 * 1024).single('image'), async (req, res) => {
   const uid = await verifyFirebaseToken(req);
   if (!uid) return res.status(401).json({ error: 'unauthorized' });
 
@@ -104,56 +84,61 @@ app.post('/upload', uploadLimiter, upload.single('image'), async (req, res) => {
       .webp({ quality: cfg.quality })
       .toBuffer();
 
-    const name = `${Date.now()}-${crypto.randomBytes(8).toString('hex')}.webp`;
-    const dir = path.join(DATA_DIR, kind);
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, name), processed);
-
-    console.log(`upload ok: uid=${uid} kind=${kind} in=${req.file.buffer.length}B out=${processed.length}B → ${name}`);
-    return res.json({ url: `${PUBLIC_BASE_URL}/i/${kind}/${name}` });
+    const url = writeMedia(kind, `${mediaBasename()}.webp`, processed);
+    console.log(`upload ok: uid=${uid} kind=${kind} in=${req.file.buffer.length}B out=${processed.length}B`);
+    return res.json({ url });
   } catch (err) {
     console.error('upload error:', err);
     return res.status(422).json({ error: 'invalid image' });
   }
 });
 
-// Sesli mesaj. Görsel hattından geçmez: sharp yok, NSFW kontrolü yok (ses),
-// dosya olduğu gibi saklanır. Tür kontrolü uzantıya değil, MPEG-4 kutu
-// imzasına ("ftyp", 4.-8. bayt) bakar — istemcinin bildirdiği mime'a güvenilmez.
-const VOICE_MAX_BYTES = 6 * 1024 * 1024; // ~2 dk / 64 kbps AAC
+/**
+ * Ses/GIF/video uçları aynı iskeleti paylaşır: kimlik → gövde → işleyici.
+ * İşleyicinin fırlattığı `MediaError` durum kodu ve kodla istemciye geçer;
+ * 451 moderasyon reddidir ve istemci bunu kullanıcıya gösterir.
+ */
+const mediaRoute = (label, process, maxBytes) => [
+  uploadLimiter,
+  bodyLimit(maxBytes).single('file'),
+  async (req, res) => {
+    const uid = await verifyFirebaseToken(req);
+    if (!uid) return res.status(401).json({ error: 'unauthorized' });
+    if (!req.file?.buffer?.length) return res.status(400).json({ error: 'no file' });
 
-const isMpeg4Audio = (buffer) =>
-  buffer.length > 12 && buffer.subarray(4, 8).toString('latin1') === 'ftyp';
+    try {
+      const result = await process(req.file.buffer);
+      console.log(`${label} ok: uid=${uid} in=${req.file.buffer.length}B ${JSON.stringify(result)}`);
+      return res.json(result);
+    } catch (err) {
+      if (err instanceof MediaError) {
+        const level = err.status === 451 ? 'warn' : 'error';
+        console[level](`${label} rejected (${err.code}): uid=${uid} ${err.message}`);
+        return res.status(err.status).json({ error: err.code });
+      }
+      console.error(`${label} error:`, err);
+      return res.status(500).json({ error: 'processing failed' });
+    }
+  },
+];
 
-app.post('/upload-voice', uploadLimiter, upload.single('file'), async (req, res) => {
-  const uid = await verifyFirebaseToken(req);
-  if (!uid) return res.status(401).json({ error: 'unauthorized' });
+app.post('/upload-voice', ...mediaRoute('voice', processVoice, 6 * 1024 * 1024));
+app.post('/upload-gif', ...mediaRoute('gif', processGif, GIF_MAX_BYTES));
+app.post('/upload-video', ...mediaRoute('video', processVideo, VIDEO_MAX_BYTES));
 
-  const buffer = req.file?.buffer;
-  if (!buffer?.length) return res.status(400).json({ error: 'no audio' });
-  if (buffer.length > VOICE_MAX_BYTES) return res.status(413).json({ error: 'audio too large' });
-  if (!isMpeg4Audio(buffer)) return res.status(415).json({ error: 'unsupported audio type' });
-
-  try {
-    const name = `${Date.now()}-${crypto.randomBytes(8).toString('hex')}.m4a`;
-    const dir = path.join(DATA_DIR, 'voice');
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, name), buffer);
-
-    console.log(`voice ok: uid=${uid} bytes=${buffer.length} → ${name}`);
-    return res.json({ url: `${PUBLIC_BASE_URL}/i/voice/${name}` });
-  } catch (err) {
-    console.error('voice upload error:', err);
-    return res.status(500).json({ error: 'write failed' });
-  }
-});
-
-// İşlenmiş görseller içerik-değişmez dosyalardır → agresif cache güvenli.
+// İşlenmiş medya içerik-değişmez dosyalardır → agresif cache güvenli.
 app.use('/i', express.static(DATA_DIR, {
   immutable: true,
   maxAge: '365d',
   fallthrough: false,
 }));
+
+// Multer'ın boyut sınırı aşımı 500 değil 413 dönmeli: istemci "çok büyük"
+// mesajını gösterebilsin.
+app.use((err, _req, res, next) => {
+  if (err?.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'file_too_large' });
+  return next(err);
+});
 
 // NSFW modelini açılışta ısıt (indirme bir kereliktir), sonra dinlemeye başla.
 // Model yüklenemese bile (loadNsfwModel fırlatmaz) sunucu ayağa kalkar.

@@ -202,7 +202,13 @@
     "contentWarningSuicide": "Suicide",
     "contentWarningDrug": "Drugs/Alcohol",
     "contentWarningLanguage": "Strong language",
-    "contentWarningDark": "Dark themes"
+    "contentWarningDark": "Dark themes",
+    "mediaSheetTitle": "Tambahkan media",
+    "mediaImage": "Gambar",
+    "mediaGifSearch": "Cari GIF",
+    "mediaGif": "GIF dari galeri",
+    "mediaVideo": "Video",
+    "mediaVideoHint": "Maksimal {{seconds}} detik"
   },
   "saved": {
     "title": "Cerita tersimpan",
@@ -251,7 +257,8 @@
     "themeLight": "Terang",
     "themeSepia": "Sepia",
     "themeDark": "Gelap",
-    "themeBlack": "Hitam"
+    "themeBlack": "Hitam",
+    "playVideo": "Putar video"
   },
   "commentsScreen": {
     "title": "Komentar ({{count}})",
@@ -868,6 +875,20 @@
     "pickError": "Terjadi kesalahan saat memilih gambar.",
     "captureError": "Terjadi kesalahan saat mengambil foto.",
     "coverRetryHint": "Ceritamu tersimpan. Kamu bisa menambahkan sampulnya lagi nanti."
+  },
+  "mediaUpload": {
+    "explicitRejected": "Media ini tidak sesuai dengan pedoman komunitas kami. Silakan pilih file lain.",
+    "videoTooLong": "Video maksimal {{seconds}} detik.",
+    "videoTooLarge": "Video ini terlalu besar. Pilih klip yang lebih pendek.",
+    "videoUnsupported": "Format video ini tidak didukung.",
+    "videoError": "Video gagal diunggah. Periksa koneksimu dan coba lagi.",
+    "videoPickError": "Terjadi kesalahan saat memilih video.",
+    "gifTooLarge": "GIF ini terlalu besar. Pilih yang lebih kecil.",
+    "gifTooLong": "GIF ini memiliki terlalu banyak frame.",
+    "gifUnsupported": "File ini bukan GIF.",
+    "gifError": "GIF gagal diunggah. Periksa koneksimu dan coba lagi.",
+    "gifPickError": "Terjadi kesalahan saat memilih GIF.",
+    "tooLarge": "File terlalu besar."
   },
   "legal": {
     "privacyPolicy": "Kebijakan privasi",

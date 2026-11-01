@@ -1,9 +1,5 @@
-import { imageUploadService } from '@/services/imageUploadService';
-import i18n from '@/i18n';
 import { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
 import { adjustRangesForEdit, diffTexts, shiftRanges, splitRangeAtNewlines } from '../utils/editorEdits';
-import { buildImageToken } from '../utils/imageToken';
 import { ItalicRange, normalizeRanges, parseItalic, serializeItalic } from '../utils/richText';
 
 const BULLET = '• ';
@@ -112,23 +108,8 @@ export function useChapterEditor(onCommit: (storedContent: string) => void) {
     moveCaret(start + snippet.length);
   };
 
-  const [imageUploading, setImageUploading] = useState(false);
-  const insertImage = async () => {
-    try {
-      const uri = await imageUploadService.pickContentImage();
-      if (!uri) return;
-      setImageUploading(true);
-      const url = await imageUploadService.uploadStoryContentImage(uri);
-      insertSnippet(buildImageToken(url));
-    } catch (e) {
-      Alert.alert(i18n.t('common.error'), e instanceof Error ? e.message : i18n.t('imageUpload.contentError'));
-    } finally {
-      setImageUploading(false);
-    }
-  };
-
   return {
-    display, ranges, italicMode, bulletMode, forcedSel, imageUploading,
-    load, onChangeText, onSelectionChange, toggleItalic, toggleBullet, insertSnippet, insertImage,
+    display, ranges, italicMode, bulletMode, forcedSel,
+    load, onChangeText, onSelectionChange, toggleItalic, toggleBullet, insertSnippet,
   };
 }

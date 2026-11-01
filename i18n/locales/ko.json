@@ -202,7 +202,13 @@
     "contentWarningSuicide": "Suicide",
     "contentWarningDrug": "Drugs/Alcohol",
     "contentWarningLanguage": "Strong language",
-    "contentWarningDark": "Dark themes"
+    "contentWarningDark": "Dark themes",
+    "mediaSheetTitle": "미디어 추가",
+    "mediaImage": "이미지",
+    "mediaGifSearch": "GIF 검색",
+    "mediaGif": "갤러리에서 GIF",
+    "mediaVideo": "동영상",
+    "mediaVideoHint": "최대 {{seconds}}초"
   },
   "saved": {
     "title": "저장한 스토리",
@@ -251,7 +257,8 @@
     "themeLight": "라이트",
     "themeSepia": "세피아",
     "themeDark": "다크",
-    "themeBlack": "블랙"
+    "themeBlack": "블랙",
+    "playVideo": "동영상 재생"
   },
   "commentsScreen": {
     "title": "댓글 ({{count}})",
@@ -868,6 +875,20 @@
     "pickError": "이미지를 선택하는 중 문제가 발생했습니다.",
     "captureError": "사진을 촬영하는 중 문제가 발생했습니다.",
     "coverRetryHint": "작품은 저장되었습니다. 표지는 나중에 다시 추가할 수 있습니다."
+  },
+  "mediaUpload": {
+    "explicitRejected": "이 미디어는 커뮤니티 가이드라인에 맞지 않습니다. 다른 파일을 선택해 주세요.",
+    "videoTooLong": "동영상은 최대 {{seconds}}초까지 가능합니다.",
+    "videoTooLarge": "이 동영상은 너무 큽니다. 더 짧은 클립을 선택해 주세요.",
+    "videoUnsupported": "지원하지 않는 동영상 형식입니다.",
+    "videoError": "동영상을 업로드할 수 없습니다. 연결을 확인하고 다시 시도해 주세요.",
+    "videoPickError": "동영상을 선택하는 중 오류가 발생했습니다.",
+    "gifTooLarge": "이 GIF는 너무 큽니다. 더 작은 GIF를 선택해 주세요.",
+    "gifTooLong": "이 GIF의 프레임이 너무 많습니다.",
+    "gifUnsupported": "이 파일은 GIF가 아닙니다.",
+    "gifError": "GIF를 업로드할 수 없습니다. 연결을 확인하고 다시 시도해 주세요.",
+    "gifPickError": "GIF를 선택하는 중 오류가 발생했습니다.",
+    "tooLarge": "파일이 너무 큽니다."
   },
   "legal": {
     "privacyPolicy": "개인정보처리방침",

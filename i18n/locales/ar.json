@@ -202,7 +202,13 @@
     "contentWarningSuicide": "Suicide",
     "contentWarningDrug": "Drugs/Alcohol",
     "contentWarningLanguage": "Strong language",
-    "contentWarningDark": "Dark themes"
+    "contentWarningDark": "Dark themes",
+    "mediaSheetTitle": "إضافة وسائط",
+    "mediaImage": "صورة",
+    "mediaGifSearch": "البحث عن GIF",
+    "mediaGif": "GIF من المعرض",
+    "mediaVideo": "فيديو",
+    "mediaVideoHint": "حتى {{seconds}} ثانية"
   },
   "saved": {
     "title": "القصص المحفوظة",
@@ -251,7 +257,8 @@
     "themeLight": "فاتح",
     "themeSepia": "سيبيا",
     "themeDark": "داكن",
-    "themeBlack": "أسود"
+    "themeBlack": "أسود",
+    "playVideo": "تشغيل الفيديو"
   },
   "commentsScreen": {
     "title": "التعليقات ({{count}})",
@@ -868,6 +875,20 @@
     "pickError": "حدث خطأ ما أثناء اختيار الصورة.",
     "captureError": "حدث خطأ ما أثناء التقاط الصورة.",
     "coverRetryHint": "تم حفظ قصتك. يمكنك إضافة الغلاف لاحقًا."
+  },
+  "mediaUpload": {
+    "explicitRejected": "هذه الوسائط لا تتوافق مع إرشادات مجتمعنا. الرجاء اختيار ملف آخر.",
+    "videoTooLong": "يمكن أن يكون طول الفيديو {{seconds}} ثانية كحد أقصى.",
+    "videoTooLarge": "هذا الفيديو كبير جدًا. اختر مقطعًا أقصر.",
+    "videoUnsupported": "تنسيق الفيديو هذا غير مدعوم.",
+    "videoError": "تعذّر تحميل الفيديو. تحقق من اتصالك وحاول مرة أخرى.",
+    "videoPickError": "حدث خطأ أثناء اختيار الفيديو.",
+    "gifTooLarge": "صورة GIF هذه كبيرة جدًا. اختر واحدة أصغر.",
+    "gifTooLong": "تحتوي صورة GIF هذه على عدد كبير جدًا من الإطارات.",
+    "gifUnsupported": "هذا الملف ليس صورة GIF.",
+    "gifError": "تعذّر تحميل صورة GIF. تحقق من اتصالك وحاول مرة أخرى.",
+    "gifPickError": "حدث خطأ أثناء اختيار صورة GIF.",
+    "tooLarge": "الملف كبير جدًا."
   },
   "legal": {
     "privacyPolicy": "سياسة الخصوصية",
