@@ -317,6 +317,7 @@
     "locationLabel": "所在地",
     "locationPlaceholder": "都市名、国名",
     "websiteLabel": "ウェブサイト",
+    "invalidWebsite": "有効なウェブサイトのアドレスを入力してください。",
     "accountSection": "アカウント設定",
     "saveChanges": "変更を保存",
     "available": "使用可能",
@@ -375,6 +376,8 @@
     "likesSub": "あなたのストーリーに「いいね」がついたとき",
     "comments": "コメント",
     "commentsSub": "誰かがあなたのコンテンツにコメントしたとき",
+    "mentions": "メンション",
+    "mentionsSub": "コメントであなたがメンションされたとき",
     "newFollower": "新しいフォロワー",
     "newFollowerSub": "誰かがあなたをフォローし始めたとき",
     "enablePushFirst": "アクティビティ通知をオンにするには、まずプッシュ通知を有効にしてください。"
@@ -582,8 +585,10 @@
     },
     "weekly": {
       "title": "週末読書マラソン",
-      "desc": "金曜日から日曜日までに3章を読み終え、2件のコメントを残しましょう。",
-      "endsIn": "残り2日"
+      "desc": "金曜から日曜の間に3章を読み終えて、コメントを1件残しましょう。",
+      "endsIn": "残り2日",
+      "endsToday": "本日終了",
+      "endsInDays": "残り{{count}}日"
     },
     "errors": {
       "sessionChanged": "チャレンジセッションが変更されました。",
@@ -694,6 +699,7 @@
     "signOutConfirm": "アカウントからログアウトしてもよろしいですか?",
     "offlineLibrary": "オフラインライブラリ",
     "loadingUser": "ユーザー情報を読み込み中...",
+    "loadingUserInfo": "ユーザー情報を読み込んでいます...",
     "myStories": "自分のストーリー",
     "myConversations": "自分の会話",
     "editProfile": "プロフィールを編集",
@@ -1101,5 +1107,9 @@
     "later": "Later",
     "unavailable": "Launch unavailable",
     "ownerOnly": "Only the author of a published book can prepare its launch."
+  },
+  "chat": {
+    "removeFailedTitle": "メッセージを削除できませんでした",
+    "removeFailedMessage": "メッセージを復元しました。もう一度お試しください。"
   }
 }

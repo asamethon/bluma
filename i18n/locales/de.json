@@ -317,6 +317,7 @@
     "locationLabel": "Standort",
     "locationPlaceholder": "Stadt, Land",
     "websiteLabel": "Website",
+    "invalidWebsite": "Bitte gib eine gültige Website-Adresse ein.",
     "accountSection": "Kontoeinstellungen",
     "saveChanges": "Änderungen speichern",
     "available": "Verfügbar",
@@ -375,6 +376,8 @@
     "likesSub": "Wenn deine Geschichten „Gefällt mir“ erhalten",
     "comments": "Kommentare",
     "commentsSub": "Wenn jemand deine Inhalte kommentiert",
+    "mentions": "Erwähnungen",
+    "mentionsSub": "Wenn dich jemand in einem Kommentar erwähnt",
     "newFollower": "Neuer Follower",
     "newFollowerSub": "Wenn dir jemand zu folgen beginnt",
     "enablePushFirst": "Aktiviere zuerst Push-Benachrichtigungen, um Aktivitätsbenachrichtigungen einzuschalten."
@@ -582,8 +585,10 @@
     },
     "weekly": {
       "title": "Wochenend-Lesemarathon",
-      "desc": "Schließe zwischen Freitag und Sonntag 3 Kapitel ab und hinterlasse 2 Kommentare.",
-      "endsIn": "2 Tage"
+      "desc": "Schließe zwischen Freitag und Sonntag 3 Kapitel ab und hinterlasse 1 Kommentar.",
+      "endsIn": "2 Tage",
+      "endsToday": "Endet heute",
+      "endsInDays": "{{count}} Tage"
     },
     "errors": {
       "sessionChanged": "Aufgabensitzung geändert.",
@@ -694,6 +699,7 @@
     "signOutConfirm": "Möchtest du dich wirklich von deinem Konto abmelden?",
     "offlineLibrary": "Offline-Bibliothek",
     "loadingUser": "Nutzerinformationen werden geladen...",
+    "loadingUserInfo": "Benutzerinfos werden geladen ...",
     "myStories": "Meine Geschichten",
     "myConversations": "Meine Unterhaltungen",
     "editProfile": "Profil bearbeiten",
@@ -1101,5 +1107,9 @@
     "later": "Later",
     "unavailable": "Launch unavailable",
     "ownerOnly": "Only the author of a published book can prepare its launch."
+  },
+  "chat": {
+    "removeFailedTitle": "Nachricht konnte nicht gelöscht werden",
+    "removeFailedMessage": "Die Nachricht wurde wiederhergestellt. Bitte versuche es erneut."
   }
 }

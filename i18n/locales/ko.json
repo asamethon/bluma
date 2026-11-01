@@ -317,6 +317,7 @@
     "locationLabel": "지역",
     "locationPlaceholder": "도시, 국가",
     "websiteLabel": "웹사이트",
+    "invalidWebsite": "올바른 웹사이트 주소를 입력해 주세요.",
     "accountSection": "계정 설정",
     "saveChanges": "변경사항 저장",
     "available": "사용 가능",
@@ -375,6 +376,8 @@
     "likesSub": "내 스토리가 좋아요를 받을 때",
     "comments": "댓글",
     "commentsSub": "누군가 내 콘텐츠에 댓글을 남길 때",
+    "mentions": "멘션",
+    "mentionsSub": "댓글에서 나를 멘션했을 때",
     "newFollower": "새 팔로워",
     "newFollowerSub": "누군가 나를 팔로우하기 시작할 때",
     "enablePushFirst": "활동 알림을 받으려면 먼저 푸시 알림을 활성화하세요."
@@ -582,8 +585,10 @@
     },
     "weekly": {
       "title": "주말 독서 마라톤",
-      "desc": "금요일부터 일요일까지 3화를 읽고 댓글 2개를 남기세요.",
-      "endsIn": "2일 남음"
+      "desc": "금요일부터 일요일 사이에 3개 챕터를 읽고 댓글 1개를 남기세요.",
+      "endsIn": "2일 남음",
+      "endsToday": "오늘 종료",
+      "endsInDays": "{{count}}일"
     },
     "errors": {
       "sessionChanged": "챌린지 세션이 변경되었습니다.",
@@ -694,6 +699,7 @@
     "signOutConfirm": "계정에서 로그아웃하시겠습니까?",
     "offlineLibrary": "오프라인 보관함",
     "loadingUser": "사용자 정보를 불러오는 중...",
+    "loadingUserInfo": "사용자 정보를 불러오는 중...",
     "myStories": "내 스토리",
     "myConversations": "내 대화",
     "editProfile": "프로필 편집",
@@ -1101,5 +1107,9 @@
     "later": "Later",
     "unavailable": "Launch unavailable",
     "ownerOnly": "Only the author of a published book can prepare its launch."
+  },
+  "chat": {
+    "removeFailedTitle": "메시지를 삭제하지 못했습니다",
+    "removeFailedMessage": "메시지를 복구했습니다. 다시 시도해 주세요."
   }
 }

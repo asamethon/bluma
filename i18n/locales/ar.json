@@ -317,6 +317,7 @@
     "locationLabel": "الموقع",
     "locationPlaceholder": "المدينة، الدولة",
     "websiteLabel": "الموقع الإلكتروني",
+    "invalidWebsite": "يرجى إدخال عنوان موقع إلكتروني صالح.",
     "accountSection": "إعدادات الحساب",
     "saveChanges": "حفظ التغييرات",
     "available": "متاح",
@@ -375,6 +376,8 @@
     "likesSub": "عندما تحصل قصصك على إعجابات",
     "comments": "التعليقات",
     "commentsSub": "عندما يعلّق أحدهم على محتواك",
+    "mentions": "الإشارات",
+    "mentionsSub": "عندما يشير إليك أحدهم في تعليق",
     "newFollower": "متابع جديد",
     "newFollowerSub": "عندما يبدأ أحدهم بمتابعتك",
     "enablePushFirst": "فعّل الإشعارات الفورية أولًا لتشغيل إشعارات النشاط."
@@ -582,8 +585,10 @@
     },
     "weekly": {
       "title": "ماراثون القراءة في نهاية الأسبوع",
-      "desc": "أنهِ 3 فصول واترك تعليقين بين الجمعة والأحد.",
-      "endsIn": "يومان"
+      "desc": "أنهِ 3 فصول واترك تعليقًا واحدًا بين الجمعة والأحد.",
+      "endsIn": "يومان",
+      "endsToday": "ينتهي اليوم",
+      "endsInDays": "{{count}} يوم"
     },
     "errors": {
       "sessionChanged": "تغيرت جلسة التحدي.",
@@ -694,6 +699,7 @@
     "signOutConfirm": "هل أنت متأكد أنك تريد تسجيل الخروج من حسابك؟",
     "offlineLibrary": "المكتبة بلا اتصال",
     "loadingUser": "جارٍ تحميل معلومات المستخدم...",
+    "loadingUserInfo": "جارٍ تحميل معلومات المستخدم...",
     "myStories": "قصصي",
     "myConversations": "محادثاتي",
     "editProfile": "تعديل الملف الشخصي",
@@ -1101,5 +1107,9 @@
     "later": "Later",
     "unavailable": "Launch unavailable",
     "ownerOnly": "Only the author of a published book can prepare its launch."
+  },
+  "chat": {
+    "removeFailedTitle": "تعذّر حذف الرسالة",
+    "removeFailedMessage": "تمت استعادة الرسالة. يرجى المحاولة مرة أخرى."
   }
 }

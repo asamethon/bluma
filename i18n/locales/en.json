@@ -339,6 +339,7 @@
     "locationLabel": "Location",
     "locationPlaceholder": "City, Country",
     "websiteLabel": "Website",
+    "invalidWebsite": "Please enter a valid website address.",
     "accountSection": "Account Settings",
     "saveChanges": "Save Changes",
     "available": "Available",
@@ -397,6 +398,8 @@
     "likesSub": "When your stories get likes",
     "comments": "Comments",
     "commentsSub": "When someone comments on your content",
+    "mentions": "Mentions",
+    "mentionsSub": "When someone mentions you in a comment",
     "newFollower": "New Follower",
     "newFollowerSub": "When someone starts following you",
     "enablePushFirst": "Enable Push Notifications first to turn on activity notifications."
@@ -604,8 +607,10 @@
     },
     "weekly": {
       "title": "Weekend Reading Marathon",
-      "desc": "Finish 3 chapters and leave 2 comments between Friday and Sunday.",
-      "endsIn": "2 days"
+      "desc": "Finish 3 chapters and leave 1 comment between Friday and Sunday.",
+      "endsIn": "2 days",
+      "endsToday": "Ends today",
+      "endsInDays": "{{count}} days"
     },
     "errors": {
       "sessionChanged": "Challenge session changed.",
@@ -716,6 +721,7 @@
     "signOutConfirm": "Are you sure you want to sign out of your account?",
     "offlineLibrary": "Offline Library",
     "loadingUser": "Loading user info...",
+    "loadingUserInfo": "Loading user info...",
     "myStories": "My Stories",
     "myConversations": "My Conversations",
     "editProfile": "Edit Profile",
@@ -1101,5 +1107,9 @@
     "alertBody": "Your email address isn't verified. If you don't verify it within {{days}} days, your account will be suspended. If the address is wrong, you can fix it on the verification screen.",
     "alertLater": "Later",
     "alertGo": "Verify now"
+  },
+  "chat": {
+    "removeFailedTitle": "Message couldn't be deleted",
+    "removeFailedMessage": "The message was restored. Please try again."
   }
 }

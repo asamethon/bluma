@@ -317,6 +317,7 @@
     "locationLabel": "所在地",
     "locationPlaceholder": "城市，国家",
     "websiteLabel": "网站",
+    "invalidWebsite": "请输入有效的网站地址。",
     "accountSection": "账户设置",
     "saveChanges": "保存更改",
     "available": "可用",
@@ -375,6 +376,8 @@
     "likesSub": "你的故事获得点赞时",
     "comments": "评论",
     "commentsSub": "有人评论你的内容时",
+    "mentions": "提及",
+    "mentionsSub": "当有人在评论中提到你时",
     "newFollower": "新关注者",
     "newFollowerSub": "有人开始关注你时",
     "enablePushFirst": "请先开启推送通知，才能启用动态通知。"
@@ -582,8 +585,10 @@
     },
     "weekly": {
       "title": "周末阅读马拉松",
-      "desc": "在周五至周日之间读完 3 个章节并留下 2 条评论。",
-      "endsIn": "还剩 2 天"
+      "desc": "在周五至周日之间读完 3 个章节并留下 1 条评论。",
+      "endsIn": "还剩 2 天",
+      "endsToday": "今天结束",
+      "endsInDays": "{{count}} 天"
     },
     "errors": {
       "sessionChanged": "挑战会话已更改。",
@@ -694,6 +699,7 @@
     "signOutConfirm": "确定要退出账户吗？",
     "offlineLibrary": "离线书库",
     "loadingUser": "用户信息加载中…",
+    "loadingUserInfo": "正在加载用户信息…",
     "myStories": "我的故事",
     "myConversations": "我的对话",
     "editProfile": "编辑资料",
@@ -1101,5 +1107,9 @@
     "later": "Later",
     "unavailable": "Launch unavailable",
     "ownerOnly": "Only the author of a published book can prepare its launch."
+  },
+  "chat": {
+    "removeFailedTitle": "无法删除消息",
+    "removeFailedMessage": "消息已恢复，请重试。"
   }
 }

@@ -317,6 +317,7 @@
     "locationLabel": "Localização",
     "locationPlaceholder": "Cidade, país",
     "websiteLabel": "Site",
+    "invalidWebsite": "Digite um endereço de site válido.",
     "accountSection": "Configurações da conta",
     "saveChanges": "Salvar alterações",
     "available": "Disponível",
@@ -375,6 +376,8 @@
     "likesSub": "Quando suas histórias receberem curtidas",
     "comments": "Comentários",
     "commentsSub": "Quando alguém comentar no seu conteúdo",
+    "mentions": "Menções",
+    "mentionsSub": "Quando alguém te menciona em um comentário",
     "newFollower": "Novo seguidor",
     "newFollowerSub": "Quando alguém começar a seguir você",
     "enablePushFirst": "Ative primeiro as notificações push para receber notificações de atividade."
@@ -582,8 +585,10 @@
     },
     "weekly": {
       "title": "Maratona de leitura de fim de semana",
-      "desc": "Termine 3 capítulos e deixe 2 comentários entre sexta-feira e domingo.",
-      "endsIn": "2 dias"
+      "desc": "Termine 3 capítulos e deixe 1 comentário entre sexta e domingo.",
+      "endsIn": "2 dias",
+      "endsToday": "Termina hoje",
+      "endsInDays": "{{count}} dias"
     },
     "errors": {
       "sessionChanged": "A sessão do desafio mudou.",
@@ -694,6 +699,7 @@
     "signOutConfirm": "Tem certeza de que deseja sair da sua conta?",
     "offlineLibrary": "Biblioteca offline",
     "loadingUser": "Carregando informações do usuário...",
+    "loadingUserInfo": "Carregando informações do usuário...",
     "myStories": "Minhas histórias",
     "myConversations": "Minhas conversas",
     "editProfile": "Editar perfil",
@@ -1101,5 +1107,9 @@
     "later": "Later",
     "unavailable": "Launch unavailable",
     "ownerOnly": "Only the author of a published book can prepare its launch."
+  },
+  "chat": {
+    "removeFailedTitle": "Não foi possível excluir a mensagem",
+    "removeFailedMessage": "A mensagem foi restaurada. Tente novamente."
   }
 }

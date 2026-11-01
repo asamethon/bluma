@@ -317,6 +317,7 @@
     "locationLabel": "Lokasi",
     "locationPlaceholder": "Kota, negara",
     "websiteLabel": "Situs web",
+    "invalidWebsite": "Masukkan alamat situs web yang valid.",
     "accountSection": "Pengaturan akun",
     "saveChanges": "Simpan perubahan",
     "available": "Tersedia",
@@ -375,6 +376,8 @@
     "likesSub": "Saat ceritamu mendapatkan suka",
     "comments": "Komentar",
     "commentsSub": "Saat seseorang mengomentari kontenmu",
+    "mentions": "Sebutan",
+    "mentionsSub": "Saat seseorang menyebut kamu di komentar",
     "newFollower": "Pengikut baru",
     "newFollowerSub": "Saat seseorang mulai mengikutimu",
     "enablePushFirst": "Aktifkan notifikasi push terlebih dahulu untuk mendapatkan notifikasi aktivitas."
@@ -582,8 +585,10 @@
     },
     "weekly": {
       "title": "Maraton membaca akhir pekan",
-      "desc": "Selesaikan 3 bab dan tinggalkan 2 komentar antara Jumat dan Minggu.",
-      "endsIn": "2 hari"
+      "desc": "Selesaikan 3 bab dan tinggalkan 1 komentar antara Jumat dan Minggu.",
+      "endsIn": "2 hari",
+      "endsToday": "Berakhir hari ini",
+      "endsInDays": "{{count}} hari"
     },
     "errors": {
       "sessionChanged": "Sesi tantangan berubah.",
@@ -694,6 +699,7 @@
     "signOutConfirm": "Yakin ingin keluar dari akunmu?",
     "offlineLibrary": "Perpustakaan luring",
     "loadingUser": "Memuat informasi pengguna...",
+    "loadingUserInfo": "Memuat info pengguna...",
     "myStories": "Ceritaku",
     "myConversations": "Percakapanku",
     "editProfile": "Edit profil",
@@ -1101,5 +1107,9 @@
     "later": "Later",
     "unavailable": "Launch unavailable",
     "ownerOnly": "Only the author of a published book can prepare its launch."
+  },
+  "chat": {
+    "removeFailedTitle": "Pesan tidak dapat dihapus",
+    "removeFailedMessage": "Pesan dikembalikan. Silakan coba lagi."
   }
 }
