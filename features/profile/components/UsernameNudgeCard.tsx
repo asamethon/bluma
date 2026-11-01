@@ -1,11 +1,9 @@
 import { Button, Callout, Text } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useUsernameNudge } from '../hooks/useUsernameNudge';
-import { trackNudgeShown } from '../services/usernameNudgeEvents';
 import { UsernameSuggestions } from './UsernameSuggestions';
 
 /**
@@ -20,10 +18,6 @@ export function UsernameNudgeCard() {
   const router = useRouter();
   const nudge = useUsernameNudge();
   const { reason, visible } = nudge;
-
-  useEffect(() => {
-    if (visible && reason) trackNudgeShown(reason);
-  }, [reason, visible]);
 
   if (!visible) return null;
 

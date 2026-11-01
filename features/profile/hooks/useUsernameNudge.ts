@@ -1,7 +1,7 @@
 import { useAppSelector } from '@/store/hooks';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { readNudgeDismissed, writeNudgeDismissed } from '../services/usernameNudgeStorage';
-import { trackNudgeDismissed } from '../services/usernameNudgeEvents';
+import { trackNudgeDismissed, trackNudgeShown } from '../services/usernameNudgeEvents';
 import { assessUsername } from '../utils/usernameAssess';
 import { useUsernameSuggestions } from './useUsernameSuggestions';
 
@@ -42,6 +42,12 @@ export function useUsernameNudge() {
     });
     return () => { lifecycle.cancelled = true; };
   }, [userId]);
+
+  // Gösterim ölçümü kartın değil, kararın yanında durur. Olay servisi
+  // oturum başına gerekçe başına tek kez gönderiyor.
+  useEffect(() => {
+    if (visible && assessment.reason) trackNudgeShown(assessment.reason);
+  }, [assessment.reason, visible]);
 
   const dismiss = useCallback(() => {
     // Optimistic: kart anında kapanır, yazma arka planda.

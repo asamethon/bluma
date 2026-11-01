@@ -38,36 +38,40 @@ export function useEditProfileForm(user: User) {
   // Öneri kartındaki çip bu rotayı adı önceden doldurarak açar.
   const params = useLocalSearchParams<{ username?: string }>();
   const prefill = normalizeUsername(params.username ?? '');
+  const prefilled = !!prefill && prefill !== user.username;
   const avatar = useAvatarPicker(user.profileImage || null);
   const cover = useProfileCoverPicker(user.coverImage || null);
   const [state, dispatch] = useReducer(reducer, {
     saving: false,
-    usernameStatus: null,
+    // Ön doldurulan ad daha doğrulanmadı; alan ilk render'dan itibaren "bakılıyor".
+    usernameStatus: prefilled ? 'checking' : null,
     form: {
       displayName: user.displayName || '',
-      username: user.username || '',
+      username: prefilled ? prefill : user.username || '',
       bio: user.bio || '',
       website: user.website || '',
       location: user.location || '',
     },
   });
 
+  const askAvailability = useCallback((username: string) => {
+    void authActions.checkUsernameAvailability(username)
+      .then(available => dispatch({ type: 'usernameStatus', username, status: available ? 'available' : 'taken' }))
+      .catch(() => dispatch({ type: 'usernameStatus', username, status: 'taken' }));
+  }, []);
+
   const update = useCallback((field: EditProfileField, value: string) => {
     if (field !== 'username') return dispatch({ type: 'field', field, value });
     const username = normalizeUsername(value);
     const status = username !== user.username && username.length >= 3 ? 'checking' : null;
     dispatch({ type: 'field', field, value: username, status });
-    if (status) {
-      void authActions.checkUsernameAvailability(username)
-        .then(available => dispatch({ type: 'usernameStatus', username, status: available ? 'available' : 'taken' }))
-        .catch(() => dispatch({ type: 'usernameStatus', username, status: 'taken' }));
-    }
-  }, [user.username]);
+    if (status) askAvailability(username);
+  }, [askAvailability, user.username]);
 
-  // Ön doldurulan ad, elle yazılmış gibi aynı yoldan geçsin (müsaitlik sorgusu dahil).
+  // Değer başlangıç durumundan geliyor; burada yalnızca müsaitlik bir kez sorulur.
   useEffect(() => {
-    if (prefill && prefill !== user.username) update('username', prefill);
-  }, [prefill, update, user.username]);
+    if (prefilled) askAvailability(prefill);
+  }, [askAvailability, prefill, prefilled]);
 
   const save = useCallback(async () => {
     if (!state.form.displayName.trim() || !state.form.username.trim()) {
