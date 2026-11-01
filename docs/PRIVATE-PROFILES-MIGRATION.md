@@ -33,7 +33,10 @@ kayıt olamaz. İkisini ayıran şey bu anahtar.
    yedisi de geçti. Canlıda `isHidden`/`isEditorsPick` taşıyan hikâye yok
    (219/219 temiz), bu yüzden yönetim alanı koruması eski sürümü etkilemiyor.
 2. 🔄 3.0.1 **1 Kasım 2026'da TestFlight'a gitti** (iOS buildNumber 20,
-   Android versionCode 16).
+   Android versionCode 16) ve **cihazda doğrulandı**: ayrı Yaz sekmesi yerinde;
+   yeni hesap açma, profil düzenleme ve taslak yaz→çık→dön→yayınla akışlarının
+   üçü de hatasız. Yani 1. aşamada dağıtılan kurallar (`private/{docId}`,
+   `draftChapters`) gerçek binary'de çalışıyor. Mağaza gönderimi bekliyor.
    Mağaza dağıtımı yayılana kadar 2. aşamaya geçmeyin: anahtar true olduğu
    anda eski sürümdeki kullanıcılar profil kaydı ve sayaç artışında reddedilir.
 
