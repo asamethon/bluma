@@ -1143,9 +1143,9 @@
   "username": {
     "nudgeTitle": "Quer atualizar seu nome de usuário?",
     "nudgeBody": "Um nome fácil de lembrar ajuda os leitores a te encontrar e a te marcar com @.",
-    "nudgeMangled": "Algumas letras do seu nome não entraram no nome de usuário — a culpa é nossa. Quer este?",
+    "nudgeMangled": "Algumas letras do seu nome não entraram no nome de usuário, a culpa é nossa. Quer este?",
     "hintGeneric": "Um nome fácil de lembrar facilita te marcarem com @.",
-    "hintMangled": "Algumas letras do seu nome não entraram no nome de usuário — a culpa é nossa.",
+    "hintMangled": "Algumas letras do seu nome não entraram no nome de usuário, a culpa é nossa.",
     "pickOwn": "Prefiro escolher",
     "keep": "Deixar assim"
   }
