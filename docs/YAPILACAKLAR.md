@@ -56,6 +56,12 @@ Bunlar yeni sürüm gönderilmeden ÖNCE bitmeli. Her kural değişikliğinden s
 - **Yapılacak:** Deterministik doküman ID'sine geç: `views/{userId}` içinde `count` alanı tut, `count < 3` ise `increment(1)`. Sorgu yerine tek doküman okuması. Kurala `views/{userId}` yaz: `request.auth.uid == userId` + count artışı ±1.
 - **Kabul:** Okuma başına 1 doc read + koşullu 2 write; sorgu yok.
 
+### 0.6 Kullanıcı adı benzersizliğini kuralda zorla 🟡
+- **Sorun:** Benzersizlik yalnızca istemci sorgusuyla korunuyor (`features/auth/services/profile/usernameAvailability.ts`). Kural `users/{uid}.username` alanına hiç bakmıyor: iki kişi aynı anda aynı adı seçerse ikisi de "müsait" görür ve ikisi de yazar. Eski adlar (`previousUsernames`) eklendiğinden beri yarışın yüzeyi biraz daha geniş.
+- **Yapılacak:** `usernames/{ad}` → `{ uid }` belgesi; kural yalnızca `create` ve yalnızca sahibine izin versin (`request.auth.uid == request.resource.data.uid`), var olan belge güncellenemesin. Ad değişiminde yeni belgeyi oluştur, eskisini sahibine bırak (eski `@bahsetme`ler çözülmeye devam etsin). Kurala `get` açık, `list` KAPALI olsun — müsaitlik tek belge okumasıyla sorulur, kullanıcı adı listesi dökülemez.
+- **Yan fayda:** Bu, `previousUsernames`in herkese açık okunmak zorunda olmasını da çözer; bugün eski adlar `users/{uid}` içinde herkese görünür duruyor (bkz. `scripts/tests/usernameHistory.rules.test.cjs`).
+- **Kabul:** Aynı adı eşzamanlı yazan iki istemciden biri izin hatası alır; müsaitlik sorgusu koleksiyon taraması yapmaz.
+
 ---
 
 ## FAZ 1 — Mağaza ve dağıtım (fırsat penceresi, ~1 hafta, FAZ 0 ile paralel başlanabilir)
@@ -132,7 +138,8 @@ Bunlar yeni sürüm gönderilmeden ÖNCE bitmeli. Her kural değişikliğinden s
 - **Arama:** İstemci `includes()` araması yalnızca bellekteki ~50 hikâyede (`app/(tabs)/search.tsx:90`). Kısa vade: başlık için `title_lowercase` alanı + Firestore prefix sorgusu (`>=` / `<=` + ``), yazar için mevcut `searchUsers`. Orta vade (katalog >1000): Algolia/Typesense (VPS'e Typesense kurulabilir — bedava).
 - **Keşif raf ömrü:** `discover.ts:22` 30 gün filtresini kaldır ya da "Yeni"nin yanına zaman filtresi olmayan "Tüm zamanlar" rafı ekle; tür sayfalarına `orderBy(viewsCount)` sıralaması ekle (composite index gerekir).
 - **Sayfalama:** ana akışta `limit(50)` sonrası `startAfter` ile infinite scroll.
-- **Kabul:** 51. hikâye keşfedilebilir; başlığı bilinen hikâye aramada çıkıyor.
+- **Kullanıcı adı kopyası:** `discovery/search` JSON'u hem hikâyelerde hem yazarlarda **kullanıcı adını kopyalıyor** (bkz. `docs/KESFET-ALGORITMASI.md` §7.2). Bugün uygulamada kullanıcı adının tek kopyası `users/{uid}`; bu JSON ilk denormalize kopya olacak. Kullanıcı adı değiştiğinde JSON bayatlar: arama eski adı gösterir ve o ada dokunan kişi yanlış profile gider. Üretim işi, JSON'u ad değişiminde (ya da periyodik yenilemede) güncellemeyi kapsamalı.
+- **Kabul:** 51. hikâye keşfedilebilir; başlığı bilinen hikâye aramada çıkıyor; adını değiştiren yazar aramada yeni adıyla görünüyor.
 
 ### 2.6 Wattpad'den içerik taşıma akışı 🟡 (yazar mıknatısı)
 - "Hikâyeni taşı" ekranı: çok bölümlü metni tek seferde yapıştır → `§§`/başlık sezgisiyle otomatik bölümlere ayır → önizle → yayınla. (Bölüm ayırma mantığı `chapterContent.ts`'te zaten var; UI akışı eksik.)
