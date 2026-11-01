@@ -9,5 +9,15 @@
   "project": [
     "**/*.{ts,tsx,js,cjs}",
     "!server/**"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "ignore": [
+    "__tests__/support/chapterFirestore.ts"
+  ],
+  "ignoreDependencies": [
+    "expo-modules-jsi"
+  ],
+  "ignoreBinaries": [
+    "firebase"
   ]
 }

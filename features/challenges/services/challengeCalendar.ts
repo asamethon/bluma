@@ -37,9 +37,3 @@ export function getDaysLeftInWeekend(): number {
   }
   return 0;
 }
-
-export function isWeekendOrFriday(): boolean {
-  const now = new Date();
-  const day = now.getDay();
-  return day === 5 || day === 6 || day === 0;
-}
