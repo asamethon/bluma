@@ -1139,5 +1139,14 @@
   "chat": {
     "removeFailedTitle": "No se pudo eliminar el mensaje",
     "removeFailedMessage": "El mensaje se ha restaurado. Inténtalo de nuevo."
+  },
+  "username": {
+    "nudgeTitle": "¿Quieres actualizar tu nombre de usuario?",
+    "nudgeBody": "Un nombre fácil de recordar ayuda a que los lectores te encuentren y te etiqueten con @.",
+    "nudgeMangled": "Algunas letras de tu nombre no pasaron al nombre de usuario; el error es nuestro. ¿Quieres este?",
+    "hintGeneric": "Un nombre fácil de recordar hace que te etiqueten con @ más fácilmente.",
+    "hintMangled": "Algunas letras de tu nombre no pasaron al nombre de usuario; el error es nuestro.",
+    "pickOwn": "Prefiero elegirlo yo",
+    "keep": "Dejarlo así"
   }
 }

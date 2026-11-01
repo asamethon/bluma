@@ -1139,5 +1139,14 @@
   "chat": {
     "removeFailedTitle": "Message couldn't be deleted",
     "removeFailedMessage": "The message was restored. Please try again."
+  },
+  "username": {
+    "nudgeTitle": "Want to update your username?",
+    "nudgeBody": "A memorable name makes it easier for readers to find you and tag you with @.",
+    "nudgeMangled": "Some letters from your name didn't make it into your username — that's on us. Want this one?",
+    "hintGeneric": "A memorable name makes it easier for readers to tag you with @.",
+    "hintMangled": "Some letters from your name didn't make it into your username — that's on us.",
+    "pickOwn": "I'll choose myself",
+    "keep": "Keep it as is"
   }
 }

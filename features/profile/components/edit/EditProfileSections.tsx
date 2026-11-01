@@ -37,6 +37,7 @@ export function EditProfileCoreSection(props: FormProps & { user: User; username
         <UsernameField
           value={props.form.username}
           originalUsername={props.user.username}
+          displayName={props.form.displayName}
           status={props.usernameStatus}
           onChange={value => props.update('username', value)}
         />

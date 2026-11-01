@@ -1,10 +1,12 @@
 import { normalizeUsername } from '@/features/auth/utils/usernameNormalize';
+import { trackNudgeChanged } from '../services/usernameNudgeEvents';
+import { assessUsername } from '../utils/usernameAssess';
 import { imageUploadService } from '@/services/imageUploadService';
 import { authActions } from '@/store/authStore';
 import type { User } from '@/types';
 import { logger } from '@/utils/logger';
-import { useRouter } from 'expo-router';
-import { useCallback, useReducer } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useReducer } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert } from 'react-native';
 import { useAvatarPicker, useProfileCoverPicker } from './useAvatarPicker';
@@ -33,6 +35,9 @@ const reducer = (state: State, action: Action): State => {
 export function useEditProfileForm(user: User) {
   const { t } = useTranslation();
   const router = useRouter();
+  // Öneri kartındaki çip bu rotayı adı önceden doldurarak açar.
+  const params = useLocalSearchParams<{ username?: string }>();
+  const prefill = normalizeUsername(params.username ?? '');
   const avatar = useAvatarPicker(user.profileImage || null);
   const cover = useProfileCoverPicker(user.coverImage || null);
   const [state, dispatch] = useReducer(reducer, {
@@ -58,6 +63,11 @@ export function useEditProfileForm(user: User) {
         .catch(() => dispatch({ type: 'usernameStatus', username, status: 'taken' }));
     }
   }, [user.username]);
+
+  // Ön doldurulan ad, elle yazılmış gibi aynı yoldan geçsin (müsaitlik sorgusu dahil).
+  useEffect(() => {
+    if (prefill && prefill !== user.username) update('username', prefill);
+  }, [prefill, update, user.username]);
 
   const save = useCallback(async () => {
     if (!state.form.displayName.trim() || !state.form.username.trim()) {
@@ -87,16 +97,20 @@ export function useEditProfileForm(user: User) {
           ? imageUploadService.uploadProfileCover(cover.image)
           : Promise.resolve(null);
       const [profileImage, coverImage] = await Promise.all([profileUpload, coverUpload]);
+      const username = normalizeUsername(state.form.username);
       await authActions.updateUserProfile({
         ...user,
         displayName: state.form.displayName.trim(),
-        username: normalizeUsername(state.form.username),
+        username,
         bio: state.form.bio.trim(),
         website: state.form.website.trim(),
         location: state.form.location.trim(),
         profileImage,
         coverImage,
       });
+      // Sonucu ölç: eski ad işaretlenmişlerden biriyse ve gerçekten değiştiyse.
+      const previous = assessUsername(user.username ?? '', user.displayName ?? '');
+      if (previous.reason && username !== user.username) trackNudgeChanged(previous.reason);
       Alert.alert(t('common.success'), t('editProfile.updated'), [
         { text: t('common.ok'), onPress: () => router.push('/(tabs)/profile') },
       ]);

@@ -21,6 +21,7 @@ import { ProfileComposePrompt } from './ProfileComposePrompt';
 import { ProfileMessageComposer } from './ProfileMessageComposer';
 import { ProfilePinnedBar } from './ProfilePinnedBar';
 import { ProfileTabsRow } from './ProfileTabsRow';
+import { UsernameNudgeCard } from './UsernameNudgeCard';
 
 type State = { tab: ProfileTab; composerVisible: boolean; image: string | null; headerHeight: number; pinned: boolean };
 type Action =
@@ -133,9 +134,13 @@ export function OwnProfileScreen({ user, stories, conversations, loading }: Prop
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 }}
         ListHeaderComponent={
-          <View onLayout={onHeaderLayout}>
-            <OwnProfileHeader user={user} stories={stories} topInset={top} onShare={actions.shareProfile} />
-          </View>
+          <>
+            {/* onLayout yalnızca künyeyi ölçer: kart sabitlenme eşiğini kaydırmasın. */}
+            <View onLayout={onHeaderLayout}>
+              <OwnProfileHeader user={user} stories={stories} topInset={top} onShare={actions.shareProfile} />
+            </View>
+            <UsernameNudgeCard />
+          </>
         }
       />
       {state.pinned && (

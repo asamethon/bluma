@@ -1138,5 +1138,14 @@
   "chat": {
     "removeFailedTitle": "Pesan tidak dapat dihapus",
     "removeFailedMessage": "Pesan dikembalikan. Silakan coba lagi."
+  },
+  "username": {
+    "nudgeTitle": "Mau perbarui nama penggunamu?",
+    "nudgeBody": "Nama yang mudah diingat membuat pembaca lebih mudah menemukan dan menandaimu dengan @.",
+    "nudgeMangled": "Beberapa huruf dari namamu tidak masuk ke nama pengguna — ini kesalahan kami. Mau yang ini?",
+    "hintGeneric": "Nama yang mudah diingat memudahkan pembaca menandaimu dengan @.",
+    "hintMangled": "Beberapa huruf dari namamu tidak masuk ke nama pengguna — ini kesalahan kami.",
+    "pickOwn": "Saya pilih sendiri",
+    "keep": "Biarkan saja"
   }
 }

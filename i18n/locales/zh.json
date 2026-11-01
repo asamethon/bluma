@@ -1138,5 +1138,14 @@
   "chat": {
     "removeFailedTitle": "无法删除消息",
     "removeFailedMessage": "消息已恢复，请重试。"
+  },
+  "username": {
+    "nudgeTitle": "要更新用户名吗？",
+    "nudgeBody": "好记的名字能让读者更容易找到你，也更方便用 @ 提到你。",
+    "nudgeMangled": "你名字里的一些字母没有进入用户名，这是我们的问题。要换成这个吗？",
+    "hintGeneric": "好记的名字能让读者更方便用 @ 提到你。",
+    "hintMangled": "你名字里的一些字母没有进入用户名，这是我们的问题。",
+    "pickOwn": "我自己选",
+    "keep": "保持不变"
   }
 }

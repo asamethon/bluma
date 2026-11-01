@@ -1,6 +1,10 @@
 import { Text } from '@/components/ui';
+import { USERNAME_MAX_LENGTH } from '@/features/auth/utils/usernameNormalize';
 import { useTheme } from '@/constants/theme';
 import type { OnboardingUsernameStatus } from '@/features/auth/hooks/useOnboardingForm';
+import { UsernameSuggestions } from '@/features/profile/components/UsernameSuggestions';
+import { useUsernameSuggestions } from '@/features/profile/hooks/useUsernameSuggestions';
+import { assessUsername } from '@/features/profile/utils/usernameAssess';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +24,11 @@ type Props = {
 export function ProfileStep(props: Props) {
   const { colors, fonts } = useTheme();
   const { t } = useTranslation();
+  // Alan boşken ilk müsait öneriyi göster; yazılan ad gürültülüyse ipucuyla birlikte.
+  // Müsaitlik sorgusu yalnızca öneri gösterilecekse atılır — boşa okuma yok.
+  const assessment = assessUsername(props.username, props.displayName);
+  const showSuggestions = !props.username || assessment.flagged;
+  const suggestions = useUsernameSuggestions(props.displayName, props.username, showSuggestions);
   const statusMeta = props.status === 'checking'
     ? { icon: 'time-outline' as const, color: colors.textSecondary, text: t('onboarding.checking') }
     : props.status === 'available'
@@ -63,11 +72,11 @@ export function ProfileStep(props: Props) {
           <Text style={[styles.atPrefix, { color: colors.primary, fontFamily: fonts.sans }]}>@</Text>
           <TextInput
             style={[styles.textInput, { color: colors.text, fontFamily: fonts.sans }]}
-            placeholder={t('onboarding.usernamePlaceholder')}
+            placeholder={(!props.username && suggestions[0]) || t('onboarding.usernamePlaceholder')}
             placeholderTextColor={colors.textSecondary}
             value={props.username}
             onChangeText={props.onUsername}
-            maxLength={20}
+            maxLength={USERNAME_MAX_LENGTH}
             autoCapitalize="none"
             autoCorrect={false}
           />
@@ -81,6 +90,11 @@ export function ProfileStep(props: Props) {
             <Text variant="caption" style={{ color: statusMeta.color }}>{statusMeta.text}</Text>
           </View>
         )}
+        <UsernameSuggestions
+          reason={assessment.reason}
+          suggestions={suggestions}
+          onPick={props.onUsername}
+        />
       </View>
     </View>
   );

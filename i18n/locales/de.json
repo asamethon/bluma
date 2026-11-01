@@ -1139,5 +1139,14 @@
   "chat": {
     "removeFailedTitle": "Nachricht konnte nicht gelöscht werden",
     "removeFailedMessage": "Die Nachricht wurde wiederhergestellt. Bitte versuche es erneut."
+  },
+  "username": {
+    "nudgeTitle": "Möchtest du deinen Benutzernamen aktualisieren?",
+    "nudgeBody": "Mit einem einprägsamen Namen finden dich Leser leichter und können dich mit @ markieren.",
+    "nudgeMangled": "Einige Buchstaben deines Namens sind nicht in den Benutzernamen übernommen worden – das ist unser Fehler. Möchtest du diesen?",
+    "hintGeneric": "Mit einem einprägsamen Namen kann man dich leichter mit @ markieren.",
+    "hintMangled": "Einige Buchstaben deines Namens fehlen im Benutzernamen – das ist unser Fehler.",
+    "pickOwn": "Selbst auswählen",
+    "keep": "So lassen"
   }
 }

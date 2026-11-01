@@ -1138,5 +1138,14 @@
     "alertBody": "Hesabının e-posta adresi doğrulanmamış. {{days}} gün içinde doğrulamazsan hesabın askıya alınacak. Adresi yanlış yazdıysan doğrulama ekranından düzeltebilirsin.",
     "alertLater": "Daha sonra",
     "alertGo": "Şimdi doğrula"
+  },
+  "username": {
+    "nudgeTitle": "Kullanıcı adını güncellemek ister misin?",
+    "nudgeBody": "Akılda kalan bir ad, okurların seni bulmasını ve @ ile etiketlemesini kolaylaştırır.",
+    "nudgeMangled": "Adındaki bazı harfler kullanıcı adına geçmemiş, bu bizim hatamız. Şunu ister misin?",
+    "hintGeneric": "Akılda kalan bir ad, okurların seni @ ile etiketlemesini kolaylaştırır.",
+    "hintMangled": "Adındaki bazı harfler kullanıcı adına geçmemiş — bu bizim hatamız.",
+    "pickOwn": "Kendim seçeyim",
+    "keep": "Böyle kalsın"
   }
 }
