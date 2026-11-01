@@ -21,6 +21,20 @@ describe('nextPreviousUsernames', () => {
     expect(result).toEqual(['yeni', 'a', 'b', 'c', 'd']);
   });
 
+  it('yeni adı geçmişten çıkarır — kendi eski adına dönen kullanıcı', () => {
+    // "gokceyilmaz" iken "gkeylmaz"a dönen kullanıcı: güncel adı geçmişinde
+    // kalmamalı, yoksa kendi adı "başkasının eski adı" gibi görünür.
+    expect(nextPreviousUsernames(['gkeylmaz'], 'gokceyilmaz', 'gkeylmaz')).toEqual(['gokceyilmaz']);
+  });
+
+  it('yeni ad listenin ortasındayken de çıkarılır', () => {
+    expect(nextPreviousUsernames(['a', 'hedef', 'b'], 'eski', 'hedef')).toEqual(['eski', 'a', 'b']);
+  });
+
+  it('yeni ad verilmezse davranış değişmez', () => {
+    expect(nextPreviousUsernames(['a', 'b'], 'eski')).toEqual(['eski', 'a', 'b']);
+  });
+
   it('boş eski adda listeyi olduğu gibi bırakır', () => {
     expect(nextPreviousUsernames(['a'], '')).toEqual(['a']);
     expect(nextPreviousUsernames(undefined, '')).toEqual([]);

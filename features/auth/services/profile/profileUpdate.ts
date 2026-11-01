@@ -15,7 +15,7 @@ export async function updateUserProfile(user: User) {
     const previous = store.getState().auth.user;
     const renamed = !!previous?.username && !!user.username && previous.username !== user.username;
     const payload = renamed
-      ? { ...user, previousUsernames: nextPreviousUsernames(previous.previousUsernames, previous.username!) }
+      ? { ...user, previousUsernames: nextPreviousUsernames(previous.previousUsernames, previous.username!, user.username) }
       : user;
     await saveUserProfile(payload);
     await AsyncStorage.setItem('userData', JSON.stringify(payload));
