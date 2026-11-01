@@ -68,10 +68,13 @@ test('beğeni sayacı tek adım oynayabilir', async () => {
   await expectStatus(path, { likesCount: 20 }, stranger, 200, 'beğeniyi geri alma -1');
 });
 
-test('yorum sayacı toplu azaltılamaz, tek tek azaltılır', async () => {
+test('yorum sayacını yabancı toplu azaltamaz; yazar dal silerken azaltabilir', async () => {
   const path = await freshStory();
-  await expectStatus(path, { commentsCount: 3 }, owner, 403, 'toplu -5 reddedilmeli');
-  await expectStatus(path, { commentsCount: 7 }, owner, 200, 'tek adım -1 kabul edilmeli');
+  await expectStatus(path, { commentsCount: 3 }, stranger, 403, 'yabancı toplu azaltma');
+  await expectStatus(path, { commentsCount: 7 }, stranger, 200, 'yabancı tek adım -1');
+  // Yazar bir yorum dalını silince sayaç birden fazla düşer.
+  await expectStatus(path, { commentsCount: 2 }, owner, 200, 'yazar toplu azaltabilir');
+  await expectStatus(path, { commentsCount: 50 }, owner, 403, 'yazar şişiremez');
 });
 
 test('görüntülenme sayacı keyfi düşürülemez', async () => {

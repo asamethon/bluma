@@ -319,6 +319,14 @@ service cloud.firestore {
             && (counterProof(/databases/$(database)/documents/stories/$(storyId)/likes/$(request.auth.uid))
                 || request.resource.data.likesCount < resource.data.get('likesCount', 0)))
         || isCounterBump('commentsCount')
+        // Yazar bir yorum dalını silince sayaç birden fazla düşer. Yalnız
+        // AZALTMA ve yalnız hikâyenin yazarı için serbest: kendi sayacını
+        // küçültmek kimseye zarar vermez, şişirmek yine engelli. Eski mağaza
+        // sürümünün toplu silme yazması da böylece kırılmıyor.
+        || (resource.data.authorId == request.auth.uid
+            && onlyChanges(['commentsCount'])
+            && request.resource.data.commentsCount < resource.data.get('commentsCount', 0)
+            && request.resource.data.commentsCount >= 0)
         || isCounterBump('viewsCount')
         || updatesManagementFields()
       );
