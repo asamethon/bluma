@@ -26,11 +26,15 @@ export const createHomeStyles = (colors: Theme['colors']) =>
     },
 
     section: { marginTop: Spacing.xxl },
+    // Çipler başlıkla ilk kart arasında kendi bandı: üstteki ve altındaki
+    // boşluk eşit (başlığın kendi marginBottom'u + xs = xl), yoksa kartlar
+    // çiplere yapışıp aynı bloğun parçası gibi duruyor.
     sortRow: {
       flexDirection: 'row',
       gap: Spacing.sm,
       paddingHorizontal: Spacing.screenX,
       marginTop: Spacing.sm,
+      marginBottom: Spacing.xl,
     },
     writerNudge: { marginTop: Spacing.xxl, paddingHorizontal: Spacing.screenX },
     continueList: { paddingHorizontal: Spacing.screenX },
