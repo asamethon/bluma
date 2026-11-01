@@ -58,19 +58,28 @@ service cloud.firestore {
     function counterProof(path) {
       return !legacyClientsRetired() || exists(path);
     }
+    // Verilen alanların hiçbirine dokunulmadığında true. Sayaçları içerik
+    // güncellemesinden ayırmak için: sayaç yalnızca tek adımlık bump
+    // yollarından değişsin, sahibi/yazarı elle yazamasın.
+    function preserves(keys) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(keys);
+    }
     // True when `field` changes by exactly n (atomic increment/decrement).
     function bumpBy(field, n) {
       return request.resource.data[field] == resource.data.get(field, 0) + n;
     }
-    // Social counters: a non-owner may only bump `field` by +1 (new
-    // like/comment/view) or move it down to some non-negative value (unlike,
-    // comment deletion — which can remove several replies at once, so the
-    // decrement isn't always exactly -1). Arbitrary inflation is blocked.
+    // Sosyal sayaçlar: oturumlu bir kullanıcı `field` değerini yalnızca TEK
+    // ADIM oynatabilir (+1 beğeni/yorum/görüntülenme, -1 geri alma).
+    //
+    // Önceden azaltma tarafı "negatif olmayan herhangi bir değer" diyordu:
+    // herkes bir hikâyenin likesCount'unu ya da bir kullanıcının
+    // followersCount'unu tek yazımla SIFIRA çekebiliyordu. Yorum silmede
+    // birden fazla yanıt birden düşebildiği için gevşek bırakılmıştı; istemci
+    // artık silinen her belge için ayrı -1 yazıyor (commentMutations.ts).
+    // Sayaç sapmalarını push-worker'daki reconcile-counters işi toparlar.
     function isCounterBump(field) {
-      return onlyChanges([field]) && (
-        bumpBy(field, 1) ||
-        (request.resource.data[field] < resource.data.get(field, 0) && request.resource.data[field] >= 0)
-      );
+      return onlyChanges([field]) && (bumpBy(field, 1) || bumpBy(field, -1))
+        && request.resource.data[field] >= 0;
     }
     // `resource` is null on the very first write (doc doesn't exist yet) —
     // resource.data would throw, so guard before reading a prior value.
@@ -181,7 +190,11 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isOwner(userId) && !blocksPrivateFields(request.resource.data);
       allow delete: if isOwner(userId);
-      allow update: if !blocksPrivateFields(request.resource.data) && ((isOwner(userId) && xpChangeAllowed())
+      allow update: if !blocksPrivateFields(request.resource.data) && (
+        (isOwner(userId) && xpChangeAllowed()
+          && preserves(['followersCount', 'followingCount', 'storiesCount']))
+        // Hikâye yayınlama/silme kendi sayacını tek adım oynatır.
+        || (isOwner(userId) && isCounterBump('storiesCount'))
         || (isSignedIn() && isCounterBump('followersCount')
             && (counterProof(/databases/$(database)/documents/users/$(userId)/followers/$(request.auth.uid))
                 || request.resource.data.followersCount < resource.data.get('followersCount', 0)))
@@ -297,7 +310,11 @@ service cloud.firestore {
         && request.resource.data.get('isEditorsPick', false) == false;
       allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
       allow update: if isSignedIn() && (
-        (resource.data.authorId == request.auth.uid && !onBannedDevice() && preservesManagementFields())
+        // Yazar sayaçları elle yazamaz: aksi hâlde kendi hikâyesinin
+        // beğeni/görüntülenme sayısını şişirip ana sayfada öne çıkabilirdi.
+        // Yorum silerken gereken -1 aşağıdaki bump yolundan geçer.
+        (resource.data.authorId == request.auth.uid && !onBannedDevice() && preservesManagementFields()
+          && preserves(['likesCount', 'commentsCount', 'viewsCount']))
         || (isCounterBump('likesCount')
             && (counterProof(/databases/$(database)/documents/stories/$(storyId)/likes/$(request.auth.uid))
                 || request.resource.data.likesCount < resource.data.get('likesCount', 0)))
@@ -349,7 +366,9 @@ service cloud.firestore {
         allow create: if canPublish() && request.resource.data.userId == request.auth.uid;
         allow delete: if (isSignedIn() && resource.data.userId == request.auth.uid) || isStoryAuthor();
         allow update: if isSignedIn() && (
-          resource.data.userId == request.auth.uid
+          // Sahibi yalnızca kendi metnini düzenleyebilir; `userId` değişimi
+          // yorumu başkasının üstüne yıkmak demekti.
+          (resource.data.userId == request.auth.uid && onlyChanges(['content', 'isEdited', 'updatedAt']))
           || (isCounterBump('likesCount')
               && (counterProof(/databases/$(database)/documents/stories/$(storyId)/comments/$(commentId)/likes/$(request.auth.uid))
                   || request.resource.data.likesCount < resource.data.get('likesCount', 0)))
@@ -405,7 +424,7 @@ service cloud.firestore {
       allow create: if canPublish() && request.resource.data.userId == request.auth.uid;
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow update: if isSignedIn() && (
-        resource.data.userId == request.auth.uid
+        (resource.data.userId == request.auth.uid && onlyChanges(['content', 'isEdited', 'updatedAt']))
         || (isCounterBump('likesCount')
             && (counterProof(/databases/$(database)/documents/conversationComments/$(commentId)/likes/$(request.auth.uid))
                 || request.resource.data.likesCount < resource.data.get('likesCount', 0)))

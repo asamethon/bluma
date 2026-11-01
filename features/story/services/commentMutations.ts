@@ -166,7 +166,14 @@ export async function deleteComment(storyId: string, commentId: string) {
       deleteCommentDocument(storyId, reference),
     ]);
     const count = deleted.reduce<number>((total, value) => total + value, 0);
-    if (count) await updateDoc(doc(db, 'stories', storyId), { commentsCount: increment(-count) });
+    // Kural sayacı tek adım oynatmaya izin veriyor (firestore.rules
+    // `isCounterBump`); toplu azaltma herkesin sayacı sıfırlamasına açıktı.
+    // Silinen her belge için ayrı bir -1 yazılır; yarıda kalırsa push-worker
+    // içindeki reconcile-counters işi farkı toparlar.
+    const story = doc(db, 'stories', storyId);
+    for (let index = 0; index < count; index += 1) {
+      await updateDoc(story, { commentsCount: increment(-1) });
+    }
     return { success: true };
   } catch (error) {
     logger.error('Delete comment error:', error);

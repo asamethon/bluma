@@ -348,6 +348,31 @@ Hata listesi bitti. Geriye kalanlar yayın işleri ve doğrulama:
 4. **İleride:** XP'yi Cloud Function'a taşımak (YAPILACAKLAR 3.1) 22b'nin
    kalıcı çözümüdür.
 
+### Sayaç bütünlüğü — 1 Kasım 2026 (açık PR #2'den devşirildi)
+
+Paralel yürüyen PR #2 (`claude/quirky-bell-46oajz`) merge edilmedi — 24 Ekim'den
+ayrıldığı için main'in aynı maddeleri çözen işini içermiyor ve 168 dosyada
+çakışıyor. Ama açıklamasında saydığı iki açık canlı kurallarda gerçekten vardı:
+
+- **Sayaç sıfırlama:** `isCounterBump` azaltma tarafını sınırlamıyordu; oturumlu
+  herhangi biri bir hikâyenin `likesCount`'unu veya bir kullanıcının
+  `followersCount`'unu tek yazımla sıfıra çekebiliyordu. Artık yalnız ±1.
+- **Yorum sahipliği:** yorum sahibi `userId`'yi değiştirip yorumu başkasının
+  üstüne yıkabiliyordu. Sahip artık yalnız `content`/`isEdited`/`updatedAt`
+  değiştirebiliyor (uygulamada yorum düzenleme akışı zaten yok).
+
+Denetim sırasında aynı sınıftan iki açık daha bulundu ve kapatıldı: **yazar
+kendi hikâyesinin** beğeni/görüntülenme/yorum sayaçlarını, **kullanıcı kendi**
+takipçi/takip/hikâye sayacını elle yazabiliyordu (ana sayfa sıralaması bu
+sayaçlara bakıyor). Sayaçlar artık yalnız tek adımlık bump yollarından değişir.
+
+**Bilinen tek gerileme:** eski mağaza sürümü yorum silerken sayacı toplu
+düşürüyordu; o yazma artık reddediliyor. Yorum yine siliniyor, sayaç sapıyor ve
+push-worker'daki `reconcile-counters` işi farkı toparlıyor. Yeni istemci silinen
+her belge için ayrı -1 yazıyor. Testler: `scripts/tests/counterIntegrity.rules.test.cjs`
+(8 test) ve eski sürüm simülasyonu; 41/41 kural testi geçiyor.
+**Kural dağıtımı bekliyor.**
+
 **Karara bağlanan ürün sorusu (1 Kasım 2026):** rozetli "hikâyeni tamamla" (w3)
 görevi **kalıcıdır** — ömür boyu bir kez kazanılır, hafta başında sıfırlanmaz.
 `storiesCompletedByAuthor` bu yüzden `weeklyTrackers` dışında tutulur
