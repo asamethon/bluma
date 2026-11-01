@@ -776,7 +776,8 @@
     "sort_hot": "Populer",
     "sort_rising": "Naik daun",
     "sort_new": "Baru",
-    "categoryCount": "{{count}} cerita"
+    "categoryCount": "{{count}} cerita",
+    "allStories": "Semua Cerita"
   },
   "onboarding": {
     "intentReader": "Untuk membaca",

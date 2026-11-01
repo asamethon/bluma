@@ -802,7 +802,8 @@
     "sort_hot": "Popüler",
     "sort_rising": "Yükselen",
     "sort_new": "Yeni",
-    "categoryCount": "{{count}} hikâye"
+    "categoryCount": "{{count}} hikâye",
+    "allStories": "Bütün Hikâyeler"
   },
   "onboarding": {
     "intentReader": "Okumak için",

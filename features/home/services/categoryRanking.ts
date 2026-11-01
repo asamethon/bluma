@@ -1,6 +1,7 @@
 import { CategoryMeta } from '@/constants/categories';
 import type { Story } from '@/types';
-import { toMillis } from './homeSections';
+import { coverLastInBlocks, newestFirst } from './storyOrder';
+import { toMillis } from '@/utils/time';
 
 /** Bir tür sayfasındaki sıralama seçenekleri (Wattpad'deki Hot / Rising / New). */
 export type CategorySort = 'hot' | 'rising' | 'new';
@@ -23,19 +24,20 @@ export function storyVelocity(story: Story, now = Date.now()): number {
   return engagement / days;
 }
 
-const newestFirst = (left: Story, right: Story) => toMillis(right.createdAt) - toMillis(left.createdAt);
-
 /**
  * `hot`: günlük hıza göre. `rising`: son 30 günde yayınlananlar arasında hız —
  * yeni yazara vitrin açan liste. `new`: en yeni.
+ *
+ * Sıra kurulduktan sonra kapaksızlar her bloğun sonuna iner: tür sayfası tek
+ * uzun bir sütun olduğu için eleme değil, blok içi kapak sıralaması uygulanır.
  */
 export function sortByCategorySort(stories: Story[], sort: CategorySort, now = Date.now()): Story[] {
-  if (sort === 'new') return [...stories].sort(newestFirst);
+  if (sort === 'new') return coverLastInBlocks([...stories].sort(newestFirst));
   const byVelocity = (left: Story, right: Story) => storyVelocity(right, now) - storyVelocity(left, now);
-  if (sort === 'rising') {
-    return stories.filter(story => now - toMillis(story.createdAt) <= RISING_WINDOW).sort(byVelocity);
-  }
-  return [...stories].sort(byVelocity);
+  const ranked = sort === 'rising'
+    ? stories.filter(story => now - toMillis(story.createdAt) <= RISING_WINDOW).sort(byVelocity)
+    : [...stories].sort(byVelocity);
+  return coverLastInBlocks(ranked);
 }
 
 export type CategoryEntry = { id: string; count: number };

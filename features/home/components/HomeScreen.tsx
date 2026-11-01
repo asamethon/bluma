@@ -10,6 +10,7 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RefreshControl, View } from 'react-native';
 import { useCategoryFeed } from '../hooks/useCategoryFeed';
+import { useEndlessFeed } from '../hooks/useEndlessFeed';
 import { CATEGORY_SORTS } from '../services/categoryRanking';
 import { useHomeFeed } from '../hooks/useHomeFeed';
 import { useHomeSections } from '../hooks/useHomeSections';
@@ -20,14 +21,24 @@ import { HomeSectionView } from './HomeSectionView';
 import { HomeStoryGridItem } from './HomeStoryGridItem';
 import { HomeWriterNudge } from './HomeWriterNudge';
 
-/** Tür seçili değilken satırlar bölümdür; seçiliyken o türün hikâyeleri. */
-type HomeListItem = { kind: 'section'; section: HomeSection } | { kind: 'story'; story: Story };
+/**
+ * Tür seçili değilken liste önce bölümlerden geçer, sonra "Bütün Hikâyeler"
+ * kuyruğuna girer ve dibe inildikçe katalogdan sayfa sayfa büyür — ana sayfanın
+ * sonu yoktur. Tür seçiliyken yalnızca o türün hikâyeleri listelenir.
+ */
+type HomeListItem =
+  | { kind: 'section'; section: HomeSection }
+  | { kind: 'label'; title: string }
+  | { kind: 'story'; story: Story; position: number };
 
-const itemKey = (item: HomeListItem) => (item.kind === 'section' ? item.section.key : item.story.id);
-const itemType = (item: HomeListItem) => (item.kind === 'section' ? `section-${item.section.layout}` : 'story');
-/** Bölümler tablette de tam genişlik; ızgara yalnızca tür listesinde. */
-const spanSections = (layout: { span?: number }, item: HomeListItem, _index: number, maxColumns: number) => {
-  if (item.kind === 'section') layout.span = maxColumns;
+const itemKey = (item: HomeListItem) => {
+  if (item.kind === 'section') return item.section.key;
+  return item.kind === 'label' ? 'all-stories' : item.story.id;
+};
+const itemType = (item: HomeListItem) => (item.kind === 'section' ? `section-${item.section.layout}` : item.kind);
+/** Bölüm ve ara başlık tablette de tam genişlik; ızgara yalnızca hikâye kartlarında. */
+const spanRows = (layout: { span?: number }, item: HomeListItem, _index: number, maxColumns: number) => {
+  if (item.kind !== 'story') layout.span = maxColumns;
 };
 
 export function HomeScreen() {
@@ -35,19 +46,35 @@ export function HomeScreen() {
   const { t } = useTranslation();
   const feed = useHomeFeed();
   const category = useCategoryFeed(feed.stories);
-  const sections = useHomeSections(feed.stories, feed.following, feed.isGuest);
+  const home = useHomeSections(feed.stories, feed.following, feed.isGuest);
+  const endless = useEndlessFeed();
   const impressions = useSectionImpressions();
   const { numColumns } = useResponsiveGrid();
   const styles = useMemo(() => createHomeStyles(colors), [colors]);
   const intent = useAppSelector(s => s.auth.user?.intent);
-  const items = useMemo<HomeListItem[]>(() => (category.stories
-    ? category.stories.map(story => ({ kind: 'story' as const, story }))
-    : sections.map(section => ({ kind: 'section' as const, section }))), [category.stories, sections]);
-  const renderItem = useCallback<ListRenderItem<HomeListItem>>(({ item, index }) => (
-    item.kind === 'section'
-      ? <HomeSectionView section={item.section} onSelectCategory={category.select} />
-      : <HomeStoryGridItem story={item.story} position={index} grid={numColumns > 1} />
-  ), [category.select, numColumns]);
+  const items = useMemo<HomeListItem[]>(() => {
+    if (category.stories) {
+      return category.stories.map((story, position) => ({ kind: 'story' as const, story, position }));
+    }
+    const rows: HomeListItem[] = home.sections.map(section => ({ kind: 'section' as const, section }));
+    if (home.rest.length) rows.push({ kind: 'label', title: t('home.allStories') });
+    home.rest.forEach((story, position) => rows.push({ kind: 'story', story, position }));
+    return rows;
+  }, [category.stories, home.rest, home.sections, t]);
+  const renderItem = useCallback<ListRenderItem<HomeListItem>>(({ item }) => {
+    if (item.kind === 'section') return <HomeSectionView section={item.section} onSelectCategory={category.select} />;
+    if (item.kind === 'label') {
+      return <View style={styles.section}><SectionHeader title={item.title} /></View>;
+    }
+    return (
+      <HomeStoryGridItem
+        story={item.story}
+        position={item.position}
+        grid={numColumns > 1}
+        source={category.stories ? 'category' : 'all_stories'}
+      />
+    );
+  }, [category.select, category.stories, numColumns, styles.section]);
   const selectedTitle = category.category && CategoryMeta[category.category]
     ? t(CategoryMeta[category.category].label)
     : category.category;
@@ -62,7 +89,7 @@ export function HomeScreen() {
         keyExtractor={itemKey}
         getItemType={itemType}
         numColumns={numColumns}
-        overrideItemLayout={spanSections}
+        overrideItemLayout={spanRows}
         renderItem={renderItem}
         viewabilityConfig={impressions.viewabilityConfig}
         onViewableItemsChanged={impressions.onViewableItemsChanged}
@@ -100,9 +127,9 @@ export function HomeScreen() {
             )}
           </>
         }
-        onEndReached={category.loadMore}
-        onEndReachedThreshold={0.4}
-        ListFooterComponent={category.loadingMore ? (
+        onEndReached={endless.loadMore}
+        onEndReachedThreshold={0.6}
+        ListFooterComponent={endless.loadingMore ? (
           <View style={styles.loadMore}>
             <SkeletonRow />
             <SkeletonRow />

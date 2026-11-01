@@ -777,7 +777,8 @@
     "sort_rising": "En ascenso",
     "sort_new": "Nuevo",
     "categoryCount_one": "{{count}} historia",
-    "categoryCount_other": "{{count}} historias"
+    "categoryCount_other": "{{count}} historias",
+    "allStories": "Todas las historias"
   },
   "onboarding": {
     "intentReader": "Para leer",

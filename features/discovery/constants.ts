@@ -4,8 +4,10 @@
  * önce/sonra karşılaştırmasını mümkün kılar (bkz. docs/KESFET-ALGORITMASI.md).
  *
  * 0: Faz 0, istemci tarafı sıralama, bölümler arası tekrar kaldırıldı.
+ * 1: Wattpad modeli — tür gezintisi, günlük hıza göre sıralama, kapaksız
+ *    hikâyeler elenmek yerine satır sonuna iniyor, ana sayfanın sonu yok.
  */
-export const ALGO_VERSION = 0;
+export const ALGO_VERSION = 1;
 
 /** Okumayı başlatan vitrin. Analytics'te `section` / `src` değeri olarak gider. */
 export type FeedSource =
@@ -18,6 +20,7 @@ export type FeedSource =
   | 'most_read'
   | 'categories'
   | 'category'
+  | 'all_stories'
   | 'search';
 
 /** Takip butonunun bulunduğu yer. */

@@ -776,7 +776,8 @@
     "sort_hot": "인기",
     "sort_rising": "급상승",
     "sort_new": "최신",
-    "categoryCount": "{{count}}개 이야기"
+    "categoryCount": "{{count}}개 이야기",
+    "allStories": "모든 이야기"
   },
   "onboarding": {
     "intentReader": "읽기 위해",

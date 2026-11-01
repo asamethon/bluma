@@ -776,7 +776,8 @@
     "sort_hot": "热门",
     "sort_rising": "上升中",
     "sort_new": "最新",
-    "categoryCount": "{{count}} 个故事"
+    "categoryCount": "{{count}} 个故事",
+    "allStories": "全部作品"
   },
   "onboarding": {
     "intentReader": "阅读",

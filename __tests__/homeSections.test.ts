@@ -1,16 +1,16 @@
 import {
   buildHomeSections,
-  localDayNumber,
-  toMillis,
   type HomeSection,
   type HomeSectionsInput,
 } from '@/features/home/services/homeSections';
+import { localDayNumber } from '@/features/home/services/storyOrder';
+import { toMillis } from '@/utils/time';
 import type { Story } from '@/types';
 
 const DAY = 24 * 60 * 60 * 1000;
 const NOW = new Date(2026, 9, 10, 12).getTime();
 
-// Vitrin eşiği adı ve (raflarda) kapağı şart koşuyor; varsayılan hikâye bunu karşılar.
+// Vitrin eşiği yalnızca adı şart koşuyor; kapak sıralamayı etkiler, elemez.
 const story = (id: string, overrides: Partial<Story> = {}) => ({
   id,
   title: `Hikâye ${id}`,
@@ -23,7 +23,7 @@ const story = (id: string, overrides: Partial<Story> = {}) => ({
   ...overrides,
 }) as Story;
 
-const build = (overrides: Partial<HomeSectionsInput> = {}) => buildHomeSections({
+const feed = (overrides: Partial<HomeSectionsInput> = {}) => buildHomeSections({
   pool: [],
   continueReading: [],
   following: [],
@@ -31,6 +31,7 @@ const build = (overrides: Partial<HomeSectionsInput> = {}) => buildHomeSections(
   now: NOW,
   ...overrides,
 });
+const build = (overrides: Partial<HomeSectionsInput> = {}) => feed(overrides).sections;
 
 const idsOf = (section: HomeSection): string[] => {
   if (section.layout === 'continue') return section.entries.map(entry => entry.story.id);
@@ -136,14 +137,16 @@ describe('buildHomeSections', () => {
     expect(ids).toEqual(['sair0', 'roman', 'gizem']);
   });
 
-  it('kapağı olmayan hikâye rafa girmez ama Yeni Geldi listesine girer', () => {
+  // Kapak artık eleme ölçütü değil (eskiden `requireCover` rafa hiç almıyordu):
+  // kart rafa girer, yalnızca satırın sonuna iner.
+  it('kapağı olmayan hikâye rafa girer ama satırın sonunda durur', () => {
     const pool = [
       story('kapaksiz', { coverImage: undefined, viewsCount: 999 }),
       ...Array.from({ length: 4 }, (_, index) => story(`k${index}`, { viewsCount: 10 - index })),
     ];
-    const sections = build({ pool });
-    expect(idsOf(find(sections, 'popular_now')!)).not.toContain('kapaksiz');
-    expect(idsOf(find(sections, 'new_arrivals')!)).toContain('kapaksiz');
+    const ids = idsOf(find(build({ pool }), 'popular_now')!);
+    expect(ids).toContain('kapaksiz');
+    expect(ids[ids.length - 1]).toBe('kapaksiz');
   });
 
   it('başlıksız hikâye hiçbir bölümde görünmez', () => {
@@ -151,12 +154,47 @@ describe('buildHomeSections', () => {
       story('adsiz', { title: '   ', viewsCount: 999 }),
       ...Array.from({ length: 4 }, (_, index) => story(`b${index}`, { viewsCount: 10 - index })),
     ];
-    const everything = build({ pool }).flatMap(idsOf);
+    const result = feed({ pool });
+    const everything = [...result.sections.flatMap(idsOf), ...result.rest.map(item => item.id)];
     expect(everything).not.toContain('adsiz');
   });
 
   it('hiç hikâye yoksa boş liste döner', () => {
-    expect(build()).toEqual([]);
+    expect(feed()).toEqual({ sections: [], rest: [] });
+  });
+});
+
+// Ana sayfanın sonu yok: rafların dışında kalan her hikâye kuyruğa düşer.
+describe('sonsuz kuyruk (rest)', () => {
+  // Tür ızgarası hikâye değil tür kimliği taşır; kuyruk karşılaştırmasına girmez.
+  const storyIds = (sections: HomeSection[]) =>
+    sections.flatMap(section => (section.layout === 'categories' ? [] : idsOf(section)));
+
+  it('rafların almadığı her hikâye kuyruğa düşer, hiçbiri iki kez görünmez', () => {
+    const pool = Array.from({ length: 60 }, (_, index) => story(`s${index}`, {
+      viewsCount: 60 - index,
+      createdAt: new Date(NOW - index * DAY),
+    }));
+    const result = feed({ pool, recommend: candidates => candidates });
+    const shelved = storyIds(result.sections);
+    const tail = result.rest.map(item => item.id);
+    expect(tail.length).toBeGreaterThan(0);
+    expect(new Set([...shelved, ...tail]).size).toBe(pool.length);
+    expect(tail.filter(id => shelved.includes(id))).toEqual([]);
+  });
+
+  it('kuyrukta kapaksızlar her 12lik bloğun sonuna iner', () => {
+    const pool = Array.from({ length: 48 }, (_, index) => story(`s${index}`, {
+      coverImage: index % 2 === 0 ? undefined : 'https://ornek/kapak.webp',
+      createdAt: new Date(NOW - index * DAY),
+    }));
+    const tail = feed({ pool }).rest;
+    expect(tail.length).toBeGreaterThan(12);
+    for (let start = 0; start < tail.length; start += 12) {
+      const covered = tail.slice(start, start + 12).map(item => !!item.coverImage);
+      // Blok içinde kapaklı bir kart, kapaksızdan SONRA gelmez.
+      expect(covered).toEqual([...covered].sort((left, right) => Number(right) - Number(left)));
+    }
   });
 });
 

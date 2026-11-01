@@ -776,7 +776,8 @@
     "sort_hot": "الأكثر رواجًا",
     "sort_rising": "صاعد",
     "sort_new": "جديد",
-    "categoryCount": "{{count}} قصة"
+    "categoryCount": "{{count}} قصة",
+    "allStories": "كل القصص"
   },
   "onboarding": {
     "intentReader": "للقراءة",

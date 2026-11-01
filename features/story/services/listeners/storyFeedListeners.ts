@@ -4,6 +4,7 @@ import type { Story } from '@/types';
 import { logger } from '@/utils/logger';
 import { collection, getDocs, getFirestore, limit, onSnapshot, orderBy, query, where } from '@react-native-firebase/firestore';
 import { getUserById } from '../userCache';
+import { rememberFeedCursor } from '../feedPagination';
 import { loadCatalogHighlights } from './catalogHighlights';
 import { fallbackAuthor, storyFromSnapshot } from './storySnapshot';
 
@@ -45,6 +46,8 @@ export function loadStoriesFeed(options: { force?: boolean } = {}): Promise<void
     .then(stories => {
       feed.loadedAt = Date.now();
       store.dispatch(patchStory({ stories, storiesLoaded: true }));
+      // Sonsuz kuyruk buradan devam eder: imleç akışın en eski belgesi.
+      rememberFeedCursor(stories);
       // Akış en yeni 50'yi getirir; "tüm zamanların" adayları ayrı ve daha
       // seyrek okunur. Akışı bekletmemek için beklenmez.
       void loadCatalogHighlights(options);

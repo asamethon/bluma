@@ -50,6 +50,32 @@ Admin SDK ile salt okunur ölçüm (`bluma-dc10e`):
 5. `isCompleted` hiç kullanılmamış; popülerlik formülündeki `completedBonus`
    ve 4. maddenin tamamlanma kontrolü pratikte etkisiz.
 
+## 0.6 Uygulanan hâli — 1 Kasım 2026 (`ALGO_VERSION = 1`)
+
+Wattpad modeli alındı (Home = öneri + Browse; her tür sayfasında Hot/Rising/New;
+Hot toplam sayıya değil **günlük hıza** bakar) ve iki yapısal kural eklendi.
+
+**Kapak artık eleme ölçütü değil.** Rafların eski `requireCover` kuralı kapağı
+olmayan hikâyeyi vitrinden tümden eliyordu: yazarın kapak koymaması, hikâyeyi
+ana sayfadan silmek anlamına geliyordu. Yeni kural `coverLast`
+(`features/home/services/storyOrder.ts`): seçim kapağa bakmadan yapılır, kapaksız
+kartlar **satırın/sütunun sonuna iner**. `StoryCover` zaten tür rengiyle
+kitap-ikonu yedeği çiziyor, boş kutu görünmüyor.
+
+**Ana sayfanın sonu yok.** Rafların dışında kalan her hikâye
+`buildHomeSections().rest` ile "Bütün Hikâyeler" kuyruğuna düşer; liste dibe
+yaklaşınca `useEndlessFeed` katalogdan 30'luk bir sonraki sayfayı çeker ve
+sunucu "daha yok" diyene kadar sürer. Uzun kuyrukta kapak sıralaması
+**12'lik bloklar hâlinde** uygulanır (`coverLastInBlocks`): tek bir küresel
+sıralama olsaydı yeni sayfa geldiğinde okurun o an baktığı kartlar yer
+değiştirirdi.
+
+**Yan düzeltme:** `loadMoreStories` imleci havuzun son elemanını kullanıyordu.
+`loadCatalogHighlights` havuza akış dışından ("tüm zamanların en çok
+okunanları") hikâye eklediği için son eleman artık en eski değil; imleç bu
+yüzden ya tekrar eden sayfa çekiyor ya da katalogun ortasını atlıyordu. Artık
+havuzun **en eski** `createdAt` değeri imleç.
+
 ## 1. Bugünkü durum (kod incelemesi)
 
 Canlı veriye erişilemedi; bulgular koddan ve 6-7 Eylül Goldie simülatör çekimlerinden. Ana sayfa ve arama kodu o tarihten beri değişmemiş.

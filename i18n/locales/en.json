@@ -799,7 +799,8 @@
     "sort_rising": "Rising",
     "sort_new": "New",
     "categoryCount_one": "{{count}} story",
-    "categoryCount_other": "{{count}} stories"
+    "categoryCount_other": "{{count}} stories",
+    "allStories": "All Stories"
   },
   "onboarding": {
     "intentReader": "To read",

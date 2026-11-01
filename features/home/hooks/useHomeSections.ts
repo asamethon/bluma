@@ -3,14 +3,15 @@ import i18n from '@/i18n';
 import { useAppSelector } from '@/store/hooks';
 import type { Story } from '@/types';
 import { useMemo } from 'react';
-import { buildHomeSections, type HomeSection } from '../services/homeSections';
+import { buildHomeSections, type HomeFeed } from '../services/homeSections';
 
 /**
  * Ana sayfa bölümleri: görünür hikâye havuzu + kişisel sinyaller → sıralı,
- * birbirini tekrar etmeyen bölüm listesi. Hesap saf fonksiyonda
- * (`buildHomeSections`), burada yalnızca store'dan dar dilimler seçilir.
+ * birbirini tekrar etmeyen bölüm listesi ve bölümlerin dışında kalan hikâyeler
+ * (sonsuz kuyruk). Hesap saf fonksiyonda (`buildHomeSections`), burada yalnızca
+ * store'dan dar dilimler seçilir.
  */
-export function useHomeSections(pool: Story[], following: Story[], guest: boolean): HomeSection[] {
+export function useHomeSections(pool: Story[], following: Story[], guest: boolean): HomeFeed {
   const userId = useAppSelector(state => state.auth.user?.id);
   const interests = useAppSelector(state => state.auth.user?.interests);
   const likedStories = useAppSelector(state => state.story.likedStories);

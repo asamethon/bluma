@@ -60,6 +60,14 @@ describe('sortByCategorySort', () => {
     const ids = sortByCategorySort([stale, active, brandNew], 'new', NOW).map(item => item.id);
     expect(ids).toEqual(['new', 'active', 'stale']);
   });
+
+  // Kapaksız hikâye listeden ELENMEZ, sütunun sonuna iner — hızı en yüksek olsa bile.
+  it('kapaksız hikâye listede kalır ama sütunun sonuna iner', () => {
+    const kapakli = story('kapakli', { coverImage: 'https://ornek/a.webp', viewsCount: 5 });
+    const kapaksiz = story('kapaksiz', { viewsCount: 500 });
+    const ids = sortByCategorySort([kapaksiz, kapakli], 'hot', NOW).map(item => item.id);
+    expect(ids).toEqual(['kapakli', 'kapaksiz']);
+  });
 });
 
 describe('categoryEntries', () => {
