@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { pickAvailableUsernames } from '../services/usernameSuggestions';
 import { suggestUsernames } from '../utils/usernameSuggest';
 
-/** Her tuş vuruşunda sorgu atmamak için; ad yazılırken 3 sorgu bütçesi hızla tükenir. */
+/** Her tuş vuruşunda sorgu atmamak için; her denemenin bedeli 6'ya varan okuma. */
 const DEBOUNCE_MS = 450;
 
 /**

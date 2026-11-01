@@ -22,7 +22,7 @@ export function UsernameField({ value, originalUsername, displayName = '', statu
   const { colors } = useTheme();
   const { t } = useTranslation();
   // Sorunsuz bir kullanıcı adı için sorgu atılmaz; ekran her açıldığında
-  // boşa 3 okuma yapmasın.
+  // boşuna aday denenmesin (aday başına iki okuma).
   const assessment = assessUsername(value, displayName);
   const suggestions = useUsernameSuggestions(displayName, value, !value || assessment.flagged);
   const statusMeta = status === 'checking'
