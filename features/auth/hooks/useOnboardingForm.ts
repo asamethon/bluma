@@ -1,3 +1,4 @@
+import { normalizeUsername } from '@/features/auth/utils/usernameNormalize';
 import { useAvatarPicker } from '@/features/profile/hooks/useAvatarPicker';
 import { authActions } from '@/store/authStore';
 import { useAppSelector } from '@/store/hooks';
@@ -47,7 +48,7 @@ export function useOnboardingForm() {
     data: { username: '', displayName: '', interests: [], bio: '' },
   });
   const updateUsername = useCallback((raw: string) => {
-    const username = raw.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const username = normalizeUsername(raw);
     const status = username.length >= 3 ? 'checking' : null;
     dispatch({ type: 'field', field: 'username', value: username, status });
     if (status) {

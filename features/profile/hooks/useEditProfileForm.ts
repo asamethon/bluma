@@ -1,3 +1,4 @@
+import { normalizeUsername } from '@/features/auth/utils/usernameNormalize';
 import { imageUploadService } from '@/services/imageUploadService';
 import { authActions } from '@/store/authStore';
 import type { User } from '@/types';
@@ -48,7 +49,7 @@ export function useEditProfileForm(user: User) {
 
   const update = useCallback((field: EditProfileField, value: string) => {
     if (field !== 'username') return dispatch({ type: 'field', field, value });
-    const username = value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const username = normalizeUsername(value);
     const status = username !== user.username && username.length >= 3 ? 'checking' : null;
     dispatch({ type: 'field', field, value: username, status });
     if (status) {
@@ -89,7 +90,7 @@ export function useEditProfileForm(user: User) {
       await authActions.updateUserProfile({
         ...user,
         displayName: state.form.displayName.trim(),
-        username: state.form.username.trim(),
+        username: normalizeUsername(state.form.username),
         bio: state.form.bio.trim(),
         website: state.form.website.trim(),
         location: state.form.location.trim(),

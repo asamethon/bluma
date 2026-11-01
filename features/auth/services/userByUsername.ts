@@ -1,10 +1,11 @@
 import { collection, getDocs, getFirestore, query, where } from '@react-native-firebase/firestore';
+import { normalizeUsername } from '@/features/auth/utils/usernameNormalize';
 import { User } from '@/store/slices/authSlice';
 import { publicProfileData } from './profilePrivacy';
 
 export async function getUserByUsername(username: string): Promise<User | null> {
   try {
-    const normalized = username.toLowerCase().trim();
+    const normalized = normalizeUsername(username);
     if (!normalized) return null;
     const db = getFirestore();
     const snapshot = await getDocs(query(collection(db, 'users'), where('username', '==', normalized)));

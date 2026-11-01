@@ -2,6 +2,7 @@ import { imageUploadService } from '@/services/imageUploadService';
 import { store } from '@/store';
 import { patchAuth, type User } from '@/store/slices/authSlice';
 import i18n from '@/i18n';
+import { normalizeUsername } from '@/features/auth/utils/usernameNormalize';
 import { logger } from '@/utils/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { saveUserProfile } from '../profileRepository';
@@ -32,7 +33,7 @@ export async function completeOnboarding(input: OnboardingProfile) {
       : undefined;
     const user: User = {
       ...current,
-      username: input.username.trim().toLowerCase(),
+      username: normalizeUsername(input.username),
       bio: input.bio,
       interests: input.interests,
       ...(input.intent ? { intent: input.intent } : {}),
