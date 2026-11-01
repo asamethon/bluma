@@ -771,7 +771,12 @@
     "newArrivals": "وصل حديثًا",
     "emptyTitle": "الحديقة لا تزال فارغة",
     "emptySub": "اكتب قصتك الأولى وشاهدها تزدهر على Bluma.",
-    "noStoriesInGenre": "لا توجد قصص في هذا النوع الأدبي بعد."
+    "noStoriesInGenre": "لا توجد قصص في هذا النوع الأدبي بعد.",
+    "categories": "التصنيفات",
+    "sort_hot": "الأكثر رواجًا",
+    "sort_rising": "صاعد",
+    "sort_new": "جديد",
+    "categoryCount": "{{count}} قصة"
   },
   "onboarding": {
     "intentReader": "للقراءة",

@@ -32,9 +32,11 @@ const build = (overrides: Partial<HomeSectionsInput> = {}) => buildHomeSections(
   ...overrides,
 });
 
-const idsOf = (section: HomeSection) => (
-  section.layout === 'continue' ? section.entries.map(entry => entry.story.id) : section.stories.map(item => item.id)
-);
+const idsOf = (section: HomeSection): string[] => {
+  if (section.layout === 'continue') return section.entries.map(entry => entry.story.id);
+  if (section.layout === 'categories') return section.categories.map(entry => entry.id);
+  return section.stories.map(item => item.id);
+};
 const find = (sections: HomeSection[], key: string) => sections.find(section => section.key === key);
 
 describe('buildHomeSections', () => {

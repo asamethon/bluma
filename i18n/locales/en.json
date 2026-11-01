@@ -793,7 +793,13 @@
     "newArrivals": "Just Arrived",
     "emptyTitle": "The garden is still empty",
     "emptySub": "Write your first story and watch it bloom on Bluma.",
-    "noStoriesInGenre": "No stories in this genre yet."
+    "noStoriesInGenre": "No stories in this genre yet.",
+    "categories": "Genres",
+    "sort_hot": "Hot",
+    "sort_rising": "Rising",
+    "sort_new": "New",
+    "categoryCount_one": "{{count}} story",
+    "categoryCount_other": "{{count}} stories"
   },
   "onboarding": {
     "intentReader": "To read",

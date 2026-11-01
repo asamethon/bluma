@@ -771,7 +771,13 @@
     "newArrivals": "Gerade erschienen",
     "emptyTitle": "Der Garten ist noch leer",
     "emptySub": "Schreibe deine erste Geschichte und sieh zu, wie sie auf Bluma erblüht.",
-    "noStoriesInGenre": "Noch keine Geschichten in diesem Genre."
+    "noStoriesInGenre": "Noch keine Geschichten in diesem Genre.",
+    "categories": "Genres",
+    "sort_hot": "Beliebt",
+    "sort_rising": "Im Aufstieg",
+    "sort_new": "Neu",
+    "categoryCount_one": "{{count}} Geschichte",
+    "categoryCount_other": "{{count}} Geschichten"
   },
   "onboarding": {
     "intentReader": "Zum Lesen",

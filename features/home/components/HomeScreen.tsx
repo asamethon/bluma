@@ -1,5 +1,5 @@
 import OfflineIndicator from '@/components/ui/OfflineIndicator';
-import { BloomMark, Screen, SectionHeader, SkeletonRow, Text } from '@/components/ui';
+import { BloomMark, Chip, Screen, SectionHeader, SkeletonRow, Text } from '@/components/ui';
 import { CategoryMeta, useTheme } from '@/constants/theme';
 import { useSectionImpressions } from '@/features/discovery/hooks/useSectionImpressions';
 import { useResponsiveGrid } from '@/hooks/useResponsive';
@@ -10,6 +10,7 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RefreshControl, View } from 'react-native';
 import { useCategoryFeed } from '../hooks/useCategoryFeed';
+import { CATEGORY_SORTS } from '../services/categoryRanking';
 import { useHomeFeed } from '../hooks/useHomeFeed';
 import { useHomeSections } from '../hooks/useHomeSections';
 import type { HomeSection } from '../services/homeSections';
@@ -44,9 +45,9 @@ export function HomeScreen() {
     : sections.map(section => ({ kind: 'section' as const, section }))), [category.stories, sections]);
   const renderItem = useCallback<ListRenderItem<HomeListItem>>(({ item, index }) => (
     item.kind === 'section'
-      ? <HomeSectionView section={item.section} />
+      ? <HomeSectionView section={item.section} onSelectCategory={category.select} />
       : <HomeStoryGridItem story={item.story} position={index} grid={numColumns > 1} />
-  ), [numColumns]);
+  ), [category.select, numColumns]);
   const selectedTitle = category.category && CategoryMeta[category.category]
     ? t(CategoryMeta[category.category].label)
     : category.category;
@@ -81,6 +82,18 @@ export function HomeScreen() {
             {category.category ? (
               <View style={styles.section}>
                 <SectionHeader title={selectedTitle || ''} />
+                {/* Tür sayfasında sıralama: Popüler (günlük hız) · Yükselen (yeni + hız) · Yeni */}
+                <View style={styles.sortRow}>
+                  {CATEGORY_SORTS.map(sort => (
+                    <Chip
+                      key={sort}
+                      label={t(`home.sort_${sort}`)}
+                      active={category.sort === sort}
+                      shape="pill"
+                      onPress={() => category.setSort(sort)}
+                    />
+                  ))}
+                </View>
               </View>
             ) : (
               intent !== 'reader' ? <HomeWriterNudge /> : null

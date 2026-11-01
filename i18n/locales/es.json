@@ -771,7 +771,13 @@
     "newArrivals": "Recién llegadas",
     "emptyTitle": "El jardín todavía está vacío",
     "emptySub": "Escribe tu primera historia y mírala florecer en Bluma.",
-    "noStoriesInGenre": "Aún no hay historias en este género."
+    "noStoriesInGenre": "Aún no hay historias en este género.",
+    "categories": "Géneros",
+    "sort_hot": "Popular",
+    "sort_rising": "En ascenso",
+    "sort_new": "Nuevo",
+    "categoryCount_one": "{{count}} historia",
+    "categoryCount_other": "{{count}} historias"
   },
   "onboarding": {
     "intentReader": "Para leer",

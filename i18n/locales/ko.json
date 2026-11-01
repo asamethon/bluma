@@ -771,7 +771,12 @@
     "newArrivals": "신작",
     "emptyTitle": "정원이 아직 비어 있습니다",
     "emptySub": "첫 스토리를 쓰고 Bluma에서 꽃피우는 모습을 지켜보세요.",
-    "noStoriesInGenre": "이 장르에는 아직 스토리가 없습니다."
+    "noStoriesInGenre": "이 장르에는 아직 스토리가 없습니다.",
+    "categories": "장르",
+    "sort_hot": "인기",
+    "sort_rising": "급상승",
+    "sort_new": "최신",
+    "categoryCount": "{{count}}개 이야기"
   },
   "onboarding": {
     "intentReader": "읽기 위해",

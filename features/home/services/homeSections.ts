@@ -1,4 +1,5 @@
 import type { FeedSource } from '@/features/discovery/constants';
+import { categoryEntries, type CategoryEntry } from './categoryRanking';
 import { calculatePopularityScore } from '@/features/story/services/discover/popularity';
 import type { Story } from '@/types';
 
@@ -14,6 +15,7 @@ export type ContinueEntry = { story: Story; chapterIndex: number };
 type SectionBase = { key: FeedSource; size: number };
 export type HomeSection =
   | (SectionBase & { layout: 'continue'; entries: ContinueEntry[] })
+  | (SectionBase & { layout: 'categories'; categories: CategoryEntry[] })
   | (SectionBase & { layout: 'feature' | 'shelf' | 'list'; stories: Story[] });
 
 export type HomeSectionsInput = {
@@ -141,6 +143,16 @@ export function buildHomeSections(input: HomeSectionsInput): HomeSection[] {
 
   const picks = unused(input.pool.filter(story => story.isEditorsPick));
   if (picks.length) add('editors_pick', 'feature', [picks[localDayNumber(now) % picks.length]]);
+
+  // Tür gezintisi (Wattpad'deki "Browse"): bütün türler, hikâye sayılarıyla.
+  // Editörün seçiminin hemen altında durur; raf değil, gezinti olduğu için
+  // dedupe'tan etkilenmez ve boş türler de listelenir.
+  // Katalog boşken tür ızgarası da gösterilmez: 10 tane "0 hikâye" kutusu
+  // boş uygulamayı daha da boş gösterir.
+  const categories = input.pool.length ? categoryEntries(input.pool) : [];
+  if (categories.length) {
+    sections.push({ key: 'categories', layout: 'categories', categories, size: categories.length });
+  }
 
   add('for_you', 'shelf', input.recommend(unused(input.pool)));
   add('popular_now', 'shelf', popularNow(unused(input.pool), now));

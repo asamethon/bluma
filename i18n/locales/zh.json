@@ -771,7 +771,12 @@
     "newArrivals": "最新发布",
     "emptyTitle": "花园还是空的",
     "emptySub": "写下你的第一个故事，让它在 Bluma 绽放。",
-    "noStoriesInGenre": "这个类型还没有故事。"
+    "noStoriesInGenre": "这个类型还没有故事。",
+    "categories": "分类",
+    "sort_hot": "热门",
+    "sort_rising": "上升中",
+    "sort_new": "最新",
+    "categoryCount": "{{count}} 个故事"
   },
   "onboarding": {
     "intentReader": "阅读",

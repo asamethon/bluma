@@ -771,7 +771,12 @@
     "newArrivals": "Baru terbit",
     "emptyTitle": "Taman ini masih kosong",
     "emptySub": "Tulis cerita pertamamu dan saksikan ia bersemi di Bluma.",
-    "noStoriesInGenre": "Belum ada cerita dalam genre ini."
+    "noStoriesInGenre": "Belum ada cerita dalam genre ini.",
+    "categories": "Genre",
+    "sort_hot": "Populer",
+    "sort_rising": "Naik daun",
+    "sort_new": "Baru",
+    "categoryCount": "{{count}} cerita"
   },
   "onboarding": {
     "intentReader": "Untuk membaca",

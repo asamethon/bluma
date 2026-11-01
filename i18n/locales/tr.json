@@ -797,7 +797,12 @@
     "newArrivals": "Yeni Geldi",
     "emptyTitle": "Bahçe henüz boş",
     "emptySub": "İlk hikayeni yaz ve Bluma'da filizlenmesini izle.",
-    "noStoriesInGenre": "Bu türde henüz hikâye yok."
+    "noStoriesInGenre": "Bu türde henüz hikâye yok.",
+    "categories": "Türler",
+    "sort_hot": "Popüler",
+    "sort_rising": "Yükselen",
+    "sort_new": "Yeni",
+    "categoryCount": "{{count}} hikâye"
   },
   "onboarding": {
     "intentReader": "Okumak için",

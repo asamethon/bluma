@@ -16,6 +16,7 @@ export type FeedSource =
   | 'popular_now'
   | 'new_arrivals'
   | 'most_read'
+  | 'categories'
   | 'category'
   | 'search';
 
