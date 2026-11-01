@@ -31,13 +31,17 @@ const firstWordOf = (displayName: string) => displayName.trim().split(/\s+/)[0] 
 /**
  * En güvenilir sinyal: kullanıcı adı, görünen adın ESKİ silme filtresinden
  * geçmiş hâline eşit. Yani bu adı kullanıcı seçmedi — biz bozduk.
+ *
+ * Kritik koşul `legacy !== normalize`: o kaynağı eski filtre GERÇEKTEN bozmuş
+ * olmalı. Yoksa aksansız bir ilk ada sahip herkes işaretlenirdi — "Samet
+ * Balcı" + @samet ya da "Ege Doğan" + @ege gibi kusursuz adlar, yalnızca
+ * görünen adın ikinci bir kelimesi olduğu için (canlı ölçümde yakalandı).
  */
 function isMangled(username: string, displayName: string): boolean {
-  const normalized = normalizeUsername(displayName);
-  if (!normalized || normalized === username) return false;
   return [displayName, firstWordOf(displayName)].some(source => {
     const legacy = legacyUsername(source);
-    return !!legacy && (legacy === username || legacy.slice(0, USERNAME_MAX_LENGTH) === username);
+    if (!legacy || legacy === normalizeUsername(source)) return false;
+    return legacy === username || legacy.slice(0, USERNAME_MAX_LENGTH) === username;
   });
 }
 
@@ -107,7 +111,8 @@ function hasVowellessRun(value: string): boolean {
 /**
  * Sıra önemli: `mangled` en güvenilir sinyal olduğu için önce bakılır,
  * ardından "bu kişinin kendi adı" muafiyeti gelir — ondan sonraki kurallar
- * yalnızca gerçekten gürültülü adlara uygulanır.
+ * yalnızca gerçekten gürültülü adlara uygulanır. `digits`, `keyboard`'dan
+ * önce gelir: "777" tekrar değil, rakam yığını olarak açıklanmalı.
  *
  * `displayName` verilmezse yalnızca gürültü kuralları çalışır; aday
  * kullanıcı adlarını süzerken bu biçimde (muafiyetsiz) çağrılır.
@@ -118,9 +123,9 @@ export function assessUsername(username: string, displayName = ''): UsernameAsse
   if (displayName && isMangled(value, displayName)) return { flagged: true, reason: 'mangled' };
   if (value.length < 3) return CLEAN;
   if (displayName && isOwnName(value, displayName)) return CLEAN;
+  if (isDigitHeavy(value)) return { flagged: true, reason: 'digits' };
   if (hasKeyboardRun(value) || isRepeated(value)) return { flagged: true, reason: 'keyboard' };
   if (value.length >= 6 && letterDigitTransitions(value) >= 3) return { flagged: true, reason: 'mixed' };
-  if (isDigitHeavy(value)) return { flagged: true, reason: 'digits' };
   if (hasVowellessRun(value)) return { flagged: true, reason: 'noVowels' };
   return CLEAN;
 }

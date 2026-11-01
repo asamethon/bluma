@@ -70,6 +70,33 @@ describe('assessUsername', () => {
     });
   });
 
+  /**
+   * Canlı ölçümden (852 kullanıcı) çıkan şekiller. Gerçek kullanıcı adları
+   * repoya girmesin diye aynı yapıyı üreten uydurma adlar kullanılıyor.
+   */
+  describe('canlı ölçüm şekilleri', () => {
+    it('eski filtrenin gerçekten bozduğu adları işaretler', () => {
+      expect(assessUsername('nar', 'Çınar').reason).toBe('mangled');
+      expect(assessUsername('glen', 'Gülşen').reason).toBe('mangled');
+      expect(assessUsername('erefkaya', 'Şeref Kaya').reason).toBe('mangled');
+      expect(assessUsername('yldzlar', 'Yıldızlar').reason).toBe('mangled');
+    });
+
+    it('temiz ilk adı, görünen adın ikinci kelimesi yüzünden işaretlemez', () => {
+      // Ölçümde mangled'ın yanlış pozitiflerinin tamamı bu şekildeydi:
+      // kullanıcı adı = kusursuz ilk ad, eski filtre o kelimeye hiç dokunmamış.
+      expect(assessUsername('kerem', 'Kerem Balcı').flagged).toBe(false);
+      expect(assessUsername('serap', 'Serap Aydın').flagged).toBe(false);
+      expect(assessUsername('pelin', 'Pelin kaya').flagged).toBe(false);
+      expect(assessUsername('lara', 'Lara Mz 🧸✨').flagged).toBe(false);
+    });
+
+    it('rakam yığınını tekrar değil rakam olarak açıklar', () => {
+      expect(assessUsername('777', 'Elif Kaya')).toEqual({ flagged: true, reason: 'digits' });
+      expect(assessUsername('_120', 'Mavii')).toEqual({ flagged: true, reason: 'digits' });
+    });
+  });
+
   describe('mixed', () => {
     it('harf-rakam gürültüsünü yakalar', () => {
       expect(assessUsername('a1b2c3x')).toEqual({ flagged: true, reason: 'mixed' });
