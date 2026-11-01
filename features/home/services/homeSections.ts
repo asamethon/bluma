@@ -1,7 +1,7 @@
 import type { FeedSource } from '@/features/discovery/constants';
 import { calculatePopularityScore } from '@/features/story/services/discover/popularity';
 import type { Story } from '@/types';
-import { categoryEntries, type CategoryEntry } from './categoryRanking';
+import { categoryEntries, sortByCategorySort } from './categoryRanking';
 import { coverLast, coverLastInBlocks, localDayNumber, newestFirst } from './storyOrder';
 import { toMillis } from '@/utils/time';
 
@@ -18,10 +18,11 @@ import { toMillis } from '@/utils/time';
  */
 export type ContinueEntry = { story: Story; chapterIndex: number };
 
-type SectionBase = { key: FeedSource; size: number };
+/** `key` ölçüm bölümü, `rowKey` listedeki satır kimliği (tür rafları aynı key'i paylaşır). */
+type SectionBase = { key: FeedSource; rowKey: string; size: number };
 export type HomeSection =
   | (SectionBase & { layout: 'continue'; entries: ContinueEntry[] })
-  | (SectionBase & { layout: 'categories'; categories: CategoryEntry[] })
+  | (SectionBase & { layout: 'category'; categoryId: string; total: number; stories: Story[] })
   | (SectionBase & { layout: 'feature' | 'shelf' | 'list'; stories: Story[] });
 
 /** Bölümler + bölümlerin dışında kalan, sonsuz kuyruğu besleyen hikâyeler. */
@@ -42,6 +43,7 @@ const SHELF_SIZE = 12;
 const MIN_SHELF = 3;
 const CONTINUE_MAX = 3;
 const NEW_ARRIVALS_MAX = 6;
+const CATEGORY_SHELF = 12;
 const RECENT_WINDOW = 7 * DAY;
 const RECENT_BOOST = 1.25;
 
@@ -119,29 +121,19 @@ export function buildHomeSections(input: HomeSectionsInput): HomeFeed {
     if (picked.length < rule.min) return;
     picked.forEach(story => used.add(story.id));
     // Sıralama seçimden sonra: kapaksızlar rafın sonuna iner ama rafa girer.
-    sections.push({ key, layout, stories: coverLast(picked), size: picked.length });
+    sections.push({ key, rowKey: key, layout, stories: coverLast(picked), size: picked.length });
   };
 
   const entries = input.continueReading.slice(0, CONTINUE_MAX);
   if (entries.length) {
     entries.forEach(entry => used.add(entry.story.id));
-    sections.push({ key: 'continue_reading', layout: 'continue', entries, size: entries.length });
+    sections.push({ key: 'continue_reading', rowKey: 'continue_reading', layout: 'continue', entries, size: entries.length });
   }
 
   add('following', 'shelf', [...input.following].sort(newestFirst));
 
   const picks = unused(input.pool.filter(story => story.isEditorsPick));
   if (picks.length) add('editors_pick', 'feature', [picks[localDayNumber(now) % picks.length]]);
-
-  // Tür gezintisi (Wattpad'deki "Browse"): bütün türler, hikâye sayılarıyla.
-  // Editörün seçiminin hemen altında durur; raf değil, gezinti olduğu için
-  // dedupe'tan etkilenmez ve boş türler de listelenir.
-  // Katalog boşken tür ızgarası da gösterilmez: 10 tane "0 hikâye" kutusu
-  // boş uygulamayı daha da boş gösterir.
-  const categories = input.pool.length ? categoryEntries(input.pool) : [];
-  if (categories.length) {
-    sections.push({ key: 'categories', layout: 'categories', categories, size: categories.length });
-  }
 
   add('for_you', 'shelf', input.recommend(unused(input.pool)));
   add('popular_now', 'shelf', popularNow(unused(input.pool), now));
@@ -154,5 +146,33 @@ export function buildHomeSections(input: HomeSectionsInput): HomeFeed {
       .sort((left, right) => (right.viewsCount || 0) - (left.viewsCount || 0)),
   );
 
+  // Tür gezintisi (Wattpad'deki "Browse"), kitaplarıyla birlikte: her türün
+  // kendi rafı, türün kendi "Popüler" sırasıyla (günlük hız). Bu raflar
+  // dedupe'a GİRMEZ ve `used`'a dokunmaz — tür rafı başka bir eksen, bir
+  // hikâyenin hem "Şu An Popüler"de hem kendi türünde görünmesi beklenen
+  // davranıştır; aksi hâlde türün en iyi kitapları rafından düşerdi.
+  sections.push(...categoryShelves(input.pool, now));
+
   return { sections, rest: coverLastInBlocks(unused(input.pool).sort(newestFirst)) };
+}
+
+/** Hikâyesi olan her tür için bir raf; türler hikâye sayısına göre sıralanır. */
+function categoryShelves(pool: Story[], now: number): HomeSection[] {
+  const ready = pool.filter(isShowcaseReady);
+  return categoryEntries(ready)
+    .filter(entry => entry.count > 0)
+    .map(entry => {
+      const stories = sortByCategorySort(
+        ready.filter(story => story.category === entry.id), 'hot', now,
+      ).slice(0, CATEGORY_SHELF);
+      return {
+        key: 'categories' as const,
+        rowKey: `category:${entry.id}`,
+        layout: 'category' as const,
+        categoryId: entry.id,
+        total: entry.count,
+        stories,
+        size: stories.length,
+      };
+    });
 }

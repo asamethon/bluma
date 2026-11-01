@@ -7,9 +7,16 @@ import { FlatList, type ListRenderItemInfo, View } from 'react-native';
 import { useOpenFeedStory } from '../hooks/useOpenFeedStory';
 import { createHomeStyles } from '../styles/homeStyles';
 
-type Props = { section: FeedSource; title: string; stories: Story[] };
+type Props = {
+  section: FeedSource;
+  title: string;
+  stories: Story[];
+  /** Tür raflarında hikâye sayısı ve o türün sayfasına geçiş. */
+  subtitle?: string;
+  onSeeAll?: () => void;
+};
 
-function HomeStoryShelfView({ section, title, stories }: Props) {
+function HomeStoryShelfView({ section, title, stories, subtitle, onSeeAll }: Props) {
   const { colors } = useTheme();
   const open = useOpenFeedStory();
   const styles = useMemo(() => createHomeStyles(colors), [colors]);
@@ -20,7 +27,7 @@ function HomeStoryShelfView({ section, title, stories }: Props) {
 
   return (
     <View style={styles.section}>
-      <SectionHeader title={title} />
+      <SectionHeader title={title} subtitle={subtitle} onSeeAll={onSeeAll} />
       <FlatList
         horizontal
         data={stories}

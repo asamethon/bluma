@@ -22,18 +22,19 @@ import { HomeStoryGridItem } from './HomeStoryGridItem';
 import { HomeWriterNudge } from './HomeWriterNudge';
 
 /**
- * Tür seçili değilken liste önce bölümlerden geçer, sonra "Bütün Hikâyeler"
- * kuyruğuna girer ve dibe inildikçe katalogdan sayfa sayfa büyür — ana sayfanın
- * sonu yoktur. Tür seçiliyken yalnızca o türün hikâyeleri listelenir.
+ * Tür seçili değilken liste önce kişisel bölümlerden, sonra tür raflarından
+ * geçer ve "Bütün Hikâyeler" kuyruğuna girer; dibe inildikçe katalogdan sayfa
+ * sayfa büyür — ana sayfanın sonu yoktur. Tür seçiliyken yalnızca o türün
+ * hikâyeleri listelenir.
  */
 type HomeListItem =
   | { kind: 'section'; section: HomeSection }
-  | { kind: 'label'; title: string }
+  | { kind: 'label'; id: string; title: string }
   | { kind: 'story'; story: Story; position: number };
 
 const itemKey = (item: HomeListItem) => {
-  if (item.kind === 'section') return item.section.key;
-  return item.kind === 'label' ? 'all-stories' : item.story.id;
+  if (item.kind === 'section') return item.section.rowKey;
+  return item.kind === 'label' ? `label:${item.id}` : item.story.id;
 };
 const itemType = (item: HomeListItem) => (item.kind === 'section' ? `section-${item.section.layout}` : item.kind);
 /** Bölüm ve ara başlık tablette de tam genişlik; ızgara yalnızca hikâye kartlarında. */
@@ -56,8 +57,15 @@ export function HomeScreen() {
     if (category.stories) {
       return category.stories.map((story, position) => ({ kind: 'story' as const, story, position }));
     }
-    const rows: HomeListItem[] = home.sections.map(section => ({ kind: 'section' as const, section }));
-    if (home.rest.length) rows.push({ kind: 'label', title: t('home.allStories') });
+    const rows: HomeListItem[] = [];
+    home.sections.forEach((section, index) => {
+      // Tür raflarının başında tek bir "Türler" künyesi durur.
+      if (section.layout === 'category' && home.sections[index - 1]?.layout !== 'category') {
+        rows.push({ kind: 'label', id: 'categories', title: t('home.categories') });
+      }
+      rows.push({ kind: 'section', section });
+    });
+    if (home.rest.length) rows.push({ kind: 'label', id: 'all', title: t('home.allStories') });
     home.rest.forEach((story, position) => rows.push({ kind: 'story', story, position }));
     return rows;
   }, [category.stories, home.rest, home.sections, t]);
@@ -84,7 +92,9 @@ export function HomeScreen() {
     <Screen edges={[]} style={styles.container}>
       <OfflineIndicator showWhenOnline />
       <FlashList
-        key={`grid-${numColumns}`}
+        /* Tür değişince liste BAŞTAN kurulur: aksi hâlde yeni türe, önceki
+           listede kalınan kaydırma konumundan giriliyordu. */
+        key={`grid-${numColumns}-${category.category ?? 'home'}`}
         data={items}
         keyExtractor={itemKey}
         getItemType={itemType}

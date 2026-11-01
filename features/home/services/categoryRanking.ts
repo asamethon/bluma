@@ -43,8 +43,9 @@ export function sortByCategorySort(stories: Story[], sort: CategorySort, now = D
 export type CategoryEntry = { id: string; count: number };
 
 /**
- * Bütün türler, hikâye sayısıyla. Boş tür de listelenir: katalog küçükken
- * okurun hangi türlerin var olduğunu görmesi, dolu rafları görmesinden önemli.
+ * Bütün türler, hikâye sayısıyla, çoktan aza sıralı. Boş türler de döner;
+ * ayıklamak çağıranın işi (ana sayfadaki tür rafları onları göstermez, çünkü
+ * gösterecek kitabı yok).
  */
 export function categoryEntries(stories: Story[]): CategoryEntry[] {
   const counts = new Map<string, number>();

@@ -26,24 +26,6 @@ export const createHomeStyles = (colors: Theme['colors']) =>
     },
 
     section: { marginTop: Spacing.xxl },
-    categoryGrid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      paddingHorizontal: Spacing.screenX,
-      gap: Spacing.sm,
-    },
-    categoryTile: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: Spacing.sm,
-      flexGrow: 1,
-      flexBasis: '47%',
-      borderWidth: StyleSheet.hairlineWidth,
-      borderRadius: Radius.md,
-      paddingVertical: Spacing.md,
-      paddingHorizontal: Spacing.md,
-    },
-    categoryTileText: { flex: 1, gap: 1 },
     sortRow: {
       flexDirection: 'row',
       gap: Spacing.sm,

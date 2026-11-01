@@ -1,8 +1,8 @@
 import type { FeedSource } from '@/features/discovery/constants';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { CategoryMeta } from '@/constants/categories';
 import type { HomeSection } from '../services/homeSections';
-import { HomeCategoriesSection } from './HomeCategoriesSection';
 import { HomeContinueSection } from './HomeContinueSection';
 import { HomeFeatureSection } from './HomeFeatureSection';
 import { HomeStoryListSection } from './HomeStoryListSection';
@@ -22,8 +22,17 @@ type Props = { section: HomeSection; onSelectCategory: (id: string) => void };
 function HomeSectionViewImpl({ section, onSelectCategory }: Props) {
   const { t } = useTranslation();
   if (section.layout === 'continue') return <HomeContinueSection entries={section.entries} />;
-  if (section.layout === 'categories') {
-    return <HomeCategoriesSection categories={section.categories} onSelect={onSelectCategory} />;
+  if (section.layout === 'category') {
+    const meta = CategoryMeta[section.categoryId];
+    return (
+      <HomeStoryShelf
+        section={section.key}
+        title={t(meta?.label || 'genres.other')}
+        subtitle={t('home.categoryCount', { count: section.total })}
+        stories={section.stories}
+        onSeeAll={() => onSelectCategory(section.categoryId)}
+      />
+    );
   }
   if (section.layout === 'feature') return <HomeFeatureSection story={section.stories[0]} />;
 

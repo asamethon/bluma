@@ -32,11 +32,22 @@ function topBy(field: 'viewsCount' | 'likesCount') {
   );
 }
 
-/** Havuza yalnızca akışta olmayanları ekler; mevcut nesneler korunur. */
+/**
+ * Havuza yalnızca akışta olmayanları ekler; mevcut nesneler korunur.
+ *
+ * Eleme `incoming` İÇİNDE de yapılır: iki sorgu (en çok okunan / en çok
+ * beğenilen) aynı hikâyeyi pekâlâ döndürüyor ve yalnız mevcut havuza bakmak
+ * onu listeye iki kez sokuyordu — "two children with the same key".
+ */
 function mergeIntoPool(incoming: Story[]) {
   const current = store.getState().story.stories;
   const known = new Set(current.map(story => story.id));
-  const fresh = incoming.filter(story => !known.has(story.id));
+  const fresh: Story[] = [];
+  for (const story of incoming) {
+    if (known.has(story.id)) continue;
+    known.add(story.id);
+    fresh.push(story);
+  }
   if (!fresh.length) return;
   store.dispatch(patchStory({ stories: [...current, ...fresh] }));
 }

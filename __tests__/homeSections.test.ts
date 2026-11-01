@@ -33,12 +33,12 @@ const feed = (overrides: Partial<HomeSectionsInput> = {}) => buildHomeSections({
 });
 const build = (overrides: Partial<HomeSectionsInput> = {}) => feed(overrides).sections;
 
-const idsOf = (section: HomeSection): string[] => {
-  if (section.layout === 'continue') return section.entries.map(entry => entry.story.id);
-  if (section.layout === 'categories') return section.categories.map(entry => entry.id);
-  return section.stories.map(item => item.id);
-};
+const idsOf = (section: HomeSection): string[] => (section.layout === 'continue'
+  ? section.entries.map(entry => entry.story.id)
+  : section.stories.map(item => item.id));
 const find = (sections: HomeSection[], key: string) => sections.find(section => section.key === key);
+/** Tür rafları dedupe dışıdır; kişisel bölümleri incelerken ayıklanır. */
+const curated = (sections: HomeSection[]) => sections.filter(section => section.layout !== 'category');
 
 describe('buildHomeSections', () => {
   const pool = Array.from({ length: 30 }, (_, index) => story(`s${index}`, {
@@ -54,7 +54,7 @@ describe('buildHomeSections', () => {
       following: [pool[1], pool[2]],
       recommend: candidates => candidates.slice(0, 5),
     });
-    const all = sections.flatMap(idsOf);
+    const all = curated(sections).flatMap(idsOf);
     expect(new Set(all).size).toBe(all.length);
   });
 
@@ -62,7 +62,7 @@ describe('buildHomeSections', () => {
     const continueReading = pool.slice(0, 5).map(item => ({ story: item, chapterIndex: 0 }));
     const sections = build({ pool, continueReading, recommend: candidates => candidates });
     expect(idsOf(sections[0])).toEqual(['s0', 's1', 's2']);
-    const rest = sections.slice(1).flatMap(idsOf);
+    const rest = curated(sections).slice(1).flatMap(idsOf);
     expect(rest).not.toContain('s0');
     expect(rest).not.toContain('s2');
   });
@@ -164,11 +164,49 @@ describe('buildHomeSections', () => {
   });
 });
 
+// Tür gezintisi artık kitaplarıyla birlikte: her türün kendi rafı var.
+describe('tür rafları', () => {
+  const shelves = (sections: HomeSection[]) =>
+    sections.filter(section => section.layout === 'category');
+
+  it('hikâyesi olan her tür için bir raf çıkar, boş tür çıkmaz', () => {
+    const pool = [
+      story('r1', { category: 'romance' }),
+      story('r2', { category: 'romance' }),
+      story('k1', { category: 'horror' }),
+    ];
+    const rows = shelves(build({ pool }));
+    expect(rows.map(row => row.layout === 'category' && row.categoryId)).toEqual(['romance', 'horror']);
+    expect(rows[0].size).toBe(2);
+  });
+
+  // Tür rafı başka bir eksen: üstteki rafa giren hikâye kendi türünden düşmez.
+  it('tür rafı dedupe dışıdır, üstte görünen hikâye kendi türünde de görünür', () => {
+    const pool = Array.from({ length: 5 }, (_, index) => story(`m${index}`, {
+      category: 'mystery', viewsCount: 100 - index,
+    }));
+    const sections = build({ pool });
+    const popular = idsOf(find(sections, 'popular_now')!);
+    const shelf = shelves(sections)[0];
+    expect(popular).toContain('m0');
+    expect(idsOf(shelf)).toContain('m0');
+  });
+
+  it('tür rafı günlük hıza göre sıralar, kapaksızı sona alır', () => {
+    const pool = [
+      story('durgun', { category: 'drama', viewsCount: 900, createdAt: new Date(NOW - 300 * DAY) }),
+      story('hareketli', { category: 'drama', viewsCount: 60, createdAt: new Date(NOW - 2 * DAY) }),
+      story('kapaksiz', { category: 'drama', coverImage: undefined, viewsCount: 500 }),
+    ];
+    const ids = idsOf(shelves(build({ pool }))[0]);
+    expect(ids).toEqual(['hareketli', 'durgun', 'kapaksiz']);
+  });
+});
+
 // Ana sayfanın sonu yok: rafların dışında kalan her hikâye kuyruğa düşer.
 describe('sonsuz kuyruk (rest)', () => {
-  // Tür ızgarası hikâye değil tür kimliği taşır; kuyruk karşılaştırmasına girmez.
-  const storyIds = (sections: HomeSection[]) =>
-    sections.flatMap(section => (section.layout === 'categories' ? [] : idsOf(section)));
+  // Tür rafları dedupe'a girmez, kuyrukla kesişmeleri beklenen davranıştır.
+  const storyIds = (sections: HomeSection[]) => curated(sections).flatMap(idsOf);
 
   it('rafların almadığı her hikâye kuyruğa düşer, hiçbiri iki kez görünmez', () => {
     const pool = Array.from({ length: 60 }, (_, index) => story(`s${index}`, {

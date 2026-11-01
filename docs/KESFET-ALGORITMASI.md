@@ -62,6 +62,15 @@ ana sayfadan silmek anlamına geliyordu. Yeni kural `coverLast`
 kartlar **satırın/sütunun sonuna iner**. `StoryCover` zaten tür rengiyle
 kitap-ikonu yedeği çiziyor, boş kutu görünmüyor.
 
+**Tür gezintisi kitaplarıyla.** Türler önce sayaçlı bir kutucuk ızgarasıydı;
+kutucuk türün adını veriyor ama tek bir kitap göstermiyordu. Artık her türün
+kendi rafı var (`layout: 'category'`): tür adı, hikâye sayısı, "Tümü →" ve o
+türün kendi "Popüler" sırasıyla (günlük hız) ilk 12 kitabı. Raflar kişisel
+bölümlerin ardından, "Bütün Hikâyeler" kuyruğunun önünde durur ve **dedupe'a
+girmez** — tür rafı başka bir eksen; bir hikâyenin hem "Şu An Popüler"de hem
+kendi türünde görünmesi beklenen davranıştır, aksi hâlde türün en iyi kitapları
+kendi rafından düşerdi. Kitabı olmayan tür listelenmez.
+
 **Ana sayfanın sonu yok.** Rafların dışında kalan her hikâye
 `buildHomeSections().rest` ile "Bütün Hikâyeler" kuyruğuna düşer; liste dibe
 yaklaşınca `useEndlessFeed` katalogdan 30'luk bir sonraki sayfayı çeker ve
@@ -69,6 +78,12 @@ sunucu "daha yok" diyene kadar sürer. Uzun kuyrukta kapak sıralaması
 **12'lik bloklar hâlinde** uygulanır (`coverLastInBlocks`): tek bir küresel
 sıralama olsaydı yeni sayfa geldiğinde okurun o an baktığı kartlar yer
 değiştirirdi.
+
+**Yan düzeltme (2):** `loadCatalogHighlights` iki sorgunun (en çok okunan / en
+çok beğenilen) sonucunu birleştirirken yalnız mevcut havuza bakıp `incoming`
+içindeki tekrarları elemiyordu; her iki listede birden olan hikâye havuza iki
+kez giriyordu ("two children with the same key"). Kuyruk bütün havuzu tek
+listede gösterdiği için ortaya çıktı.
 
 **Yan düzeltme:** `loadMoreStories` imleci havuzun son elemanını kullanıyordu.
 `loadCatalogHighlights` havuza akış dışından ("tüm zamanların en çok
