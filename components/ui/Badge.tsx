@@ -64,7 +64,7 @@ export function Badge({
   );
 }
 
-/** Sayaç baloncuğu (okunmamış bildirim, mesaj). Tek yerden ölçülenir. */
+/** Sayaç baloncuğu (okunmamış bildirim, mesaj). 9'dan fazlası "9+" yazılır. */
 export function CountBadge({ count, color }: { count: number; color?: string }) {
   const { colors } = useTheme();
   if (count <= 0) return null;
@@ -81,7 +81,7 @@ export function CountBadge({ count, color }: { count: number; color?: string }) 
       }}
     >
       <Text variant="labelSm" color="#fff" style={{ fontSize: 10.5, lineHeight: 14 }}>
-        {count > 99 ? "99+" : count}
+        {count > 9 ? "9+" : count}
       </Text>
     </View>
   );

@@ -2,6 +2,7 @@ import { privacyActions } from '@/features/privacy/services/privacyService';
 import { readingProgressActions } from '@/features/story/services/readingProgress';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { messagingActions } from '@/store/messagingStore';
+import { notificationActions } from '@/store/notificationStore';
 import { moderationActions } from '@/store/moderationStore';
 import { preferencesActions } from '@/store/preferencesStore';
 import { useAppSelector } from '@/store/hooks';
@@ -30,6 +31,10 @@ export function useHomeFeed() {
       void moderationActions.loadBlockedUsers();
       void privacyActions.load();
       messagingActions.startThreadsListener(userId);
+      // Zildeki okunmamış sayısı bu dinleyiciden gelir. Eskiden yalnız
+      // bildirimler ekranı açınca kuruluyordu, rozet ancak oraya girince
+      // görünüyordu. Dinleyici kullanıcı başına tekil; çıkışta kapanır.
+      void notificationActions.initializeNotifications(userId);
     } else if (isGuest) {
       void storyActions.loadStoriesFeed();
     }

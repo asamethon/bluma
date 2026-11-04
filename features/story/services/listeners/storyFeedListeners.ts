@@ -6,6 +6,7 @@ import { collection, getDocs, getFirestore, limit, onSnapshot, orderBy, query, w
 import { getUserById } from '../userCache';
 import { rememberFeedCursor } from '../feedPagination';
 import { loadCatalogHighlights } from './catalogHighlights';
+import { prefetchAuthors, readCachedFeed } from './feedWarmStart';
 import { fallbackAuthor, storyFromSnapshot } from './storySnapshot';
 
 /**
@@ -41,9 +42,20 @@ export function loadStoriesFeed(options: { force?: boolean } = {}): Promise<void
     orderBy('createdAt', 'desc'),
     limit(FEED_SIZE),
   );
+  // Akış henüz hiç gösterilmediyse önce cihazdaki ön bellekten çiz; sunucu
+  // cevabı gelince (veya önce gelmişse) ön bellek sonucu yok sayılır.
+  let served = false;
+  if (!store.getState().story.storiesLoaded) {
+    void readCachedFeed(source).then(cached => {
+      if (served || !cached.length) return;
+      store.dispatch(patchStory({ stories: cached, storiesLoaded: true }));
+      prefetchAuthors(cached);
+    });
+  }
   feed.inFlight = getDocs(source)
     .then(snapshot => Promise.all(snapshot.docs.map(storyFromSnapshot)))
     .then(stories => {
+      served = true;
       feed.loadedAt = Date.now();
       store.dispatch(patchStory({ stories, storiesLoaded: true }));
       // Sonsuz kuyruk buradan devam eder: imleç akışın en eski belgesi.
