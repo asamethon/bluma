@@ -73,7 +73,7 @@ function publish() {
   if (upload) run('node', ['node_modules/@sentry/react-native/scripts/expo-upload-sourcemaps.js', 'dist']);
   saveResult(easJson(['update', '--channel', channel, '--environment', environment,
     '--message', options.message, '--platform', platform,
-    '--skip-bundler', '--input-dir', 'dist', '--emit-metadata', '--non-interactive']));
+    '--skip-bundler', '--input-dir', 'dist', '--non-interactive']));
 }
 
 function republish(rollback) {

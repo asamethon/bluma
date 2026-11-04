@@ -2,7 +2,13 @@ const { execFileSync } = require('node:child_process');
 const { resolve } = require('node:path');
 
 const root = resolve(__dirname, '../..');
-const env = { ...process.env, EXPO_NO_DOTENV: '1', CI: '1', FORCE_COLOR: '0' };
+// Dil ayarı sabit: @expo/fingerprint dizinleri `localeCompare` ile sıralıyor.
+// Türkçe terminalde (tr_TR) "I/ı/i" sıralaması değişip runtime farklı
+// hesaplanıyor ve güncelleme mağazadaki build'lere hiç inmiyordu.
+const env = {
+  ...process.env, EXPO_NO_DOTENV: '1', CI: '1', FORCE_COLOR: '0',
+  LANG: 'en_US.UTF-8', LC_ALL: 'en_US.UTF-8',
+};
 
 function run(command, args, capture = false) {
   try {
@@ -23,8 +29,13 @@ function eas(args, capture = false) {
   return run('npx', ['--yes', 'eas-cli@24.12.1', ...args], capture);
 }
 
+// eas-cli bazen JSON'dan önce stdout'a uyarı satırı basıyor ("ignoring flag
+// ..."). Çıktı ilk '{' ya da '[' karakterinden itibaren okunur.
 function easJson(args) {
-  return JSON.parse(eas([...args, '--json'], true));
+  const output = eas([...args, '--json'], true);
+  const start = output.search(/^[[{]/m);
+  if (start < 0) throw new Error(`eas JSON döndürmedi: ${output.slice(0, 200)}`);
+  return JSON.parse(output.slice(start));
 }
 
 module.exports = { root, run, eas, easJson };
