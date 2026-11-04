@@ -3,7 +3,6 @@ import { USERNAME_MAX_LENGTH } from '@/features/auth/utils/usernameNormalize';
 import { useTheme } from '@/constants/theme';
 import type { OnboardingUsernameStatus } from '@/features/auth/hooks/useOnboardingForm';
 import { UsernameSuggestions } from '@/features/profile/components/UsernameSuggestions';
-import { useUsernameSuggestions } from '@/features/profile/hooks/useUsernameSuggestions';
 import { assessUsername } from '@/features/profile/utils/usernameAssess';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -16,6 +15,8 @@ type Props = {
   displayName: string;
   username: string;
   status: OnboardingUsernameStatus;
+  /** Müsait öneriler (hook'ta aranır); alan boşsa ilki kullanılacak ad olarak gösterilir. */
+  suggestions: string[];
   onAvatar: () => void;
   onDisplayName: (value: string) => void;
   onUsername: (value: string) => void;
@@ -24,16 +25,16 @@ type Props = {
 export function ProfileStep(props: Props) {
   const { colors, fonts } = useTheme();
   const { t } = useTranslation();
-  // Alan boşken ilk müsait öneriyi göster; yazılan ad gürültülüyse ipucuyla birlikte.
-  // Müsaitlik sorgusu yalnızca öneri gösterilecekse atılır — boşa okuma yok.
+  // Alan boşken ilk müsait öneri kullanılacak ad olarak gösterilir; yazılan ad gürültülüyse ipucuyla.
   const assessment = assessUsername(props.username, props.displayName);
-  const showSuggestions = !props.username || assessment.flagged;
-  const suggestions = useUsernameSuggestions(props.displayName, props.username, showSuggestions);
-  const statusMeta = props.status === 'checking'
+  const { suggestions } = props;
+  const shown = props.username || suggestions[0] || '';
+  const status = props.username ? props.status : suggestions[0] ? 'available' : null;
+  const statusMeta = status === 'checking'
     ? { icon: 'time-outline' as const, color: colors.textSecondary, text: t('onboarding.checking') }
-    : props.status === 'available'
-      ? { icon: 'checkmark-circle' as const, color: colors.success, text: t('onboarding.usernameAvailable', { username: props.username }) }
-      : props.status === 'taken'
+    : status === 'available'
+      ? { icon: 'checkmark-circle' as const, color: colors.success, text: t('onboarding.usernameAvailable', { username: shown }) }
+      : status === 'taken'
         ? { icon: 'close-circle' as const, color: colors.error, text: t('onboarding.usernameTaken', { username: props.username }) }
         : null;
   return (
@@ -67,7 +68,7 @@ export function ProfileStep(props: Props) {
       <View>
         <View style={[
           styles.inputRow,
-          { backgroundColor: colors.surfaceVariant, borderColor: props.status === 'available' ? colors.success : colors.border },
+          { backgroundColor: colors.surfaceVariant, borderColor: status === 'available' ? colors.success : colors.border },
         ]}>
           <Text style={[styles.atPrefix, { color: colors.primary, fontFamily: fonts.sans }]}>@</Text>
           <TextInput
@@ -84,7 +85,7 @@ export function ProfileStep(props: Props) {
         <Text variant="caption" tone="textSecondary" style={styles.usernameHint}>
           {t('onboarding.usernameHint', { length: props.username.length })}
         </Text>
-        {props.username.length >= 3 && statusMeta && (
+        {shown.length >= 3 && statusMeta && (
           <View style={styles.usernameStatus}>
             <Ionicons name={statusMeta.icon} size={16} color={statusMeta.color} />
             <Text variant="caption" style={{ color: statusMeta.color }}>{statusMeta.text}</Text>
@@ -92,7 +93,7 @@ export function ProfileStep(props: Props) {
         )}
         <UsernameSuggestions
           reason={assessment.reason}
-          suggestions={suggestions}
+          suggestions={props.username ? suggestions : suggestions.slice(1)}
           onPick={props.onUsername}
         />
       </View>

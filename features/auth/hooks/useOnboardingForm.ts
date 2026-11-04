@@ -1,5 +1,7 @@
 import { normalizeUsername } from '@/features/auth/utils/usernameNormalize';
 import { useAvatarPicker } from '@/features/profile/hooks/useAvatarPicker';
+import { useUsernameSuggestions } from '@/features/profile/hooks/useUsernameSuggestions';
+import { assessUsername } from '@/features/profile/utils/usernameAssess';
 import { authActions } from '@/store/authStore';
 import { useAppSelector } from '@/store/hooks';
 import { useCallback, useReducer } from 'react';
@@ -37,16 +39,35 @@ const reducer = (state: State, action: Action): State => {
   };
 };
 
+/** Ad gelmeyen girişlerde (Apple adı gizlediğinde) denenecek kullanıcı adları. */
+const fallbackUsernames = (userId: string) => {
+  const tag = normalizeUsername(userId).slice(-5);
+  return tag ? [`bluma_${tag}`, `okur_${tag}`, `bluma${tag}`] : [];
+};
+
 export function useOnboardingForm() {
   const { t } = useTranslation();
   const loading = useAppSelector(state => state.auth.isLoading);
+  const userId = useAppSelector(state => state.auth.user?.id ?? '');
+  const providerName = useAppSelector(state => state.auth.user?.displayName ?? '');
   const avatar = useAvatarPicker();
-  const [state, dispatch] = useReducer(reducer, {
+  // Apple/Google'ın verdiği ad hazır gelir (Apple kılavuzu 4.8: tekrar sorulmaz);
+  // yalnızca bizim koyduğumuz yedek ad ("Apple Kullanıcısı") öne doldurulmaz.
+  const [state, dispatch] = useReducer(reducer, null, () => ({
     step: 0,
     intent: null,
     usernameStatus: null,
-    data: { username: '', displayName: '', interests: [], bio: '' },
-  });
+    data: {
+      username: '',
+      displayName: [t('common.appleUser'), t('common.user')].includes(providerName) ? '' : providerName,
+      interests: [],
+      bio: '',
+    },
+  }));
+  const { username, displayName } = state.data;
+  // Alan boşken ya da yazılan ad gürültülüyken müsait öneri aranır; boş alan ilk öneriyle geçilir.
+  const wantsSuggestions = state.step === 2 && (!username || assessUsername(username, displayName).flagged);
+  const suggestions = useUsernameSuggestions(displayName, username, wantsSuggestions, fallbackUsernames(userId));
   const updateUsername = useCallback((raw: string) => {
     const username = normalizeUsername(raw);
     const status = username.length >= 3 ? 'checking' : null;
@@ -71,7 +92,7 @@ export function useOnboardingForm() {
     : state.step === 1
       ? state.data.interests.length >= 3
       : state.step === 2
-        ? state.data.username.length >= 3 && state.usernameStatus === 'available'
+        ? username ? username.length >= 3 && state.usernameStatus === 'available' : !!suggestions[0]
         : true;
 
   return {
@@ -81,8 +102,15 @@ export function useOnboardingForm() {
     completion: state.step === ONBOARDING_STEPS.length - 1,
     finish,
     loading,
+    suggestions,
     back: () => dispatch({ type: 'step', delta: -1 }),
-    next: () => dispatch({ type: 'step', delta: 1 }),
+    next: () => {
+      // Boş bırakılan kullanıcı adı, gösterilen müsait öneriyle doldurulup ilerlenir.
+      if (state.step === 2 && !username && suggestions[0]) {
+        dispatch({ type: 'field', field: 'username', value: suggestions[0], status: 'available' });
+      }
+      dispatch({ type: 'step', delta: 1 });
+    },
     selectIntent: (value: OnboardingIntent) => dispatch({ type: 'intent', value }),
     setDisplayName: (value: string) => dispatch({ type: 'field', field: 'displayName', value }),
     toggleGenre: (value: OnboardingGenre) => dispatch({ type: 'genre', value }),

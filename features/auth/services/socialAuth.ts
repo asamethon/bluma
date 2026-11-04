@@ -17,7 +17,7 @@ type AppleCredential = {
   nonce?: string;
   user?: string;
   email?: string | null;
-  fullName?: { givenName?: string | null } | null;
+  fullName?: { givenName?: string | null; familyName?: string | null } | null;
 };
 
 async function signInWithGoogle(): Promise<AuthResult> {
@@ -49,11 +49,14 @@ async function signInWithApple(credential: AppleCredential): Promise<AuthResult>
   try {
     const appleCredential = AppleAuthProvider.credential(credential.identityToken, credential.nonce);
     const { user: firebaseUser } = await signInWithCredential(getAuth(), appleCredential);
+    // Apple adı yalnızca ilk girişte verir; varsa tamamını al ki kayıtta bir daha sorulmasın.
+    const appleName = [credential.fullName?.givenName, credential.fullName?.familyName]
+      .filter(Boolean).join(' ').trim();
 
     await establishSession(firebaseUser, {
       email: firebaseUser.email || credential.email || '',
       displayName:
-        firebaseUser.displayName || credential.fullName?.givenName || i18n.t('common.appleUser'),
+        firebaseUser.displayName || appleName || i18n.t('common.appleUser'),
       authProvider: 'apple',
       appleUserId: credential.user,
     });

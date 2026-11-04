@@ -35,6 +35,7 @@ export function OnboardingScreen() {
             displayName={form.data.displayName}
             username={form.data.username}
             status={form.usernameStatus}
+            suggestions={form.suggestions}
             onAvatar={form.avatar.showOptions}
             onDisplayName={form.setDisplayName}
             onUsername={form.updateUsername}

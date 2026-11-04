@@ -22,7 +22,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.asamethon.bluma",
       "usesAppleSignIn": true,
-      "buildNumber": "21",
+      "buildNumber": "29",
       "googleServicesFile": "./GoogleService-Info.plist",
       "associatedDomains": [
         "applinks:bluma-dc10e.web.app"
@@ -39,6 +39,19 @@
         "LSApplicationQueriesSchemes": [
           "instagram",
           "instagram-stories"
+        ],
+        "CFBundleLocalizations": [
+          "tr",
+          "en",
+          "es",
+          "pt-BR",
+          "pt-PT",
+          "id",
+          "ar",
+          "de",
+          "ja",
+          "ko",
+          "zh-Hant"
         ]
       },
       "appleTeamId": "RUXJ98MZ8W",
@@ -51,7 +64,7 @@
       },
       "googleServicesFile": "./google-services.json",
       "package": "com.d4tecompany.bluma",
-      "versionCode": 17,
+      "versionCode": 22,
       "playStoreUrl": "https://play.google.com/store/apps/details?id=com.d4tecompany.bluma",
       "intentFilters": [
         {

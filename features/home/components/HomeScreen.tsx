@@ -1,5 +1,5 @@
 import OfflineIndicator from '@/components/ui/OfflineIndicator';
-import { BloomMark, Chip, Screen, SectionHeader, SkeletonRow, Text } from '@/components/ui';
+import { Chip, Screen, SectionHeader, SkeletonRow } from '@/components/ui';
 import { CategoryMeta, useTheme } from '@/constants/theme';
 import { useSectionImpressions } from '@/features/discovery/hooks/useSectionImpressions';
 import { useResponsiveGrid } from '@/hooks/useResponsive';
@@ -16,6 +16,7 @@ import { useHomeFeed } from '../hooks/useHomeFeed';
 import { useHomeSections } from '../hooks/useHomeSections';
 import type { HomeSection } from '../services/homeSections';
 import { createHomeStyles } from '../styles/homeStyles';
+import { HomeEmptyState } from './HomeEmptyState';
 import { HomeHeader } from './HomeHeader';
 import { HomeSectionView } from './HomeSectionView';
 import { HomeStoryGridItem } from './HomeStoryGridItem';
@@ -145,15 +146,7 @@ export function HomeScreen() {
             <SkeletonRow />
           </View>
         ) : null}
-        ListEmptyComponent={showEmpty ? (
-          <View style={styles.empty}>
-            <BloomMark size={category.stories ? 64 : 52} color={colors.primaryLight} coreColor={colors.bloomLight} />
-            {!category.stories && <Text variant="titleSm" center style={styles.emptyTitle}>{t('home.emptyTitle')}</Text>}
-            <Text variant="body" tone="textSecondary" center style={styles.emptySubtitle}>
-              {category.stories ? t('home.noStoriesInGenre') : t('home.emptySub')}
-            </Text>
-          </View>
-        ) : null}
+        ListEmptyComponent={showEmpty ? <HomeEmptyState genre={!!category.stories} styles={styles} /> : null}
       />
     </Screen>
   );

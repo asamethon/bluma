@@ -64,3 +64,10 @@ it('yeni hesap yalnızca profil kaydı tamamlandıktan sonra yeni sayılır', as
   expect(saveUserProfile).toHaveBeenCalledWith(expect.objectContaining({ id: 'writer', signupRegion: 'TR' }), true);
   expect(trackSignupContext).toHaveBeenCalledTimes(1);
 });
+
+it('sonraki Apple girişinde gelen yedek ad, profilde seçilmiş görünen adı ezmez', async () => {
+  const apple = { email: 'x@privaterelay.appleid.com', displayName: 'Apple Kullanıcısı', authProvider: 'apple' as const };
+  const result = await upsertProviderProfile('writer', apple);
+  expect(result.user.displayName).toBe('Yazar');
+  expect(saveUserProfile).toHaveBeenCalledWith(expect.objectContaining({ displayName: 'Yazar', authProvider: 'apple' }));
+});

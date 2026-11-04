@@ -38,10 +38,13 @@ export async function upsertProviderProfile(
     return { user, isNew: true };
   }
 
-  const user = { ...existing, id: userId, ...identity } as User;
+  // Uygulamada seçilen görünen ad korunur: Apple adı yalnızca ilk girişte verir,
+  // sonraki girişlerde gelen yedek ad ("Apple Kullanıcısı") profili ezmemeli.
+  const merged = { ...identity, displayName: existing.displayName || identity.displayName };
+  const user = { ...existing, id: userId, ...merged } as User;
   try {
     // Sayaçları eski anlık görüntüyle ezmeden yalnızca kimlik ve eski özel alanları taşır.
-    await saveUserProfile({ ...privateProfileData(existing), id: userId, ...identity });
+    await saveUserProfile({ ...privateProfileData(existing), id: userId, ...merged });
   } catch (error) {
     logger.warn('Profil kimlik alanları güncellenemedi; okunan profil korunuyor:', error);
   }
