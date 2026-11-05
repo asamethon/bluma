@@ -1148,5 +1148,17 @@
     "hintMangled": "Einige Buchstaben deines Namens sind nicht in den Benutzernamen übernommen worden, das ist unser Fehler.",
     "pickOwn": "Selbst auswählen",
     "keep": "So lassen"
+  },
+  "pushPrompt": {
+    "followTitle": "Sollen wir dir bei neuen Kapiteln Bescheid geben?",
+    "followSub": "Wir benachrichtigen dich, wenn die Person, der du folgst, ein neues Kapitel oder eine neue Geschichte veröffentlicht.",
+    "commentTitle": "Sollen wir dir Bescheid geben, wenn jemand antwortet?",
+    "commentSub": "Wir benachrichtigen dich, wenn jemand auf deinen Kommentar antwortet, damit das Gespräch weitergeht.",
+    "blockedHint": "Mitteilungen sind in den Einstellungen deines Telefons deaktiviert. Öffne die Einstellungen, wähle Bluma und erlaube Mitteilungen.",
+    "enable": "Benachrichtigungen aktivieren",
+    "openSettings": "Einstellungen öffnen",
+    "later": "Jetzt nicht",
+    "bannerTitle": "Benachrichtigungen sind aus",
+    "bannerBody": "Erfahre, wenn Autorinnen und Autoren, denen du folgst, neue Kapitel veröffentlichen oder du eine Antwort oder Nachricht bekommst."
   }
 }

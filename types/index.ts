@@ -8,6 +8,12 @@ export type {
   SharedStory,
   VoiceMessage,
 } from './messaging';
-export type { Notification, NotificationI18n, NotificationSettings } from './notification';
+export type {
+  Notification,
+  NotificationI18n,
+  NotificationSettings,
+  PushPermission,
+  PushPromptReason,
+} from './notification';
 export type { Comment, Story, StoryCategory } from './story';
 export type { PrivacySettings, User } from './user';

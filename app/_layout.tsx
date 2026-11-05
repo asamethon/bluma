@@ -3,6 +3,7 @@ import 'react-native-reanimated';
 import '@/features/notifications/services/foregroundNotifications';
 
 import { AuthGateSheet } from '@/features/auth/components/AuthGateSheet';
+import { PushPromptSheet } from '@/features/notifications/components/PushPromptSheet';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { BootSplash } from '@/features/bootstrap/components/BootSplash';
 import { configureGoogleSignIn } from '@/config/googleSignIn';
@@ -80,6 +81,7 @@ function RootLayoutInner() {
                 </Stack>
                 <StatusBar style="auto" />
                 <AuthGateSheet />
+                <PushPromptSheet />
               </GuestProvider>
               <BootSplash visible={!appReady} onIntroFinished={onIntroFinished} />
             </ErrorBoundary>

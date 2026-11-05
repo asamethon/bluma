@@ -9,7 +9,15 @@ import { isLocalFirebase } from '@/constants/firebaseEnvironment';
 class PushNotificationService {
   private registrationVersion = 0;
 
-  async getExpoPushToken(): Promise<string | null> {
+  /**
+   * `prompt: false` (varsayılan) izin penceresini ASLA açmaz; yalnızca izin
+   * zaten verilmişse token alır. Pencere eskiden oturum açılır açılmaz
+   * çıkıyordu: kullanıcı neden izin vereceğini bilmeden "hayır" diyordu ve
+   * iOS bir daha sordurmuyordu (898 kayıtlıdan 503'ünde token yoktu). İzin
+   * artık değer anında, önce bizim kartımızla isteniyor
+   * (bkz. features/notifications/services/pushPermission.ts).
+   */
+  async getExpoPushToken(options: { prompt?: boolean } = {}): Promise<string | null> {
     if (isLocalFirebase) return null;
     try {
       if (!Device.isDevice) {
@@ -18,7 +26,7 @@ class PushNotificationService {
       }
 
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      const { status } = existingStatus === 'granted'
+      const { status } = existingStatus === 'granted' || !options.prompt
         ? { status: existingStatus }
         : await Notifications.requestPermissionsAsync();
 
@@ -38,10 +46,10 @@ class PushNotificationService {
     }
   }
 
-  async saveUserPushToken(userId: string): Promise<boolean> {
+  async saveUserPushToken(userId: string, options: { prompt?: boolean } = {}): Promise<boolean> {
     const version = this.registrationVersion;
     try {
-      const token = await this.getExpoPushToken();
+      const token = await this.getExpoPushToken(options);
       if (!token) return false;
       // Çıkış sırasında başlamış eski kayıt yeni oturumun token'ını ele geçirmesin.
       if (version !== this.registrationVersion || getAuth().currentUser?.uid !== userId) return false;

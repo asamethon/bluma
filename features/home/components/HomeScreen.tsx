@@ -17,6 +17,7 @@ import { useHomeSections } from '../hooks/useHomeSections';
 import type { HomeSection } from '../services/homeSections';
 import { createHomeStyles } from '../styles/homeStyles';
 import { HomeEmptyState } from './HomeEmptyState';
+import { PushPermissionBanner } from '@/features/notifications/components/PushPermissionBanner';
 import { HomeHeader } from './HomeHeader';
 import { HomeSectionView } from './HomeSectionView';
 import { HomeStoryGridItem } from './HomeStoryGridItem';
@@ -117,6 +118,7 @@ export function HomeScreen() {
               selectedCategory={category.category}
               onSelectCategory={category.select}
             />
+            {!category.category && <PushPermissionBanner snoozable />}
             {category.category ? (
               <View style={styles.section}>
                 <SectionHeader title={selectedTitle || ''} />

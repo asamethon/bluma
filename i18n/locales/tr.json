@@ -1147,5 +1147,17 @@
     "hintMangled": "Adındaki bazı harfler kullanıcı adına geçmemiş, bu bizim hatamız.",
     "pickOwn": "Kendim seçeyim",
     "keep": "Böyle kalsın"
+  },
+  "pushPrompt": {
+    "followTitle": "Yeni bölümler gelince haber verelim mi?",
+    "followSub": "Takip ettiğin yazar yeni bir bölüm ya da hikâye yayınladığında sana bildirim gönderelim.",
+    "commentTitle": "Cevap gelince haber verelim mi?",
+    "commentSub": "Yorumuna cevap geldiğinde sana bildirim gönderelim, sohbet yarım kalmasın.",
+    "blockedHint": "Bildirimler telefonunun ayarlarında kapalı. Ayarlar'da Bluma'yı seçip bildirimlere izin ver.",
+    "enable": "Bildirimleri aç",
+    "openSettings": "Ayarlar'ı aç",
+    "later": "Şimdi değil",
+    "bannerTitle": "Bildirimler kapalı",
+    "bannerBody": "Takip ettiğin yazarlar yeni bölüm yayınladığında, yorumuna cevap ya da mesaj geldiğinde haberin olsun."
   }
 }

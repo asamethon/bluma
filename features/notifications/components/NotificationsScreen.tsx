@@ -10,6 +10,7 @@ import { notificationStyles as styles } from '../styles/notificationStyles';
 import { FollowRequestsBanner } from './FollowRequestsBanner';
 import { NotificationHeader } from './NotificationHeader';
 import { NotificationRow } from './NotificationRow';
+import { PushPermissionBanner } from './PushPermissionBanner';
 import { NotificationEmptyState, NotificationGuestState } from './NotificationStates';
 
 export function NotificationsScreen() {
@@ -39,7 +40,12 @@ export function NotificationsScreen() {
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        ListHeaderComponent={<FollowRequestsBanner count={state.requests.length} />}
+        ListHeaderComponent={(
+          <>
+            <PushPermissionBanner />
+            <FollowRequestsBanner count={state.requests.length} />
+          </>
+        )}
         refreshControl={<RefreshControl refreshing={state.isLoading} onRefresh={state.refresh} tintColor={colors.primary} />}
         ListEmptyComponent={!state.isLoading ? <NotificationEmptyState /> : null}
       />

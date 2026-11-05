@@ -17,9 +17,10 @@ export function useNotificationSettings() {
   const toggle = (key: ToggleKey, value: boolean) => {
     if (!userId) return;
     notificationActions.updateNotificationSettings(userId, { [key]: value });
-    // Push yeni açıldıysa cihaz jetonu hemen tazelenmeli.
+    // Push yeni açıldıysa cihaz jetonu hemen tazelenmeli; kullanıcı açıkça
+    // istediği için sistem izni burada sorulabilir.
     if (key === 'pushNotifications' && value) {
-      pushNotificationService.saveUserPushToken(userId).catch(() => {});
+      pushNotificationService.saveUserPushToken(userId, { prompt: true }).catch(() => {});
     }
   };
 

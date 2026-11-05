@@ -1147,5 +1147,17 @@
     "hintMangled": "你名字里的一些字母没有进入用户名，这是我们的问题。",
     "pickOwn": "我自己选",
     "keep": "保持不变"
+  },
+  "pushPrompt": {
+    "followTitle": "有新章节时通知你吗？",
+    "followSub": "你关注的作者发布新章节或新故事时，我们会通知你。",
+    "commentTitle": "有人回复时通知你吗？",
+    "commentSub": "有人回复你的评论时，我们会通知你，让对话继续下去。",
+    "blockedHint": "手机设置中的通知已关闭。请打开“设置”，选择 Bluma 并允许通知。",
+    "enable": "开启通知",
+    "openSettings": "打开设置",
+    "later": "暂时不要",
+    "bannerTitle": "通知已关闭",
+    "bannerBody": "你关注的作者发布新章节，或你收到回复和私信时，及时告诉你。"
   }
 }

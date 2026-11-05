@@ -67,3 +67,13 @@ export interface NotificationSettings {
   pushNotifications: boolean;
   updatedAt: FirestoreDate;
 }
+
+/**
+ * Cihazın bildirim izni. `askable`: sistem penceresi gösterilebilir.
+ * `blocked`: yalnızca telefonun Ayarlar'ından açılır (iOS'ta bir kez
+ * reddedilince böyle kalır). `unsupported`: simülatör / yerel emülatör.
+ */
+export type PushPermission = 'granted' | 'askable' | 'blocked' | 'unsupported';
+
+/** Yumuşak izin kartını açan an. */
+export type PushPromptReason = 'follow' | 'comment';

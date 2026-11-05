@@ -1,3 +1,4 @@
+import { offerPushPrompt } from '@/features/notifications/services/pushPermission';
 import { useAppSelector } from '@/store/hooks';
 import { storyActions } from '@/store/storyStore';
 import { logger } from '@/utils/logger';
@@ -83,7 +84,11 @@ export function useComments(storyId: string, chapterIndex?: number) {
       const result = await storyActions.addComment(
         storyId, state.content, state.replyingTo || undefined, chapterIndex,
       );
-      if (result.success) dispatch({ type: 'submitted' });
+      if (result.success) {
+        dispatch({ type: 'submitted' });
+        // Cevap bildirimi bu yorumun karşılığı: izin burada istenir.
+        void offerPushPrompt('comment');
+      }
       else Alert.alert(t('common.error'), result.error || t('conversations.commentFailed'));
     } catch (error) {
       logger.error('Submit comment error:', error);

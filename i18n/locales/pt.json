@@ -1148,5 +1148,17 @@
     "hintMangled": "Algumas letras do teu nome não passaram para o nome de utilizador, a culpa é nossa.",
     "pickOwn": "Prefiro escolher",
     "keep": "Deixar assim"
+  },
+  "pushPrompt": {
+    "followTitle": "Quer saber quando sair um capítulo novo?",
+    "followSub": "Vamos avisar quando o autor que segue publicar um novo capítulo ou história.",
+    "commentTitle": "Quer saber quando lhe responderem?",
+    "commentSub": "Vamos avisar quando alguém responder ao seu comentário, para a conversa continuar.",
+    "blockedHint": "As notificações estão desativadas nas definições do telemóvel. Abra as Definições, escolha Bluma e permita as notificações.",
+    "enable": "Ativar notificações",
+    "openSettings": "Abrir Definições",
+    "later": "Agora não",
+    "bannerTitle": "Notificações desativadas",
+    "bannerBody": "Saiba quando os autores que segue publicarem novos capítulos ou quando receber uma resposta ou mensagem."
   }
 }

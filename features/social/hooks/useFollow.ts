@@ -1,5 +1,6 @@
 import type { FollowSource } from '@/features/discovery/constants';
 import { trackFollow } from '@/features/discovery/services/feedEvents';
+import { offerPushPrompt } from '@/features/notifications/services/pushPermission';
 import { authActions } from '@/store/authStore';
 import { useCallback, useEffect, useState } from 'react';
 import { useAppSelector } from '@/store/hooks';
@@ -125,6 +126,8 @@ export function useFollow(
           return;
         }
         if (source) trackFollow(source);
+        // Yeni bölüm bildirimi tam da bu takibin karşılığı: izin burada istenir.
+        void offerPushPrompt('follow');
       })
       .catch(undoOptimisticFollow)
       .finally(() => setBusy(false));

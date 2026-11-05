@@ -1147,5 +1147,17 @@
     "hintMangled": "Beberapa huruf dari namamu tidak masuk ke nama pengguna, ini kesalahan kami.",
     "pickOwn": "Saya pilih sendiri",
     "keep": "Biarkan saja"
+  },
+  "pushPrompt": {
+    "followTitle": "Mau dikabari saat ada bab baru?",
+    "followSub": "Kami akan memberi tahu saat penulis yang kamu ikuti menerbitkan bab atau cerita baru.",
+    "commentTitle": "Mau dikabari saat ada balasan?",
+    "commentSub": "Kami akan memberi tahu saat seseorang membalas komentarmu, supaya obrolan tetap berlanjut.",
+    "blockedHint": "Notifikasi dimatikan di pengaturan ponselmu. Buka Pengaturan, pilih Bluma, lalu izinkan notifikasi.",
+    "enable": "Aktifkan notifikasi",
+    "openSettings": "Buka Pengaturan",
+    "later": "Nanti saja",
+    "bannerTitle": "Notifikasi mati",
+    "bannerBody": "Dapatkan kabar saat penulis yang kamu ikuti menerbitkan bab baru, atau saat kamu menerima balasan atau pesan."
   }
 }
