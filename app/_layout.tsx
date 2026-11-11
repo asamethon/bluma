@@ -49,8 +49,8 @@ export default Sentry.wrap(RootLayout);
 function RootLayoutInner() {
   const navigationTheme = useNavigationTheme();
   const fontsLoaded = useAppFonts();
-  const { appReady, onIntroFinished } = useBootSequence(fontsLoaded);
   const deviceBan = useDeviceBan();
+  const { appReady, onIntroFinished } = useBootSequence(fontsLoaded, !deviceBan.checking);
   useEmailVerificationAlert();
   useScreenTracking();
   useNotificationRouting(appReady);
@@ -63,7 +63,9 @@ function RootLayoutInner() {
   if (!fontsLoaded) return null;
 
   // Banlı cihazda uygulama hiç açılmaz; kurallar yazmayı zaten reddediyor,
-  // buradaki ekran kullanıcıya sebebini söyler.
+  // buradaki ekran kullanıcıya sebebini söyler. Karar perdenin arkasında
+  // verilir (useBootSequence ban cevabını bekler), bu yüzden kullanıcı
+  // uygulamayı bir an görüp sonra bu ekrana düşmez.
   if (deviceBan.ban) return <DeviceBannedScreen reason={deviceBan.ban.reason} />;
 
   return (

@@ -34,26 +34,39 @@ const TICK_MS = 200;
 export type VoiceRecording = { uri: string; durationMs: number };
 
 /**
+ * Kaydın aşaması. `stopping` olmadan durdurma İKİ KEZ tetiklenebiliyordu:
+ * `recorder.stop()` beklenirken sayaç dönmeye devam ettiği için süre sınırı
+ * effect'i yeniden çalışıp aynı kaydı bir daha gönderiyordu.
+ */
+type Phase = 'idle' | 'recording' | 'stopping';
+
+/**
  * Mikrofon kaydı. Süre sayacı burada tutulur (modül canlı `currentTime` verir
  * ama render tetiklemez); süre dolduğunda kayıt kendiliğinden durur.
  */
 export function useVoiceRecorder(onFinish: (recording: VoiceRecording) => void) {
   const recorder = useAudioRecorder(VOICE_OPTIONS);
-  const [isRecording, setIsRecording] = useState(false);
+  const [phase, setPhase] = useState<Phase>('idle');
   const [durationMs, setDurationMs] = useState(0);
   const finish = useRef(onFinish);
   finish.current = onFinish;
   const startedAt = useRef(0);
+  // `phase` durumu bir sonraki render'da görünür; aynı tık içinde iki kez
+  // çağrılan durdurmayı (çift dokunuş) ancak senkron bir kilit engeller.
+  const stopping = useRef(false);
 
+  // Sayaç yalnızca kayıt sürerken döner; `stopping` anında durur, böylece
+  // durdurma işlemi uzasa bile süre sınırı bir daha tetiklenmez.
   useEffect(() => {
-    if (!isRecording) return;
+    if (phase !== 'recording') return;
     const timer = setInterval(() => setDurationMs(Date.now() - startedAt.current), TICK_MS);
     return () => clearInterval(timer);
-  }, [isRecording]);
+  }, [phase]);
 
   const close = useCallback(async () => {
-    setIsRecording(false);
+    setPhase('idle');
     setDurationMs(0);
+    stopping.current = false;
     await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => {});
   }, []);
 
@@ -66,7 +79,8 @@ export function useVoiceRecorder(onFinish: (recording: VoiceRecording) => void) 
       recorder.record();
       startedAt.current = Date.now();
       setDurationMs(0);
-      setIsRecording(true);
+      stopping.current = false;
+      setPhase('recording');
       return true;
     } catch (error) {
       logger.error('Voice record start error:', error);
@@ -76,6 +90,10 @@ export function useVoiceRecorder(onFinish: (recording: VoiceRecording) => void) 
   }, [close, recorder]);
 
   const stop = useCallback(async (keep: boolean) => {
+    // Gönder/iptal dokunuşu ile süre sınırı aynı kaydı iki kez durdurmasın.
+    if (phase !== 'recording' || stopping.current) return;
+    stopping.current = true;
+    setPhase('stopping');
     const elapsed = Date.now() - startedAt.current;
     try {
       await recorder.stop();
@@ -86,14 +104,14 @@ export function useVoiceRecorder(onFinish: (recording: VoiceRecording) => void) 
     await close();
     // Yanlışlıkla dokunuşla oluşan yarım saniyelik kayıtlar gönderilmez.
     if (keep && uri && elapsed >= 800) finish.current({ uri, durationMs: elapsed });
-  }, [close, recorder]);
+  }, [close, phase, recorder]);
 
   useEffect(() => {
-    if (isRecording && durationMs >= VOICE_MAX_MS) void stop(true);
-  }, [durationMs, isRecording, stop]);
+    if (phase === 'recording' && durationMs >= VOICE_MAX_MS) void stop(true);
+  }, [durationMs, phase, stop]);
 
   return {
-    isRecording,
+    isRecording: phase === 'recording',
     durationMs,
     start,
     send: useCallback(() => stop(true), [stop]),

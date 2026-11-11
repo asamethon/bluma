@@ -16,8 +16,10 @@ const PREFETCH_COUNT = 12;
 /**
  * Açılış akışı: oturum + akış dinleyicileri, ilk kapakların ön yüklemesi ve
  * "artık gösterebiliriz" kararı. Veri hazır olmasa da zaman aşımı devreye girer.
+ *
+ * `banChecked`: cihaz banı sorusu cevaplanmadan perde kalkmaz (bkz. canRevealApp).
  */
-export function useBootSequence(fontsLoaded: boolean) {
+export function useBootSequence(fontsLoaded: boolean, banChecked: boolean) {
   const isLoading = useAppSelector(state => state.auth.isLoading);
   const isGuest = useAppSelector(state => state.auth.isGuest);
   const userId = useAppSelector(state => state.auth.user?.id);
@@ -63,6 +65,7 @@ export function useBootSequence(fontsLoaded: boolean) {
     authLoading: isLoading,
     storiesLoaded,
     continueReadingReady,
+    banChecked,
     timedOut: splashTimedOut,
   });
 

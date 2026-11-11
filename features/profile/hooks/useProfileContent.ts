@@ -11,13 +11,17 @@ export function useProfileContent(user: User | null) {
   const userId = user?.id;
   const [storyRecords, setStoryRecords] = useState<ProfileStoryRecord[]>([]);
   const [conversationRecords, setConversationRecords] = useState<ProfileConversationRecord[]>([]);
+  // İkisi de `true` başlar: `false` başlayan bayrak ilk render'da "yüklendi,
+  // sıfır sohbet" diyor ve boş durum bir kare parlıyordu.
   const [storiesLoading, setStoriesLoading] = useState(true);
-  const [conversationsLoading, setConversationsLoading] = useState(false);
+  const [conversationsLoading, setConversationsLoading] = useState(true);
 
   useEffect(() => {
     if (!userId) {
       setStoryRecords([]);
       setConversationRecords([]);
+      setStoriesLoading(false);
+      setConversationsLoading(false);
       return;
     }
     const lifecycle = { active: true };
@@ -31,10 +35,11 @@ export function useProfileContent(user: User | null) {
     const unsubscribe = subscribeProfileConversations(
       userId,
       items => {
-        if (lifecycle.active) setConversationRecords(items);
+        if (!lifecycle.active) return;
+        setConversationRecords(items);
         setConversationsLoading(false);
       },
-      () => setConversationsLoading(false),
+      () => { if (lifecycle.active) setConversationsLoading(false); },
     );
     return () => {
       lifecycle.active = false;

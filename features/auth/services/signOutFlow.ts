@@ -43,6 +43,7 @@ export async function signOut() {
 
 export function continueAsGuest() {
   store.dispatch(patchAuth({
+    sessionResolved: true,
     isGuest: true,
     isAuthenticated: false,
     hasCompletedOnboarding: false,

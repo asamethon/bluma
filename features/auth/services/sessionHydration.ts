@@ -18,6 +18,8 @@ import { primeCachedUser } from './userCache';
  * başarısız olması "çıkış yapıldı" anlamına gelmez.
  */
 export async function hydrateSession(firebaseUser: FirebaseAuthTypes.User) {
+  // Firebase kullanıcısı elimizde: "kimse giriş yapmış mı" sorusu cevaplandı.
+  store.dispatch(patchAuth({ sessionResolved: true }));
   const cached = await readCachedSession();
   const cachedMatches = cached?.user.id === firebaseUser.uid;
 
@@ -66,7 +68,7 @@ async function syncProfile(firebaseUser: FirebaseAuthTypes.User) {
     logger.debug('Profil okunamadı, önbellek kullanılıyor:', error);
     // Önbellek de yoksa oturum yine de açılır — kullanıcı boş ekranda kalmasın.
     if (!store.getState().auth.isAuthenticated) {
-      store.dispatch(patchAuth({ isAuthenticated: true, isGuest: false }));
+      store.dispatch(patchAuth({ sessionResolved: true, isAuthenticated: true, isGuest: false }));
     }
   }
 }

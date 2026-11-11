@@ -44,9 +44,11 @@ export function useSearch() {
       setIsSearchingUsers(false);
       return;
     }
+    // Bekleme süresi de "arıyor" sayılır: aksi halde 250 ms boyunca `busy`
+    // false, `empty` true kalıyor ve arama başlamadan "sonuç yok" parlıyordu.
+    setIsSearchingUsers(true);
     const lifecycle = { active: true };
     const timeout = setTimeout(() => {
-      setIsSearchingUsers(true);
       void searchUsers(normalized)
         .then(result => { if (lifecycle.active) setUsers(result); })
         .catch(() => { if (lifecycle.active) setUsers([]); })

@@ -1,6 +1,7 @@
 import { startChallengeSession } from '@/features/challenges/services/challengeSession';
 import { challengeActions } from '@/features/challenges/services/challengeProgress';
 import { store } from '@/store';
+import { patchAuth } from '@/store/slices/authSlice';
 import { logger } from '@/utils/logger';
 import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
 import { AppState } from 'react-native';
@@ -28,7 +29,11 @@ function watchAuthState() {
     if (state.isAuthenticated) {
       logger.debug('Firebase oturumu kapandı, yerel durum temizleniyor');
       void endSession({ asGuest: state.isGuest });
+      return;
     }
+    // Açılışta native katman cevap vermemişti ve karar bekleniyordu: artık
+    // kesin, oturum yok. Karşılama ekranı bundan sonra açılabilir.
+    if (!state.sessionResolved) store.dispatch(patchAuth({ sessionResolved: true }));
   });
 }
 

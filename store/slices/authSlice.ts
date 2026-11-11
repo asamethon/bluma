@@ -34,7 +34,14 @@ export interface User {
 }
 
 interface AuthState {
+  /** Herhangi bir auth işlemi (giriş, çıkış, profil yazımı) sürüyor mu. */
   isLoading: boolean;
+  /**
+   * "Kimse giriş yapmış mı" sorusu kesin olarak cevaplandı mı. Açılışta native
+   * katman zamanında cevap vermezse `isAuthenticated: false` "çıkış yapılmış"
+   * DEĞİL "henüz bilinmiyor" demektir; bu bayrak ikisini ayırır.
+   */
+  sessionResolved: boolean;
   isAuthenticated: boolean;
   hasCompletedOnboarding: boolean;
   isGuest: boolean;
@@ -44,6 +51,7 @@ interface AuthState {
 
 const initialState: AuthState = {
   isLoading: true,
+  sessionResolved: false,
   isAuthenticated: false,
   hasCompletedOnboarding: false,
   isGuest: false,

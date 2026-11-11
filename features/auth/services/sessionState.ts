@@ -25,6 +25,7 @@ export async function endSession({ asGuest }: { asGuest: boolean }) {
   store.dispatch(resetPrivacy());
   store.dispatch(resetStoryDrafts());
   store.dispatch(patchAuth({
+    sessionResolved: true,
     isAuthenticated: false,
     hasCompletedOnboarding: false,
     isGuest: asGuest,
