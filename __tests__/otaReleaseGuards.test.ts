@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
-const { assertGroup, assertBuild, assertChannel } = require('../scripts/ota/guards.cjs');
+const { assertGroup, assertBuild, assertChannel, assertStoreRuntime } = require('../scripts/ota/guards.cjs');
 
 const update = { group: 'group', branch: 'production-candidate',
   platform: 'ios', runtimeVersion: 'native-hash', isRollBackToEmbedded: false };
@@ -32,5 +32,12 @@ describe('OTA yayın korumaları', () => {
     expect(() => assertChannel({ ...channel, isPaused: true }, 'production')).toThrow();
     expect(() => assertChannel({ ...channel, updateBranches: [{ id: 'branch', name: 'preview' }] }, 'production')).toThrow();
     expect(() => assertChannel(channel, 'production')).not.toThrow();
+  });
+
+  it('mağazadaki build\'e inmeyecek paketi yüklemeden durdurur', () => {
+    const store = { ios: { runtime: 'store-hash', build: '3.0.1 (29)' } };
+    expect(() => assertStoreRuntime('ios', 'drifted-hash', store)).toThrow(/uyuşmuyor/);
+    expect(() => assertStoreRuntime('android', 'store-hash', store)).toThrow(/kayd/);
+    expect(() => assertStoreRuntime('ios', 'store-hash', store)).not.toThrow();
   });
 });

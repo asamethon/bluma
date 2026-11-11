@@ -3,12 +3,16 @@ const { writeFileSync, mkdirSync } = require('node:fs');
 const { parseArgs } = require('node:util');
 const { run, eas, easJson } = require('./eas.cjs');
 const { assertGroup, assertBuild, assertChannel } = require('./guards.cjs');
+const { assertMatchesStore, pinStoreRuntime, readStore, recordBuild } = require('./fingerprint.cjs');
 
 const action = process.argv[2];
 const { values: options } = parseArgs({
   args: process.argv.slice(3),
-  options: Object.fromEntries(['channel', 'message', 'group', 'percentage', 'runtime', 'platform']
-    .map(name => [name, { type: 'string' }])),
+  options: {
+    ...Object.fromEntries(['channel', 'message', 'group', 'percentage', 'runtime', 'platform', 'build']
+      .map(name => [name, { type: 'string' }])),
+    'pin-store-runtime': { type: 'boolean' },
+  },
 });
 const platform = options.platform ?? 'all';
 assert.ok(['all', 'ios', 'android'].includes(platform), 'Platform: all, ios veya android.');
@@ -28,8 +32,11 @@ function getGroup(branch) {
   });
 }
 
+// Build'ler yerelde alındığı için EAS'ta kaydı yok: önce mağaza kaydına bakılır.
 function validateProductionBuilds(updates) {
+  const store = readStore();
   for (const update of updates) {
+    if (store[update.platform]?.runtime === update.runtimeVersion) continue;
     const builds = easJson(['build:list', '--channel', 'production', '--status', 'finished',
       '--runtime-version', update.runtimeVersion, '--platform', update.platform,
       '--limit', '1', '--non-interactive']);
@@ -57,6 +64,11 @@ function publish() {
   run('yarn', ['run', 'check']);
   run('yarn', ['test', '--runInBand']);
   validateChannel(channel);
+  // Mağazaya inmeyecek paket hiç üretilmez (preview build'leri farklı olabilir).
+  if (channel === 'production-candidate') {
+    if (options['pin-store-runtime']) pinStoreRuntime(platform);
+    else assertMatchesStore(platform);
+  }
   const environment = channel === 'preview' ? 'preview' : 'production';
   eas(['env:exec', environment, 'node scripts/ota/check-env.cjs', '--non-interactive']);
   const upload = !!process.env.SENTRY_AUTH_TOKEN;
@@ -76,6 +88,9 @@ function publish() {
     '--skip-bundler', '--input-dir', 'dist', '--non-interactive']));
 }
 
+// eas-cli yalnızca 0–99 kabul ediyor; %100 bayraksız demek.
+const rolloutArgs = value => (value === '100' ? [] : ['--rollout-percentage', value]);
+
 function republish(rollback) {
   const updates = getGroup(rollback ? 'production' : 'production-candidate');
   validateChannel('production');
@@ -83,7 +98,7 @@ function republish(rollback) {
   assert.ok(options.message?.trim(), '--message gerekli.');
   const args = ['update:republish', '--group', options.group,
     '--destination-channel', 'production', '--platform', platform,
-    '--message', options.message, '--rollout-percentage', rollback ? '100' : percentage,
+    '--message', options.message, ...rolloutArgs(rollback ? '100' : percentage),
     '--non-interactive'];
   if (rollback) args.push('--force-end-active-rollout');
   saveResult(easJson(args));
@@ -108,7 +123,12 @@ function embedded() {
     '--force-end-active-rollout', '--non-interactive']));
 }
 
+function recordStoreBuild() {
+  assert.ok(options.build?.trim(), '--build gerekli, örn. --build "3.0.2 (30)".');
+  recordBuild(platform, options.build.trim());
+}
+
 const commands = { publish, promote: () => republish(false), rollout,
-  rollback: () => republish(true), embedded };
-assert.ok(Object.hasOwn(commands, action), 'İşlem: publish, promote, rollout, rollback, embedded.');
+  rollback: () => republish(true), embedded, 'record-build': recordStoreBuild };
+assert.ok(Object.hasOwn(commands, action), 'İşlem: publish, promote, rollout, rollback, embedded, record-build.');
 commands[action]();

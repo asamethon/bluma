@@ -5,15 +5,15 @@ const root = resolve(__dirname, '../..');
 // Dil ayarı sabit: @expo/fingerprint dizinleri `localeCompare` ile sıralıyor.
 // Türkçe terminalde (tr_TR) "I/ı/i" sıralaması değişip runtime farklı
 // hesaplanıyor ve güncelleme mağazadaki build'lere hiç inmiyordu.
-const env = {
+const env = () => ({
   ...process.env, EXPO_NO_DOTENV: '1', CI: '1', FORCE_COLOR: '0',
   LANG: 'en_US.UTF-8', LC_ALL: 'en_US.UTF-8',
-};
+});
 
 function run(command, args, capture = false) {
   try {
     return execFileSync(command, args, {
-      cwd: root, env, encoding: 'utf8',
+      cwd: root, env: env(), encoding: 'utf8',
       stdio: capture ? ['ignore', 'pipe', 'pipe'] : 'inherit',
       maxBuffer: 20 * 1024 * 1024,
     });

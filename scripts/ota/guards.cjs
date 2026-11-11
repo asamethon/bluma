@@ -26,6 +26,16 @@ function assertBuild(builds, update) {
   `${update.platform} / ${update.runtimeVersion} için bitmiş production build yok. Önce native build gerekir.`);
 }
 
+/** Yüklenecek paketin runtime'ı mağazadaki build'inkiyle aynı olmalı. */
+function assertStoreRuntime(platform, runtime, store) {
+  const entry = store?.[platform];
+  assert.ok(entry?.runtime, `${platform} için mağaza runtime kaydı yok (scripts/ota/store-runtimes.json).`);
+  assert.equal(runtime, entry.runtime,
+    `${platform} runtime ${runtime} mağazadaki ${entry.build} build'iyle (${entry.runtime}) uyuşmuyor; `
+    + 'bu paket kimseye inmez. Fark: .ota/fingerprint-' + platform + '.json ile scripts/ota/fingerprints/'
+    + platform + '.json. Native değişiklik varsa yeni build alıp `yarn ota:record-build` çalıştırın.');
+}
+
 function assertChannel(channel, name) {
   assert.equal(channel.name, name);
   assert.ok(!channel.isPaused, `${name} kanalı duraklatılmış.`);
@@ -37,4 +47,4 @@ function assertChannel(channel, name) {
   `${name} kanalı aynı adlı dala bağlı olmalı.`);
 }
 
-module.exports = { assertGroup, assertBuild, assertChannel };
+module.exports = { assertGroup, assertBuild, assertChannel, assertStoreRuntime };
