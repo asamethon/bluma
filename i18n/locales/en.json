@@ -508,6 +508,7 @@
     "followAcceptedMessage": "{{name}} approved your follow request",
     "mentionTitle": "You were mentioned",
     "mentionMessage": "{{name}} mentioned you in “{{story}}”",
+    "conversationMentionMessage": "{{name}} mentioned you in the conversation \"{{conversation}}\"",
     "newChapterMessageNumbered": "{{author}} added a new chapter to “{{story}}” (chapter {{chapter}})",
     "verifyEmailTitle": "Verify your email",
     "verifyEmailMessage": "Verify your email address to keep using your account. If you typed it wrong, you can fix it here."

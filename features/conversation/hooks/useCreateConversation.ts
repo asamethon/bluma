@@ -1,3 +1,4 @@
+import { useMentionAutocomplete } from '@/features/mentions/hooks/useMentionAutocomplete';
 import { imageUploadService } from '@/services/imageUploadService';
 import { conversationActions } from '@/store/conversationStore';
 import { useAppSelector } from '@/store/hooks';
@@ -27,6 +28,7 @@ export function useCreateConversation() {
   const setTitle = useCallback((title: string) => patch({ title }), []);
   const setContent = useCallback((content: string) => patch({ content }), []);
   const setExtraMessage = useCallback((extraMessage: string) => patch({ extraMessage }), []);
+  const mentions = useMentionAutocomplete(form.content, setContent);
   const toggleAnnounce = useCallback(() => patch({ announce: !form.announce }), [form.announce]);
   const removeImage = useCallback(() => patch({ image: null }), []);
   const pickImage = useCallback(() => {
@@ -99,6 +101,7 @@ export function useCreateConversation() {
     ...form,
     canSubmit: Boolean(form.title.trim() && form.content.trim() && !form.submitting),
     cancel,
+    mentions,
     pickImage,
     removeImage,
     setContent,

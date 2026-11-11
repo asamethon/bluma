@@ -34,7 +34,7 @@ export function notificationTarget(input: {
   if (type === 'verify_email') return route('/profile/verify-email');
   if (type === 'writer_nudge') return route(internalRoute(data?.route) || '/(tabs)/write');
   if (type === 'welcome') return route('/(tabs)/write');
-  if (conversation && ['like', 'comment', 'conversation_announcement'].includes(type || '')) {
+  if (conversation && ['like', 'comment', 'mention', 'conversation_announcement'].includes(type || '')) {
     return route(`/conversation/${conversation}`);
   }
   if (story && (type === 'comment' || type === 'mention')) {

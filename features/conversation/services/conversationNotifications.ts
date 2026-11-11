@@ -1,3 +1,5 @@
+import { getUserByUsername } from '@/features/auth/services/userByUsername';
+import { extractMentions } from '@/features/mentions/utils/mentionQuery';
 import i18n from '@/i18n';
 import { store } from '@/store';
 import { notificationActions } from '@/store/notificationStore';
@@ -55,6 +57,52 @@ export const notifyConversationLike = (conversationId: string, likerId: string) 
 export const notifyConversationComment = (conversationId: string, commenterId: string, commentText: string) => (
   notifyEngagement(conversationId, commenterId, 'comment', commentText)
 );
+
+/**
+ * Konuşmada ya da yorumunda `@` ile etiketlenenlere bildirim. Yorumda
+ * etiketlenen konuşma sahibi zaten "yorum yaptı" bildirimi aldığı için
+ * (`skipAuthor`) ikinci kez rahatsız edilmez. Bekletilmez.
+ */
+export async function notifyConversationMentions(
+  conversationId: string,
+  text: string,
+  options: { skipAuthor?: boolean } = {},
+) {
+  try {
+    const actor = store.getState().auth.user;
+    const usernames = extractMentions(text);
+    if (!actor || !usernames.length) return;
+    const context = await conversationContext(conversationId);
+    if (!context) return;
+    const titleKey = 'notifications.mentionTitle';
+    const messageKey = 'notifications.conversationMentionMessage';
+    const params = { name: actor.displayName || actor.username || i18n.t('notifications.someone'), conversation: context.title };
+    const mentioned = await Promise.all(usernames.map(getUserByUsername));
+    const notified = new Set<string>();
+    for (const user of mentioned) {
+      if (!user?.id || user.id === actor.id || notified.has(user.id)) continue;
+      if (options.skipAuthor && user.id === context.authorId) continue;
+      notified.add(user.id);
+      void notificationActions.createNotification({
+        userId: user.id,
+        senderId: actor.id,
+        type: 'mention',
+        title: i18n.t(titleKey),
+        message: i18n.t(messageKey, params),
+        data: {
+          conversationId,
+          conversationTitle: context.title,
+          commentText: text.slice(0, 200),
+          commenterProfileImage: actor.profileImage,
+          i18n: { titleKey, messageKey, params },
+        },
+        isRead: false,
+      });
+    }
+  } catch (error) {
+    logger.error('Conversation mention notification error:', error);
+  }
+}
 
 export async function announceConversationToFollowers(conversationId: string, author: User) {
   try {

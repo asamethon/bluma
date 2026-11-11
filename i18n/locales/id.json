@@ -486,6 +486,7 @@
     "followAcceptedMessage": "{{name}} menyetujui permintaanmu",
     "mentionTitle": "Kamu disebut",
     "mentionMessage": "{{name}} menyebutmu di “{{story}}”",
+    "conversationMentionMessage": "{{name}} menyebutmu di percakapan \"{{conversation}}\"",
     "newChapterMessageNumbered": "{{author}} menambahkan bab baru di “{{story}}” (bab {{chapter}})",
     "verifyEmailTitle": "Verifikasi emailmu",
     "verifyEmailMessage": "Verifikasi alamat emailmu untuk terus menggunakan akun. Kalau salah ketik, bisa diperbaiki di sini."

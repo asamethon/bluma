@@ -1,8 +1,10 @@
+import { useMentionAutocomplete } from '@/features/mentions/hooks/useMentionAutocomplete';
 import { imageUploadService } from '@/services/imageUploadService';
 import { conversationActions } from '@/store/conversationStore';
 import { useAppSelector } from '@/store/hooks';
+import type { User } from '@/types';
 import { logger } from '@/utils/logger';
-import { useCallback, useEffect, useReducer } from 'react';
+import { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert } from 'react-native';
 
@@ -80,6 +82,12 @@ export function useConversationDetail(conversationId: string) {
   const openModal = useCallback((value: string) => dispatch({ type: 'modal', value }), []);
   const removeImage = useCallback(() => dispatch({ type: 'image', value: null }), []);
   const setComment = useCallback((value: string) => dispatch({ type: 'comment', value }), []);
+  // Tek başına `@` yazılınca önce bu sohbetteki kişiler önerilir.
+  const participants = useMemo(
+    () => [conversation?.author, ...(comments ?? []).map(item => item.user)].filter((user): user is User => !!user),
+    [comments, conversation?.author],
+  );
+  const mentions = useMentionAutocomplete(state.comment, setComment, participants);
 
   return {
     ...state,
@@ -87,6 +95,7 @@ export function useConversationDetail(conversationId: string) {
     conversation,
     currentUser,
     liked,
+    mentions,
     closeModal,
     like,
     openModal,

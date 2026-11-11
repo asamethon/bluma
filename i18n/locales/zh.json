@@ -486,6 +486,7 @@
     "followAcceptedMessage": "{{name}} 通过了你的关注请求",
     "mentionTitle": "有人提到了你",
     "mentionMessage": "{{name}} 在《{{story}}》中提到了你",
+    "conversationMentionMessage": "{{name}} 在对话“{{conversation}}”中提到了你",
     "newChapterMessageNumbered": "{{author}} 为《{{story}}》添加了新章节（第 {{chapter}} 章）",
     "verifyEmailTitle": "验证你的邮箱",
     "verifyEmailMessage": "请验证邮箱地址以继续使用账户。如果填错了，可以在这里修改。"

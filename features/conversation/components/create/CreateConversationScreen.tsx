@@ -31,12 +31,14 @@ export function CreateConversationScreen() {
           extraMessage={(form as any).extraMessage || ''}
           hasAuthoredAny={hasAuthored}
           image={form.image}
+          mentionSuggestions={form.mentions.suggestions}
           styles={styles}
           title={form.title}
           onContentChange={form.setContent}
           onExtraMessageChange={(form as any).setExtraMessage || (() => {})}
           onImagePick={form.pickImage}
           onImageRemove={form.removeImage}
+          onMentionSelect={form.mentions.select}
           onTitleChange={form.setTitle}
           onToggleAnnounce={form.toggleAnnounce}
         />

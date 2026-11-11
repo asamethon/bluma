@@ -9,6 +9,7 @@ describe('notificationTarget', () => {
     [{ type: 'like', data: { storyId: 's1', chapterIndex: '0' } }, '/story/s1?chapter=0'],
     [{ type: 'new_chapter', data: { storyId: 's1', chapterNumber: '3' } }, '/story/s1?chapter=2'],
     [{ type: 'conversation_announcement', data: { conversationId: 'c1' } }, '/conversation/c1'],
+    [{ type: 'mention', data: { conversationId: 'c1', commentText: '@ayse' } }, '/conversation/c1'],
     [{ type: 'verify_email' }, '/profile/verify-email'],
     [{ type: 'announcement', data: { tag: 'v3' } }, '/notifications'],
     [{ type: 'writer_nudge', data: { route: '/story/compose/s1?ch=0' } }, '/story/compose/s1?ch=0'],

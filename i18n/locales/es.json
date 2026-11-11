@@ -486,6 +486,7 @@
     "followAcceptedMessage": "{{name}} aceptó tu solicitud de seguimiento",
     "mentionTitle": "Te mencionaron",
     "mentionMessage": "{{name}} te mencionó en «{{story}}»",
+    "conversationMentionMessage": "{{name}} te mencionó en la conversación \"{{conversation}}\"",
     "newChapterMessageNumbered": "{{author}} añadió un capítulo nuevo a «{{story}}» (capítulo {{chapter}})",
     "verifyEmailTitle": "Verifica tu correo",
     "verifyEmailMessage": "Verifica tu correo electrónico para seguir usando tu cuenta. Si lo escribiste mal, puedes corregirlo aquí."

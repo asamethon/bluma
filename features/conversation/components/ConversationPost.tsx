@@ -1,5 +1,7 @@
 import { Avatar, Text } from '@/components/ui';
 import { Motion, useTheme } from '@/constants/theme';
+import { useOpenMention } from '@/features/mentions/hooks/useOpenMention';
+import { renderMentionText } from '@/features/story/utils/mentionText';
 import { formatRelativeTime } from '@/features/story/utils/time';
 import type { Conversation } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,6 +21,7 @@ type Props = {
 export function ConversationPost({ conversation, liked, styles, onLike, onImage }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const openMention = useOpenMention();
 
   return (
     <View style={styles.conversationHeader}>
@@ -36,7 +39,9 @@ export function ConversationPost({ conversation, liked, styles, onLike, onImage 
         </View>
       </View>
 
-      <Text variant="bodyLg" style={styles.conversationContent}>{conversation.content}</Text>
+      <Text variant="bodyLg" style={styles.conversationContent}>
+        {renderMentionText(conversation.content, colors.primary, openMention)}
+      </Text>
 
       {conversation.image && (
         <Pressable

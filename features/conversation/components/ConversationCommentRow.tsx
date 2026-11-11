@@ -1,5 +1,7 @@
 import { Avatar, Text } from '@/components/ui';
-import { Motion } from '@/constants/theme';
+import { Motion, useTheme } from '@/constants/theme';
+import { useOpenMention } from '@/features/mentions/hooks/useOpenMention';
+import { renderMentionText } from '@/features/story/utils/mentionText';
 import { formatRelativeTime } from '@/features/story/utils/time';
 import type { ConversationComment } from '@/types';
 import { Image } from 'expo-image';
@@ -16,6 +18,8 @@ type Props = {
 
 function ConversationCommentRowComponent({ item, styles, onImage }: Props) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const openMention = useOpenMention();
 
   return (
     <View style={styles.commentItem}>
@@ -28,7 +32,9 @@ function ConversationCommentRowComponent({ item, styles, onImage }: Props) {
       </View>
 
       {!!item.content && (
-        <Text variant="body" style={styles.commentContent}>{item.content}</Text>
+        <Text variant="body" style={styles.commentContent}>
+          {renderMentionText(item.content, colors.primary, openMention)}
+        </Text>
       )}
 
       {item.image && (

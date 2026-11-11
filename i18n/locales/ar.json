@@ -486,6 +486,7 @@
     "followAcceptedMessage": "وافق {{name}} على طلب المتابعة",
     "mentionTitle": "تمت الإشارة إليك",
     "mentionMessage": "أشار إليك {{name}} في «{{story}}»",
+    "conversationMentionMessage": "أشار إليك {{name}} في المحادثة \"{{conversation}}\"",
     "newChapterMessageNumbered": "أضاف {{author}} فصلاً جديداً إلى «{{story}}» (الفصل {{chapter}})",
     "verifyEmailTitle": "أكّد بريدك الإلكتروني",
     "verifyEmailMessage": "أكّد بريدك الإلكتروني لمواصلة استخدام حسابك. إن كتبته بالخطأ يمكنك تصحيحه من هنا."

@@ -6,6 +6,7 @@ import { store } from '@/store';
 import { patchConversation } from '@/store/slices/conversationSlice';
 import type { Conversation } from '@/types';
 import { logger } from '@/utils/logger';
+import { notifyConversationMentions } from './conversationNotifications';
 import {
   addDoc,
   collection,
@@ -90,6 +91,7 @@ export async function createConversation(
       }
     });
     const reference = await addDoc(collection(getFirestore(), 'conversations'), payload);
+    void notifyConversationMentions(reference.id, conversation.content);
     return { success: true, conversationId: reference.id };
   } catch (error) {
     logger.error('Create conversation error:', error);

@@ -18,7 +18,7 @@ import {
   updateDoc,
   where,
 } from '@react-native-firebase/firestore';
-import { notifyConversationComment } from './conversationNotifications';
+import { notifyConversationComment, notifyConversationMentions } from './conversationNotifications';
 
 async function enrichComment(snapshot: any): Promise<ConversationComment> {
   const comment = { id: snapshot.id, ...snapshot.data() } as ConversationComment;
@@ -65,6 +65,7 @@ export async function addComment(conversationId: string, content: string, image?
       updatedAt: serverTimestamp(),
     });
     void notifyConversationComment(conversationId, user.id, content);
+    void notifyConversationMentions(conversationId, content, { skipAuthor: true });
     return { success: true };
   } catch (error) {
     logger.error('Add comment error:', error);

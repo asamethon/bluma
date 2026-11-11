@@ -1,5 +1,7 @@
 import { useTheme } from '@/constants/theme';
 import type { CreateConversationStyles } from '@/features/conversation/styles/createConversationStyles';
+import { MentionSuggestions } from '@/features/mentions/components/MentionSuggestions';
+import type { User } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,12 +14,14 @@ type Props = {
   extraMessage?: string;
   hasAuthoredAny?: boolean;
   image: string | null;
+  mentionSuggestions: User[];
   styles: CreateConversationStyles;
   title: string;
   onContentChange: (value: string) => void;
   onExtraMessageChange?: (value: string) => void;
   onImagePick: () => void;
   onImageRemove: () => void;
+  onMentionSelect: (username: string) => void;
   onTitleChange: (value: string) => void;
   onToggleAnnounce: () => void;
 };
@@ -31,7 +35,12 @@ export const CreateConversationForm = memo(function CreateConversationForm(props
     ['chatbubble-outline', t('conversations.tip3')],
   ] as const;
   return (
-    <ScrollView style={props.styles.content} contentContainerStyle={props.styles.scrollContent} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={props.styles.content}
+      contentContainerStyle={props.styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={props.styles.inputContainer}>
         <Text style={props.styles.inputLabel}>{t('conversations.titleLabel')}</Text>
         <TextInput
@@ -55,6 +64,7 @@ export const CreateConversationForm = memo(function CreateConversationForm(props
           onChangeText={props.onContentChange}
           multiline
         />
+        <MentionSuggestions suggestions={props.mentionSuggestions} onSelect={props.onMentionSelect} />
       </View>
       {props.hasAuthoredAny && (
         <View style={props.styles.inputContainer}>

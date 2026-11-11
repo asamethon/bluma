@@ -2,6 +2,7 @@ import ImageModal from '@/components/ui/ImageModal';
 import { PageHeader, Screen } from '@/components/ui';
 import { ContentMaxWidth, useTheme } from '@/constants/theme';
 import { useConversationDetail } from '@/features/conversation/hooks/useConversationDetail';
+import { MentionSuggestions } from '@/features/mentions/components/MentionSuggestions';
 import type { ConversationComment } from '@/types';
 import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
@@ -57,6 +58,7 @@ export function ConversationDetailScreen({ conversationId }: { conversationId: s
             </View>
           }
         />
+        <MentionSuggestions suggestions={state.mentions.suggestions} onSelect={state.mentions.select} />
         <ConversationCommentComposer
           text={state.comment}
           image={state.image}
