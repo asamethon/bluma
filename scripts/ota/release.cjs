@@ -105,7 +105,11 @@ function republish(rollback) {
 }
 
 function rollout() {
-  assert.equal(platform, 'all', 'Rollout yüzdesi tüm gruba uygulanır.');
+  // --pin-store-runtime platformları ayrı gruplara yayınlar: tek platformlu grupta
+  // --platform verilebilir, karışık grupta yüzde tüm gruba uygulandığı için verilemez.
+  const updates = easJson(['update:view', options.group]);
+  assert.ok(platform === 'all' || updates.every(update => update.platform === platform),
+    'Rollout yüzdesi tüm gruba uygulanır; karışık grupta --platform kullanılamaz.');
   getGroup('production');
   validateChannel('production');
   saveResult(easJson(['update:edit', options.group, '--rollout-percentage', percentage,

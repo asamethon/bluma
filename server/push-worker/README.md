@@ -33,8 +33,8 @@ cd /opt/bluma-push-worker && npm install --omit=dev
 
 # Servis hesabı anahtarını güvenli bir konuma koy (repo dışı, dar izinli):
 sudo mkdir -p /etc/bluma
-sudo cp /path/to/serviceAccountKey.json /etc/bluma/firebase-service-account.json
-sudo chmod 600 /etc/bluma/firebase-service-account.json
+sudo cp /path/to/serviceAccountKey.json /etc/bluma/bluma-dc10e-firebase-adminsdk-fbsvc-2801848a7f.json
+sudo chmod 600 /etc/bluma/bluma-dc10e-firebase-adminsdk-fbsvc-2801848a7f.json
 ```
 
 ## 3. systemd servisi (görsel servisiyle aynı desende)
@@ -42,7 +42,7 @@ sudo chmod 600 /etc/bluma/firebase-service-account.json
 ```bash
 useradd --system --home /opt/bluma-push-worker --shell /usr/sbin/nologin bluma-push
 chown -R bluma-push:bluma-push /opt/bluma-push-worker
-chown bluma-push:bluma-push /etc/bluma/firebase-service-account.json
+chown bluma-push:bluma-push /etc/bluma/bluma-dc10e-firebase-adminsdk-fbsvc-2801848a7f.json
 ```
 
 `/etc/systemd/system/bluma-push-worker.service`:
@@ -58,7 +58,7 @@ Group=bluma-push
 WorkingDirectory=/opt/bluma-push-worker
 ExecStart=/usr/bin/node index.js
 Restart=always
-Environment=GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/firebase-service-account.json
+Environment=GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/bluma-dc10e-firebase-adminsdk-fbsvc-2801848a7f.json
 Environment=PORT=8789
 Environment=HOST=127.0.0.1
 # Sandbox
@@ -132,11 +132,11 @@ alındı). Kurulum `cron/install.sh` ile; elle örnek:
 
 ```bash
 # Önce kontrol et (hiçbir şey yazmaz):
-GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/firebase-service-account.json \
+GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/bluma-dc10e-firebase-adminsdk-fbsvc-2801848a7f.json \
   node /opt/bluma-push-worker/reconcile-counters.js --dry-run
 
 # crontab -e (bluma-push kullanıcısı için):
-30 4 1 * * GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/firebase-service-account.json \
+30 4 1 * * GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/bluma-dc10e-firebase-adminsdk-fbsvc-2801848a7f.json \
   node /opt/bluma-push-worker/reconcile-counters.js >> /var/log/bluma-reconcile.log 2>&1
 ```
 
@@ -152,7 +152,7 @@ anahtarı başına sabittir — ikisi de "sil-kur" ile sıfırlanmaz.
 
 ```bash
 cd /opt/bluma-push-worker
-export GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/firebase-service-account.json
+export GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/bluma-dc10e-firebase-adminsdk-fbsvc-2801848a7f.json
 
 node ban-device.js --devices                       # hesap → cihaz eşlemesi
 node ban-device.js --uid <uid> --reason "hakaret"  # o hesabın cihazını banla
@@ -247,7 +247,7 @@ mutabakatı. **Askıya alma satırı bilinçli olarak kapalı** — açma koşul
 ## Yönetim komutları
 
 ```bash
-export GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/firebase-service-account.json
+export GOOGLE_APPLICATION_CREDENTIALS=/etc/bluma/bluma-dc10e-firebase-adminsdk-fbsvc-2801848a7f.json
 
 node reconcile-counters.js --dry-run        # sayaç mutabakatı (aylık)
 node notify-unverified.js --dry-run         # doğrulama hatırlatması

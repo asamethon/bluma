@@ -12,6 +12,7 @@ const path = require('path');
 const fs = require('fs');
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestore');
+const { getAuth } = require('firebase-admin/auth');
 const { assignMemberNumbers } = require('./memberNumbers.cjs');
 
 const ROOT = path.resolve(__dirname, '..', '..');
@@ -40,6 +41,19 @@ async function communityStats() {
   };
 }
 
+// createdAt'i olmayan (eski) profiller sona düşmesin: Auth hesabının açılış
+// tarihi gerçek kayıt sırasını verir. Auth'ta da yoksa sona kalır.
+async function fillAuthDates(users) {
+  const missing = users.filter(u => !u.createdAt);
+  for (let i = 0; i < missing.length; i += 100) {
+    const chunk = missing.slice(i, i + 100);
+    const { users: found } = await getAuth().getUsers(chunk.map(u => ({ uid: u.id })));
+    const byId = new Map(found.map(r => [r.uid, Date.parse(r.metadata.creationTime) || 0]));
+    chunk.forEach(u => { u.createdAt = byId.get(u.id) || 0; });
+  }
+  return missing.length;
+}
+
 (async () => {
   const ref = db.collection('milestones').doc('1k');
   if (OFF) {
@@ -50,9 +64,10 @@ async function communityStats() {
 
   const snap = await db.collection('users').select('createdAt', 'memberNumber').get();
   const users = snap.docs.map(d => ({ id: d.id, createdAt: ms(d.get('createdAt')), memberNumber: d.get('memberNumber') }));
+  await fillAuthDates(users);
   const fresh = assignMemberNumbers(users);
   const noDate = users.filter(u => !u.createdAt).length;
-  console.log(`Kullanıcı: ${users.length} | yeni numara: ${fresh.size} | createdAt'siz: ${noDate}`);
+  console.log(`Kullanıcı: ${users.length} | yeni numara: ${fresh.size} | hiç tarihi olmayan: ${noDate}`);
   const preview = [...fresh.entries()].sort((a, b) => a[1] - b[1]);
   console.log('İlk/son atamalar:', preview.slice(0, 3), '…', preview.slice(-3));
 
