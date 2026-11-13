@@ -1160,5 +1160,27 @@
     "later": "Nanti saja",
     "bannerTitle": "Notifikasi mati",
     "bannerBody": "Dapatkan kabar saat penulis yang kamu ikuti menerbitkan bab baru, atau saat kamu menerima balasan atau pesan."
+  },
+  "milestone": {
+    "title": "BLUMA 1K",
+    "eyebrow": "Bersama",
+    "headline": "Kita sudah 1.000 orang.",
+    "memberLine": "Aku anggota Bluma ke-{{number}}",
+    "memberFallback": "Aku juga bagian dari cerita ini",
+    "founder": "Pendiri 1000",
+    "joined": "Bergabung {{date}}",
+    "stat": {
+      "stories": "cerita",
+      "reads": "bacaan",
+      "comments": "komentar"
+    },
+    "cta": "Ayo gabung · bluma",
+    "thanks": "Kamu ikut menjadikan Bluma perpustakaan seribu pembaca. Kartu ini milikmu, bagikan kalau mau.",
+    "thanksFounder": "Kamu salah satu dari seribu anggota pertama. Lencana Pendiri 1000 tetap ada di profilmu. Kartu ini milikmu.",
+    "instagramStory": "Bagikan ke Instagram Story",
+    "message": "Kirim sebagai pesan",
+    "shareMessage": "Bluma sudah punya 1.000 anggota dan aku salah satunya. Ayo baca bareng:\n{{url}}",
+    "unavailable": "Perayaan sedang tidak aktif",
+    "close": "Tutup"
   }
 }

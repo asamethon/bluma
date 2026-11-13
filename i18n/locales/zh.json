@@ -1160,5 +1160,27 @@
     "later": "暂时不要",
     "bannerTitle": "通知已关闭",
     "bannerBody": "你关注的作者发布新章节，或你收到回复和私信时，及时告诉你。"
+  },
+  "milestone": {
+    "title": "BLUMA 1K",
+    "eyebrow": "一起",
+    "headline": "我们已经有 1,000 人了。",
+    "memberLine": "我是 Bluma 第 {{number}} 位成员",
+    "memberFallback": "我也是这个故事的一部分",
+    "founder": "创始 1000",
+    "joined": "{{date}} 加入",
+    "stat": {
+      "stories": "作品",
+      "reads": "阅读",
+      "comments": "评论"
+    },
+    "cta": "一起来读 · bluma",
+    "thanks": "是你让 Bluma 成为一座千人的图书馆。这张卡片属于你，想分享就分享吧。",
+    "thanksFounder": "你是最早的一千位成员之一。创始 1000 徽章将永久留在你的主页上。这张卡片属于你。",
+    "instagramStory": "分享到 Instagram 快拍",
+    "message": "通过消息发送",
+    "shareMessage": "Bluma 已经有 1,000 位成员了，我也是其中之一。一起来读吧：\n{{url}}",
+    "unavailable": "庆祝活动当前未开启",
+    "close": "关闭"
   }
 }

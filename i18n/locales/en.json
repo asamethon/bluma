@@ -1161,5 +1161,27 @@
     "later": "Not now",
     "bannerTitle": "Notifications are off",
     "bannerBody": "Get notified when authors you follow publish new chapters, or when you get a reply or a message."
+  },
+  "milestone": {
+    "title": "BLUMA 1K",
+    "eyebrow": "Together",
+    "headline": "We're 1,000 strong.",
+    "memberLine": "I'm Bluma member #{{number}}",
+    "memberFallback": "I'm part of this story too",
+    "founder": "Founding 1000",
+    "joined": "Joined {{date}}",
+    "stat": {
+      "stories": "stories",
+      "reads": "reads",
+      "comments": "comments"
+    },
+    "cta": "Join us · bluma",
+    "thanks": "You helped turn Bluma into a library of a thousand readers. This card is yours to share.",
+    "thanksFounder": "You're one of the first thousand members. Your Founding 1000 badge stays on your profile for good. This card is yours to share.",
+    "instagramStory": "Share to Instagram Story",
+    "message": "Send as Message",
+    "shareMessage": "Bluma just hit 1,000 members and I'm one of them. Come read with us:\n{{url}}",
+    "unavailable": "The celebration isn't live right now",
+    "close": "Close"
   }
 }

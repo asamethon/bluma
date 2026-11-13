@@ -1161,5 +1161,27 @@
     "later": "Jetzt nicht",
     "bannerTitle": "Benachrichtigungen sind aus",
     "bannerBody": "Erfahre, wenn Autorinnen und Autoren, denen du folgst, neue Kapitel veröffentlichen oder du eine Antwort oder Nachricht bekommst."
+  },
+  "milestone": {
+    "title": "BLUMA 1K",
+    "eyebrow": "Gemeinsam",
+    "headline": "Wir sind 1.000.",
+    "memberLine": "Ich bin Bluma-Mitglied Nr. {{number}}",
+    "memberFallback": "Ich bin Teil dieser Geschichte",
+    "founder": "Gründer 1000",
+    "joined": "Dabei seit {{date}}",
+    "stat": {
+      "stories": "Geschichten",
+      "reads": "Lesungen",
+      "comments": "Kommentare"
+    },
+    "cta": "Komm dazu · bluma",
+    "thanks": "Du hast Bluma zu einer Bibliothek mit tausend Lesenden gemacht. Diese Karte gehört dir, teile sie gern.",
+    "thanksFounder": "Du gehörst zu den ersten tausend Mitgliedern. Dein Gründer-1000-Abzeichen bleibt dauerhaft in deinem Profil. Diese Karte gehört dir.",
+    "instagramStory": "In Instagram Story teilen",
+    "message": "Als Nachricht senden",
+    "shareMessage": "Bluma hat 1.000 Mitglieder und ich bin dabei. Lies mit uns:\n{{url}}",
+    "unavailable": "Die Feier ist gerade nicht aktiv",
+    "close": "Schließen"
   }
 }

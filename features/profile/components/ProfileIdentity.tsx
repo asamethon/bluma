@@ -2,6 +2,7 @@ import { Badge, Text } from '@/components/ui';
 import { useTheme } from '@/constants/theme';
 import type { Ionicons } from '@expo/vector-icons';
 import { Ionicons as IoniconsIcon } from '@expo/vector-icons';
+import { FounderBadge } from '@/features/milestone/components/FounderBadge';
 import { Linking, TouchableOpacity, View } from 'react-native';
 import { profileStyles as styles } from '../styles/profileStyles';
 import { ProfileBio } from './ProfileBio';
@@ -13,13 +14,16 @@ type Props = {
   bio?: string;
   website?: string;
   location?: string;
+  /** İlk 1000 üyeye "Kurucu 1000" rozeti; kendi profilinde dokunulabilir. */
+  memberNumber?: number;
+  ownProfile?: boolean;
 };
 
 /**
  * Profil kimlik künyesi: ad, @kullanıcı + rozet, biyografi. Kendi profilim ve
  * başkasının profili aynı ritmi paylaşsın diye tek bileşende durur.
  */
-export function ProfileIdentity({ name, handle, badge, bio, website, location }: Props) {
+export function ProfileIdentity({ name, handle, badge, bio, website, location, memberNumber, ownProfile }: Props) {
   const { colors } = useTheme();
 
   const openWebsite = () => {
@@ -35,6 +39,7 @@ export function ProfileIdentity({ name, handle, badge, bio, website, location }:
       <View style={styles.metaRow}>
         <Text variant="label" tone="primary">@{handle}</Text>
         {badge ? <Badge label={badge.label} tone="primary" icon={badge.icon} /> : null}
+        <FounderBadge memberNumber={memberNumber} interactive={ownProfile} />
       </View>
       {bio ? <ProfileBio bio={bio} /> : null}
       {(location || website) ? (

@@ -1160,5 +1160,27 @@
     "later": "Şimdi değil",
     "bannerTitle": "Bildirimler kapalı",
     "bannerBody": "Takip ettiğin yazarlar yeni bölüm yayınladığında, yorumuna cevap ya da mesaj geldiğinde haberin olsun."
+  },
+  "milestone": {
+    "title": "BLUMA 1K",
+    "eyebrow": "Birlikte",
+    "headline": "Bin kişi olduk.",
+    "memberLine": "Bluma'nın {{number}}. üyesiyim",
+    "memberFallback": "Ben de bu hikâyenin içindeyim",
+    "founder": "Kurucu 1000",
+    "joined": "Katılış: {{date}}",
+    "stat": {
+      "stories": "hikâye",
+      "reads": "okuma",
+      "comments": "yorum"
+    },
+    "cta": "Sen de gel · bluma",
+    "thanks": "Bluma'yı bin kişilik bir kütüphaneye sen çevirdin. Bu kart senin, istersen paylaş.",
+    "thanksFounder": "İlk bin üyeden birisin. Kurucu 1000 rozetin profilinde kalıcı olarak duruyor. Bu kart senin, istersen paylaş.",
+    "instagramStory": "Instagram Story'de Paylaş",
+    "message": "Mesajla Gönder",
+    "shareMessage": "Bluma'da bin kişi olduk ve ben de aralarındayım. Gel, birlikte okuyalım:\n{{url}}",
+    "unavailable": "Kutlama şu an yayında değil",
+    "close": "Kapat"
   }
 }

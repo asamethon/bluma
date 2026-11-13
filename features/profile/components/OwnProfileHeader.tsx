@@ -90,6 +90,8 @@ export function OwnProfileHeader({ user, stories, topInset, onShare }: Props) {
         bio={user.bio}
         website={user.website}
         location={user.location}
+        memberNumber={user.memberNumber}
+        ownProfile
       />
 
       <ProfileStatsBar

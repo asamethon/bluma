@@ -1160,5 +1160,27 @@
     "later": "今はしない",
     "bannerTitle": "通知がオフです",
     "bannerBody": "フォロー中の作者が新しい章を公開したときや、返信・メッセージが届いたときにお知らせします。"
+  },
+  "milestone": {
+    "title": "BLUMA 1K",
+    "eyebrow": "みんなで",
+    "headline": "1,000人になりました。",
+    "memberLine": "Bluma {{number}}番目のメンバー",
+    "memberFallback": "私もこの物語の一員です",
+    "founder": "ファウンダー1000",
+    "joined": "{{date}}に参加",
+    "stat": {
+      "stories": "作品",
+      "reads": "閲覧",
+      "comments": "コメント"
+    },
+    "cta": "一緒に読もう · bluma",
+    "thanks": "Blumaを千人の図書館にしたのはあなたです。このカードはあなたのもの。よければシェアしてください。",
+    "thanksFounder": "あなたは最初の千人のひとりです。ファウンダー1000バッジはプロフィールにずっと残ります。このカードはあなたのものです。",
+    "instagramStory": "Instagramストーリーでシェア",
+    "message": "メッセージで送る",
+    "shareMessage": "Blumaのメンバーが1,000人になりました。私もそのひとりです。一緒に読もう:\n{{url}}",
+    "unavailable": "現在お祝いは公開されていません",
+    "close": "閉じる"
   }
 }

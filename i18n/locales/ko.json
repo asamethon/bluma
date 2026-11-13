@@ -1160,5 +1160,27 @@
     "later": "나중에",
     "bannerTitle": "알림이 꺼져 있어요",
     "bannerBody": "팔로우한 작가가 새 챕터를 올리거나 답글, 메시지가 오면 알려드려요."
+  },
+  "milestone": {
+    "title": "BLUMA 1K",
+    "eyebrow": "함께",
+    "headline": "1,000명이 되었어요.",
+    "memberLine": "나는 Bluma의 {{number}}번째 멤버",
+    "memberFallback": "나도 이 이야기의 일부예요",
+    "founder": "파운더 1000",
+    "joined": "{{date}} 가입",
+    "stat": {
+      "stories": "작품",
+      "reads": "읽기",
+      "comments": "댓글"
+    },
+    "cta": "함께해요 · bluma",
+    "thanks": "Bluma를 천 명의 서재로 만든 건 바로 당신이에요. 이 카드는 당신의 것이니 원하면 공유하세요.",
+    "thanksFounder": "당신은 첫 천 명의 멤버 중 한 명이에요. 파운더 1000 배지는 프로필에 영원히 남아요. 이 카드는 당신의 것이에요.",
+    "instagramStory": "Instagram 스토리에 공유",
+    "message": "메시지로 보내기",
+    "shareMessage": "Bluma 멤버가 1,000명이 되었고 나도 그중 한 명이에요. 같이 읽어요:\n{{url}}",
+    "unavailable": "지금은 축하 이벤트가 진행 중이 아니에요",
+    "close": "닫기"
   }
 }

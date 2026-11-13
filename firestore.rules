@@ -188,11 +188,15 @@ service cloud.firestore {
       }
 
       allow read: if true;
-      allow create: if isOwner(userId) && !blocksPrivateFields(request.resource.data);
+      // `memberNumber` (kayıt sırası, "Kurucu 1000" rozeti) yalnızca Admin SDK ile
+      // yazılır (scripts/milestone-1k.cjs): istemci ne oluştururken ne de
+      // güncellerken bu alana dokunabilir.
+      allow create: if isOwner(userId) && !blocksPrivateFields(request.resource.data)
+        && !('memberNumber' in request.resource.data);
       allow delete: if isOwner(userId);
       allow update: if !blocksPrivateFields(request.resource.data) && (
         (isOwner(userId) && xpChangeAllowed()
-          && preserves(['followersCount', 'followingCount', 'storiesCount']))
+          && preserves(['followersCount', 'followingCount', 'storiesCount', 'memberNumber']))
         // Hikâye yayınlama/silme kendi sayacını tek adım oynatır.
         || (isOwner(userId) && isCounterBump('storiesCount'))
         || (isSignedIn() && isCounterBump('followersCount')
@@ -267,6 +271,13 @@ service cloud.firestore {
     }
 
     // Books catalog — public read; only the author writes.
+    // Topluluk kilometre taşları (1K kutlaması). Herkes okur; yalnızca Admin SDK
+    // yazar (scripts/milestone-1k.cjs). Kural yazma yolunu tümden kapatır.
+    match /milestones/{milestoneId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     match /books/{bookId} {
       allow read: if true;
       allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;

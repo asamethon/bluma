@@ -1161,5 +1161,27 @@
     "later": "Agora não",
     "bannerTitle": "Notificações desativadas",
     "bannerBody": "Saiba quando os autores que você segue publicarem novos capítulos ou quando receber uma resposta ou mensagem."
+  },
+  "milestone": {
+    "title": "BLUMA 1K",
+    "eyebrow": "Juntos",
+    "headline": "Somos 1.000.",
+    "memberLine": "Sou o membro nº {{number}} da Bluma",
+    "memberFallback": "Também faço parte dessa história",
+    "founder": "Fundadores 1000",
+    "joined": "Desde {{date}}",
+    "stat": {
+      "stories": "histórias",
+      "reads": "leituras",
+      "comments": "comentários"
+    },
+    "cta": "Vem com a gente · bluma",
+    "thanks": "Você ajudou a transformar a Bluma numa biblioteca de mil leitores. Este card é seu, compartilhe se quiser.",
+    "thanksFounder": "Você é um dos primeiros mil membros. Seu selo Fundadores 1000 fica no seu perfil para sempre. Este card é seu.",
+    "instagramStory": "Compartilhar no Instagram Story",
+    "message": "Enviar por mensagem",
+    "shareMessage": "A Bluma chegou a 1.000 membros e eu sou um deles. Vem ler com a gente:\n{{url}}",
+    "unavailable": "A comemoração não está ativa agora",
+    "close": "Fechar"
   }
 }

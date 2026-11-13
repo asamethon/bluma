@@ -4,6 +4,7 @@ import challengeReducer from './slices/challengeSlice';
 import chatReducer from './slices/chatSlice';
 import conversationReducer from './slices/conversationSlice';
 import messagingReducer from './slices/messagingSlice';
+import milestoneReducer from './slices/milestoneSlice';
 import moderationReducer from './slices/moderationSlice';
 import notificationReducer from './slices/notificationSlice';
 import preferencesReducer from './slices/preferencesSlice';
@@ -26,6 +27,7 @@ export const store = configureStore({
     notification: notificationReducer,
     conversation: conversationReducer,
     messaging: messagingReducer,
+    milestone: milestoneReducer,
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({

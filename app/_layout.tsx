@@ -16,6 +16,7 @@ import { useNavigationTheme } from '@/features/bootstrap/hooks/useNavigationThem
 import { useNotificationRouting } from '@/features/bootstrap/hooks/useNotificationRouting';
 import { useScreenTracking } from '@/features/bootstrap/hooks/useScreenTracking';
 import { useOtaUpdates } from '@/features/updates/hooks/useOtaUpdates';
+import { useMilestoneGate } from '@/features/milestone/hooks/useMilestoneGate';
 import { DeviceBannedScreen } from '@/features/moderation/components/DeviceBannedScreen';
 import { useDeviceBan } from '@/features/moderation/hooks/useDeviceBan';
 import { store } from '@/store';
@@ -55,6 +56,7 @@ function RootLayoutInner() {
   useScreenTracking();
   useNotificationRouting(appReady);
   useOtaUpdates(appReady);
+  useMilestoneGate(appReady);
 
   const onLayoutRootView = useCallback(() => {
     if (fontsLoaded) SplashScreen.hideAsync();
@@ -80,6 +82,7 @@ function RootLayoutInner() {
                 <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   <Stack.Screen name="+not-found" />
+                  <Stack.Screen name="milestone" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
                 </Stack>
                 <StatusBar style="auto" />
                 <AuthGateSheet />

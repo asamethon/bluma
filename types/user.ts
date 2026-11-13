@@ -22,6 +22,8 @@ export interface User {
   followersCount?: number;
   followingCount?: number;
   storiesCount?: number;
+  /** Kayıt sırası; yalnızca admin script'i yazar (scripts/milestone-1k.cjs). */
+  memberNumber?: number;
   profileImage?: string;
   coverImage?: string | null;
   privacy?: PrivacySettings;

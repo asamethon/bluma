@@ -102,6 +102,8 @@ export function UserProfileHeader(props: Props) {
         bio={user.bio}
         website={user.website}
         location={user.location}
+        memberNumber={user.memberNumber}
+        ownProfile={props.ownProfile}
       />
 
       <ProfileStatsBar
