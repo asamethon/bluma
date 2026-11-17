@@ -142,6 +142,28 @@ service cloud.firestore {
                .data.get('privacy', {}).get('allowMessages', true) == true
         || exists(/databases/$(database)/documents/users/$(ownerId)/following/$(request.auth.uid));
     }
+    // Gizlilik → "Panoma kimler yazabilir" (users/{uid}.privacy.boardPosts).
+    // 'everyone' (varsayılan; alan hiç yoksa da bu) | 'following' (yalnızca
+    // pano sahibinin TAKİP ETTİĞİ kişiler) | 'nobody'.
+    function boardPostPolicy(ownerId) {
+      return get(/databases/$(database)/documents/users/$(ownerId))
+               .data.get('privacy', {}).get('boardPosts', 'everyone');
+    }
+    function acceptsBoardPostFrom(ownerId) {
+      return boardPostPolicy(ownerId) == 'everyone'
+        || (boardPostPolicy(ownerId) == 'following'
+            && exists(/databases/$(database)/documents/users/$(ownerId)/following/$(request.auth.uid)));
+    }
+    // Konuşmanın yazarı VEYA panosunda durduğu kullanıcı. Gönderiyi silerken
+    // yorum/beğeni temizliğine yetki verir — hikâyedeki `isStoryAuthor()` ile
+    // aynı kalıp: alt kayıtlar konuşma dokümanından ÖNCE silinmeli, yoksa bu
+    // arama başarısız olur.
+    function ownsConversation(conversationId) {
+      return isSignedIn() && (
+        get(/databases/$(database)/documents/conversations/$(conversationId)).data.authorId == request.auth.uid
+        || get(/databases/$(database)/documents/conversations/$(conversationId))
+             .data.get('boardOwnerId', '') == request.auth.uid);
+    }
 
     // User profiles — public read (guest browsing). Only the owner edits their
     // own document, except the followersCount counter which is incremented by
@@ -415,11 +437,23 @@ service cloud.firestore {
     // Conversations — same ownership model as stories.
     match /conversations/{conversationId} {
       allow read: if true;
+      // Yazar panosu: gönderi başkasının panosunda duruyorsa pano sahibinin
+      // ayarı izin vermeli ve yazan engellenmemiş olmalı. `boardOwnerId` alanı
+      // HİÇ YOKSA gönderi eski istemciden gelir ve koşul aranmaz.
       allow create: if canPublish() && request.resource.data.authorId == request.auth.uid
-        && !blocksPrivateFields(request.resource.data.get('author', {}));
-      allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+        && !blocksPrivateFields(request.resource.data.get('author', {}))
+        && (!('boardOwnerId' in request.resource.data)
+          || request.resource.data.boardOwnerId == request.auth.uid
+          || (notBlockedBy(request.resource.data.boardOwnerId)
+              && acceptsBoardPostFrom(request.resource.data.boardOwnerId)));
+      // Yazan ya da pano sahibi siler.
+      allow delete: if isSignedIn() && (resource.data.authorId == request.auth.uid
+        || resource.data.get('boardOwnerId', '') == request.auth.uid);
       // updatedAt is included because commenting bumps it alongside the counter.
-      allow update: if isSignedIn() && !blocksPrivateFields(request.resource.data.get('author', {})) && (
+      // `boardOwnerId` hiçbir güncellemeyle DEĞİŞEMEZ (yazarın kendi
+      // güncellemesinde de): gönderi başka bir panoya taşınamaz.
+      allow update: if isSignedIn() && !blocksPrivateFields(request.resource.data.get('author', {}))
+        && preserves(['boardOwnerId']) && (
         resource.data.authorId == request.auth.uid
         || (isCounterBump('likesCount')
             && (counterProof(/databases/$(database)/documents/conversations/$(conversationId)/likes/$(request.auth.uid))
@@ -434,14 +468,19 @@ service cloud.firestore {
       match /likes/{likeId} {
         allow read: if true;
         allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-        allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+        // Beğenen geri alabilir; konuşma sahibi gönderiyi silerken temizler.
+        allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid
+          || ownsConversation(conversationId));
       }
     }
 
     match /conversationComments/{commentId} {
       allow read: if true;
       allow create: if canPublish() && request.resource.data.userId == request.auth.uid;
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // Yorumu yazan siler; ayrıca konuşmanın sahibi (yazar ya da pano sahibi)
+      // gönderiyi silerken yorumları da temizleyebilir — yetim yorum kalmasın.
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid
+        || ownsConversation(resource.data.conversationId));
       allow update: if isSignedIn() && (
         (resource.data.userId == request.auth.uid && onlyChanges(['content', 'isEdited', 'updatedAt']))
         || (isCounterBump('likesCount')
@@ -460,7 +499,7 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.resource.data.senderId == request.auth.uid
         && request.resource.data.type in
-          ['follow', 'follow_request', 'follow_accepted', 'like', 'comment', 'mention', 'story_published', 'new_chapter', 'welcome', 'conversation_announcement']
+          ['follow', 'follow_request', 'follow_accepted', 'like', 'comment', 'mention', 'story_published', 'new_chapter', 'welcome', 'conversation_announcement', 'board_post']
         && request.resource.data.keys().hasOnly(
           ['userId', 'senderId', 'type', 'title', 'message', 'data', 'isRead', 'createdAt', 'updatedAt'])
         // Anti-spam/phishing: engellenen kullanıcı bildirim gönderemez ve

@@ -1,5 +1,6 @@
 import ImageModal from '@/components/ui/ImageModal';
-import { PageHeader, Screen } from '@/components/ui';
+import { IconButton, PageHeader, Screen } from '@/components/ui';
+import ReportSheet from '@/features/moderation/components/ReportSheet';
 import { ContentMaxWidth, useTheme } from '@/constants/theme';
 import { useConversationDetail } from '@/features/conversation/hooks/useConversationDetail';
 import { MentionSuggestions } from '@/features/mentions/components/MentionSuggestions';
@@ -20,6 +21,10 @@ export function ConversationDetailScreen({ conversationId }: { conversationId: s
   const router = useRouter();
   const state = useConversationDetail(conversationId);
   const styles = useMemo(() => createConversationDetailStyles(colors), [colors]);
+  // Kendi gönderisini kimse şikâyet etmez.
+  const canReport = !!state.conversation
+    && !!state.currentUser
+    && state.conversation.authorId !== state.currentUser.id;
   const renderComment = useCallback<ListRenderItem<ConversationComment>>(({ item }) => (
     <ConversationCommentRow item={item} styles={styles} onImage={state.openModal} />
   ), [state.openModal, styles]);
@@ -35,7 +40,18 @@ export function ConversationDetailScreen({ conversationId }: { conversationId: s
   return (
     <Screen style={styles.container} maxContentWidth={ContentMaxWidth.content}>
       <KeyboardAvoidingView style={styles.keyboardAvoidingView} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <PageHeader title={t('conversations.conversation')} onBack={router.back} />
+        <PageHeader
+          title={t('conversations.conversation')}
+          onBack={router.back}
+          right={canReport ? (
+            <IconButton
+              icon="flag-outline"
+              size={36}
+              accessibilityLabel={t('report.targetConversation')}
+              onPress={state.openReport}
+            />
+          ) : undefined}
+        />
         <FlashList
           data={state.comments || []}
           renderItem={renderComment}
@@ -71,6 +87,15 @@ export function ConversationDetailScreen({ conversationId }: { conversationId: s
         />
       </KeyboardAvoidingView>
       <ImageModal visible={!!state.modalImage} imageUri={state.modalImage || ''} onClose={state.closeModal} />
+      <ReportSheet
+        visible={state.reportVisible}
+        onClose={state.closeReport}
+        target={{
+          type: 'conversation',
+          targetId: conversationId,
+          reportedUserId: state.conversation.authorId,
+        }}
+      />
     </Screen>
   );
 }

@@ -12,7 +12,7 @@ type Props = {
   onStoryMenu: (story: Story) => void;
   onPressConversation: (id: string) => void;
   onConversationImage: (uri: string) => void;
-  onDeleteConversation: (conversation: Conversation) => void;
+  onConversationMenu: (conversation: Conversation) => void;
 };
 
 const storyStatus = (story: Story) => {
@@ -42,7 +42,7 @@ function OwnProfileListItemComponent(props: Props) {
         conversation={conversation}
         onPress={() => props.onPressConversation(conversation.id)}
         onImagePress={props.onConversationImage}
-        onDelete={() => props.onDeleteConversation(conversation)}
+        onMenu={() => props.onConversationMenu(conversation)}
       />
     </View>
   );

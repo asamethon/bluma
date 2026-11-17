@@ -1,4 +1,5 @@
 import {
+  canPostToBoard,
   canSendMessageTo,
   canViewProfile,
   filterDiscoverable,
@@ -9,6 +10,7 @@ import { applyLocally, load, update } from './privacy/settings';
 
 export const privacyActions = {
   applyLocally,
+  canPostToBoard,
   canSendMessageTo,
   canViewProfile,
   filterDiscoverable,

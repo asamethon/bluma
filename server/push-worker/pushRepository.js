@@ -17,6 +17,7 @@ export const CATEGORY_FIELD = {
   story_published: 'storyNotifications',
   new_chapter: 'storyNotifications',
   conversation_announcement: 'storyNotifications',
+  board_post: 'commentNotifications',
 };
 
 export function createPushRepository(db) {

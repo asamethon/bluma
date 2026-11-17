@@ -463,7 +463,12 @@
     "privateProfileBody": "{{name}} adlı kullanıcının hikâyelerini ve listelerini görmek için takip etmelisin.",
     "privateProfileBodyGeneric": "Hikâyeleri ve listeleri görmek için bu hesabı takip etmelisin.",
     "messagesOff": "{{name}} yalnızca takip ettiği kişilerden mesaj alıyor.",
-    "privateProfileRequested": "Takip isteğin gönderildi, onay bekleniyor."
+    "privateProfileRequested": "Takip isteğin gönderildi, onay bekleniyor.",
+    "boardPosts": "Panoma Kimler Yazabilir",
+    "boardPostsSub": "Profilindeki Konuşmalar sekmesine kim gönderi bırakabilir",
+    "boardPostsEveryone": "Herkes",
+    "boardPostsFollowing": "Takip ettiklerim",
+    "boardPostsNobody": "Kimse"
   },
   "coverPicker": {
     "title": "Kapak resmi ekle",
@@ -511,7 +516,9 @@
     "conversationMentionMessage": "{{name}}, \"{{conversation}}\" konuşmasında senden bahsetti",
     "newChapterMessageNumbered": "{{author}}, \"{{story}}\" hikâyesine yeni bir bölüm ekledi ({{chapter}}. bölüm)",
     "verifyEmailTitle": "E-postanı doğrula",
-    "verifyEmailMessage": "Hesabını kullanmaya devam etmek için e-posta adresini doğrulaman gerekiyor. Yanlış yazdıysan buradan düzeltebilirsin."
+    "verifyEmailMessage": "Hesabını kullanmaya devam etmek için e-posta adresini doğrulaman gerekiyor. Yanlış yazdıysan buradan düzeltebilirsin.",
+    "boardPostTitle": "Panona yeni mesaj",
+    "boardPostMessage": "{{name}} panona bir mesaj bıraktı."
   },
   "comments": {
     "writeOrAttach": "Lütfen yorum yazın veya resim ekleyin.",
@@ -748,7 +755,12 @@
     "messagePlaceholder": "Mesaj yaz...",
     "addPhoto": "Fotoğraf Ekle",
     "announceToFollowers": "Takipçilere Duyur",
-    "announceToFollowersSub": "Takipçilerin bu mesajı bildirim olarak alsın"
+    "announceToFollowersSub": "Takipçilerin bu mesajı bildirim olarak alsın",
+    "boardMessageTitle": "Panoya Mesaj",
+    "boardMessagePlaceholder": "Panoya bir mesaj bırak...",
+    "boardMessageShared": "Mesajın panoya bırakıldı!",
+    "deleteBoardPostConfirm": "Bu gönderi panondan kaldırılsın mı? Yorumlarıyla birlikte silinir.",
+    "conversationOptionsTitle": "Gönderi seçenekleri"
   },
   "challengesScreen": {
     "title": "Görevler",

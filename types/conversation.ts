@@ -5,6 +5,13 @@ export interface Conversation {
   id: string;
   authorId: string;
   author: User;
+  /**
+   * Gönderinin durduğu pano (yazar panosu). Kendi profiline yazılan
+   * gönderide `authorId` ile aynıdır. Alan HİÇ YOKSA gönderi eski
+   * istemcinin açtığı bir konuşmadır ve yazarın kendi panosunda sayılır —
+   * geriye dönük dolum (backfill) yapılmaz.
+   */
+  boardOwnerId?: string;
   title: string;
   content: string;
   image?: string;
@@ -16,6 +23,9 @@ export interface Conversation {
   updatedAt: FirestoreDate;
   tags?: string[];
   category?: string;
+  // İstemcide doldurulur (dokümanda saklanmaz): pano sahibinin künyesi,
+  // "yazar ▸ pano sahibi" etiketini basmak için.
+  boardOwner?: User;
 }
 
 export interface ConversationComment {

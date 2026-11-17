@@ -10,10 +10,10 @@ import {
   toggleLikeConversationUI,
 } from '@/features/conversation/services/conversationLikes';
 import { announceConversationToFollowers } from '@/features/conversation/services/conversationNotifications';
+import { deleteConversation } from '@/features/conversation/services/conversationDeletion';
 import {
   cleanupConversationQueries,
   createConversation,
-  deleteConversation,
   getConversationById,
   getConversationRealTimeUpdates,
   getUserConversations,

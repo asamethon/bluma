@@ -16,6 +16,7 @@ const META: Partial<Record<Notification['type'], Meta>> = {
   story_published: { icon: 'book', color: '#4CAF50' },
   new_chapter: { icon: 'library', color: '#4CAF50' },
   conversation_announcement: { icon: 'chatbubble-ellipses', color: '#2196F3' },
+  board_post: { icon: 'create', color: '#2196F3' },
   announcement: { icon: 'megaphone', color: '#7057D9' },
   verify_email: { icon: 'mail', color: '#E6B95C' },
 };

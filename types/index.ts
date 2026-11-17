@@ -16,4 +16,4 @@ export type {
   PushPromptReason,
 } from './notification';
 export type { Comment, Story, StoryCategory } from './story';
-export type { PrivacySettings, User } from './user';
+export type { BoardPostPolicy, PrivacySettings, User } from './user';

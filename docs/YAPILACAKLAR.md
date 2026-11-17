@@ -193,6 +193,20 @@ Bunlar yeni sürüm gönderilmeden ÖNCE bitmeli. Her kural değişikliğinden s
 ### 4.3 Topluluk kanalı
 - Discord/Telegram yazar topluluğu — moderasyonu ucuz, geri bildirim döngüsü hızlı. Challenges özelliği (zaten var) buradaki etkinliklerle beslenir.
 
+### 4.4 Yazar panosu — ertelenen parçalar
+Pano özelliği canlıda (başkasının profilindeki Konuşmalar sekmesine gönderi
+bırakma, `boardOwnerId` + `privacy.boardPosts`). Bilinçli olarak kapsam dışı
+bırakılanlar:
+- **Pano sahibinin, panosundaki gönderilere gelen YORUMLARI silmesi.** Kural
+  artık buna izin veriyor (`ownsConversation`, gönderi silinirken yorum
+  temizliği için gerekti) — eksik olan yalnızca arayüz: yorum satırında
+  pano sahibine silme menüsü yok.
+- **Pano gönderisini düzenleme.** Gönderi oluşturulduktan sonra metni
+  değiştirilemiyor (yazarın kendi konuşmalarında da böyle).
+- Eski istemci (3.0.1) `boardOwnerId` alanını okumadığı için başkasının
+  panosuna bırakılan gönderiyi YAZARIN profilinde gösterir. Mağaza sürümü
+  yenilenince kendiliğinden düzelir; veri doğru.
+
 ---
 
 ## FAZ 5 — Monetizasyon (KAPILI — aşağıdaki eşikler geçilmeden BAŞLAMA)

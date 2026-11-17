@@ -1,3 +1,4 @@
+import { isBoardGuestPost } from '@/features/conversation/utils/boardPost';
 import type { Conversation, Story, User } from '@/types';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -51,8 +52,15 @@ export function useProfileContent(user: User | null) {
     () => user ? storyRecords.map(story => ({ ...story, author: user })) : [],
     [storyRecords, user],
   );
+  // Pano gönderisinin yazarı profil sahibi DEĞİL: dokümandaki künye kopyası
+  // kullanılır (ek okuma yapmadan). Pano sahibi her zaman profil sahibidir —
+  // sorgu sonucu zaten onun panosuna süzülmüştür.
   const conversations = useMemo<Conversation[]>(
-    () => user ? conversationRecords.map(item => ({ ...item, author: user })) : [],
+    () => user ? conversationRecords.map(item => ({
+      ...item,
+      author: (item.authorId === user.id ? user : item.author) ?? user,
+      ...(isBoardGuestPost(item) ? { boardOwner: user } : {}),
+    })) : [],
     [conversationRecords, user],
   );
 

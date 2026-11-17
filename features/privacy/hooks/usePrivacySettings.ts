@@ -18,11 +18,12 @@ export function usePrivacySettings() {
     privacyActions.load();
   }, [userId]);
 
-  const toggle = async (key: keyof PrivacySettings, value: boolean) => {
+  // Anahtarlar boolean, "panoma kimler yazabilir" üç değerli: tek yazma yolu.
+  const set = async <K extends keyof PrivacySettings>(key: K, value: PrivacySettings[K]) => {
     setError(null);
-    const result = await privacyActions.update({ [key]: value });
+    const result = await privacyActions.update({ [key]: value } as Partial<PrivacySettings>);
     if (!result.success) setError(result.error ?? null);
   };
 
-  return { settings, toggle, error, isGuest: !userId };
+  return { settings, set, error, isGuest: !userId };
 }

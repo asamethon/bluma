@@ -441,7 +441,12 @@
     "privateProfileBody": "Ikuti {{name}} untuk melihat cerita dan daftarnya.",
     "privateProfileBodyGeneric": "Ikuti akun ini untuk melihat cerita dan daftarnya.",
     "messagesOff": "{{name}} hanya menerima pesan dari orang yang diikutinya.",
-    "privateProfileRequested": "Permintaan terkirim, menunggu persetujuan."
+    "privateProfileRequested": "Permintaan terkirim, menunggu persetujuan.",
+    "boardPosts": "Siapa yang Bisa Menulis di Papanku",
+    "boardPostsSub": "Siapa yang bisa meninggalkan kiriman di tab Percakapan di profilmu",
+    "boardPostsEveryone": "Semua orang",
+    "boardPostsFollowing": "Orang yang saya ikuti",
+    "boardPostsNobody": "Tidak ada"
   },
   "coverPicker": {
     "title": "Tambahkan gambar sampul",
@@ -489,7 +494,9 @@
     "conversationMentionMessage": "{{name}} menyebutmu di percakapan \"{{conversation}}\"",
     "newChapterMessageNumbered": "{{author}} menambahkan bab baru di “{{story}}” (bab {{chapter}})",
     "verifyEmailTitle": "Verifikasi emailmu",
-    "verifyEmailMessage": "Verifikasi alamat emailmu untuk terus menggunakan akun. Kalau salah ketik, bisa diperbaiki di sini."
+    "verifyEmailMessage": "Verifikasi alamat emailmu untuk terus menggunakan akun. Kalau salah ketik, bisa diperbaiki di sini.",
+    "boardPostTitle": "Pesan baru di papanmu",
+    "boardPostMessage": "{{name}} meninggalkan pesan di papanmu."
   },
   "comments": {
     "writeOrAttach": "Silakan tulis komentar atau lampirkan gambar.",
@@ -722,7 +729,12 @@
     "messagePlaceholder": "Tulis pesan...",
     "addPhoto": "Tambahkan foto",
     "announceToFollowers": "Umumkan ke pengikut",
-    "announceToFollowersSub": "Pengikutmu akan menerima pesan ini sebagai notifikasi"
+    "announceToFollowersSub": "Pengikutmu akan menerima pesan ini sebagai notifikasi",
+    "boardMessageTitle": "Pesan di Papan",
+    "boardMessagePlaceholder": "Tinggalkan pesan di papan...",
+    "boardMessageShared": "Pesanmu sudah dikirim ke papan!",
+    "deleteBoardPostConfirm": "Hapus kiriman ini dari papanmu? Komentarnya juga akan dihapus.",
+    "conversationOptionsTitle": "Opsi kiriman"
   },
   "challengesScreen": {
     "title": "Tantangan",

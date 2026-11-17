@@ -441,7 +441,12 @@
     "privateProfileBody": "Sigue a {{name}} para ver sus historias y listas.",
     "privateProfileBodyGeneric": "Sigue esta cuenta para ver sus historias y listas.",
     "messagesOff": "{{name}} solo recibe mensajes de las personas que sigue.",
-    "privateProfileRequested": "Solicitud enviada: esperando aprobación."
+    "privateProfileRequested": "Solicitud enviada: esperando aprobación.",
+    "boardPosts": "Quién puede escribir en mi muro",
+    "boardPostsSub": "Quién puede dejar una publicación en la pestaña Conversaciones de tu perfil",
+    "boardPostsEveryone": "Todos",
+    "boardPostsFollowing": "Las personas que sigo",
+    "boardPostsNobody": "Nadie"
   },
   "coverPicker": {
     "title": "Añadir una imagen de portada",
@@ -489,7 +494,9 @@
     "conversationMentionMessage": "{{name}} te mencionó en la conversación \"{{conversation}}\"",
     "newChapterMessageNumbered": "{{author}} añadió un capítulo nuevo a «{{story}}» (capítulo {{chapter}})",
     "verifyEmailTitle": "Verifica tu correo",
-    "verifyEmailMessage": "Verifica tu correo electrónico para seguir usando tu cuenta. Si lo escribiste mal, puedes corregirlo aquí."
+    "verifyEmailMessage": "Verifica tu correo electrónico para seguir usando tu cuenta. Si lo escribiste mal, puedes corregirlo aquí.",
+    "boardPostTitle": "Nuevo mensaje en tu muro",
+    "boardPostMessage": "{{name}} dejó un mensaje en tu muro."
   },
   "comments": {
     "writeOrAttach": "Escribe un comentario o adjunta una imagen.",
@@ -722,7 +729,12 @@
     "messagePlaceholder": "Escribe un mensaje...",
     "addPhoto": "Añadir foto",
     "announceToFollowers": "Anunciar a los seguidores",
-    "announceToFollowersSub": "Tus seguidores recibirán este mensaje como una notificación"
+    "announceToFollowersSub": "Tus seguidores recibirán este mensaje como una notificación",
+    "boardMessageTitle": "Mensaje en el muro",
+    "boardMessagePlaceholder": "Deja un mensaje en el muro...",
+    "boardMessageShared": "¡Tu mensaje se publicó en el muro!",
+    "deleteBoardPostConfirm": "¿Quitar esta publicación de tu muro? También se eliminan sus comentarios.",
+    "conversationOptionsTitle": "Opciones de la publicación"
   },
   "challengesScreen": {
     "title": "Retos",

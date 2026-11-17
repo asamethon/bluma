@@ -1,7 +1,6 @@
 import { authActions } from '@/store/authStore';
-import { conversationActions } from '@/store/conversationStore';
 import { storyActions } from '@/store/storyStore';
-import type { Conversation, Story, User } from '@/types';
+import type { Story, User } from '@/types';
 import { buildProfileShareUrl } from '@/utils/deepLinks';
 import { logger } from '@/utils/logger';
 import { useRouter } from 'expo-router';
@@ -49,19 +48,6 @@ export function useOwnProfileActions({ user, router, t }: Params) {
     ]);
   };
 
-  const deleteConversation = (conversation: Conversation) => Alert.alert(
-    t('profileScreen.deleteConversationTitle'),
-    t('profileScreen.deleteConversationConfirm'),
-    [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.delete'),
-        style: 'destructive',
-        onPress: () => void conversationActions.deleteConversation(conversation.id),
-      },
-    ],
-  );
-
   const signOut = () => Alert.alert(t('profileScreen.signOut'), t('profileScreen.signOutConfirm'), [
     { text: t('common.cancel'), style: 'cancel' },
     {
@@ -74,5 +60,5 @@ export function useOwnProfileActions({ user, router, t }: Params) {
     },
   ]);
 
-  return { deleteConversation, openStoryMenu, shareProfile, signOut };
+  return { openStoryMenu, shareProfile, signOut };
 }

@@ -441,7 +441,12 @@
     "privateProfileBody": "关注 {{name}} 才能查看其故事和书单。",
     "privateProfileBodyGeneric": "关注该账户才能查看其故事和书单。",
     "messagesOff": "{{name}} 只接收其关注的人发来的消息。",
-    "privateProfileRequested": "关注请求已发送，等待通过。"
+    "privateProfileRequested": "关注请求已发送，等待通过。",
+    "boardPosts": "谁可以在我的留言板留言",
+    "boardPostsSub": "谁可以在你个人资料的「对话」标签下留言",
+    "boardPostsEveryone": "所有人",
+    "boardPostsFollowing": "我关注的人",
+    "boardPostsNobody": "无人"
   },
   "coverPicker": {
     "title": "添加封面图片",
@@ -489,7 +494,9 @@
     "conversationMentionMessage": "{{name}} 在对话“{{conversation}}”中提到了你",
     "newChapterMessageNumbered": "{{author}} 为《{{story}}》添加了新章节（第 {{chapter}} 章）",
     "verifyEmailTitle": "验证你的邮箱",
-    "verifyEmailMessage": "请验证邮箱地址以继续使用账户。如果填错了，可以在这里修改。"
+    "verifyEmailMessage": "请验证邮箱地址以继续使用账户。如果填错了，可以在这里修改。",
+    "boardPostTitle": "留言板有新消息",
+    "boardPostMessage": "{{name}} 在你的留言板留言了。"
   },
   "comments": {
     "writeOrAttach": "请写下评论或附加图片。",
@@ -722,7 +729,12 @@
     "messagePlaceholder": "写一条消息…",
     "addPhoto": "添加照片",
     "announceToFollowers": "通知关注者",
-    "announceToFollowersSub": "你的关注者会收到这条消息通知"
+    "announceToFollowersSub": "你的关注者会收到这条消息通知",
+    "boardMessageTitle": "留言板消息",
+    "boardMessagePlaceholder": "在留言板上留言……",
+    "boardMessageShared": "你的留言已发布到留言板！",
+    "deleteBoardPostConfirm": "要从你的留言板移除这条留言吗？其评论也会一并删除。",
+    "conversationOptionsTitle": "留言选项"
   },
   "challengesScreen": {
     "title": "挑战",

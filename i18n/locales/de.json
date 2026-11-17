@@ -441,7 +441,12 @@
     "privateProfileBody": "Folge {{name}}, um Geschichten und Listen zu sehen.",
     "privateProfileBodyGeneric": "Folge diesem Konto, um Geschichten und Listen zu sehen.",
     "messagesOff": "{{name}} erhält nur Nachrichten von Personen, denen die Person folgt.",
-    "privateProfileRequested": "Anfrage gesendet, wartet auf Bestätigung."
+    "privateProfileRequested": "Anfrage gesendet, wartet auf Bestätigung.",
+    "boardPosts": "Wer auf meine Pinnwand schreiben darf",
+    "boardPostsSub": "Wer im Tab „Gespräche“ deines Profils einen Beitrag hinterlassen darf",
+    "boardPostsEveryone": "Alle",
+    "boardPostsFollowing": "Personen, denen ich folge",
+    "boardPostsNobody": "Niemand"
   },
   "coverPicker": {
     "title": "Titelbild hinzufügen",
@@ -489,7 +494,9 @@
     "conversationMentionMessage": "{{name}} hat dich in der Unterhaltung \"{{conversation}}\" erwähnt",
     "newChapterMessageNumbered": "{{author}} hat ein neues Kapitel zu „{{story}}“ hinzugefügt (Kapitel {{chapter}})",
     "verifyEmailTitle": "Bestätige deine E-Mail",
-    "verifyEmailMessage": "Bestätige deine E-Mail-Adresse, um dein Konto weiter zu nutzen. Falsch getippt? Hier korrigieren."
+    "verifyEmailMessage": "Bestätige deine E-Mail-Adresse, um dein Konto weiter zu nutzen. Falsch getippt? Hier korrigieren.",
+    "boardPostTitle": "Neue Nachricht an deiner Pinnwand",
+    "boardPostMessage": "{{name}} hat eine Nachricht an deiner Pinnwand hinterlassen."
   },
   "comments": {
     "writeOrAttach": "Bitte schreibe einen Kommentar oder füge ein Bild an.",
@@ -722,7 +729,12 @@
     "messagePlaceholder": "Schreibe eine Nachricht...",
     "addPhoto": "Foto hinzufügen",
     "announceToFollowers": "Followern ankündigen",
-    "announceToFollowersSub": "Deine Follower erhalten diese Nachricht als Benachrichtigung"
+    "announceToFollowersSub": "Deine Follower erhalten diese Nachricht als Benachrichtigung",
+    "boardMessageTitle": "Pinnwand-Nachricht",
+    "boardMessagePlaceholder": "Hinterlasse eine Nachricht an der Pinnwand ...",
+    "boardMessageShared": "Deine Nachricht wurde an der Pinnwand hinterlassen!",
+    "deleteBoardPostConfirm": "Diesen Beitrag von deiner Pinnwand entfernen? Die Kommentare werden ebenfalls gelöscht.",
+    "conversationOptionsTitle": "Beitragsoptionen"
   },
   "challengesScreen": {
     "title": "Herausforderungen",

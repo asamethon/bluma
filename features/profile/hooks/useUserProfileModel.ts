@@ -1,5 +1,6 @@
 import { useGuestGate } from '@/contexts/GuestContext';
 import { useCanMessage } from '@/features/privacy/hooks/useCanMessage';
+import { useCanPostToBoard } from '@/features/privacy/hooks/useCanPostToBoard';
 import { useProfileAccess } from '@/features/privacy/hooks/useProfileAccess';
 import { useFollow } from '@/features/social/hooks/useFollow';
 import { useAppSelector } from '@/store/hooks';
@@ -13,7 +14,10 @@ import { useProfileUser } from './useProfileUser';
 
 export function useUserProfileModel(profileId: string) {
   const { t } = useTranslation();
+  // `currentUserId` effect bağımlılığı olduğu için ayrı seçilir (obje değil);
+  // `currentUser` yalnızca pano yazıcısına künye vermek için okunur.
   const currentUserId = useAppSelector(state => state.auth.user?.id);
+  const currentUser = useAppSelector(state => state.auth.user);
   const guest = useAppSelector(state => state.auth.isGuest);
   const blockedIds = useAppSelector(state => state.moderation.blockedUserIds);
   const { startAuth } = useGuestGate();
@@ -21,12 +25,14 @@ export function useUserProfileModel(profileId: string) {
   const content = useProfileContent(user);
   const access = useProfileAccess(user);
   const message = useCanMessage(user?.id);
+  const board = useCanPostToBoard(user?.id);
   const follow = useFollow(user?.id, undefined, { live: true, source: 'profile' });
   const { isFollowing, toggle: toggleFollowState } = follow;
   const [tab, setTab] = useState<ProfileTab>('stories');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
+  const [composerVisible, setComposerVisible] = useState(false);
   const blocked = !!user && blockedIds.includes(user.id);
 
   useEffect(() => {
@@ -85,10 +91,19 @@ export function useUserProfileModel(profileId: string) {
     ]);
   }, [blocked, isFollowing, t, toggleFollowState, user]);
 
+  // Pano yazma satırı: izin yoksa HİÇ gösterilmez; izin kontrolü sürerken de
+  // basılmaz (bir kare görünüp kaybolmasın). Misafirde satır durur, dokunuşta
+  // GuestGate devralır.
+  const canPostToBoard = !!user && !access.locked && (guest || board.allowed);
+
   return {
     access,
     blocked,
+    board,
+    canPostToBoard,
+    composerVisible,
     content,
+    currentUser,
     currentUserId,
     follow,
     guest,
@@ -100,6 +115,7 @@ export function useUserProfileModel(profileId: string) {
     startAuth,
     tab,
     user,
+    setComposerVisible,
     setImageUri,
     setMenuVisible,
     setReportVisible,

@@ -441,7 +441,12 @@
     "privateProfileBody": "{{name}} のストーリーとリストを見るにはフォローしてください。",
     "privateProfileBodyGeneric": "ストーリーとリストを見るにはこのアカウントをフォローしてください。",
     "messagesOff": "{{name}} はフォローしている人からのみメッセージを受け取ります。",
-    "privateProfileRequested": "フォローリクエストを送信しました。承認待ちです。"
+    "privateProfileRequested": "フォローリクエストを送信しました。承認待ちです。",
+    "boardPosts": "ボードに書き込める人",
+    "boardPostsSub": "プロフィールの「会話」タブに投稿できる人",
+    "boardPostsEveryone": "全員",
+    "boardPostsFollowing": "フォロー中の人",
+    "boardPostsNobody": "誰も許可しない"
   },
   "coverPicker": {
     "title": "カバー画像を追加",
@@ -489,7 +494,9 @@
     "conversationMentionMessage": "{{name}}が会話「{{conversation}}」であなたにメンションしました",
     "newChapterMessageNumbered": "{{author}} が「{{story}}」に新しい章を追加しました（第{{chapter}}章）",
     "verifyEmailTitle": "メールアドレスの確認",
-    "verifyEmailMessage": "アカウントを引き続きご利用いただくには、メールアドレスの確認が必要です。入力を誤った場合はここで修正できます。"
+    "verifyEmailMessage": "アカウントを引き続きご利用いただくには、メールアドレスの確認が必要です。入力を誤った場合はここで修正できます。",
+    "boardPostTitle": "ボードに新しいメッセージ",
+    "boardPostMessage": "{{name}} さんがボードにメッセージを残しました。"
   },
   "comments": {
     "writeOrAttach": "コメントを入力するか、画像を添付してください。",
@@ -722,7 +729,12 @@
     "messagePlaceholder": "メッセージを入力...",
     "addPhoto": "写真を追加",
     "announceToFollowers": "フォロワーに知らせる",
-    "announceToFollowersSub": "フォロワーにこのメッセージが通知として届きます"
+    "announceToFollowersSub": "フォロワーにこのメッセージが通知として届きます",
+    "boardMessageTitle": "ボードへのメッセージ",
+    "boardMessagePlaceholder": "ボードにメッセージを残す...",
+    "boardMessageShared": "メッセージをボードに投稿しました。",
+    "deleteBoardPostConfirm": "この投稿をボードから削除しますか？コメントもあわせて削除されます。",
+    "conversationOptionsTitle": "投稿の操作"
   },
   "challengesScreen": {
     "title": "チャレンジ",

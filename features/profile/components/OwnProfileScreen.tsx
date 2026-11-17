@@ -10,6 +10,8 @@ import { useCallback, useMemo, useReducer } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ReportSheet from '@/features/moderation/components/ReportSheet';
+import { useConversationMenu } from '../hooks/useConversationMenu';
 import { useOwnProfileActions } from '../hooks/useOwnProfileActions';
 import { pinnedThreshold } from '../profileLayout';
 import { buildProfileRows, tabLabel, type ProfileRow, type ProfileTab } from '../profileRows';
@@ -18,22 +20,19 @@ import { OwnProfileEmpty } from './OwnProfileEmpty';
 import { OwnProfileHeader } from './OwnProfileHeader';
 import { OwnProfileListItem } from './OwnProfileListItem';
 import { ProfileComposePrompt } from './ProfileComposePrompt';
-import { ProfileMessageComposer } from './ProfileMessageComposer';
 import { ProfilePinnedBar } from './ProfilePinnedBar';
 import { ProfileTabsRow } from './ProfileTabsRow';
 import { UsernameNudgeCard } from './UsernameNudgeCard';
 
-type State = { tab: ProfileTab; composerVisible: boolean; image: string | null; headerHeight: number; pinned: boolean };
+type State = { tab: ProfileTab; image: string | null; headerHeight: number; pinned: boolean };
 type Action =
   | { type: 'tab'; value: ProfileTab }
-  | { type: 'composer'; value: boolean }
   | { type: 'image'; value: string | null }
   | { type: 'headerHeight'; value: number }
   | { type: 'pinned'; value: boolean };
 
 const reducer = (state: State, action: Action): State => {
   if (action.type === 'tab') return { ...state, tab: action.value };
-  if (action.type === 'composer') return { ...state, composerVisible: action.value };
   if (action.type === 'headerHeight') {
     return state.headerHeight === action.value ? state : { ...state, headerHeight: action.value };
   }
@@ -41,7 +40,7 @@ const reducer = (state: State, action: Action): State => {
   return { ...state, image: action.value };
 };
 
-const INITIAL: State = { tab: 'stories', composerVisible: false, image: null, headerHeight: 0, pinned: false };
+const INITIAL: State = { tab: 'stories', image: null, headerHeight: 0, pinned: false };
 
 type Props = {
   user: User;
@@ -56,6 +55,7 @@ export function OwnProfileScreen({ user, stories, conversations, loading }: Prop
   const router = useRouter();
   const { top } = useSafeAreaInsets();
   const actions = useOwnProfileActions({ user, router, t });
+  const menu = useConversationMenu();
   const [state, dispatch] = useReducer(reducer, INITIAL);
   const currentUser = useAppSelector(state => state.auth.user) || user;
   const { hasAuthored } = useHasAuthoredConversation(currentUser?.id);
@@ -116,10 +116,10 @@ export function OwnProfileScreen({ user, stories, conversations, loading }: Prop
         onStoryMenu={actions.openStoryMenu}
         onPressConversation={openConversation}
         onConversationImage={setImage}
-        onDeleteConversation={actions.deleteConversation}
+        onConversationMenu={menu.open}
       />
     );
-  }, [actions.deleteConversation, actions.openStoryMenu, hasAuthored, openComposer, openConversation, openStory,
+  }, [actions.openStoryMenu, hasAuthored, menu.open, openComposer, openConversation, openStory,
     setImage, state.tab, tabs]);
 
   return (
@@ -165,10 +165,10 @@ export function OwnProfileScreen({ user, stories, conversations, loading }: Prop
         imageUri={state.image || ''}
         onClose={() => setImage(null)}
       />
-      <ProfileMessageComposer
-        visible={false}
-        user={user}
-        onClose={() => dispatch({ type: 'composer', value: false })}
+      <ReportSheet
+        visible={!!menu.reportTarget}
+        onClose={menu.closeReport}
+        target={menu.reportTarget ? { type: 'conversation', ...menu.reportTarget } : null}
       />
     </Screen>
   );

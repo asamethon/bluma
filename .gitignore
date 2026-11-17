@@ -83,3 +83,4 @@ goldie/build/
 
 # pazarlama videosu/gorsel ciktilari (uretilen medya, ~10 MB)
 /marketing/
+.claude/settings.local.json

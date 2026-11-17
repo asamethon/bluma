@@ -2,14 +2,15 @@ import { Callout, ListRow, PageHeader, Screen, SettingsGroup, Switch, Text } fro
 import { useTheme } from '@/constants/theme';
 import { usePrivacySettings } from '@/features/privacy/hooks/usePrivacySettings';
 import { createPrivacyStyles as createStyles } from '@/features/privacy/styles/privacyStyles';
-import { PrivacySettings } from '@/features/privacy/types';
+import { PrivacyToggleKey } from '@/features/privacy/types';
+import { BoardPostPolicyRow } from './BoardPostPolicyRow';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 
-const ROWS: { key: keyof PrivacySettings; icon: keyof typeof Ionicons.glyphMap; title: string; caption: string }[] = [
+const ROWS: { key: PrivacyToggleKey; icon: keyof typeof Ionicons.glyphMap; title: string; caption: string }[] = [
   { key: 'privateAccount', icon: 'lock-closed-outline', title: 'privacy.privateAccount', caption: 'privacy.privateAccountSub' },
   { key: 'showActivity', icon: 'pulse-outline', title: 'privacy.showActivity', caption: 'privacy.showActivitySub' },
   { key: 'allowMessages', icon: 'chatbubble-ellipses-outline', title: 'privacy.allowMessages', caption: 'privacy.allowMessagesSub' },
@@ -21,7 +22,7 @@ export default function PrivacyScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { settings, toggle, error, isGuest } = usePrivacySettings();
+  const { settings, set, error, isGuest } = usePrivacySettings();
 
   return (
     <Screen style={styles.container} edges={['top']}>
@@ -33,19 +34,24 @@ export default function PrivacyScreen() {
         </View>
 
         <SettingsGroup title={t('privacy.title')}>
-          {ROWS.map((row, index) => (
+          {ROWS.map(row => (
             <ListRow
               key={row.key}
               icon={row.icon}
               title={t(row.title)}
               subtitle={t(row.caption)}
               disabled={isGuest}
-              divider={index < ROWS.length - 1}
+              divider
               right={
-                <Switch checked={settings[row.key]} onChange={v => toggle(row.key, v)} disabled={isGuest} />
+                <Switch checked={settings[row.key]} onChange={v => set(row.key, v)} disabled={isGuest} />
               }
             />
           ))}
+          <BoardPostPolicyRow
+            value={settings.boardPosts ?? 'everyone'}
+            disabled={isGuest}
+            onChange={value => void set('boardPosts', value)}
+          />
         </SettingsGroup>
 
         <View style={styles.notes}>

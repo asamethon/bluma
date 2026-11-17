@@ -5,8 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import { profileStyles as styles } from '../styles/profileStyles';
 
+type Props = { onPress: () => void; label?: string };
+
 /** Konuşma sekmesinin başındaki "bir mesaj yaz" davetiyesi. */
-export function ProfileComposePrompt({ onPress }: { onPress: () => void }) {
+export function ProfileComposePrompt({ onPress, label }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -18,7 +20,7 @@ export function ProfileComposePrompt({ onPress }: { onPress: () => void }) {
         accessibilityRole="button"
       >
         <Text variant="body" tone="textSecondary" style={styles.composeHint}>
-          {t('profileScreen.writeAMessage')}
+          {label ?? t('profileScreen.writeAMessage')}
         </Text>
         <Ionicons name="camera-outline" size={20} color={colors.textSecondary} />
       </TouchableOpacity>

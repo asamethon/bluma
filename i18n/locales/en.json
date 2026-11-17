@@ -463,7 +463,12 @@
     "privateProfileBody": "Follow {{name}} to see their stories and lists.",
     "privateProfileBodyGeneric": "Follow this account to see its stories and lists.",
     "messagesOff": "{{name}} only receives messages from people they follow.",
-    "privateProfileRequested": "Follow request sent, waiting for approval."
+    "privateProfileRequested": "Follow request sent, waiting for approval.",
+    "boardPosts": "Who Can Post on My Board",
+    "boardPostsSub": "Who can leave a post in the Conversations tab on your profile",
+    "boardPostsEveryone": "Everyone",
+    "boardPostsFollowing": "People I follow",
+    "boardPostsNobody": "No one"
   },
   "coverPicker": {
     "title": "Add a cover image",
@@ -511,7 +516,9 @@
     "conversationMentionMessage": "{{name}} mentioned you in the conversation \"{{conversation}}\"",
     "newChapterMessageNumbered": "{{author}} added a new chapter to “{{story}}” (chapter {{chapter}})",
     "verifyEmailTitle": "Verify your email",
-    "verifyEmailMessage": "Verify your email address to keep using your account. If you typed it wrong, you can fix it here."
+    "verifyEmailMessage": "Verify your email address to keep using your account. If you typed it wrong, you can fix it here.",
+    "boardPostTitle": "New message on your board",
+    "boardPostMessage": "{{name}} left a message on your board."
   },
   "comments": {
     "writeOrAttach": "Please write a comment or attach an image.",
@@ -744,7 +751,12 @@
     "messagePlaceholder": "Write a message...",
     "addPhoto": "Add Photo",
     "announceToFollowers": "Announce to Followers",
-    "announceToFollowersSub": "Your followers will get this message as a notification"
+    "announceToFollowersSub": "Your followers will get this message as a notification",
+    "boardMessageTitle": "Board Message",
+    "boardMessagePlaceholder": "Leave a message on the board...",
+    "boardMessageShared": "Your message was posted to the board!",
+    "deleteBoardPostConfirm": "Remove this post from your board? Its comments are deleted too.",
+    "conversationOptionsTitle": "Post options"
   },
   "challengesScreen": {
     "title": "Challenges",

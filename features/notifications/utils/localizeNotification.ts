@@ -66,6 +66,8 @@ function legacyRecipe(item: Localizable): NotificationI18n | null {
         : recipe('notifications.newChapterTitle', 'notifications.newChapterMessage', { author: name, story });
     case 'conversation_announcement':
       return recipe('notifications.newConversationTitle', 'notifications.newConversationMessage', { name });
+    case 'board_post':
+      return recipe('notifications.boardPostTitle', 'notifications.boardPostMessage', { name });
     case 'welcome':
       // Hoş geldin bildiriminde gönderen = alıcının kendisi.
       return recipe('notifications.welcomeTitle', 'notifications.welcomeMessage', { name });

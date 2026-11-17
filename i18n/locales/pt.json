@@ -441,7 +441,12 @@
     "privateProfileBody": "Siga {{name}} para ver as histórias e listas dessa pessoa.",
     "privateProfileBodyGeneric": "Siga esta conta para ver as histórias e listas.",
     "messagesOff": "{{name}} só recebe mensagens de quem segue.",
-    "privateProfileRequested": "Solicitação enviada, aguardando aprovação."
+    "privateProfileRequested": "Solicitação enviada, aguardando aprovação.",
+    "boardPosts": "Quem pode escrever no meu mural",
+    "boardPostsSub": "Quem pode deixar uma publicação no separador Conversas do teu perfil",
+    "boardPostsEveryone": "Todos",
+    "boardPostsFollowing": "Pessoas que sigo",
+    "boardPostsNobody": "Ninguém"
   },
   "coverPicker": {
     "title": "Adicionar imagem de capa",
@@ -489,7 +494,9 @@
     "conversationMentionMessage": "{{name}} mencionou-te na conversa \"{{conversation}}\"",
     "newChapterMessageNumbered": "{{author}} adicionou um novo capítulo a “{{story}}” (capítulo {{chapter}})",
     "verifyEmailTitle": "Verifica o teu e-mail",
-    "verifyEmailMessage": "Verifica o teu e-mail para continuares a usar a conta. Se o escreveste mal, podes corrigir aqui."
+    "verifyEmailMessage": "Verifica o teu e-mail para continuares a usar a conta. Se o escreveste mal, podes corrigir aqui.",
+    "boardPostTitle": "Nova mensagem no teu mural",
+    "boardPostMessage": "{{name}} deixou uma mensagem no teu mural."
   },
   "comments": {
     "writeOrAttach": "Escreve um comentário ou anexa uma imagem.",
@@ -722,7 +729,12 @@
     "messagePlaceholder": "Escreve uma mensagem...",
     "addPhoto": "Adicionar foto",
     "announceToFollowers": "Anunciar aos seguidores",
-    "announceToFollowersSub": "Os teus seguidores vão receber esta mensagem como notificação"
+    "announceToFollowersSub": "Os teus seguidores vão receber esta mensagem como notificação",
+    "boardMessageTitle": "Mensagem no mural",
+    "boardMessagePlaceholder": "Deixa uma mensagem no mural...",
+    "boardMessageShared": "A tua mensagem foi publicada no mural!",
+    "deleteBoardPostConfirm": "Remover esta publicação do teu mural? Os comentários também são eliminados.",
+    "conversationOptionsTitle": "Opções da publicação"
   },
   "challengesScreen": {
     "title": "Desafios",

@@ -11,6 +11,10 @@
 // (altındaki followers/following/likedStories/savedStories/
 // likedConversations/readingLists/readingProgress/blocked dahil) için bunu
 // kullanıyoruz. Başkalarının verisindeki izler cleanupUserTraces.js'te.
+//
+// Konuşma yorumları top-level koleksiyonda olduğu için recursiveDelete'in
+// kapsamına girmez; konuşma başına ayrıca silinirler (yazar panosu gönderileri
+// dahil — bkz. features/conversation/services/conversationDeletion.ts).
 import { TRACE_CLEANUPS } from './cleanupUserTraces.js';
 
 async function deleteAllUserData(auth, db, uid) {
@@ -34,9 +38,26 @@ async function deleteAllUserData(auth, db, uid) {
     await db.recursiveDelete(doc.ref);
   }
 
-  const conversations = await db.collection('conversations').where('authorId', '==', uid).get();
-  for (const doc of conversations.docs) {
-    await db.recursiveDelete(doc.ref);
+  // Kullanıcının açtığı konuşmalar VE başkalarının onun panosuna bıraktığı
+  // gönderiler (boardOwnerId == uid). İki sorgu aynı dokümana ulaşabildiği
+  // için kimlikler tekilleştirilir.
+  const [authoredConversations, boardConversations] = await Promise.all([
+    db.collection('conversations').where('authorId', '==', uid).get(),
+    db.collection('conversations').where('boardOwnerId', '==', uid).get(),
+  ]);
+  const conversationRefs = new Map();
+  for (const doc of [...authoredConversations.docs, ...boardConversations.docs]) {
+    conversationRefs.set(doc.id, doc.ref);
+  }
+  for (const [conversationId, ref] of conversationRefs) {
+    // Yorumlar top-level `conversationComments` koleksiyonunda durur, konuşma
+    // dokümanının altında değil: recursiveDelete onları almaz, yetim kalırlar.
+    const comments = await db.collection('conversationComments')
+      .where('conversationId', '==', conversationId).get();
+    for (const comment of comments.docs) {
+      await db.recursiveDelete(comment.ref);
+    }
+    await db.recursiveDelete(ref);
   }
 
   // DM thread'leri — istemci bunu yapamıyordu (bkz. yukarıdaki not).

@@ -1,11 +1,16 @@
 import type { FirestoreDate } from './firestore';
 // Gizlilik tercihleri kullanıcı dokümanında (users/{uid}.privacy) yaşar:
 // karşı taraftaki istemcinin de okuyabilmesi gerekir.
+/** Yazar panosuna kimler gönderi bırakabilir. Alan yoksa 'everyone'. */
+export type BoardPostPolicy = 'everyone' | 'following' | 'nobody';
+
 export interface PrivacySettings {
   privateAccount: boolean;
   showActivity: boolean;
   allowMessages: boolean;
   discoverable: boolean;
+  /** Eski dokümanlarda yok; okuyan her yer 'everyone' varsayar. */
+  boardPosts?: BoardPostPolicy;
 }
 
 export interface User {

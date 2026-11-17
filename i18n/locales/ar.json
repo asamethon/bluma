@@ -441,7 +441,12 @@
     "privateProfileBody": "تابِع {{name}} لمشاهدة القصص والقوائم.",
     "privateProfileBodyGeneric": "تابِع هذا الحساب لمشاهدة القصص والقوائم.",
     "messagesOff": "{{name}} يستقبل الرسائل من الأشخاص الذين يتابعهم فقط.",
-    "privateProfileRequested": "تم إرسال طلب المتابعة، بانتظار الموافقة."
+    "privateProfileRequested": "تم إرسال طلب المتابعة، بانتظار الموافقة.",
+    "boardPosts": "من يمكنه الكتابة على لوحتي",
+    "boardPostsSub": "من يمكنه ترك منشور في تبويب المحادثات في ملفك الشخصي",
+    "boardPostsEveryone": "الجميع",
+    "boardPostsFollowing": "من أتابعهم",
+    "boardPostsNobody": "لا أحد"
   },
   "coverPicker": {
     "title": "إضافة صورة غلاف",
@@ -489,7 +494,9 @@
     "conversationMentionMessage": "أشار إليك {{name}} في المحادثة \"{{conversation}}\"",
     "newChapterMessageNumbered": "أضاف {{author}} فصلاً جديداً إلى «{{story}}» (الفصل {{chapter}})",
     "verifyEmailTitle": "أكّد بريدك الإلكتروني",
-    "verifyEmailMessage": "أكّد بريدك الإلكتروني لمواصلة استخدام حسابك. إن كتبته بالخطأ يمكنك تصحيحه من هنا."
+    "verifyEmailMessage": "أكّد بريدك الإلكتروني لمواصلة استخدام حسابك. إن كتبته بالخطأ يمكنك تصحيحه من هنا.",
+    "boardPostTitle": "رسالة جديدة على لوحتك",
+    "boardPostMessage": "ترك {{name}} رسالة على لوحتك."
   },
   "comments": {
     "writeOrAttach": "يرجى كتابة تعليق أو إرفاق صورة.",
@@ -722,7 +729,12 @@
     "messagePlaceholder": "اكتب رسالة...",
     "addPhoto": "إضافة صورة",
     "announceToFollowers": "إعلام المتابعين",
-    "announceToFollowersSub": "سيتلقى متابعوك هذه الرسالة كإشعار"
+    "announceToFollowersSub": "سيتلقى متابعوك هذه الرسالة كإشعار",
+    "boardMessageTitle": "رسالة على اللوحة",
+    "boardMessagePlaceholder": "اترك رسالة على اللوحة...",
+    "boardMessageShared": "تم نشر رسالتك على اللوحة!",
+    "deleteBoardPostConfirm": "هل تريد إزالة هذا المنشور من لوحتك؟ ستُحذف تعليقاته أيضًا.",
+    "conversationOptionsTitle": "خيارات المنشور"
   },
   "challengesScreen": {
     "title": "التحديات",

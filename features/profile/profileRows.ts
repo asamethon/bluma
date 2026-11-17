@@ -21,7 +21,10 @@ type Params = {
   conversations: Conversation[];
   /** Aktif sekmenin verisi hâlâ geliyorsa iskelet satırları gösterilir. */
   loading?: boolean;
-  /** Kendi profilimde konuşma sekmesinin başındaki "mesaj yaz" satırı. */
+  /**
+   * Konuşma sekmesinin başındaki "mesaj yaz" satırı: kendi profilimde kendi
+   * panom, başkasının profilinde onun panosu (izin varsa).
+   */
   composer?: boolean;
 };
 

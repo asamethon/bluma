@@ -6,6 +6,7 @@ import {
 import { store } from '@/store';
 import { getUserById } from '@/features/auth/services/userCache';
 import { logger } from '@/utils/logger';
+import { canPostToBoard as policyAllows } from '../../utils/boardPostPolicy';
 import { privacyOf } from '../../types';
 
 const db = () => getFirestore();
@@ -51,6 +52,30 @@ export async function canSendMessageTo(targetUserId: string): Promise<boolean> {
     return snap.exists();
   } catch (error) {
     logger.error('Mesaj izni kontrolü başarısız:', error);
+    return false;
+  }
+}
+
+/**
+ * Yazar panosuna gönderi bırakma izni (`users/{uid}.privacy.boardPosts`).
+ * Kurallardaki `acceptsBoardPostFrom` ile aynı karar; 'following' modunda
+ * pano sahibinin takip listesine bakılır.
+ */
+
+export async function canPostToBoard(ownerId: string): Promise<boolean> {
+  const viewerId = store.getState().auth.user?.id;
+  if (!viewerId || !ownerId) return false;
+  if (viewerId === ownerId) return true;
+
+  const owner = await getUserById(ownerId);
+  const policy = privacyOf(owner).boardPosts;
+  if (policy !== 'following') return policyAllows({ policy, ownerId, viewerId });
+
+  try {
+    const snap = await getDoc(doc(db(), 'users', ownerId, 'following', viewerId));
+    return policyAllows({ policy, ownerId, viewerId, followedByOwner: snap.exists() });
+  } catch (error) {
+    logger.error('Pano yazma izni kontrolü başarısız:', error);
     return false;
   }
 }

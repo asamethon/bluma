@@ -1,3 +1,4 @@
+import { deleteConversation } from '@/features/conversation/services/conversationDeletion';
 import { storyApiActions } from '@/features/story/services/storyApi';
 import type { User } from '@/store/slices/authSlice';
 import { collection, deleteDoc, doc, getDocs, getFirestore, query, where } from '@react-native-firebase/firestore';
@@ -20,12 +21,18 @@ async function deleteCollection(path: string[]) {
 
 export async function deleteAccountData(user: User) {
   const db = getFirestore();
-  const [stories, conversations] = await Promise.all([
+  // Hem kullanıcının açtığı konuşmalar hem BAŞKALARININ onun panosuna
+  // bıraktığı gönderiler silinir (`or()` yerine iki sorgu: aynı dokümana iki
+  // daldan ulaşılabildiği için kimlikler tekilleştirilir).
+  const [stories, authored, received] = await Promise.all([
     getDocs(query(collection(db, 'stories'), where('authorId', '==', user.id))),
     getDocs(query(collection(db, 'conversations'), where('authorId', '==', user.id))),
+    getDocs(query(collection(db, 'conversations'), where('boardOwnerId', '==', user.id))),
   ]);
   await Promise.all(stories.docs.map(story => storyApiActions.deleteStory(story.id)));
-  await Promise.all(conversations.docs.map(item => deleteDoc(item.ref)));
+  const conversationIds = new Set([...authored.docs, ...received.docs].map(item => item.id));
+  // Yorumlar top-level koleksiyonda: tek tek `deleteDoc` yetim bırakıyordu.
+  await Promise.all([...conversationIds].map(id => deleteConversation(id)));
   await Promise.all([
     deleteCollection(['users', user.id, 'followers']),
     deleteCollection(['users', user.id, 'following']),

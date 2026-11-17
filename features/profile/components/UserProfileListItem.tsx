@@ -11,9 +11,10 @@ type Props = {
   onStory: (story: Story) => void;
   onConversation: (conversation: Conversation) => void;
   onImage: (uri: string) => void;
+  onConversationMenu: (conversation: Conversation) => void;
 };
 
-function UserProfileListItemComponent({ kind, item, onStory, onConversation, onImage }: Props) {
+function UserProfileListItemComponent({ kind, item, onStory, onConversation, onImage, onConversationMenu }: Props) {
   return (
     <View style={styles.tabRow}>
       {kind === 'story' ? (
@@ -27,6 +28,7 @@ function UserProfileListItemComponent({ kind, item, onStory, onConversation, onI
           conversation={item as Conversation}
           onPress={() => onConversation(item as Conversation)}
           onImagePress={onImage}
+          onMenu={() => onConversationMenu(item as Conversation)}
         />
       )}
     </View>

@@ -8,12 +8,19 @@ import { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert } from 'react-native';
 
-type State = { comment: string; image: string | null; modalImage: string | null; submitting: boolean };
+type State = {
+  comment: string;
+  image: string | null;
+  modalImage: string | null;
+  submitting: boolean;
+  reportVisible: boolean;
+};
 type Action =
   | { type: 'comment'; value: string }
   | { type: 'image'; value: string | null }
   | { type: 'modal'; value: string | null }
   | { type: 'submitting'; value: boolean }
+  | { type: 'report'; value: boolean }
   | { type: 'submitted' };
 
 const reducer = (state: State, action: Action): State => {
@@ -21,6 +28,7 @@ const reducer = (state: State, action: Action): State => {
   if (action.type === 'image') return { ...state, image: action.value };
   if (action.type === 'modal') return { ...state, modalImage: action.value };
   if (action.type === 'submitting') return { ...state, submitting: action.value };
+  if (action.type === 'report') return { ...state, reportVisible: action.value };
   return { ...state, comment: '', image: null };
 };
 
@@ -30,7 +38,9 @@ export function useConversationDetail(conversationId: string) {
   const conversation = useAppSelector(state => state.conversation.currentConversation);
   const comments = useAppSelector(state => state.conversation.currentConversationComments);
   const liked = useAppSelector(state => state.conversation.likedConversationIds.includes(conversationId));
-  const [state, dispatch] = useReducer(reducer, { comment: '', image: null, modalImage: null, submitting: false });
+  const [state, dispatch] = useReducer(reducer, {
+    comment: '', image: null, modalImage: null, submitting: false, reportVisible: false,
+  });
   const userId = currentUser?.id;
 
   useEffect(() => {
@@ -82,6 +92,8 @@ export function useConversationDetail(conversationId: string) {
   const openModal = useCallback((value: string) => dispatch({ type: 'modal', value }), []);
   const removeImage = useCallback(() => dispatch({ type: 'image', value: null }), []);
   const setComment = useCallback((value: string) => dispatch({ type: 'comment', value }), []);
+  const openReport = useCallback(() => dispatch({ type: 'report', value: true }), []);
+  const closeReport = useCallback(() => dispatch({ type: 'report', value: false }), []);
   // Tek başına `@` yazılınca önce bu sohbetteki kişiler önerilir.
   const participants = useMemo(
     () => [conversation?.author, ...(comments ?? []).map(item => item.user)].filter((user): user is User => !!user),
@@ -97,8 +109,10 @@ export function useConversationDetail(conversationId: string) {
     liked,
     mentions,
     closeModal,
+    closeReport,
     like,
     openModal,
+    openReport,
     pickImage,
     removeImage,
     setComment,

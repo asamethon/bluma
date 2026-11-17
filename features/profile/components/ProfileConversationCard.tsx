@@ -1,16 +1,19 @@
 import { Divider, IconButton, Text } from '@/components/ui';
 import { Motion, Radius, Spacing, useTheme } from '@/constants/theme';
+import { boardByline, isBoardGuestPost } from '@/features/conversation/utils/boardPost';
 import { Conversation } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 interface ProfileConversationCardProps {
   conversation: Conversation;
   onPress: () => void;
   onImagePress: (imageUri: string) => void;
-  onDelete?: () => void;
+  /** Sil / şikâyet menüsü; yetki yoksa hiç verilmez. */
+  onMenu?: () => void;
 }
 
 /** Profil akışındaki paylaşım — kart çerçevesi yok, hairline ayraçlı bir giriş. */
@@ -18,9 +21,14 @@ export function ProfileConversationCard({
   conversation,
   onPress,
   onImagePress,
-  onDelete,
+  onMenu,
 }: ProfileConversationCardProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  // Gönderi başka birinin panosunda duruyorsa hedef künyede gösterilir.
+  const byline = isBoardGuestPost(conversation)
+    ? boardByline(conversation, t('common.user'))
+    : null;
 
   return (
     <View>
@@ -28,6 +36,7 @@ export function ProfileConversationCard({
         style={({ pressed }) => [styles.card, { opacity: pressed ? Motion.pressOpacity : 1 }]}
         onPress={onPress}
       >
+        {byline && <Text variant="caption" tone="textLight">{byline}</Text>}
         <Text variant="body">{conversation.content}</Text>
 
         {conversation.image && (
@@ -43,13 +52,13 @@ export function ProfileConversationCard({
         <View style={styles.stats}>
           <Stat icon="heart-outline" value={conversation.likesCount || 0} />
           <Stat icon="chatbubble-outline" value={conversation.commentsCount || 0} />
-          {onDelete && (
+          {onMenu && (
             <IconButton
               icon="ellipsis-horizontal"
               size={28}
               iconSize={16}
               color={colors.textLight}
-              onPress={onDelete}
+              onPress={onMenu}
               style={styles.menu}
             />
           )}

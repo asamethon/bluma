@@ -1,6 +1,7 @@
 import { Avatar, Text } from '@/components/ui';
 import { Motion, useTheme } from '@/constants/theme';
 import { useOpenMention } from '@/features/mentions/hooks/useOpenMention';
+import { boardByline } from '../utils/boardPost';
 import { renderMentionText } from '@/features/story/utils/mentionText';
 import { formatRelativeTime } from '@/features/story/utils/time';
 import type { Conversation } from '@/types';
@@ -32,8 +33,9 @@ export function ConversationPost({ conversation, liked, styles, onLike, onImage 
           size={40}
         />
         <View style={styles.authorDetails}>
+          {/* Gönderi başka birinin panosundaysa künye hedefi de taşır. */}
           <Text variant="bodyStrong" numberOfLines={1}>
-            {conversation.author?.displayName || t('common.user')}
+            {boardByline(conversation, t('common.user'))}
           </Text>
           <Text variant="caption" tone="textLight">{formatRelativeTime(conversation.createdAt)}</Text>
         </View>

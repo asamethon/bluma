@@ -61,12 +61,13 @@ export const notifyConversationComment = (conversationId: string, commenterId: s
 /**
  * Konuşmada ya da yorumunda `@` ile etiketlenenlere bildirim. Yorumda
  * etiketlenen konuşma sahibi zaten "yorum yaptı" bildirimi aldığı için
- * (`skipAuthor`) ikinci kez rahatsız edilmez. Bekletilmez.
+ * (`skipAuthor`) ikinci kez rahatsız edilmez. Pano sahibi de `skipUserId` ile
+ * atlanır: ona zaten "panona mesaj bırakıldı" bildirimi gidiyor. Bekletilmez.
  */
 export async function notifyConversationMentions(
   conversationId: string,
   text: string,
-  options: { skipAuthor?: boolean } = {},
+  options: { skipAuthor?: boolean; skipUserId?: string } = {},
 ) {
   try {
     const actor = store.getState().auth.user;
@@ -82,6 +83,7 @@ export async function notifyConversationMentions(
     for (const user of mentioned) {
       if (!user?.id || user.id === actor.id || notified.has(user.id)) continue;
       if (options.skipAuthor && user.id === context.authorId) continue;
+      if (options.skipUserId && user.id === options.skipUserId) continue;
       notified.add(user.id);
       void notificationActions.createNotification({
         userId: user.id,
@@ -101,6 +103,41 @@ export async function notifyConversationMentions(
     }
   } catch (error) {
     logger.error('Conversation mention notification error:', error);
+  }
+}
+
+/**
+ * Başkasının panosuna gönderi bırakıldığında pano sahibine. Bekletilmez.
+ *
+ * Doküman hem `data.i18n` tarifini hem DÜZ `title`/`message` metnini taşır:
+ * eski bundle yeni çeviri anahtarını bulamayınca düz metne düşer
+ * (localizeNotification). `data.route` de yazılır ki eski sürüm bildirime
+ * dokununca doğru ekrana gitsin.
+ */
+export async function notifyBoardPost(conversationId: string, boardOwnerId: string, actor: User) {
+  try {
+    if (!boardOwnerId || boardOwnerId === actor.id) return;
+    const titleKey = 'notifications.boardPostTitle';
+    const messageKey = 'notifications.boardPostMessage';
+    const params = { name: actor.displayName || actor.username || i18n.t('notifications.someone') };
+    void notificationActions.createNotification({
+      userId: boardOwnerId,
+      senderId: actor.id,
+      type: 'board_post',
+      title: i18n.t(titleKey, params),
+      message: i18n.t(messageKey, params),
+      data: {
+        conversationId,
+        boardOwnerId,
+        authorId: actor.id,
+        authorName: actor.displayName || actor.username,
+        route: `/conversation/${conversationId}`,
+        i18n: { titleKey, messageKey, params },
+      },
+      isRead: false,
+    });
+  } catch (error) {
+    logger.error('Board post notification error:', error);
   }
 }
 

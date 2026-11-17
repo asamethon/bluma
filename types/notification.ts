@@ -17,6 +17,7 @@ type NotificationType =
   | 'new_chapter'
   | 'welcome'
   | 'conversation_announcement'
+  | 'board_post'
   | 'announcement'
   | 'verify_email';
 
@@ -43,6 +44,7 @@ export interface Notification {
     chapterNumber?: string;
     authorId?: string;
     authorName?: string;
+    boardOwnerId?: string;
     url?: string;
     route?: string;
     tag?: string;

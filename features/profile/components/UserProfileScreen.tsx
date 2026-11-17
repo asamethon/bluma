@@ -1,4 +1,3 @@
-import ImageModal from '@/components/ui/ImageModal';
 import { Button, IconButton, Screen, SkeletonRow, Text } from '@/components/ui';
 import { ContentMaxWidth, useTheme } from '@/constants/theme';
 import { FlashList, type ListRenderItem } from '@shopify/flash-list';
@@ -13,6 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { useConversationMenu } from '../hooks/useConversationMenu';
 import { useUserProfileModel } from '../hooks/useUserProfileModel';
 import { pinnedThreshold } from '../profileLayout';
 import { buildProfileRows, skeletonRows, tabLabel, type ProfileRow, type ProfileTab } from '../profileRows';
@@ -20,7 +20,8 @@ import { profileStyles as styles } from '../styles/profileStyles';
 import { UserProfileEmptyState } from './UserProfileEmptyState';
 import { UserProfileHeader } from './UserProfileHeader';
 import { UserProfileListItem } from './UserProfileListItem';
-import { UserProfileMenu } from './UserProfileMenu';
+import { UserProfileOverlays } from './UserProfileOverlays';
+import { ProfileComposePrompt } from './ProfileComposePrompt';
 import { ProfilePinnedBar } from './ProfilePinnedBar';
 import { ProfileTabsRow } from './ProfileTabsRow';
 
@@ -33,6 +34,13 @@ export function UserProfileScreen({ profileId }: { profileId: string }) {
   const [pinned, setPinned] = useState(false);
   const model = useUserProfileModel(profileId);
   const { user, content, tab, guest, setImageUri, setTab, startAuth } = model;
+  const menu = useConversationMenu();
+
+  // Panoya yazma: misafir önce girişe yönlenir.
+  const openBoardComposer = useCallback(() => {
+    if (guest) startAuth('signup');
+    else model.setComposerVisible(true);
+  }, [guest, model, startAuth]);
 
   const openStory = useCallback((story: { id: string }) => router.push(`/story/${story.id}/preview`), [router]);
   const openConversation = useCallback(
@@ -77,14 +85,17 @@ export function UserProfileScreen({ profileId }: { profileId: string }) {
       stories: content.stories,
       conversations: content.conversations,
       loading: tab === 'stories' ? content.storiesLoading : content.conversationsLoading,
+      composer: model.canPostToBoard,
     });
-  }, [content, model.access.checking, model.access.locked, tab]);
+  }, [content, model.access.checking, model.access.locked, model.canPostToBoard, tab]);
 
   const renderItem = useCallback<ListRenderItem<ProfileRow>>(({ item }) => {
     if (item.kind === 'tabs') return tabs();
     if (item.kind === 'skeleton') return <View style={styles.tabRow}><SkeletonRow /></View>;
     if (item.kind === 'empty') return <UserProfileEmptyState tab={tab} />;
-    if (item.kind === 'composer') return null;
+    if (item.kind === 'composer') {
+      return <ProfileComposePrompt onPress={openBoardComposer} label={t('profileScreen.boardMessagePlaceholder')} />;
+    }
     return (
       <UserProfileListItem
         kind={item.kind}
@@ -92,9 +103,10 @@ export function UserProfileScreen({ profileId }: { profileId: string }) {
         onStory={openStory}
         onConversation={openConversation}
         onImage={setImageUri}
+        onConversationMenu={menu.open}
       />
     );
-  }, [openConversation, openStory, setImageUri, tab, tabs]);
+  }, [menu.open, openBoardComposer, openConversation, openStory, setImageUri, t, tab, tabs]);
 
   if (model.isLoading) {
     return (
@@ -171,22 +183,7 @@ export function UserProfileScreen({ profileId }: { profileId: string }) {
           {tabs(true)}
         </ProfilePinnedBar>
       )}
-      <ImageModal
-        visible={!!model.imageUri}
-        imageUri={model.imageUri || ''}
-        onClose={() => setImageUri(null)}
-      />
-      <UserProfileMenu
-        user={user}
-        top={top + 52}
-        blocked={model.blocked}
-        menuVisible={model.menuVisible}
-        reportVisible={model.reportVisible}
-        onCloseMenu={() => model.setMenuVisible(false)}
-        onReport={model.report}
-        onCloseReport={() => model.setReportVisible(false)}
-        onToggleBlock={model.toggleBlock}
-      />
+      <UserProfileOverlays user={user} topInset={top} model={model} menu={menu} />
     </Screen>
   );
 }
