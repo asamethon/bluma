@@ -534,7 +534,10 @@
     "tipsTitle": "ヒント:",
     "tip1": "質問をしてフォロワーとの交流を深めましょう",
     "tip2": "最近の話題について考えを共有しましょう",
-    "tip3": "フォロワーにコメントを促しましょう"
+    "tip3": "フォロワーにコメントを促しましょう",
+    "commentOptionsTitle": "コメントの操作",
+    "deleteCommentTitle": "コメントを削除",
+    "deleteCommentConfirm": "このコメントと返信を削除しますか？この操作は取り消せません。"
   },
   "challenges": {
     "ranks": {

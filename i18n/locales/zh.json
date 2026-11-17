@@ -534,7 +534,10 @@
     "tipsTitle": "提示：",
     "tip1": "提出问题，与关注者互动",
     "tip2": "分享你对当前话题的看法",
-    "tip3": "鼓励关注者发表评论"
+    "tip3": "鼓励关注者发表评论",
+    "commentOptionsTitle": "评论选项",
+    "deleteCommentTitle": "删除评论",
+    "deleteCommentConfirm": "要删除这条评论及其回复吗？此操作无法撤销。"
   },
   "challenges": {
     "ranks": {

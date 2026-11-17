@@ -1,4 +1,5 @@
 import { Divider, IconButton, Text } from '@/components/ui';
+import { safeCount } from '@/utils/format';
 import { Motion, Radius, Spacing, useTheme } from '@/constants/theme';
 import { boardByline, isBoardGuestPost } from '@/features/conversation/utils/boardPost';
 import { Conversation } from '@/types';
@@ -50,8 +51,8 @@ export function ProfileConversationCard({
         )}
 
         <View style={styles.stats}>
-          <Stat icon="heart-outline" value={conversation.likesCount || 0} />
-          <Stat icon="chatbubble-outline" value={conversation.commentsCount || 0} />
+          <Stat icon="heart-outline" value={safeCount(conversation.likesCount)} />
+          <Stat icon="chatbubble-outline" value={safeCount(conversation.commentsCount)} />
           {onMenu && (
             <IconButton
               icon="ellipsis-horizontal"

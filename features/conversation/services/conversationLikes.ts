@@ -1,3 +1,4 @@
+import { setLikeState } from '@/lib/likeToggle';
 import i18n from '@/i18n';
 import { store } from '@/store';
 import { patchConversation } from '@/store/slices/conversationSlice';
@@ -5,17 +6,11 @@ import type { Conversation } from '@/types';
 import { logger } from '@/utils/logger';
 import {
   collection,
-  deleteDoc,
   doc,
-  getDoc,
   getFirestore,
-  increment,
   onSnapshot,
   orderBy,
   query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
 } from '@react-native-firebase/firestore';
 import { notifyConversationLike } from './conversationNotifications';
 
@@ -39,54 +34,58 @@ export async function getLikedConversations(userId: string) {
   }
 }
 
-export function toggleLikeConversationUI(conversationId: string) {
+/**
+ * Beğeni durumunu AÇIKÇA kurar (ters çevirmez): hata yolunda da aynı
+ * fonksiyonla son bilinen sunucu durumuna dönülür. İstenen durum zaten
+ * yürürlükteyse hiçbir şey yapmaz — gereksiz render üretmez.
+ */
+export function applyConversationLike(conversationId: string, liked: boolean) {
   const state = store.getState().conversation;
-  const liked = state.likedConversationIds.includes(conversationId);
-  const delta = liked ? -1 : 1;
+  if (state.likedConversationIds.includes(conversationId) === liked) return;
+  const delta = liked ? 1 : -1;
   const bump = (items: Conversation[]) => items.map(item => item.id === conversationId
     ? { ...item, likesCount: Math.max(0, (item.likesCount || 0) + delta) }
     : item);
   store.dispatch(patchConversation({
     likedConversationIds: liked
-      ? state.likedConversationIds.filter(id => id !== conversationId)
-      : [...state.likedConversationIds, conversationId],
+      ? [...state.likedConversationIds, conversationId]
+      : state.likedConversationIds.filter(id => id !== conversationId),
     conversations: bump(state.conversations),
     userConversations: bump(state.userConversations),
     ...(state.currentConversation?.id === conversationId
-      ? { currentConversation: { ...state.currentConversation, likesCount: Math.max(0, state.currentConversation.likesCount + delta) } }
+      ? {
+        currentConversation: {
+          ...state.currentConversation,
+          likesCount: Math.max(0, (state.currentConversation.likesCount || 0) + delta),
+        },
+      }
       : {}),
   }));
-}
-
-export async function performLikeConversationFirebaseOperation(conversationId: string, userId: string) {
-  try {
-    const db = getFirestore();
-    const conversation = doc(db, 'conversations', conversationId);
-    const like = doc(db, 'conversations', conversationId, 'likes', userId);
-    const savedLike = doc(db, 'users', userId, 'likedConversations', conversationId);
-    const liked = (await getDoc(like)).exists();
-    if (liked) {
-      await updateDoc(conversation, { likesCount: increment(-1) });
-      await Promise.all([deleteDoc(like), deleteDoc(savedLike)]);
-      return;
-    }
-    await Promise.all([
-      setDoc(like, { userId, createdAt: serverTimestamp() }),
-      setDoc(savedLike, { conversationId, createdAt: serverTimestamp() }),
-    ]);
-    await updateDoc(conversation, { likesCount: increment(1) });
-    void notifyConversationLike(conversationId, userId);
-  } catch (error) {
-    logger.error('Firebase like operation error:', error);
-    toggleLikeConversationUI(conversationId);
-  }
 }
 
 export async function likeConversation(conversationId: string) {
   const userId = store.getState().auth.user?.id;
   if (!userId) return { success: false, error: i18n.t('errors.userNotFound') };
-  toggleLikeConversationUI(conversationId);
-  void performLikeConversationFirebaseOperation(conversationId, userId);
+  const previous = store.getState().conversation.likedConversationIds.includes(conversationId);
+  const desired = !previous;
+  applyConversationLike(conversationId, desired);
+  const db = getFirestore();
+  void setLikeState({
+    key: `conversation:${conversationId}`,
+    userId,
+    desired,
+    previous,
+    targets: {
+      counter: doc(db, 'conversations', conversationId),
+      like: doc(db, 'conversations', conversationId, 'likes', userId),
+      userLike: doc(db, 'users', userId, 'likedConversations', conversationId),
+      userLikeData: { conversationId },
+    },
+    onLiked: () => notifyConversationLike(conversationId, userId),
+  }).then(outcome => {
+    // Hata: ters çevirme yok, zincir başlamadan önceki duruma dön.
+    if (!outcome.ok) applyConversationLike(conversationId, outcome.previous);
+  });
   return { success: true };
 }
 

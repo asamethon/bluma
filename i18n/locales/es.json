@@ -534,7 +534,10 @@
     "tipsTitle": "Consejos:",
     "tip1": "Haz preguntas para interactuar con tus seguidores",
     "tip2": "Comparte tus opiniones sobre temas de actualidad",
-    "tip3": "Anima a tus seguidores a comentar"
+    "tip3": "Anima a tus seguidores a comentar",
+    "commentOptionsTitle": "Opciones del comentario",
+    "deleteCommentTitle": "Eliminar comentario",
+    "deleteCommentConfirm": "¿Eliminar este comentario y sus respuestas? No se puede deshacer."
   },
   "challenges": {
     "ranks": {

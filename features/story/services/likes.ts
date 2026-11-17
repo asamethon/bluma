@@ -3,18 +3,14 @@ import { store } from '@/store';
 import { patchStory } from '@/store/slices/storySlice';
 import type { Story } from '@/types';
 import { logger } from '@/utils/logger';
+import { setLikeState } from '@/lib/likeToggle';
 import {
   collection,
-  deleteDoc,
   doc,
   getDocs,
   getFirestore,
-  increment,
   orderBy,
   query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
 } from '@react-native-firebase/firestore';
 import { notificationActions } from '@/store/notificationStore';
 import { applyLikeDelta, setLikedOptimistically } from './likes/likeState';
@@ -23,9 +19,10 @@ import { getStoryForShelf } from './storyReads';
 function likeRefs(storyId: string, userId: string) {
   const firestore = getFirestore();
   return {
-    story: doc(firestore, 'stories', storyId),
+    counter: doc(firestore, 'stories', storyId),
     like: doc(firestore, 'stories', storyId, 'likes', userId),
     userLike: doc(firestore, 'users', userId, 'likedStories', storyId),
+    userLikeData: { storyId },
   };
 }
 
@@ -43,10 +40,10 @@ async function likeStory(storyId: string): Promise<LikeResult> {
   const userId = store.getState().auth.user?.id;
   if (!userId) return { success: false, error: i18n.t('errors.loginRequired') };
 
-  const liked = !isLiked(storyId);
-  applyLikeDelta(storyId, liked ? 1 : -1);
-  setLikedOptimistically(storyId, liked);
-  void writeLike(storyId, userId, liked);
+  const previous = isLiked(storyId);
+  applyLikeDelta(storyId, previous ? -1 : 1);
+  setLikedOptimistically(storyId, !previous);
+  void writeLike(storyId, userId, !previous, previous);
   return { success: true };
 }
 
@@ -61,34 +58,44 @@ async function unlikeStory(storyId: string): Promise<LikeResult> {
 
   applyLikeDelta(storyId, -1);
   setLikedOptimistically(storyId, false);
-  const written = await writeLike(storyId, userId, false);
+  const written = await writeLike(storyId, userId, false, true);
   return written ? { success: true } : { success: false, error: i18n.t('story.likeFailed') };
 }
 
-/** Yazma başarılıysa true; hata durumunda iyimser değişikliği geri alır. */
-async function writeLike(storyId: string, userId: string, liked: boolean): Promise<boolean> {
-  const refs = likeRefs(storyId, userId);
+/**
+ * Yazma başarılıysa true. Dokunuşlar hikâye başına birleşir; hata olursa
+ * arayüz, zincir başlamadan önceki duruma döner (ters çevirme yok).
+ */
+async function writeLike(
+  storyId: string,
+  userId: string,
+  desired: boolean,
+  previous: boolean,
+): Promise<boolean> {
+  const outcome = await setLikeState({
+    key: `story:${storyId}`,
+    userId,
+    desired,
+    previous,
+    targets: likeRefs(storyId, userId),
+    onLiked: () => {
+      void trackLikeChallenge(userId);
+      notifyAuthor(storyId, userId).catch(error => logger.error('Like notification error:', error));
+    },
+  });
+  if (!outcome.ok && outcome.desired !== outcome.previous) {
+    applyLikeDelta(storyId, outcome.previous ? 1 : -1);
+    setLikedOptimistically(storyId, outcome.previous);
+  }
+  return outcome.ok;
+}
+
+async function trackLikeChallenge(userId: string) {
   try {
-    if (liked) {
-      await setDoc(refs.like, { userId, createdAt: serverTimestamp() });
-      await setDoc(refs.userLike, { storyId, createdAt: serverTimestamp() });
-      await updateDoc(refs.story, { likesCount: increment(1) });
-      try {
-        const { challengeActions } = await import('@/features/challenges/services/challengeProgress');
-        void challengeActions.trackAction(userId, 'storyLikes').catch(() => {});
-      } catch {}
-    } else {
-      await updateDoc(refs.story, { likesCount: increment(-1) });
-      await deleteDoc(refs.like);
-      await deleteDoc(refs.userLike);
-    }
-    if (liked) notifyAuthor(storyId, userId).catch(error => logger.error('Like notification error:', error));
-    return true;
-  } catch (error) {
-    logger.error('Like write error:', error);
-    applyLikeDelta(storyId, liked ? -1 : 1);
-    setLikedOptimistically(storyId, !liked);
-    return false;
+    const { challengeActions } = await import('@/features/challenges/services/challengeProgress');
+    await challengeActions.trackAction(userId, 'storyLikes');
+  } catch {
+    // Görev takibi beğeniyi bloklamaz.
   }
 }
 

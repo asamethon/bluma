@@ -4,6 +4,7 @@ import { useOpenMention } from '@/features/mentions/hooks/useOpenMention';
 import { boardByline } from '../utils/boardPost';
 import { renderMentionText } from '@/features/story/utils/mentionText';
 import { formatRelativeTime } from '@/features/story/utils/time';
+import { safeCount } from '@/utils/format';
 import type { Conversation } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -65,16 +66,16 @@ export function ConversationPost({ conversation, liked, styles, onLike, onImage 
             color={liked ? colors.bloom : colors.textLight}
           />
           <Text variant="caption" color={liked ? colors.bloom : colors.textLight}>
-            {conversation.likesCount || 0}
+            {safeCount(conversation.likesCount)}
           </Text>
         </Pressable>
         <View style={styles.statItem}>
           <Ionicons name="chatbubble-outline" size={18} color={colors.textLight} />
-          <Text variant="caption" tone="textLight">{conversation.commentsCount || 0}</Text>
+          <Text variant="caption" tone="textLight">{safeCount(conversation.commentsCount)}</Text>
         </View>
         <View style={styles.statItem}>
           <Ionicons name="eye-outline" size={18} color={colors.textLight} />
-          <Text variant="caption" tone="textLight">{conversation.viewsCount || 0}</Text>
+          <Text variant="caption" tone="textLight">{safeCount(conversation.viewsCount)}</Text>
         </View>
       </View>
     </View>

@@ -556,7 +556,10 @@
     "tipsTitle": "İpuçları:",
     "tip1": "Takipçilerinle etkileşim kurmak için sorular sorun",
     "tip2": "Güncel konular hakkında düşüncelerinizi paylaşın",
-    "tip3": "Takipçilerinizin yorum yapmasını teşvik edin"
+    "tip3": "Takipçilerinizin yorum yapmasını teşvik edin",
+    "commentOptionsTitle": "Yorum seçenekleri",
+    "deleteCommentTitle": "Yorumu sil",
+    "deleteCommentConfirm": "Bu yorum ve yanıtları silinsin mi? Bu işlem geri alınamaz."
   },
   "challenges": {
     "ranks": {

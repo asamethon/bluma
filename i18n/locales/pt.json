@@ -534,7 +534,10 @@
     "tipsTitle": "Sugestões:",
     "tip1": "Faz perguntas para interagir com os teus seguidores",
     "tip2": "Partilha as tuas opiniões sobre temas atuais",
-    "tip3": "Incentiva os teus seguidores a comentar"
+    "tip3": "Incentiva os teus seguidores a comentar",
+    "commentOptionsTitle": "Opções do comentário",
+    "deleteCommentTitle": "Eliminar comentário",
+    "deleteCommentConfirm": "Eliminar este comentário e as respostas? Esta ação não pode ser anulada."
   },
   "challenges": {
     "ranks": {

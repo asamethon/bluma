@@ -6,8 +6,6 @@ import {
   cleanupConversationLikes,
   getLikedConversations,
   likeConversation,
-  performLikeConversationFirebaseOperation,
-  toggleLikeConversationUI,
 } from '@/features/conversation/services/conversationLikes';
 import { announceConversationToFollowers } from '@/features/conversation/services/conversationNotifications';
 import { deleteConversation } from '@/features/conversation/services/conversationDeletion';
@@ -30,9 +28,6 @@ export const conversationActions = {
   getLikedConversations,
   getUserConversations,
   likeConversation,
-  performLikeConversationFirebaseOperation,
-  toggleLikeConversationUI,
-  revertLikeConversationUI: toggleLikeConversationUI,
   cleanupListeners() {
     cleanupConversationLikes();
     cleanupConversationQueries();

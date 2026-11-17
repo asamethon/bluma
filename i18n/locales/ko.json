@@ -534,7 +534,10 @@
     "tipsTitle": "팁:",
     "tip1": "질문을 던져 팔로워와 소통해보세요",
     "tip2": "시사 주제에 대한 생각을 공유해보세요",
-    "tip3": "팔로워가 댓글을 남기도록 유도해보세요"
+    "tip3": "팔로워가 댓글을 남기도록 유도해보세요",
+    "commentOptionsTitle": "댓글 옵션",
+    "deleteCommentTitle": "댓글 삭제",
+    "deleteCommentConfirm": "이 댓글과 답글을 삭제할까요? 되돌릴 수 없습니다."
   },
   "challenges": {
     "ranks": {

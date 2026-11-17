@@ -1,4 +1,5 @@
 import { storyActions } from '@/store/storyStore';
+import { safeCount } from '@/utils/format';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 type ChapterLike = { liked: boolean; count: number };
@@ -50,7 +51,7 @@ export function useChapterContent({ storyId, chapterIndex, enabled, isGuest }: P
     const lifecycle = { active: true };
     void Promise.all([fetchChapter(chapterIndex), storyActions.isChapterLiked(storyId, chapterIndex)])
       .then(([chapter, liked]) => {
-        if (lifecycle.active) setLike({ liked, count: chapter?.likesCount || 0 });
+        if (lifecycle.active) setLike({ liked, count: safeCount(chapter?.likesCount) });
       });
     return () => { lifecycle.active = false; };
   }, [chapterIndex, enabled, fetchChapter, isGuest, storyId]);

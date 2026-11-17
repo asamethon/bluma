@@ -55,8 +55,13 @@ service cloud.firestore {
     // Sayaç artışının gerçek beğeni/takip kaydına dayandığının kanıtı. Eski
     // sürüm kaydı ve sayacı paralel yazdığı için yarışı kaybedebiliyor; anahtar
     // açılana kadar kanıt aranmaz.
+    //
+    // `existsAfter` — `exists` DEĞİL: yeni istemci kaydı ve sayacı TEK
+    // transaction'da yazıyor, `exists()` ise commit ÖNCESİNİ görüp kaydı
+    // yokmuş sayıyordu. `existsAfter` commit sonrasına bakar; eski istemcinin
+    // sıralı yazımında da (kayıt önce gider) doğru çalışır.
     function counterProof(path) {
-      return !legacyClientsRetired() || exists(path);
+      return !legacyClientsRetired() || existsAfter(path);
     }
     // Verilen alanların hiçbirine dokunulmadığında true. Sayaçları içerik
     // güncellemesinden ayırmak için: sayaç yalnızca tek adımlık bump

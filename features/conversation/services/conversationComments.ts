@@ -9,6 +9,7 @@ import {
   addDoc,
   collection,
   doc,
+  getDocs,
   getFirestore,
   increment,
   onSnapshot,
@@ -17,6 +18,7 @@ import {
   serverTimestamp,
   updateDoc,
   where,
+  writeBatch,
 } from '@react-native-firebase/firestore';
 import { notifyConversationComment, notifyConversationMentions } from './conversationNotifications';
 
@@ -70,5 +72,33 @@ export async function addComment(conversationId: string, content: string, image?
   } catch (error) {
     logger.error('Add comment error:', error);
     return { success: false, error: i18n.t('conversations.commentFailed') };
+  }
+}
+
+/**
+ * Yorumu (ve yanıtlarını) siler. Kural izni: yorumu yazan VEYA konuşmanın
+ * sahibi — yazar ya da pano sahibi (`ownsConversation`). Hikâye yorumundaki
+ * kalıbın aynısı; fark şu ki buradaki sayaç düşüşü TEK update ile gider:
+ * `conversations` kuralı toplu azaltmaya zaten izin veriyor
+ * (`commentsCount` küçülüyorsa ve negatif değilse).
+ */
+export async function deleteConversationComment(conversationId: string, commentId: string) {
+  try {
+    const db = getFirestore();
+    const comments = collection(db, 'conversationComments');
+    const replies = await getDocs(query(comments, where('parentId', '==', commentId)));
+    const references = [...replies.docs.map(reply => reply.ref), doc(comments, commentId)];
+    const conversation = doc(db, 'conversations', conversationId);
+    const batch = writeBatch(db);
+    references.forEach(reference => batch.delete(reference));
+    batch.update(conversation, {
+      commentsCount: increment(-references.length),
+      updatedAt: serverTimestamp(),
+    });
+    await batch.commit();
+    return { success: true };
+  } catch (error) {
+    logger.error('Delete conversation comment error:', error);
+    return { success: false, error: i18n.t('comments.deleteFailed') };
   }
 }

@@ -534,7 +534,10 @@
     "tipsTitle": "Tipps:",
     "tip1": "Stelle Fragen, um mit deinen Followern in Kontakt zu treten",
     "tip2": "Teile deine Gedanken zu aktuellen Themen",
-    "tip3": "Ermutige deine Follower zu kommentieren"
+    "tip3": "Ermutige deine Follower zu kommentieren",
+    "commentOptionsTitle": "Kommentaroptionen",
+    "deleteCommentTitle": "Kommentar löschen",
+    "deleteCommentConfirm": "Diesen Kommentar und seine Antworten löschen? Das lässt sich nicht rückgängig machen."
   },
   "challenges": {
     "ranks": {

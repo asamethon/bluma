@@ -556,7 +556,10 @@
     "tipsTitle": "Tips:",
     "tip1": "Ask questions to engage with your followers",
     "tip2": "Share your thoughts on current topics",
-    "tip3": "Encourage your followers to comment"
+    "tip3": "Encourage your followers to comment",
+    "commentOptionsTitle": "Comment options",
+    "deleteCommentTitle": "Delete comment",
+    "deleteCommentConfirm": "Delete this comment and its replies? This cannot be undone."
   },
   "challenges": {
     "ranks": {

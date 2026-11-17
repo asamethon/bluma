@@ -10,6 +10,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { createCommentsStyles } from '../../styles/commentsStyles';
 import { renderMentionText } from '@/features/story/utils/mentionText';
 import { getUserByUsername } from '@/features/auth/services/userByUsername';
+import { safeCount } from '@/utils/format';
 
 type Props = {
   comment: Comment;
@@ -55,7 +56,7 @@ function CommentItemComponent({ comment, currentUserId, level = 0, styles, highl
       <View style={styles.commentActions}>
         <TouchableOpacity style={styles.commentAction} onPress={() => actions.onLike(comment.id)}>
           <Ionicons name="heart-outline" size={16} color={colors.textSecondary} />
-          <Text style={styles.actionText}>{comment.likesCount || 0}</Text>
+          <Text style={styles.actionText}>{safeCount(comment.likesCount)}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.commentAction} onPress={() => actions.onReply(comment.id)}>
           <Ionicons name="chatbubble-outline" size={16} color={colors.textSecondary} />

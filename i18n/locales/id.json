@@ -534,7 +534,10 @@
     "tipsTitle": "Tips:",
     "tip1": "Ajukan pertanyaan untuk berinteraksi dengan pengikutmu",
     "tip2": "Bagikan pendapatmu tentang topik yang sedang hangat",
-    "tip3": "Dorong pengikutmu untuk berkomentar"
+    "tip3": "Dorong pengikutmu untuk berkomentar",
+    "commentOptionsTitle": "Opsi komentar",
+    "deleteCommentTitle": "Hapus komentar",
+    "deleteCommentConfirm": "Hapus komentar ini beserta balasannya? Tindakan ini tidak bisa dibatalkan."
   },
   "challenges": {
     "ranks": {

@@ -2,6 +2,7 @@ import ImageModal from '@/components/ui/ImageModal';
 import { IconButton, PageHeader, Screen } from '@/components/ui';
 import ReportSheet from '@/features/moderation/components/ReportSheet';
 import { ContentMaxWidth, useTheme } from '@/constants/theme';
+import { useConversationCommentActions } from '@/features/conversation/hooks/useConversationCommentActions';
 import { useConversationDetail } from '@/features/conversation/hooks/useConversationDetail';
 import { MentionSuggestions } from '@/features/mentions/components/MentionSuggestions';
 import type { ConversationComment } from '@/types';
@@ -20,14 +21,15 @@ export function ConversationDetailScreen({ conversationId }: { conversationId: s
   const { t } = useTranslation();
   const router = useRouter();
   const state = useConversationDetail(conversationId);
+  const commentActions = useConversationCommentActions(state.conversation, state.comments ?? []);
   const styles = useMemo(() => createConversationDetailStyles(colors), [colors]);
   // Kendi gönderisini kimse şikâyet etmez.
   const canReport = !!state.conversation
     && !!state.currentUser
     && state.conversation.authorId !== state.currentUser.id;
   const renderComment = useCallback<ListRenderItem<ConversationComment>>(({ item }) => (
-    <ConversationCommentRow item={item} styles={styles} onImage={state.openModal} />
-  ), [state.openModal, styles]);
+    <ConversationCommentRow item={item} styles={styles} onImage={state.openModal} onMenu={commentActions.open} />
+  ), [commentActions.open, state.openModal, styles]);
 
   if (!state.conversation) {
     return (
@@ -53,7 +55,7 @@ export function ConversationDetailScreen({ conversationId }: { conversationId: s
           ) : undefined}
         />
         <FlashList
-          data={state.comments || []}
+          data={commentActions.comments}
           renderItem={renderComment}
           keyExtractor={item => item.id}
           ListHeaderComponent={
@@ -87,6 +89,11 @@ export function ConversationDetailScreen({ conversationId }: { conversationId: s
         />
       </KeyboardAvoidingView>
       <ImageModal visible={!!state.modalImage} imageUri={state.modalImage || ''} onClose={state.closeModal} />
+      <ReportSheet
+        visible={!!commentActions.reportTarget}
+        onClose={commentActions.closeReport}
+        target={commentActions.reportTarget ? { type: 'comment', ...commentActions.reportTarget, contextId: conversationId } : null}
+      />
       <ReportSheet
         visible={state.reportVisible}
         onClose={state.closeReport}

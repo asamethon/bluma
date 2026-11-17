@@ -11,16 +11,15 @@ import {
   collection,
   deleteDoc,
   doc,
-  getDoc,
   getDocs,
   getFirestore,
   increment,
   query,
   serverTimestamp,
-  setDoc,
   updateDoc,
   where,
 } from '@react-native-firebase/firestore';
+import { toggleLikeState } from '@/lib/likeToggle';
 import { getCommentById } from './commentRecords';
 import { getStoryById } from './storyApi';
 
@@ -181,25 +180,24 @@ export async function deleteComment(storyId: string, commentId: string) {
   }
 }
 
+/**
+ * Yorum beğenisi. Satırda beğeni DURUMU gösterilmediği için istenen durum
+ * sunucudan okunur ve aynı transaction içinde çevrilir; dokunuşlar yorum
+ * başına sıraya dizilir, iç içe geçmez.
+ */
 export async function likeComment(storyId: string, commentId: string) {
-  try {
-    const userId = store.getState().auth.user?.id;
-    if (!userId) throw new Error(i18n.t('errors.loginRequired'));
-    const db = getFirestore();
-    const like = doc(db, 'stories', storyId, 'comments', commentId, 'likes', userId);
-    const comment = doc(db, 'stories', storyId, 'comments', commentId);
-    if ((await getDoc(like)).exists()) {
-      await updateDoc(comment, { likesCount: increment(-1) });
-      await deleteDoc(like);
-    } else {
-      await setDoc(like, { userId, createdAt: serverTimestamp() });
-      await updateDoc(comment, { likesCount: increment(1) });
-    }
-    return { success: true };
-  } catch (error) {
-    logger.error('Like comment error:', error);
-    return { success: false, error: error instanceof Error ? error.message : i18n.t('comments.likeFailed') };
-  }
+  const userId = store.getState().auth.user?.id;
+  if (!userId) return { success: false, error: i18n.t('errors.loginRequired') };
+  const db = getFirestore();
+  const ok = await toggleLikeState({
+    key: `storyComment:${storyId}:${commentId}`,
+    userId,
+    targets: {
+      counter: doc(db, 'stories', storyId, 'comments', commentId),
+      like: doc(db, 'stories', storyId, 'comments', commentId, 'likes', userId),
+    },
+  });
+  return ok ? { success: true } : { success: false, error: i18n.t('comments.likeFailed') };
 }
 
 

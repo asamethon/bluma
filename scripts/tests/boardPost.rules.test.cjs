@@ -57,6 +57,30 @@ async function remove(path, uid) {
   return response.status;
 }
 
+/** Yorum silme + sayaç düşüşü TEK batch'te gider (conversationComments.ts). */
+async function commitCommentDeletion(uid, { conversationId, commentIds }) {
+  const prefix = `projects/${projectId}/databases/(default)/documents`;
+  const response = await fetch(`http://${host}/v1/projects/${projectId}/databases/(default)/documents:commit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token(uid)}` },
+    body: JSON.stringify({
+      writes: [
+        ...commentIds.map(id => ({ delete: `${prefix}/conversationComments/${id}` })),
+        {
+          transform: {
+            document: `${prefix}/conversations/${conversationId}`,
+            fieldTransforms: [
+              { fieldPath: 'commentsCount', increment: { integerValue: String(-commentIds.length) } },
+              { fieldPath: 'updatedAt', setToServerValue: 'REQUEST_TIME' },
+            ],
+          },
+        },
+      ],
+    }),
+  });
+  return response.status;
+}
+
 const post = (authorId, boardOwnerId) => ({
   authorId,
   ...(boardOwnerId ? { boardOwnerId } : {}),
@@ -134,4 +158,29 @@ test('pano sahibi panosundaki yorumu ve gönderiyi silebilir', async () => {
 test('yazan kendi gönderisini başka panodan geri çekebilir', async () => {
   assert.equal(await write('conversations/board-7', 'ayse', post('ayse', 'samet')), 200);
   assert.equal(await remove('conversations/board-7', 'ayse'), 200);
+});
+
+test('pano sahibi yorum dalını sayacıyla birlikte tek batch\'te siler', async () => {
+  await db.doc('conversations/board-8').set({
+    authorId: 'ayse', boardOwnerId: 'samet', content: 'pano', isActive: true,
+    likesCount: 0, commentsCount: 2, viewsCount: 0,
+  });
+  await db.doc('conversationComments/d-1').set({ conversationId: 'board-8', userId: 'isik', content: 'yorum' });
+  await db.doc('conversationComments/d-2').set({ conversationId: 'board-8', userId: 'kapali', content: 'yanıt', parentId: 'd-1' });
+
+  // Üçüncü kişi aynı yazmayı yapamaz.
+  assert.equal(await commitCommentDeletion('kapali', { conversationId: 'board-8', commentIds: ['d-1'] }), 403);
+  // Pano sahibi: yorum + yanıt + sayaç -2.
+  assert.equal(await commitCommentDeletion('samet', { conversationId: 'board-8', commentIds: ['d-1', 'd-2'] }), 200);
+  assert.equal((await db.doc('conversations/board-8').get()).data().commentsCount, 0);
+});
+
+test('yorumu yazan kendi dalını siler', async () => {
+  await db.doc('conversations/board-9').set({
+    authorId: 'ayse', boardOwnerId: 'samet', content: 'pano', isActive: true,
+    likesCount: 0, commentsCount: 1, viewsCount: 0,
+  });
+  await db.doc('conversationComments/d-3').set({ conversationId: 'board-9', userId: 'isik', content: 'yorum' });
+  assert.equal(await commitCommentDeletion('isik', { conversationId: 'board-9', commentIds: ['d-3'] }), 200);
+  assert.equal((await db.doc('conversations/board-9').get()).data().commentsCount, 0);
 });

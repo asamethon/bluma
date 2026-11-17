@@ -1,4 +1,4 @@
-import { Avatar, Text } from '@/components/ui';
+import { Avatar, IconButton, Text } from '@/components/ui';
 import { Motion, useTheme } from '@/constants/theme';
 import { useOpenMention } from '@/features/mentions/hooks/useOpenMention';
 import { renderMentionText } from '@/features/story/utils/mentionText';
@@ -14,9 +14,11 @@ type Props = {
   item: ConversationComment;
   styles: ReturnType<typeof createConversationDetailStyles>;
   onImage: (uri: string) => void;
+  /** Sil / şikâyet menüsü. */
+  onMenu: (comment: ConversationComment) => void;
 };
 
-function ConversationCommentRowComponent({ item, styles, onImage }: Props) {
+function ConversationCommentRowComponent({ item, styles, onImage, onMenu }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const openMention = useOpenMention();
@@ -29,6 +31,14 @@ function ConversationCommentRowComponent({ item, styles, onImage }: Props) {
           <Text variant="labelSm" numberOfLines={1}>{item.user?.displayName || t('common.user')}</Text>
           <Text variant="caption" tone="textLight">{formatRelativeTime(item.createdAt)}</Text>
         </View>
+        <IconButton
+          icon="ellipsis-horizontal"
+          size={28}
+          iconSize={16}
+          color={colors.textLight}
+          accessibilityLabel={t('common.more')}
+          onPress={() => onMenu(item)}
+        />
       </View>
 
       {!!item.content && (
